@@ -59,26 +59,10 @@ def line_figure(
     return fig
 
 
-def bubble_snapshot(radius_um: float, *, color: str = "#888", resolution: int = 120) -> go.Figure:
-    theta = np.linspace(0.0, 2.0 * np.pi, resolution)
-    x = radius_um * np.cos(theta)
-    y = radius_um * np.sin(theta)
-    fig = go.Figure(
-        data=[go.Scatter(x=x, y=y, fill="toself", mode="lines", line=dict(color=color))],
-    )
-    fig.update_layout(
-        template="plotly_white",
-        xaxis=dict(scaleanchor="y", showticklabels=False, visible=False),
-        yaxis=dict(showticklabels=False, visible=False),
-        margin=dict(l=20, r=20, t=20, b=20),
-    )
-    return fig
-
 
 __all__ = [
     "PlotArrays",
     "arrays_from_result",
     "line_trace",
     "line_figure",
-    "bubble_snapshot",
 ]
