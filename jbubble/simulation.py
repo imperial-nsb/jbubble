@@ -95,8 +95,6 @@ def run_simulation(
         progress=progress,
     )
 
-    # if sol.ts is None or sol.ys is None:
-    #     raise ValueError("SaveAt(ts=...) is required for visualisation in run_simulation")
     assert sol.ts is not None and sol.ys is not None
 
     ts = sol.ts * units.T_scale
