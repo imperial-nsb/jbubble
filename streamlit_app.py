@@ -20,9 +20,9 @@ from jbubble import (
 
 UNITS = Units()
 SAVE_SPEC = SaveSpec(num_samples=2000)
-MIN_FREQ_KHZ = 750.0
+MIN_FREQ_KHZ = 250.0
 MAX_FREQ_KHZ = 1500.0
-PRESSURE_LIMIT_KPA = 300.0
+PRESSURE_LIMIT_KPA = 500.0
 RADIUS_AXIS_MAX_UM = 15.0
 TIME_MAX_US = 15.0
 DEFAULTS = {
@@ -34,7 +34,7 @@ DEFAULTS = {
 
 @st.cache_resource(show_spinner=False)
 def _get_simulator():
-    return jax.jit(chex.assert_max_traces(run_simulation, n=1))
+    return jax.jit(run_simulation)
 
 
 JIT_SIM = _get_simulator()
@@ -56,13 +56,13 @@ def simulate(freq_khz: float, pressure_kpa: float, radius_um: float, cycles: int
         units=UNITS,
         save_spec=SAVE_SPEC,
     )
-    return arrays_from_result(result)
+    return result, arrays_from_result(result)
 
 
 def _stacked_figure(arrays, marker_idx: int | None):
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08)
-    fig.add_trace(line_trace(arrays.time_us, arrays.pressure_kpa, name="Driving Pressure", color="#1f77b4"), row=1, col=1)
-    fig.add_trace(line_trace(arrays.time_us, arrays.radius_um, name="Bubble Radius", color="#ff7f0e"), row=2, col=1)
+    fig.add_trace(line_trace(arrays.time_us, arrays.pressure_kpa, name="Driving Pressure", color="#A682FF"), row=1, col=1)
+    fig.add_trace(line_trace(arrays.time_us, arrays.radius_um, name="Bubble Radius", color="#00AFB5"), row=2, col=1)
     fig.update_xaxes(range=(0.0, TIME_MAX_US), title_text="Time (μs)", row=2, col=1)
     fig.update_xaxes(range=(0.0, TIME_MAX_US), row=1, col=1, showticklabels=False)
     fig.update_yaxes(range=(-PRESSURE_LIMIT_KPA, PRESSURE_LIMIT_KPA), title_text="Pressure (kPa)", row=1, col=1)
@@ -70,7 +70,7 @@ def _stacked_figure(arrays, marker_idx: int | None):
     fig.update_layout(
         template="plotly_white",
         height=500,
-        margin=dict(l=40, r=20, t=30, b=40),
+        margin=dict(l=40, r=20, t=30, b=60),
     )
     return fig
 
@@ -84,7 +84,12 @@ with st.sidebar:
     radius = st.slider("Equilibrium radius (μm)", min_value=1.0, max_value=5.0, value=DEFAULTS["radius"], step=0.1)
     cycles = st.slider("Pulse cycles", min_value=2, max_value=10, value=DEFAULTS["cycles"], step=1)
 
-arrays = simulate(freq, pressure, radius, cycles)
+result, arrays = simulate(freq, pressure, radius, cycles)
+
+with st.sidebar:
+    converged = bool(result.converged)
+    with st.status("Solver status", state="complete" if converged else "error"):
+        st.write("✅ Converged" if converged else "🔴 Max steps!")
 
 st.plotly_chart(_stacked_figure(arrays, None), use_container_width=True)
 col1, col2, col3, col4 = st.columns(4)
