@@ -5,3 +5,4 @@ jaxlib==0.8.1
 diffrax==0.7.0
 equinox==0.13.2
 numpy==2.3.5
+chex==0.1.91
