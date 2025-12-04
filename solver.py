@@ -1,7 +1,8 @@
 from typing import Tuple
+import jax
 import jax.numpy as jnp
 import diffrax
-from diffrax import TextProgressMeter
+from diffrax import TextProgressMeter, MultiTerm, ODETerm
 from physics import Bubble, Pulse
 
 def bubble_equation(t, state, args: Tuple[Bubble, Pulse]):
@@ -48,6 +49,22 @@ def bubble_equation(t, state, args: Tuple[Bubble, Pulse]):
 
     R_ddot = (forces / rho_L - 1.5 * R_dot**2) / R
 
+    # # Debug logging in CSV format
+    # jax.debug.print("{t},{R},{R_dot},{P_gas},{damp},{P_surf},{P_visc},{P_sv},{forces},{R_ddot},{vdw_diff},{P_gas_pregamma}",
+    #                 t=t,
+    #                 R=R,
+    #                 R_dot=R_dot,
+    #                 P_gas=P_gas,
+    #                 damp=damping_term,
+    #                 P_surf=P_surf,
+    #                 P_visc=P_visc,
+    #                 P_sv=P_surf_visc,
+    #                 forces=forces,
+    #                 R_ddot=R_ddot,
+    #                 vdw_diff=vdw_diff,
+    #                 P_gas_pregamma=((R0**3 - vdw**3) / (vdw_diff)),
+    # )
+
     return jnp.stack([R_dot, R_ddot])
 
 def solve_bubble(bubble: Bubble, pulse: Pulse, t_span=None, dt0=1e-9):
@@ -55,22 +72,22 @@ def solve_bubble(bubble: Bubble, pulse: Pulse, t_span=None, dt0=1e-9):
     Solves the bubble dynamics ODE.
     """
     if t_span is None:
-        # Default to pulse duration + some extra
+        # Integrate well beyond the driven pulse to observe late-time dynamics
+        pulse_duration = pulse.cycle_num / pulse.freq
         t_span = (
             0.0,
-            pulse.initial_time + 0.4 * (pulse.cycle_num / pulse.freq),
+            pulse.initial_time + 2.0 * pulse_duration,
         )
 
     term = diffrax.ODETerm(bubble_equation)
     # Use a stiff solver (Kvaerno5) as bubble dynamics can be stiff near collapse
     solver = diffrax.Kvaerno5()
-    # solver = diffrax.Euler()
 
     t0, t1 = t_span
     y0 = jnp.array([bubble.R0, 0.0])
 
     # Save at high resolution for plotting
-    saveat = diffrax.SaveAt(ts=jnp.linspace(t0, t1, 10000))
+    saveat = diffrax.SaveAt(ts=jnp.linspace(t0, t1, 1000))
 
     # PID controller for step size
     stepsize_controller = diffrax.PIDController(rtol=1e-3, atol=1e-6)
@@ -85,9 +102,9 @@ def solve_bubble(bubble: Bubble, pulse: Pulse, t_span=None, dt0=1e-9):
         args=(bubble, pulse),
         saveat=saveat,
         stepsize_controller=stepsize_controller,
-        max_steps=300_000, # Increased max steps even further
+        max_steps=100_000,
         progress_meter=TextProgressMeter(),
-        throw=True,
+        throw=False,
     )
 
     return sol

@@ -3,11 +3,15 @@ import jax.numpy as jnp
 import equinox as eqx
 import matplotlib.pyplot as plt
 import numpy as np
-from physics import Bubble, Pulse
+import diffrax
+from physics import Bubble, Pulse, Units
 from solver import solve_bubble
 import shapes
+import time
 
-def run_simulation(R0, pressure):
+def run_simulation(R0, pressure, f0):
+    units = Units()
+
     bubble = Bubble(
         R0=R0,
         R_buckle=0.99 * R0,
@@ -24,115 +28,78 @@ def run_simulation(R0, pressure):
     # Setup Pulse
     
     pulse = Pulse(
-        freq=200e3,
+        freq=f0,
         pressure=pressure,
-        cycle_num=3,
-        initial_time=0,
+        cycle_num=10,
+        initial_time=1e-6,
         n=3,
         shape_func=shapes.pulse_sine # pulse1 is sine
     )
 
-    # Visualize the pulse
-    t_end = pulse.cycle_num / pulse.freq
-    t_vis = jnp.linspace(0, t_end, 1000)
-    p_vis = jax.vmap(pulse)(t_vis)
+    bubble = bubble.get_scaled(units)
+    pulse = pulse.get_scaled(units)
 
-    plt.figure(figsize=(10, 4))
-    plt.plot(np.array(t_vis) * 1e6, np.array(p_vis) / 1e3)
-    plt.xlabel('Time (μs)')
-    plt.ylabel('Pressure (kPa)')
-    plt.title('Acoustic Pulse')
-    plt.grid(True)
-    plt.savefig('pulse_visualization.png')
-    plt.show()
-    print("Pulse visualization saved to pulse_visualization.png")
-
-    sol = solve_bubble(bubble, pulse)
-
-    # Visualize the solution
+    # Time the solver - first call includes JIT compilation
+    
+    num_runs = 5
+    times = []
+    
+    for i in range(num_runs):
+        start = time.perf_counter()
+        sol = solve_bubble(bubble, pulse, dt0=1e-3)
+        sol.ys.block_until_ready()  # Ensure JAX computation completes
+        end = time.perf_counter()
+        times.append(end - start)
+        print(f"Run {i+1}: {times[-1]*1000:.2f} ms")
+    
+    print(f"\nFirst run (with JIT): {times[0]*1000:.2f} ms")
+    print(f"Subsequent runs (post-JIT) avg: {np.mean(times[1:])*1000:.2f} ms")
     ts = sol.ts
     Rs = sol.ys[:, 0]
+
+    p_vis = jax.vmap(pulse)(ts)
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
     
-    plt.figure(figsize=(10, 4))
-    plt.plot(np.array(ts) * 1e6, np.array(Rs) * 1e6)
-    plt.xlabel('Time (μs)')
-    plt.ylabel('Radius (μm)')
-    plt.title('Bubble Radius vs Time')
-    plt.grid(True)
-    plt.savefig('bubble_radius.png')
+    ax1.set_ylabel('Driving Pressure (kPa)', color='tab:blue')
+    ax1.plot(np.array(ts), np.array(p_vis), label="Driving Pressure", color='tab:blue')
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+    ax1.grid(True)
+    ax1.legend(loc='upper right')
+    
+    ax2.set_xlabel('Time (μs)')
+    ax2.set_ylabel('Radius (μm)', color='tab:orange')
+    ax2.plot(np.array(ts), np.array(Rs), label="Radius / Time", color='tab:orange')
+    ax2.tick_params(axis='y', labelcolor='tab:orange')
+    ax2.grid(True)
+    ax2.legend(loc='upper right')
+    
+    plt.tight_layout()
     plt.show()
-    print("Bubble radius visualization saved to bubble_radius.png")
+
 
     # Extract metrics
     Rs = sol.ys[:, 0]
     # Filter out NaNs if any (though solver should handle it)
-    Rs = jnp.nan_to_num(Rs, nan=R0)
+    # Rs = jnp.nan_to_num(Rs, nan=R0)
 
     max_R = jnp.max(Rs)
     min_R = jnp.min(Rs)
-    
-    max_ratio = max_R / R0
-    min_ratio = R0 / min_R
+
+    max_ratio = max_R / bubble.R0
+    min_ratio = bubble.R0 / min_R
     max_min_ratio = max_R / min_R
-    
+
     return max_R, max_ratio, min_R, min_ratio, max_min_ratio
 
 def main():
-    print("Running bubble simulations with JAX/Diffrax...")
-
-    # # Grid
-    # radii = jnp.linspace(0.5e-6, 5e-6, 2)
-    # pressures = jnp.linspace(50e3, 200e3, 3)
-    
-    # # Create meshgrid for vmap
-    # # We want to iterate over all combinations
-    # R_grid, P_grid = jnp.meshgrid(radii, pressures)
-    
-    # # Flatten for vmap
-    # R_flat = R_grid.ravel()
-    # P_flat = P_grid.ravel()
-    
-    # # JIT compile the vmapped function
-    # # Note: diffrax.diffeqsolve is JIT-compatible
-    # vmapped_run = eqx.filter_jit(jax.vmap(run_simulation))
-    
-    # print(f"Simulating {len(R_flat)} combinations...")
-    # results = vmapped_run(R_flat, P_flat)
+    # print("Running bubble simulations with JAX/Diffrax...")
 
     # Single run
-    R0 = 5e-6
-    pressure = 200e3
-    results = run_simulation(R0, pressure)
-
-    max_R, max_ratio, min_R, min_ratio, max_min_ratio = results
-
-    # # Reshape results
-    # shape = R_grid.shape
-    # max_ratio_grid = max_ratio.reshape(shape)
-    
-    # # Plotting (using matplotlib, so convert to numpy)
-    # max_ratio_np = np.array(max_ratio_grid)
-    # radii_np = np.array(radii)
-    # pressures_np = np.array(pressures)
-    
-    # plt.figure(figsize=(10, 8))
-    # plt.imshow(
-    #     max_ratio_np, 
-    #     extent=[radii_np.min()*1e6, radii_np.max()*1e6, pressures_np.min()/1000, pressures_np.max()/1000],
-    #     origin='lower', # Note: exact.py used 'upper' but had pressures reversed in extent? 
-    #     # exact.py: extent=[min, max, max, min], origin='upper'. 
-    #     # This means top row is max pressure.
-    #     # My meshgrid: P_grid rows correspond to P values. 
-    #     # If I use origin='lower', bottom row is min pressure.
-    #     cmap='inferno',
-    #     aspect='auto'
-    # )
-    # plt.colorbar(label='Maximum Radius / Initial Radius')
-    # plt.xlabel('Initial Radius (μm)')
-    # plt.ylabel('Pressure (kPa)')
-    # plt.title('Expansion Ratio (JAX/Diffrax)')
-    # plt.savefig('heatmap_jax.png')
-    # print("Heatmap saved to heatmap_jax.png")
+    R0 = 4e-6
+    pressure = 1000e3
+    f0 = 800e3
+    results = run_simulation(R0, pressure, f0)
 
 if __name__ == "__main__":
     main()

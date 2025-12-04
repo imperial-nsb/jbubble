@@ -1,6 +1,24 @@
+import jax
 import jax.numpy as jnp
 import equinox as eqx
 from typing import Callable
+
+class Units:
+    def __init__(self, L_scale=1e-6, T_scale=1e-6, M_scale=1e-15):
+        self.L_scale = L_scale
+        self.T_scale = T_scale
+        self.M_scale = M_scale
+
+        # Derived scales
+        self.rho_scale = M_scale / L_scale**3
+        self.P_scale = M_scale / (L_scale * T_scale**2)
+        self.vel_scale = L_scale / T_scale
+        self.force_scale = M_scale * L_scale / T_scale**2
+        self.sigma_scale = M_scale / T_scale**2  # N/m = kg/s^2
+        self.chi_scale = self.sigma_scale        # N/m
+        self.mu_scale = M_scale / (L_scale * T_scale) # Pa s = kg / (m s)
+        self.kappa_scale = M_scale / T_scale     # N s / m = kg / s
+        self.freq_scale = 1 / T_scale
 
 class Bubble(eqx.Module):
     """
@@ -50,11 +68,12 @@ class Bubble(eqx.Module):
         self.R_break = 1.2 * self.R0
         self.sigma_break = ((self.R_break / self.R_buckle)**2 - 1) * self.chi
         self.sigma_R0 = self.chi * ((self.R0**2 / self.R_buckle**2) - 1)
-        self.vdw = self.R0 / 5.6
+        self.vdw = self.R0 / 5.61
 
     def surface_tension(self, R):
         """
         Marmottant model for surface tension.
+        Smoothed to help solver convergence.
         """
         # if R<= self.buckle_radius: sigma = 0
         # elif R>= self.break_radius: sigma = self.sigma_liquid
@@ -73,6 +92,20 @@ class Bubble(eqx.Module):
             )
         )
         return sigma
+
+    def get_scaled(self, units):
+        return Bubble(
+            R0=self.R0 / units.L_scale,
+            R_buckle=self.R_buckle / units.L_scale,
+            gamma=self.gamma,
+            chi=self.chi / units.chi_scale,
+            mu_L=self.mu_L / units.mu_scale,
+            kappa_s=self.kappa_s / units.kappa_scale,
+            rho_L=self.rho_L / units.rho_scale,
+            c_L=self.c_L / units.vel_scale,
+            P_amb=self.P_amb / units.P_scale,
+            sigma_L=self.sigma_L / units.sigma_scale
+        )
 
 class Pulse(eqx.Module):
     """
@@ -100,9 +133,21 @@ class Pulse(eqx.Module):
         hann_window = 0.5 * (1.0 - jnp.cos(2.0 * jnp.pi * tau / pulse_span))
 
         # Apply window (0 outside of pulse)
-        window = jnp.where(in_pulse, hann_window, 0.0)
+        # window = jnp.where(in_pulse, hann_window, 0.0)
+        window = jnp.where(in_pulse, 1.0, 0.0)
 
         val = self.shape_func(t, self.freq, self.n, self.phase, self.initial_time)
 
         return val * self.pressure * window
+
+    def get_scaled(self, units):
+        return Pulse(
+            freq=self.freq / units.freq_scale,
+            pressure=self.pressure / units.P_scale,
+            shape_func=self.shape_func,
+            n=self.n,
+            phase=self.phase,
+            initial_time=self.initial_time / units.T_scale,
+            cycle_num=self.cycle_num
+        )
 
