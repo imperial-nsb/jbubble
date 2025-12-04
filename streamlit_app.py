@@ -19,7 +19,7 @@ from jbubble import (
 )
 
 UNITS = Units()
-SAVE_SPEC = SaveSpec(num_samples=2000)
+SAVE_SPEC = SaveSpec(num_samples=1000)
 MIN_FREQ_KHZ = 250.0
 MAX_FREQ_KHZ = 1500.0
 PRESSURE_LIMIT_KPA = 500.0
