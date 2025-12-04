@@ -18,7 +18,7 @@ class SimulationResult(eqx.Module):
     ts: jax.Array
     ys: jax.Array
     driving_pressure: jax.Array
-    converged: bool
+    converged: jax.Array
     bubble: Bubble
     pulse: Pulse
     units: Units
@@ -65,11 +65,11 @@ def default_pulse(freq: float = 800e3, pressure: float = 1e6) -> Pulse:
 
 
 def run_simulation(
-    bubble: Bubble | None = None,
-    pulse: Pulse | None = None,
+    bubble: Bubble,
+    pulse: Pulse,
     *,
-    units: Units | None = None,
-    save_spec: SaveSpec | None = None,
+    units: Units,
+    save_spec: SaveSpec,
     dt0: float = 1e-3,
     progress: bool = False,
 ) -> SimulationResult:
@@ -79,10 +79,6 @@ def run_simulation(
     directly (optionally wrapped in :func:`equinox.filter_jit`) and reuse the
     returned function handle inside optimisation loops.
     """
-    units = units or Units()
-    bubble = bubble or default_bubble()
-    pulse = pulse or default_pulse()
-
     scaled_bubble = bubble.get_scaled(units)
     scaled_pulse = pulse.get_scaled(units)
 
@@ -90,25 +86,25 @@ def run_simulation(
         scaled_bubble,
         scaled_pulse,
         dt0=dt0,
-        save_spec=save_spec or SaveSpec(1000),
+        save_spec=save_spec,
         progress=progress,
     )
 
-    if sol.ts is None or sol.ys is None:
-        raise ValueError("SaveAt(ts=...) is required for visualisation in run_simulation")
+    # if sol.ts is None or sol.ys is None:
+    #     raise ValueError("SaveAt(ts=...) is required for visualisation in run_simulation")
+    assert sol.ts is not None and sol.ys is not None
 
     ts = sol.ts * units.T_scale
     radius = sol.ys[:, 0] * units.L_scale
     radial_velocity = sol.ys[:, 1] * units.vel_scale
     ys = jnp.stack([radius, radial_velocity], axis=-1)
     driving_pressure = jax.vmap(scaled_pulse)(sol.ts) * units.P_scale
-    converged = bool(sol.result == diffrax.RESULTS.successful) if hasattr(sol, "result") else True
 
     return SimulationResult(
         ts=ts,
         ys=ys,
         driving_pressure=driving_pressure,
-        converged=converged,
+        converged=diffrax.is_successful(sol.result),
         bubble=bubble,
         pulse=pulse,
         units=units,

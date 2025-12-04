@@ -51,7 +51,7 @@ def bubble_equation(t: Any, state: State, args: Args) -> State:
 class SaveSpec(eqx.Module):
     """Convenience wrapper for controlling solver outputs."""
 
-    num_samples: int = 1024
+    num_samples: int = eqx.field(default=1024, static=True)
 
     def build(self, t0: float, t1: float) -> diffrax.SaveAt:
         ts = jnp.linspace(t0, t1, self.num_samples)
