@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import equinox as eqx
 
 
-@dataclass(frozen=True)
-class Units:
+class Units(eqx.Module):
     """Non-dimensionalisation factors shared across the library.
 
     The defaults normalise micrometre radii and microsecond times, which keeps

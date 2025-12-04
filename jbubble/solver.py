@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Tuple
 
 import diffrax
 import jax
 import jax.numpy as jnp
+import equinox as eqx
 
 from .bubble import Bubble
 from .pulse import Pulse
@@ -48,8 +48,7 @@ def bubble_equation(t: Any, state: State, args: Args) -> State:
     return jnp.stack([R_dot, R_ddot])
 
 
-@dataclass(frozen=True)
-class SaveSpec:
+class SaveSpec(eqx.Module):
     """Convenience wrapper for controlling solver outputs."""
 
     num_samples: int = 1024

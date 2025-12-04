@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import equinox as eqx
 import jax
 import jax.numpy as jnp
@@ -16,8 +14,7 @@ from .solver import SaveSpec, solve_bubble
 from .units import Units
 
 
-@dataclass
-class SimulationResult:
+class SimulationResult(eqx.Module):
     ts: jax.Array
     ys: jax.Array
     driving_pressure: jax.Array
