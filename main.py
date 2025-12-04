@@ -7,6 +7,7 @@ from chex import assert_max_traces
 from jbubble import (
     Units,
     SaveSpec,
+    arrays_from_result,
     compute_radius_metrics,
     default_bubble,
     default_pulse,
@@ -48,12 +49,14 @@ def demo_run(R0=4e-6, pressure=500e3, freq=800e3):
     metricsA = compute_radius_metrics(resultA)
     metricsB = compute_radius_metrics(resultB)
 
-    ts_us_A = np.array(resultA.ts) / units.T_scale
-    driving_kpa_A = np.array(resultA.driving_pressure) / units.P_scale
-    radius_um_A = np.array(resultA.radius) / units.L_scale
-    ts_us_B = np.array(resultB.ts) / units.T_scale
-    driving_kpa_B = np.array(resultB.driving_pressure) / units.P_scale
-    radius_um_B = np.array(resultB.radius) / units.L_scale
+    arraysA = arrays_from_result(resultA)
+    arraysB = arrays_from_result(resultB)
+    ts_us_A = arraysA.time_us
+    driving_kpa_A = arraysA.pressure_kpa
+    radius_um_A = arraysA.radius_um
+    ts_us_B = arraysB.time_us
+    driving_kpa_B = arraysB.pressure_kpa
+    radius_um_B = arraysB.radius_um
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
     ax1.set_ylabel("Driving Pressure (kPa)", color="tab:blue")

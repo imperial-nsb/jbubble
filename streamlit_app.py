@@ -1,0 +1,160 @@
+"""Simple Streamlit interface for jbubble simulations."""
+
+from __future__ import annotations
+
+import time
+
+import chex
+import jax
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import streamlit as st
+
+from jbubble import (
+    Units,
+    SaveSpec,
+    arrays_from_result,
+    bubble_snapshot,
+    build_pulse,
+    default_bubble,
+    line_trace,
+    run_simulation,
+)
+
+UNITS = Units()
+SAVE_SPEC = SaveSpec(num_samples=2000)
+MIN_FREQ_KHZ = 750.0
+MAX_FREQ_KHZ = 1500.0
+PRESSURE_LIMIT_KPA = 300.0
+RADIUS_AXIS_MAX_UM = 15.0
+TIME_MAX_US = 15.0
+DEFAULTS = {
+    "freq": (MAX_FREQ_KHZ + MIN_FREQ_KHZ) / 2,
+    "pressure": PRESSURE_LIMIT_KPA / 2,
+    "radius": 3.0,
+    "cycles": 3,
+    "hann": False,
+}
+
+@st.cache_resource(show_spinner=False)
+def _get_simulator():
+    return jax.jit(chex.assert_max_traces(run_simulation, n=1))
+
+
+JIT_SIM = _get_simulator()
+
+
+def simulate(freq_khz: float, pressure_kpa: float, radius_um: float, cycles: int):
+    bubble = default_bubble(R0=radius_um * 1e-6)
+    pulse = build_pulse(
+        "sine",
+        freq=freq_khz * 1e3,
+        pressure=pressure_kpa * 1e3,
+        cycle_num=cycles,
+        initial_time=1e-6,
+        apply_hann=False,
+    )
+    result = JIT_SIM(
+        bubble=bubble,
+        pulse=pulse,
+        units=UNITS,
+        save_spec=SAVE_SPEC,
+    )
+    return arrays_from_result(result)
+
+
+def _stacked_figure(arrays, marker_idx: int | None):
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08)
+    fig.add_trace(line_trace(arrays.time_us, arrays.pressure_kpa, name="Driving Pressure"), row=1, col=1)
+    fig.add_trace(line_trace(arrays.time_us, arrays.radius_um, name="Bubble Radius"), row=2, col=1)
+    fig.update_xaxes(range=(0.0, TIME_MAX_US), title_text="Time (μs)", row=2, col=1)
+    fig.update_xaxes(range=(0.0, TIME_MAX_US), row=1, col=1, showticklabels=False)
+    fig.update_yaxes(range=(-PRESSURE_LIMIT_KPA, PRESSURE_LIMIT_KPA), title_text="Pressure (kPa)", row=1, col=1)
+    fig.update_yaxes(range=(0.0, RADIUS_AXIS_MAX_UM), title_text="Radius (μm)", row=2, col=1)
+    if marker_idx is not None:
+        t = arrays.time_us[marker_idx]
+        fig.add_trace(
+            go.Scatter(
+                x=[t],
+                y=[arrays.pressure_kpa[marker_idx]],
+                mode="markers",
+                marker=dict(color="red", size=9),
+                name="Pressure marker",
+                showlegend=False,
+            ),
+            row=1,
+            col=1,
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[t],
+                y=[arrays.radius_um[marker_idx]],
+                mode="markers",
+                marker=dict(color="red", size=9),
+                name="Radius marker",
+                showlegend=False,
+            ),
+            row=2,
+            col=1,
+        )
+    fig.update_layout(
+        template="plotly_white",
+        height=600,
+        margin=dict(l=40, r=20, t=30, b=40),
+    )
+    return fig
+
+
+st.set_page_config(page_title="jbubble", layout="wide")
+st.title("jbubble")
+
+with st.sidebar:
+    st.header("Input parameters")
+    freq = st.slider("Frequency (kHz)", min_value=MIN_FREQ_KHZ, max_value=MAX_FREQ_KHZ, value=DEFAULTS["freq"], step=10.0)
+    pressure = st.slider("Pressure amplitude (kPa)", min_value=0.0, max_value=PRESSURE_LIMIT_KPA, value=DEFAULTS["pressure"], step=10.0)
+    radius = st.slider("Equilibrium radius (μm)", min_value=1.0, max_value=5.0, value=DEFAULTS["radius"], step=0.1)
+    cycles = st.slider("Pulse cycles", min_value=1, max_value=10, value=DEFAULTS["cycles"], step=1)
+
+if "frame_idx" not in st.session_state:
+    st.session_state.frame_idx = 0
+if "animate" not in st.session_state:
+    st.session_state.animate = False
+
+arrays = simulate(freq, pressure, radius, cycles)
+frame_max = len(arrays.time_us) - 1
+st.session_state.frame_idx = min(st.session_state.frame_idx, frame_max)
+
+
+def _toggle_animation():
+    st.session_state.animate = not st.session_state.animate
+
+
+def _reset_animation():
+    st.session_state.frame_idx = 0
+    st.session_state.animate = False
+
+
+play_col1, play_col2 = st.sidebar.columns(2)
+play_col1.button("Play/Pause", on_click=_toggle_animation)
+play_col2.button("Reset", on_click=_reset_animation)
+
+frame_idx = st.sidebar.slider(
+    "Time sample",
+    min_value=0,
+    max_value=frame_max,
+    value=st.session_state.frame_idx,
+)
+st.session_state.frame_idx = frame_idx
+
+current_radius = arrays.radius_um[frame_idx]
+st.sidebar.subheader("Bubble snapshot")
+st.sidebar.plotly_chart(bubble_snapshot(current_radius), use_container_width=True)
+
+st.plotly_chart(_stacked_figure(arrays, frame_idx), use_container_width=True)
+
+if st.session_state.animate:
+    st.session_state.frame_idx = (st.session_state.frame_idx + 1) % (frame_max + 1)
+    time.sleep(0.05)
+    rerun = getattr(st, "experimental_rerun", None)
+    if rerun:
+        rerun()

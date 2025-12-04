@@ -98,7 +98,7 @@ def solve_bubble(
         args=(bubble, pulse),
         saveat=saveat,
         stepsize_controller=stepsize_controller,
-        max_steps=100_000,
+        max_steps=10_000,
         progress_meter=progress_meter,
         throw=False,
     )

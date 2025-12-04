@@ -13,6 +13,7 @@ from .simulation import (
     run_simulation,
     compute_radius_metrics,
 )
+from .visuals import arrays_from_result, bubble_snapshot, line_figure, line_trace, PlotArrays
 
 __all__ = [
     "Units",
@@ -28,4 +29,9 @@ __all__ = [
     "default_pulse",
     "run_simulation",
     "compute_radius_metrics",
+    "PlotArrays",
+    "arrays_from_result",
+    "line_trace",
+    "line_figure",
+    "bubble_snapshot",
 ]

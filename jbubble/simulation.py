@@ -14,6 +14,9 @@ from .solver import SaveSpec, solve_bubble
 from .units import Units
 
 
+SIMULATION_WINDOW_S = 15e-6
+
+
 class SimulationResult(eqx.Module):
     ts: jax.Array
     ys: jax.Array
@@ -81,10 +84,12 @@ def run_simulation(
     """
     scaled_bubble = bubble.get_scaled(units)
     scaled_pulse = pulse.get_scaled(units)
+    scaled_t_span = (0.0, SIMULATION_WINDOW_S / units.T_scale)
 
     sol = solve_bubble(
         scaled_bubble,
         scaled_pulse,
+        t_span=scaled_t_span,
         dt0=dt0,
         save_spec=save_spec,
         progress=progress,
