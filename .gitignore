@@ -5,6 +5,7 @@
 *.vscode
 *.egg-info
 *__pycache__
+**/*.pyc
 .venv
 site/*
 build/*
