@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt ./
 COPY jbubble.svg ./
 COPY jbubble ./jbubble
+COPY streamlit_app.py ./streamlit_app.py
 
 RUN pip3 install -r requirements.txt
 
