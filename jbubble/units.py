@@ -1,7 +1,5 @@
 """Unit-scaling helpers for jbubble simulations."""
 
-from __future__ import annotations
-
 import equinox as eqx
 
 

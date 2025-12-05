@@ -1,9 +1,6 @@
 """Simple Streamlit interface for jbubble simulations."""
 
-from __future__ import annotations
-
 import jax
-import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 

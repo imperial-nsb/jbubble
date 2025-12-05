@@ -1,7 +1,5 @@
 """Bubble material model definitions."""
 
-from __future__ import annotations
-
 import equinox as eqx
 import jax
 import jax.numpy as jnp

@@ -1,7 +1,5 @@
 """Driving pulse parameterisations."""
 
-from __future__ import annotations
-
 from typing import Callable
 
 import equinox as eqx

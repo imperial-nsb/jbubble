@@ -1,7 +1,5 @@
 """Library of differentiable-enough pulse shapes."""
 
-from __future__ import annotations
-
 import jax.numpy as jnp
 
 

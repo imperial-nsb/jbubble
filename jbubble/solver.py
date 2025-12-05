@@ -1,7 +1,5 @@
 """Diffrax-based Rayleigh-Plesset solver."""
 
-from __future__ import annotations
-
 from typing import Any, Tuple
 
 import diffrax

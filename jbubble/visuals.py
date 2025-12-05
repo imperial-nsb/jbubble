@@ -1,7 +1,5 @@
 """Reusable Plotly helpers for jbubble visualisations."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Iterable, Sequence, Union
 

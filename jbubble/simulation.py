@@ -1,7 +1,5 @@
 """High-level helpers for running and post-processing simulations."""
 
-from __future__ import annotations
-
 import equinox as eqx
 import jax
 import jax.numpy as jnp
