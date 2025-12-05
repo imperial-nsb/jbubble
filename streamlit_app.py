@@ -32,11 +32,8 @@ DEFAULTS = {
 }
 
 @st.cache_resource(show_spinner=False)
-def _get_simulator():
+def _jitted_simulator():
     return jax.jit(run_simulation)
-
-
-JIT_SIM = _get_simulator()
 
 
 def simulate(freq_khz: float, pressure_kpa: float, radius_um: float, cycles: int):
@@ -49,7 +46,7 @@ def simulate(freq_khz: float, pressure_kpa: float, radius_um: float, cycles: int
         initial_time=1e-6,
         apply_hann=False,
     )
-    result = JIT_SIM(
+    result = _jitted_simulator()(
         bubble=bubble,
         pulse=pulse,
         units=UNITS,
