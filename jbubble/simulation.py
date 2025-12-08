@@ -12,9 +12,6 @@ from .solver import SaveSpec, solve_bubble
 from .units import Units
 
 
-SIMULATION_WINDOW_S = 15e-6
-
-
 class SimulationResult(eqx.Module):
     ts: jax.Array
     ys: jax.Array
@@ -60,7 +57,6 @@ def default_pulse(freq: float = 800e3, pressure: float = 1e6) -> Pulse:
         pressure=pressure,
         cycle_num=10,
         initial_time=1e-6,
-        n=3,
         apply_hann=False,
     )
 
@@ -71,6 +67,7 @@ def run_simulation(
     *,
     units: Units,
     save_spec: SaveSpec,
+    window_s: float = 20e-6, # [s]
     dt0: float = 1e-3,
     progress: bool = False,
 ) -> SimulationResult:
@@ -82,7 +79,7 @@ def run_simulation(
     """
     scaled_bubble = bubble.get_scaled(units)
     scaled_pulse = pulse.get_scaled(units)
-    scaled_t_span = (0.0, SIMULATION_WINDOW_S / units.T_scale)
+    scaled_t_span = (0.0, window_s / units.T_scale)
 
     sol = solve_bubble(
         scaled_bubble,
