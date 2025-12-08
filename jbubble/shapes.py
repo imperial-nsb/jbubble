@@ -1,102 +1,127 @@
 """Library of differentiable-enough pulse shapes."""
 
+import jax
 import jax.numpy as jnp
 
+NUM_FOURIER_TERMS = 10
 
-def pulse_sine(t, freq, num_fourier_terms, phase, initial_time):
+
+def pulse_sine(t, freq, phase, initial_time):
     """Pure sine wave."""
     t = t - initial_time
     return jnp.sin(2.0 * jnp.pi * freq * t - phase)
 
 
-def pulse_sawtooth(t, freq, num_fourier_terms, phase, initial_time):
+def pulse_sawtooth(t, freq, phase, initial_time):
     """Fourier sawtooth approximation."""
     t = t - initial_time
-    output = 0.0
-    for m in range(1, num_fourier_terms + 1):
-        output += -((-1) ** m / m) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
-    return output
+    m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
 
-
-def pulse_triangle(t, freq, num_fourier_terms, phase, initial_time):
-    t = t - initial_time
-    output = 0.0
-    for m in range(1, num_fourier_terms + 1):
-        output += -((1 - (-1) ** m) / (m**2)) * jnp.cos(
-            2.0 * jnp.pi * m * freq * (t + (1.0 / (4.0 * freq))) - m * phase
+    def term_fn(m_val):
+        return -((-1) ** m_val / m_val) * jnp.sin(
+            2.0 * jnp.pi * m_val * freq * t - m_val * phase
         )
-    return output
+
+    return jnp.sum(jax.vmap(term_fn)(m), axis=0)
 
 
-def pulse_quadratic(t, freq, num_fourier_terms, phase, initial_time):
+def pulse_triangle(t, freq, phase, initial_time):
     t = t - initial_time
-    output = 0.0
+    m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+
+    def term_fn(m_val):
+        return -((1 - (-1) ** m_val) / (m_val**2)) * jnp.cos(
+            2.0 * jnp.pi * m_val * freq * (t + (1.0 / (4.0 * freq))) - m_val * phase
+        )
+
+    return jnp.sum(jax.vmap(term_fn)(m), axis=0)
+
+
+def pulse_quadratic(t, freq, phase, initial_time):
+    t = t - initial_time
     p = jnp.pi / jnp.sqrt(3.0)
-    for m in range(1, num_fourier_terms + 1):
-        output += ((-1) ** m / (m**2)) * jnp.cos(
-            2.0 * jnp.pi * m * freq * t - m * phase - m * p
+    m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+
+    def term_fn(m_val):
+        return ((-1) ** m_val / (m_val**2)) * jnp.cos(
+            2.0 * jnp.pi * m_val * freq * t - m_val * phase - m_val * p
         )
-    return output
+
+    return jnp.sum(jax.vmap(term_fn)(m), axis=0)
 
 
-def pulse_negative_quadratic(t, freq, num_fourier_terms, phase, initial_time):
+def pulse_negative_quadratic(t, freq, phase, initial_time):
     t = t - initial_time
-    output = 0.0
     p = jnp.pi / jnp.sqrt(3.0)
-    for m in range(1, num_fourier_terms + 1):
-        output += -(((-1) ** m) / (m**2)) * jnp.cos(
-            2.0 * jnp.pi * m * freq * t - m * phase - m * p
+    m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+
+    def term_fn(m_val):
+        return -(((-1) ** m_val) / (m_val**2)) * jnp.cos(
+            2.0 * jnp.pi * m_val * freq * t - m_val * phase - m_val * p
         )
-    return output
+
+    return jnp.sum(jax.vmap(term_fn)(m), axis=0)
 
 
-def pulse_asymmetrical(t, freq, num_fourier_terms, phase, initial_time):
+def pulse_asymmetrical(t, freq, phase, initial_time):
     t = t - initial_time
-    output = 0.0
-    for m in range(1, num_fourier_terms + 1):
-        output += (1.0 / (m**2)) * jnp.cos(
-            2.0 * jnp.pi * m * freq * t - m * phase
-        ) - (1.0 / m) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
-    return -output
+    m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+
+    def term_fn(m_val):
+        return (1.0 / (m_val**2)) * jnp.cos(
+            2.0 * jnp.pi * m_val * freq * t - m_val * phase
+        ) - (1.0 / m_val) * jnp.sin(2.0 * jnp.pi * m_val * freq * t - m_val * phase)
+
+    return -jnp.sum(jax.vmap(term_fn)(m), axis=0)
 
 
-def pulse_slanted_sine(t, freq, num_fourier_terms, phase, initial_time):
+def pulse_slanted_sine(t, freq, phase, initial_time):
     t = t - initial_time
-    output = 0.0
-    for m in range(1, num_fourier_terms + 1):
-        output += ((-1) ** m / (m**2)) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
-    return output
+    m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
 
-
-def pulse_square(t, freq, num_fourier_terms, phase, initial_time):
-    t = t - initial_time
-    output = 0.0
-    for m in range(1, num_fourier_terms + 1):
-        output += (1.0 / (2 * m - 1)) * jnp.sin(
-            2.0 * jnp.pi * (2 * m - 1) * freq * t - (2 * m - 1) * phase
+    def term_fn(m_val):
+        return ((-1) ** m_val / (m_val**2)) * jnp.sin(
+            2.0 * jnp.pi * m_val * freq * t - m_val * phase
         )
-    return output
+
+    return jnp.sum(jax.vmap(term_fn)(m), axis=0)
 
 
-def pulse_9(t, freq, num_fourier_terms, phase, initial_time):
+def pulse_square(t, freq, phase, initial_time):
     t = t - initial_time
-    output = 0.0
+    m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+
+    def term_fn(m_val):
+        return (1.0 / (2 * m_val - 1)) * jnp.sin(
+            2.0 * jnp.pi * (2 * m_val - 1) * freq * t - (2 * m_val - 1) * phase
+        )
+
+    return jnp.sum(jax.vmap(term_fn)(m), axis=0)
+
+
+def pulse_9(t, freq, phase, initial_time):
+    t = t - initial_time
     p = jnp.pi / jnp.sqrt(3.0)
-    for m in range(1, num_fourier_terms + 1):
-        output += ((-1) ** m / m) * jnp.cos(
-            2.0 * jnp.pi * m * freq * t - m * phase - m * p
+    m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+
+    def term_fn(m_val):
+        return ((-1) ** m_val / m_val) * jnp.cos(
+            2.0 * jnp.pi * m_val * freq * t - m_val * phase - m_val * p
         )
-    return -output
+
+    return -jnp.sum(jax.vmap(term_fn)(m), axis=0)
 
 
-def pulse_10(t, freq, num_fourier_terms, phase, initial_time):
+def pulse_10(t, freq, phase, initial_time):
     t = t - initial_time
-    output = 0.0
-    for m in range(1, num_fourier_terms + 1):
-        output += ((-1) ** m / m) * jnp.sin(
-            2.0 * jnp.pi * (2 * m - 1) * freq * t - (2 * m - 1) * phase
+    m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+
+    def term_fn(m_val):
+        return ((-1) ** m_val / m_val) * jnp.sin(
+            2.0 * jnp.pi * (2 * m_val - 1) * freq * t - (2 * m_val - 1) * phase
         )
-    return output
+
+    return jnp.sum(jax.vmap(term_fn)(m), axis=0)
 
 
 DEFAULT_PULSE_LIBRARY = {

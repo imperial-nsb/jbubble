@@ -8,7 +8,7 @@ import jax.numpy as jnp
 
 from .units import Units
 
-PulseShape = Callable[[jax.Array, float, int | None, float, float], jax.Array]
+PulseShape = Callable[[jax.Array, float, float, float], jax.Array]
 
 
 class Pulse(eqx.Module):
@@ -17,7 +17,6 @@ class Pulse(eqx.Module):
     freq: float
     pressure: float
     shape_func: PulseShape = eqx.field(static=True)
-    num_fourier_terms: int | None = 1
     phase: float = 0.0
     initial_time: float = 0.0
     cycle_num: float = 4.0
@@ -33,7 +32,7 @@ class Pulse(eqx.Module):
         else:
             window = jnp.where(in_pulse, 1.0, 0.0)
 
-        val = self.shape_func(t, self.freq, self.num_fourier_terms, self.phase, self.initial_time)
+        val = self.shape_func(t, self.freq, self.phase, self.initial_time)
         return val * self.pressure * window
 
     def get_scaled(self, units: Units) -> "Pulse":
@@ -41,7 +40,6 @@ class Pulse(eqx.Module):
             freq=self.freq / units.freq_scale,
             pressure=self.pressure / units.P_scale,
             shape_func=self.shape_func,
-            num_fourier_terms=self.num_fourier_terms,
             phase=self.phase,
             initial_time=self.initial_time / units.T_scale,
             cycle_num=self.cycle_num,
