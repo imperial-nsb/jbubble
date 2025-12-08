@@ -10,31 +10,52 @@ from jbubble import (
 )
 from jbubble.bubble import Bubble
 from jbubble.simulation import build_pulse
+import time
+from jax import jit
+import equinox as eqx
 
 
 def demo():
     units = Units()
-    bubble = default_bubble(R0=3.0e-6)
-    freq = 800e3
-    pressure = 1e6
+    bubble = default_bubble(R0=2e-6)
+    freq = 300e3
+    pressure = 100e3
     pulse = build_pulse(
-        "quadratic",
+        "sine",
         freq=freq,
         pressure=pressure,
         cycle_num=10,
         initial_time=1e-6,
-        n=3,
         apply_hann=False,
     )
 
     save_spec = SaveSpec(num_samples=1000)
 
-    result = run_simulation(
+    # JIT compile the simulation function
+    jit_run_simulation = eqx.filter_jit(run_simulation)
+
+    # First run (includes compilation time)
+    start1 = time.perf_counter()
+    result = jit_run_simulation(
         bubble=bubble,
         pulse=pulse,
         units=units,
         save_spec=save_spec,
     )
+    end1 = time.perf_counter()
+    print(f"First run (with JIT compilation): {end1 - start1:.4f} seconds")
+
+    # Second run (just execution time)
+    start2 = time.perf_counter()
+    result = jit_run_simulation(
+        bubble=bubble,
+        pulse=pulse,
+        units=units,
+        save_spec=save_spec,
+    )
+    end2 = time.perf_counter()
+    print(f"Second run (JIT compiled): {end2 - start2:.4f} seconds")
+
 
     metrics = compute_radius_metrics(result)
     arrays = arrays_from_result(result)
