@@ -37,6 +37,7 @@ class Bubble(eqx.Module):
         c_L: float,
         P_amb: float,
         sigma_L: float,
+        vdw_scale: float = 5.61,
     ) -> None:
         self.R0 = R0
         self.R_buckle = R_buckle
@@ -51,7 +52,7 @@ class Bubble(eqx.Module):
         self.R_break = 1.2 * self.R0
         self.sigma_break = ((self.R_break / self.R_buckle) ** 2 - 1.0) * self.chi
         self.sigma_R0 = self.chi * ((self.R0**2 / self.R_buckle**2) - 1.0)
-        self.vdw = self.R0 / 5.61
+        self.vdw = self.R0 / vdw_scale
 
     def surface_tension(self, R: float) -> jax.Array:
         """Marmottant surface-tension law in a JAX-friendly form."""
