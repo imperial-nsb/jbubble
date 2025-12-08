@@ -69,13 +69,11 @@ def run_simulation(
     save_spec: SaveSpec,
     window_s: float = 20e-6, # [s]
     dt0: float = 1e-3,
+    max_steps: int = 10_000,
     progress: bool = False,
 ) -> SimulationResult:
-    """Solve once in SI units.
-
-    For differentiable workflows, call :func:`jbubble.solver.solve_bubble`
-    directly (optionally wrapped in :func:`equinox.filter_jit`) and reuse the
-    returned function handle inside optimisation loops.
+    """
+    Scale, solve, rescale.
     """
     scaled_bubble = bubble.get_scaled(units)
     scaled_pulse = pulse.get_scaled(units)
@@ -88,6 +86,7 @@ def run_simulation(
         dt0=dt0,
         save_spec=save_spec,
         progress=progress,
+        max_steps=max_steps,
     )
 
     assert sol.ts is not None and sol.ys is not None
