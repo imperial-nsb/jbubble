@@ -69,6 +69,7 @@ def solve_bubble(
     solver: diffrax.AbstractSolver | None = None,
     stepsize_controller: diffrax.AbstractStepSizeController | None = None,
     progress: bool = False,
+    max_steps: int = 10_000,
 ) -> diffrax.Solution:
     if t_span is None:
         pulse_duration = pulse.cycle_num / pulse.freq
@@ -99,7 +100,7 @@ def solve_bubble(
         args=(bubble, pulse),
         saveat=saveat,
         stepsize_controller=stepsize_controller,
-        max_steps=10_000,
+        max_steps=max_steps,
         progress_meter=progress_meter,
         throw=False,
     )
