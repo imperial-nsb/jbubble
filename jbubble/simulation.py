@@ -23,11 +23,11 @@ class SimulationResult(eqx.Module):
 
     @property
     def radius(self) -> jax.Array:
-        return self.ys[:, 0]
+        return self.ys[..., 0]
 
     @property
     def radial_velocity(self) -> jax.Array:
-        return self.ys[:, 1]
+        return self.ys[..., 1]
 
 
 def build_pulse(shape: str, **kwargs) -> Pulse:
