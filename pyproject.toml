@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jbubble"
+version = "0.1.0"
+description = "Differentiable microbubble dynamics primitives"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  {name = "Callum Rhys Tilbury"},
+]
+dependencies = [
+    "plotly>=6.5.0",
+    "jax>=0.8.1",
+    "jaxlib>=0.8.1",
+    "diffrax>=0.7.0",
+    "equinox>=0.13.2",
+    "numpy>=2.0.0",
+    "chex>=0.1.91",
+    "optax>=0.2.3",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/imperial-nsb/jbubble"
+"Bug Tracker" = "https://github.com/imperial-nsb/jbubble/issues"
+
+[tool.setuptools.packages.find]
+include = ["jbubble*"]

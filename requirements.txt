@@ -1,9 +1,0 @@
-streamlit==1.40.0
-plotly==6.5.0
-jax==0.8.1
-jaxlib==0.8.1
-diffrax==0.7.0
-equinox==0.13.2
-numpy==2.3.5
-chex==0.1.91
-optax==0.2.3
