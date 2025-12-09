@@ -12,12 +12,12 @@ from jbubble.bubble import Bubble
 from jbubble.simulation import build_pulse
 import time
 from jax import jit
-import equinox as eqx
 
 
 def demo():
     units = Units()
-    bubble = default_bubble(R0=2e-6)
+    bubbleA = default_bubble(R0=2e-6)
+    bubbleB = default_bubble(R0=3e-6)
     freq = 300e3
     pressure = 100e3
     pulse = build_pulse(
@@ -32,47 +32,52 @@ def demo():
     save_spec = SaveSpec(num_samples=1000)
 
     # JIT compile the simulation function
-    jit_run_simulation = eqx.filter_jit(run_simulation)
+    jit_run_simulation = jit(run_simulation)
 
     # First run (includes compilation time)
-    start1 = time.perf_counter()
-    result = jit_run_simulation(
-        bubble=bubble,
+    startA = time.perf_counter()
+    resultA = jit_run_simulation(
+        bubble=bubbleA,
         pulse=pulse,
         units=units,
         save_spec=save_spec,
     )
-    end1 = time.perf_counter()
-    print(f"First run (with JIT compilation): {end1 - start1:.4f} seconds")
+    endA = time.perf_counter()
+    print(f"First run (with JIT compilation): {endA - startA:.4f} seconds")
 
     # Second run (just execution time)
-    start2 = time.perf_counter()
-    result = jit_run_simulation(
-        bubble=bubble,
+    startB = time.perf_counter()
+    resultB = jit_run_simulation(
+        bubble=bubbleB,
         pulse=pulse,
         units=units,
         save_spec=save_spec,
     )
-    end2 = time.perf_counter()
-    print(f"Second run (JIT compiled): {end2 - start2:.4f} seconds")
+    endB = time.perf_counter()
+    print(f"Second run (JIT compiled): {endB - startB:.4f} seconds")
 
+    metricsA = compute_radius_metrics(resultA)
+    arraysA = arrays_from_result(resultA)
+    radius_umA = arraysA.radius_um
 
-    metrics = compute_radius_metrics(result)
-    arrays = arrays_from_result(result)
-    ts_us = arrays.time_us
-    driving_kpa = arrays.pressure_kpa
-    radius_um = arrays.radius_um
+    metricsB = compute_radius_metrics(resultB)
+    arraysB = arrays_from_result(resultB)
+    radius_umB = arraysB.radius_um
+
+    ts_us = arraysA.time_us
+    driving_kpa = arraysA.pressure_kpa
 
     _, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
     ax1.set_ylabel("Driving Pressure (kPa)", color="black")
-    ax1.plot(ts_us, driving_kpa, label="Driving Pressure", color="tab:blue")
+    ax1.plot(ts_us, driving_kpa, label="Driving Pressure", color="black")
     ax1.tick_params(axis="y", labelcolor="black")
     ax1.grid(True)
     ax1.legend(loc="upper right")
 
     ax2.set_xlabel("Time (μs)")
     ax2.set_ylabel("Radius (μm)", color="black")
-    ax2.plot(ts_us, radius_um, label="Radius / Time", color="tab:blue")
+    ax2.plot(ts_us, radius_umA, label="Radius / Time A", color="tab:blue")
+    ax2.plot(ts_us, radius_umB, label="Radius / Time B", color="tab:orange")
     ax2.tick_params(axis="y", labelcolor="black")
     ax2.grid(True)
     ax2.legend(loc="upper right")
@@ -80,8 +85,13 @@ def demo():
     plt.tight_layout()
     plt.show()
 
-    print("Converged:", result.converged)
-    for key, value in metrics.items():
+    print("Converged A:", resultA.converged)
+    print("Metrics A:")
+    for key, value in metricsA.items():
+        print(f"{key}: {value:.3e}")
+    print("Converged B:", resultB.converged)
+    print("Metrics B:")
+    for key, value in metricsB.items():
         print(f"{key}: {value:.3e}")
 
 
