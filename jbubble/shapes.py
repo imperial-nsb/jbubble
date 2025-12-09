@@ -119,7 +119,7 @@ class Asymmetrical(FourierPulseShape):
 
     @property
     def norm_factor(self) -> float | jax.Array:
-        return -(jnp.pi ** 2) / 6.0 + jnp.pi / 2.0
+        return -((jnp.pi ** 2) / 6.0 + jnp.pi / 2.0)
 
     @property
     def name(self) -> str:
