@@ -10,20 +10,20 @@ from .units import Units
 class Bubble(eqx.Module):
     """Encodes the Marmottant shell model parameters for a single bubble."""
 
-    R0: float
-    R_buckle: float
-    gamma: float
-    chi: float
-    mu_L: float
-    kappa_s: float
-    rho_L: float
-    c_L: float
-    P_amb: float
-    sigma_L: float
-    R_break: float
-    sigma_break: float
-    sigma_R0: float
-    vdw: float
+    R0: float  # Initial radius [m]
+    R_buckle: float  # Buckling radius [m]
+    gamma: float  # Polytropic index of the gas
+    chi: float  # Shell elasticity [N/m]
+    mu_L: float  # Liquid viscosity [Pa.s]
+    kappa_s: float  # Shell viscosity [kg/s]
+    rho_L: float  # Liquid density [kg/m^3]
+    c_L: float  # Speed of sound in liquid [m/s]
+    P_amb: float  # Ambient pressure [Pa]
+    sigma_L: float  # Surface tension of the liquid [N/m]
+    R_break: float  # Break-up radius [m]
+    sigma_break: float  # Surface tension at break-up [N/m]
+    sigma_R0: float  # Initial surface tension [N/m]
+    vdw: float  # Van der Waals hard core radius [m]
 
     def __init__(
         self,
