@@ -22,8 +22,6 @@ conda create -n jbubble python=3.10
 
 3.  **Activate the environment**
 
-Activate the newly created environment:
-
 ```bash
 conda activate jbubble
 ```
