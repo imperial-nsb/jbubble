@@ -10,23 +10,23 @@ We recommend using [Miniconda](https://docs.conda.io/en/latest/miniconda.html) t
 
 1.  **Download and install Miniconda**
     
-    Visit the [Miniconda documentation](https://docs.conda.io/en/latest/miniconda.html) and download the installer for your operating system (Windows, macOS, or Linux). Follow the installation instructions provided there.
+Visit the [Miniconda documentation](https://docs.conda.io/en/latest/miniconda.html) and download the installer for your operating system (Windows, macOS, or Linux). Follow the installation instructions provided there.
 
 2.  **Create a new environment**
     
-    Open your terminal (or Anaconda Prompt on Windows) and create a new environment named `jbubble`. We recommend using Python 3.10 or newer.
+Open your terminal (or Anaconda Prompt on Windows) and create a new environment named `jbubble`. We recommend using Python 3.10 or newer.
 
-    ```bash
-    conda create -n jbubble python=3.10
-    ```
+```bash
+conda create -n jbubble python=3.10
+```
 
 3.  **Activate the environment**
 
-    Activate the newly created environment:
+Activate the newly created environment:
 
-    ```bash
-    conda activate jbubble
-    ```
+```bash
+conda activate jbubble
+```
 
 ### Install jbubble
 
