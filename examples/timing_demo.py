@@ -5,7 +5,6 @@ from jbubble import (
     SaveSpec,
     arrays_from_result,
     compute_radius_metrics,
-    default_bubble,
     run_simulation,
 )
 from jbubble.bubble import Bubble
@@ -16,8 +15,8 @@ from jax import jit
 
 def demo():
     units = Units()
-    bubbleA = default_bubble(R0=2e-6)
-    bubbleB = default_bubble(R0=3e-6)
+    bubbleA = Bubble(R0=2e-6)
+    bubbleB = Bubble(R0=3e-6)
     freq = 300e3
     pressure = 100e3
     pulse = build_pulse(

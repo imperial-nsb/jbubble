@@ -28,19 +28,19 @@ class Bubble(eqx.Module):
     def __init__(
         self,
         R0: float,
-        R_buckle: float,
-        gamma: float,
-        chi: float,
-        mu_L: float,
-        kappa_s: float,
-        rho_L: float,
-        c_L: float,
-        P_amb: float,
-        sigma_L: float,
+        R_buckle: float | None = None,
+        gamma: float = 1.07,
+        chi: float = 0.38,
+        mu_L: float = 0.00089,
+        kappa_s: float = 2.4e-9,
+        rho_L: float = 1000.0,
+        c_L: float = 1498.0,
+        P_amb: float = 101.3e3,
+        sigma_L: float = 72e-3,
         vdw_divisor: float = 5.61,
     ) -> None:
         self.R0 = R0
-        self.R_buckle = R_buckle
+        self.R_buckle = R_buckle if R_buckle is not None else 0.99 * R0
         self.gamma = gamma
         self.chi = chi
         self.mu_L = mu_L

@@ -35,20 +35,6 @@ def build_pulse(shape: str, **kwargs) -> Pulse:
     return Pulse(shape_func=shape_func, **kwargs)
 
 
-def default_bubble(R0: float = 4e-6) -> Bubble:
-    return Bubble(
-        R0=R0,
-        R_buckle=0.99 * R0,
-        gamma=1.07,
-        chi=0.38,
-        mu_L=0.00089,
-        kappa_s=2.4e-9,
-        rho_L=1000.0,
-        c_L=1498.0,
-        P_amb=101.3e3,
-        sigma_L=72e-3,
-    )
-
 
 def default_pulse(freq: float = 800e3, pressure: float = 1e6) -> Pulse:
     return build_pulse(
