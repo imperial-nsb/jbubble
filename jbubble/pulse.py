@@ -17,17 +17,16 @@ class Pulse(eqx.Module):
     phase: float = 0.0
     initial_time: float = 0.0
     cycle_num: float = 4.0
-    apply_hann: bool = eqx.field(default=False, static=True)
+    apply_hann: bool = False
 
     def __call__(self, t: jax.Array) -> jax.Array:
         pulse_span = self.cycle_num / self.freq
         tau = t - self.initial_time
         in_pulse = (tau >= 0) & (tau <= pulse_span)
-        if self.apply_hann:
-            hann = 0.5 * (1.0 - jnp.cos(2.0 * jnp.pi * tau / pulse_span))
-            window = jnp.where(in_pulse, hann, 0.0)
-        else:
-            window = jnp.where(in_pulse, 1.0, 0.0)
+        
+        hann = 0.5 * (1.0 - jnp.cos(2.0 * jnp.pi * tau / pulse_span))
+        window_val = jnp.where(self.apply_hann, hann, 1.0)
+        window = jnp.where(in_pulse, window_val, 0.0)
 
         val = self.shape(t, self.freq, self.phase, self.initial_time)
         return val * self.pressure * window
