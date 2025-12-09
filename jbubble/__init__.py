@@ -39,8 +39,6 @@ __all__ = [
     "solve_bubble",
     "SaveSpec",
     "SimulationResult",
-    "build_pulse",
-    "default_pulse",
     "run_simulation",
     "compute_radius_metrics",
     "PlotArrays",
