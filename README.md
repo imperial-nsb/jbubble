@@ -4,15 +4,15 @@ Simulating microbubble dynamics in JAX.
 
 ## Installation
 
-### 1. Set up Python environment
+### Set up Python environment
 
 We recommend using [Miniconda](https://docs.conda.io/en/latest/miniconda.html) to manage your Python environment and dependencies.
 
-(a)  **Download and install Miniconda**
+1.  **Download and install Miniconda**
     
     Visit the [Miniconda documentation](https://docs.conda.io/en/latest/miniconda.html) and download the installer for your operating system (Windows, macOS, or Linux). Follow the installation instructions provided there.
 
-(b)  **Create a new environment**
+2.  **Create a new environment**
     
     Open your terminal (or Anaconda Prompt on Windows) and create a new environment named `jbubble`. We recommend using Python 3.10 or newer.
 
@@ -20,13 +20,15 @@ We recommend using [Miniconda](https://docs.conda.io/en/latest/miniconda.html) t
     conda create -n jbubble python=3.10
     ```
 
-(c)  **Activate the environment**
+3.  **Activate the environment**
+
+    Activate the newly created environment:
 
     ```bash
     conda activate jbubble
     ```
 
-### 2. Install jbubble
+### Install jbubble
 
 Once your environment is active, navigate to the root directory of this repository (where `pyproject.toml` is located) and install the package.
 
