@@ -79,3 +79,23 @@ class Bubble(eqx.Module):
             P_amb=self.P_amb / units.P_scale,
             sigma_L=self.sigma_L / units.sigma_scale,
         )
+
+    def __str__(self) -> str:
+        """Print the bubble properties with units."""
+        return "\n".join([
+            "** Bubble Properties **",
+            f"Initial radius (R0): \t\t\t{self.R0:.2e} [m]",
+            f"Buckling radius (R_buckle): \t\t{self.R_buckle:.2e} [m]",
+            f"Polytropic index (gamma): \t\t{self.gamma:.2f}",
+            f"Shell elasticity (chi): \t\t{self.chi:.2f} [N/m]",
+            f"Liquid viscosity (mu_L): \t\t{self.mu_L:.2e} [Pa.s]",
+            f"Shell viscosity (kappa_s): \t\t{self.kappa_s:.2e} [kg/s]",
+            f"Liquid density (rho_L): \t\t{self.rho_L:.1f} [kg/m^3]",
+            f"Speed of sound (c_L): \t\t\t{self.c_L:.1f} [m/s]",
+            f"Ambient pressure (P_amb): \t\t{self.P_amb:.2e} [Pa]",
+            f"Liquid surface tension (sigma_L): \t{self.sigma_L:.2e} [N/m]",
+            f"Break-up radius (R_break): \t\t{self.R_break:.2e} [m]",
+            f"Break-up surface tension (sigma_break): {self.sigma_break:.2e} [N/m]",
+            f"Initial surface tension (sigma_R0): \t{self.sigma_R0:.2e} [N/m]",
+            f"Van der Waals radius (vdw): \t\t{self.vdw:.2e} [m]",
+        ])
