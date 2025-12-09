@@ -7,7 +7,6 @@ import diffrax
 
 from .bubble import Bubble
 from .pulse import Pulse
-from .shapes import DEFAULT_PULSE_LIBRARY
 from .solver import SaveSpec, solve_bubble
 from .units import Units
 
@@ -29,22 +28,6 @@ class SimulationResult(eqx.Module):
     def radial_velocity(self) -> jax.Array:
         return self.ys[..., 1]
 
-
-def build_pulse(shape: str, **kwargs) -> Pulse:
-    shape_func = DEFAULT_PULSE_LIBRARY.get(shape, DEFAULT_PULSE_LIBRARY["sine"])
-    return Pulse(shape_func=shape_func, **kwargs)
-
-
-
-def default_pulse(freq: float = 800e3, pressure: float = 1e6) -> Pulse:
-    return build_pulse(
-        "sine",
-        freq=freq,
-        pressure=pressure,
-        cycle_num=10,
-        initial_time=1e-6,
-        apply_hann=False,
-    )
 
 
 def run_simulation(

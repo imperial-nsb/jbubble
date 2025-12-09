@@ -3,12 +3,20 @@
 from .units import Units
 from .bubble import Bubble
 from .pulse import Pulse
-from .shapes import DEFAULT_PULSE_LIBRARY
+from .shapes import (
+    PulseShape,
+    Sine,
+    Sawtooth,
+    Triangle,
+    Quadratic,
+    NegativeQuadratic,
+    Asymmetrical,
+    SlantedSine,
+    Square,
+)
 from .solver import bubble_equation, solve_bubble, SaveSpec
 from .simulation import (
     SimulationResult,
-    build_pulse,
-    default_pulse,
     run_simulation,
     compute_radius_metrics,
 )
@@ -18,7 +26,15 @@ __all__ = [
     "Units",
     "Bubble",
     "Pulse",
-    "DEFAULT_PULSE_LIBRARY",
+    "PulseShape",
+    "Sine",
+    "Sawtooth",
+    "Triangle",
+    "Quadratic",
+    "NegativeQuadratic",
+    "Asymmetrical",
+    "SlantedSine",
+    "Square",
     "bubble_equation",
     "solve_bubble",
     "SaveSpec",

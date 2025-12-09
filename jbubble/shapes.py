@@ -7,20 +7,8 @@ import jax.numpy as jnp
 
 NUM_FOURIER_TERMS = 50
 
-# Analytical normalization factors (based on infinite series limits or coefficient sums)
-NORM_SAWTOOTH = jnp.pi / 2.0
-NORM_TRIANGLE = (jnp.pi ** 2) / 4.0
-NORM_QUADRATIC = (jnp.pi ** 2) / 6.0
-NORM_ASYMMETRICAL = (jnp.pi ** 2) / 6.0 + jnp.pi / 2.0
-NORM_SLANTED_SINE = 1.0149  # Approx max of Clausen function Cl2
-NORM_SQUARE = jnp.pi / 4.0
-
+# Analytical normalization factors are based on infinite series limits or coefficient sums
 # For divergent series, we normalize by the sum of absolute coefficients
-_harmonic_sum = jnp.sum(1.0 / jnp.arange(1, NUM_FOURIER_TERMS + 1))
-NORM_PULSE_9 = _harmonic_sum
-NORM_PULSE_10 = _harmonic_sum
-
-
 
 class PulseShape(eqx.Module):
 
@@ -35,6 +23,27 @@ class PulseShape(eqx.Module):
         return "base_pulse"
 
 
+class FourierPulseShape(PulseShape):
+
+    @abc.abstractmethod
+    def term(self, m: jax.Array, t: jax.Array, freq: float, phase: float) -> jax.Array:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def norm_factor(self) -> float | jax.Array:
+        pass
+
+    def __call__(self, t, freq, phase, initial_time):
+        t = t - initial_time
+        m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+
+        def term_wrapper(m_val):
+            return self.term(m_val, t, freq, phase)
+
+        return jnp.sum(jax.vmap(term_wrapper)(m), axis=0) / self.norm_factor
+
+
 class Sine(PulseShape):
     def __call__(self, t, freq, phase, initial_time):
         t = t - initial_time
@@ -45,148 +54,140 @@ class Sine(PulseShape):
         return "sine"
 
 
-class Sawtooth(PulseShape):
-    def __call__(self, t, freq, phase, initial_time):
-        t = t - initial_time
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+class Sawtooth(FourierPulseShape):
 
-        def term_fn(m_val):
-            return -((-1) ** m_val / m_val) * jnp.sin(
-                2.0 * jnp.pi * m_val * freq * t - m_val * phase
-            )
+    def term(self, m, t, freq, phase):
+        return -((-1) ** m / m) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
 
-        return jnp.sum(jax.vmap(term_fn)(m), axis=0) / NORM_SAWTOOTH
+    @property
+    def norm_factor(self) -> float | jax.Array:
+        return jnp.pi / 2.0
 
     @property
     def name(self) -> str:
         return "sawtooth"
 
 
-class Triangle(PulseShape):
-    def __call__(self, t, freq, phase, initial_time):
-        t = t - initial_time
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+class Triangle(FourierPulseShape):
 
-        def term_fn(m_val):
-            return -((1 - (-1) ** m_val) / (m_val**2)) * jnp.cos(
-                2.0 * jnp.pi * m_val * freq * (t + (1.0 / (4.0 * freq))) - m_val * phase
-            )
+    def term(self, m, t, freq, phase):
+        return -((1 - (-1) ** m) / (m**2)) * jnp.cos(
+            2.0 * jnp.pi * m * freq * (t + (1.0 / (4.0 * freq))) - m * phase
+        )
 
-        return jnp.sum(jax.vmap(term_fn)(m), axis=0) / NORM_TRIANGLE
+    @property
+    def norm_factor(self) -> float | jax.Array:
+        return (jnp.pi ** 2) / 4.0
 
     @property
     def name(self) -> str:
         return "triangle"
 
 
-class Quadratic(PulseShape):
-    def __call__(self, t, freq, phase, initial_time):
-        t = t - initial_time
+class Quadratic(FourierPulseShape):
+
+    def term(self, m, t, freq, phase):
         p = jnp.pi / jnp.sqrt(3.0)
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+        return ((-1) ** m / (m**2)) * jnp.cos(
+            2.0 * jnp.pi * m * freq * t - m * phase - m * p
+        )
 
-        def term_fn(m_val):
-            return ((-1) ** m_val / (m_val**2)) * jnp.cos(
-                2.0 * jnp.pi * m_val * freq * t - m_val * phase - m_val * p
-            )
-
-        return jnp.sum(jax.vmap(term_fn)(m), axis=0) / NORM_QUADRATIC
+    @property
+    def norm_factor(self) -> float | jax.Array:
+        return (jnp.pi ** 2) / 6.0
 
     @property
     def name(self) -> str:
         return "quadratic"
 
 
-class NegativeQuadratic(PulseShape):
+class NegativeQuadratic(Quadratic):
     def __call__(self, t, freq, phase, initial_time):
-        t = t - initial_time
-        p = jnp.pi / jnp.sqrt(3.0)
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
-
-        def term_fn(m_val):
-            return -(((-1) ** m_val) / (m_val**2)) * jnp.cos(
-                2.0 * jnp.pi * m_val * freq * t - m_val * phase - m_val * p
-            )
-
-        return jnp.sum(jax.vmap(term_fn)(m), axis=0) / NORM_QUADRATIC
+        return -super().__call__(t, freq, phase, initial_time)
 
     @property
     def name(self) -> str:
         return "negative_quadratic"
 
 
-class Asymmetrical(PulseShape):
-    def __call__(self, t, freq, phase, initial_time):
-        t = t - initial_time
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+class Asymmetrical(FourierPulseShape):
 
-        def term_fn(m_val):
-            return -((1.0 / (m_val**2)) * jnp.cos(
-                2.0 * jnp.pi * m_val * freq * t - m_val * phase
-            ) - (1.0 / m_val) * jnp.sin(2.0 * jnp.pi * m_val * freq * t - m_val * phase))
+    def term(self, m, t, freq, phase):
+        return (1.0 / (m**2)) * jnp.cos(
+            2.0 * jnp.pi * m * freq * t - m * phase
+        ) - (1.0 / m) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
 
-        return jnp.sum(jax.vmap(term_fn)(m), axis=0) / NORM_ASYMMETRICAL
+    @property
+    def norm_factor(self) -> float | jax.Array:
+        return -(jnp.pi ** 2) / 6.0 + jnp.pi / 2.0
 
     @property
     def name(self) -> str:
         return "asymmetrical"
 
 
-class SlantedSine(PulseShape):
-    def __call__(self, t, freq, phase, initial_time):
-        t = t - initial_time
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+class SlantedSine(FourierPulseShape):
 
-        def term_fn(m_val):
-            return ((-1) ** m_val / (m_val**2)) * jnp.sin(
-                2.0 * jnp.pi * m_val * freq * t - m_val * phase
-            )
+    def term(self, m, t, freq, phase):
+        return ((-1) ** m / (m**2)) * jnp.sin(
+            2.0 * jnp.pi * m * freq * t - m * phase
+        )
 
-        return jnp.sum(jax.vmap(term_fn)(m), axis=0) / NORM_SLANTED_SINE
+    @property
+    def norm_factor(self) -> float | jax.Array:
+        return 1.0149  # Approx max of Clausen function Cl2
 
     @property
     def name(self) -> str:
         return "slanted_sine"
 
 
-class Square(PulseShape):
-    def __call__(self, t, freq, phase, initial_time):
-        t = t - initial_time
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+class Square(FourierPulseShape):
 
-        def term_fn(m_val):
-            return (1.0 / (2 * m_val - 1)) * jnp.sin(
-                2.0 * jnp.pi * (2 * m_val - 1) * freq * t - (2 * m_val - 1) * phase
-            )
+    def term(self, m, t, freq, phase):
+        return (1.0 / (2 * m - 1)) * jnp.sin(
+            2.0 * jnp.pi * (2 * m - 1) * freq * t - (2 * m - 1) * phase
+        )
 
-        return jnp.sum(jax.vmap(term_fn)(m), axis=0) / NORM_SQUARE
+    @property
+    def norm_factor(self) -> float | jax.Array:
+        return jnp.pi / 4.0
 
     @property
     def name(self) -> str:
         return "square"
 
 
-# def pulse_9(t, freq, phase, initial_time):
-#     t = t - initial_time
-#     p = jnp.pi / jnp.sqrt(3.0)
-#     m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+class Pulse9(FourierPulseShape):
 
-#     def term_fn(m_val):
-#         return -(((-1) ** m_val / m_val) * jnp.cos(
-#             2.0 * jnp.pi * m_val * freq * t - m_val * phase - m_val * p
-#         ))
+    def term(self, m, t, freq, phase):
+        p = jnp.pi / jnp.sqrt(3.0)
+        return ((-1) ** m / m) * jnp.cos(
+            2.0 * jnp.pi * m * freq * t - m * phase - m * p
+        )
 
-#     return jnp.sum(jax.vmap(term_fn)(m), axis=0) / NORM_PULSE_9
+    @property
+    def norm_factor(self) -> float | jax.Array:
+        return -jnp.sum(1.0 / jnp.arange(1, NUM_FOURIER_TERMS + 1))
+
+    @property
+    def name(self) -> str:
+        return "pulse_9"
 
 
-# def pulse_10(t, freq, phase, initial_time):
-#     t = t - initial_time
-#     m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
+class Pulse10(FourierPulseShape):
 
-#     def term_fn(m_val):
-#         return ((-1) ** m_val / m_val) * jnp.sin(
-#             2.0 * jnp.pi * (2 * m_val - 1) * freq * t - (2 * m_val - 1) * phase
-#         )
+    def term(self, m, t, freq, phase):
+        return ((-1) ** m / m) * jnp.sin(
+            2.0 * jnp.pi * (2 * m - 1) * freq * t - (2 * m - 1) * phase
+        )
 
-#     return jnp.sum(jax.vmap(term_fn)(m), axis=0) / NORM_PULSE_10
+    @property
+    def norm_factor(self) -> float | jax.Array:
+        return jnp.sum(1.0 / jnp.arange(1, NUM_FOURIER_TERMS + 1))
+
+
+    @property
+    def name(self) -> str:
+        return "pulse_10"
 

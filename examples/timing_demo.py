@@ -7,8 +7,9 @@ from jbubble import (
     compute_radius_metrics,
     run_simulation,
 )
+import jbubble.shapes as shapes
 from jbubble.bubble import Bubble
-from jbubble.simulation import build_pulse
+from jbubble.pulse import Pulse
 import time
 from jax import jit
 
@@ -19,10 +20,10 @@ def demo():
     bubbleB = Bubble(R0=3e-6)
     freq = 300e3
     pressure = 100e3
-    pulse = build_pulse(
-        "sine",
+    pulse = Pulse(
         freq=freq,
         pressure=pressure,
+        shape=shapes.Sine(),
         cycle_num=10,
         initial_time=1e-6,
         apply_hann=False,
