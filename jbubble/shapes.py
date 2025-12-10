@@ -158,6 +158,38 @@ class Square(FourierPulseShape):
         return "square"
 
 
+class TimeDomainSquare(PulseShape):
+    sharpness: float = 50.0
+
+    def __call__(self, t, freq, phase, initial_time):
+        t = t - initial_time
+        return jnp.tanh(self.sharpness * jnp.sin(2.0 * jnp.pi * freq * t - phase))
+
+    @property
+    def name(self) -> str:
+        return "time_domain_square"
+
+
+class TimeDomainSawtooth(PulseShape):
+    def __call__(self, t, freq, phase, initial_time):
+        t = t - initial_time
+        return (2.0 / jnp.pi) * jnp.arctan(jnp.tan(jnp.pi * freq * t - phase / 2.0))
+
+    @property
+    def name(self) -> str:
+        return "time_domain_sawtooth"
+
+
+class TimeDomainTriangle(PulseShape):
+    def __call__(self, t, freq, phase, initial_time):
+        t = t - initial_time
+        return (2.0 / jnp.pi) * jnp.arcsin(jnp.sin(2.0 * jnp.pi * freq * t - phase))
+
+    @property
+    def name(self) -> str:
+        return "time_domain_triangle"
+
+
 class Pulse9(FourierPulseShape):
 
     def term(self, m, t, freq, phase):

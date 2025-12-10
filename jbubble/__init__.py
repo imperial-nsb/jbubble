@@ -13,6 +13,9 @@ from .shapes import (
     Asymmetrical,
     SlantedSine,
     Square,
+    TimeDomainSquare,
+    TimeDomainSawtooth,
+    TimeDomainTriangle,
 )
 from .solver import bubble_equation, solve_bubble, SaveSpec
 from .simulation import (
@@ -35,6 +38,9 @@ __all__ = [
     "Asymmetrical",
     "SlantedSine",
     "Square",
+    "TimeDomainSquare",
+    "TimeDomainSawtooth",
+    "TimeDomainTriangle",
     "bubble_equation",
     "solve_bubble",
     "SaveSpec",
