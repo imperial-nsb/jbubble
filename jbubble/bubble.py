@@ -61,7 +61,7 @@ class Bubble(eqx.Module):
         return jnp.where(
             R <= self.R_buckle,
             0.0,
-            jnp.where(R >= self.R_break, self.sigma_L, sigma_elastic),
+            jnp.where(R >= self.R_break, self.sigma_break, sigma_elastic),
         )
 
     def get_scaled(self, units: Units) -> "Bubble":
