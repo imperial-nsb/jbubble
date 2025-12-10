@@ -1,9 +1,11 @@
 """High-level helpers for running and post-processing simulations."""
 
+from dataclasses import dataclass
 import equinox as eqx
 import jax
 import jax.numpy as jnp
 import diffrax
+import numpy as np
 
 from .bubble import Bubble
 from .pulse import Pulse
@@ -89,3 +91,23 @@ def compute_radius_metrics(result: SimulationResult) -> dict[str, float]:
         "min_ratio": R0 / min_R,
         "swing_ratio": max_R / min_R,
     }
+
+
+@dataclass
+class PlotArrays:
+    """Convenient numpy arrays for plotting a simulation."""
+
+    time_us: np.ndarray
+    radius_um: np.ndarray
+    pressure_kpa: np.ndarray
+
+
+def arrays_from_result(result: SimulationResult) -> PlotArrays:
+    units = result.units
+    return PlotArrays(
+        time_us=np.asarray(result.ts) / units.T_scale,
+        radius_um=np.asarray(result.radius) / units.L_scale,
+        pressure_kpa=np.asarray(result.driving_pressure) / units.P_scale,
+    )
+
+

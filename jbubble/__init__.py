@@ -22,8 +22,9 @@ from .simulation import (
     SimulationResult,
     run_simulation,
     compute_radius_metrics,
+    arrays_from_result,
+    PlotArrays,
 )
-from .visuals import arrays_from_result, line_figure, line_trace, PlotArrays
 
 __all__ = [
     "Units",
@@ -49,6 +50,4 @@ __all__ = [
     "compute_radius_metrics",
     "PlotArrays",
     "arrays_from_result",
-    "line_trace",
-    "line_figure",
 ]
