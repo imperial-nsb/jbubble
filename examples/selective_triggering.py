@@ -17,9 +17,8 @@ from jbubble import (
 
 config.update("jax_enable_x64", True)
 
-# Define a custom PulseShape that uses Fourier coefficients
 class ParametricFourierShape(shapes.PulseShape):
-    coeffs: jax.Array  # The parameters we will optimize (num_terms,)
+    coeffs: jax.Array 
 
     def __init__(self, coeffs):
         self.coeffs = coeffs
@@ -28,225 +27,246 @@ class ParametricFourierShape(shapes.PulseShape):
         t = t - initial_time
         m = jnp.arange(1, self.coeffs.shape[0] + 1)
         
-        # Simple sine series sum: sum(coeff[i] * sin(2*pi*i*f*t))
-        # This allows constructing arbitrary periodic waveforms
         def term(i, c):
              return c * jnp.sin(2.0 * jnp.pi * i * freq * t - phase)
 
-        # Vectorize over terms and sum
         val = jnp.sum(jax.vmap(term)(m, self.coeffs), axis=0)
-        
-        # Normalize by sum of absolute coefficients to keep amplitude roughly bounded
         norm = jnp.sum(jnp.abs(self.coeffs)) + 1e-6
         return val / norm
 
-
 def run_optimization():
-    print("Starting selective bubble triggering optimization...")
+    print("Starting Co-Design Selective Triggering Optimization...")
+    print("optimizing: [Pulse A (Shape+Freq)] + [Pulse B (Shape+Freq)] + [Bubble A Params] + [Bubble B Params]")
     
     units = Units()
-    # We only need the max radius, so we don't need to save all time steps
-    # But currently run_simulation returns everything. We can use a minimal SaveSpec.
-    save_spec = SaveSpec(num_samples=100) # Keep it small for speed? Or does it matter for JIT?
+    save_spec = SaveSpec(num_samples=200) 
     
-    # --- Problem Setup ---
-    # Bubble A: R0 = 2.0 um
-    # Bubble B: R0 = 4.0 um
-    bubble_a = Bubble(R0=2.0e-6)
-    bubble_b = Bubble(R0=4.0e-6)
+    # --- Genome Definition ---
+    # Total dims: 26
+    # 0-9:   Pulse A Shape (10)
+    # 10:    Pulse A Freq (1)
+    # 11:    Bubble A Radius (1)
+    # 12:    Bubble A Chi (1)
+    # 13-22: Pulse B Shape (10)
+    # 23:    Pulse B Freq (1)
+    # 24:    Bubble B Radius (1)
+    # 25:    Bubble B Chi (1)
     
-    # Pulse constraints
-    base_freq = 1.0e6
-    pressure = 150e3 # 150 kPa
-    num_coeffs = 10
+    NUM_SHAPE = 10
+    GENOME_SIZE = 2 * (NUM_SHAPE + 1 + 2) # 26
     
-    # Define the fitness function for Evosax
-    # We optimize 'coeffs'
+    # Parameter Bounds / Scaling
+    MIN_FREQ = 0.2e6
+    MAX_FREQ = 0.8e6
     
-    @jax.jit
-    def fitness_fn(coeffs):
-        # Construct the shape
-        shape = ParametricFourierShape(coeffs)
-        
-        pulse = Pulse(
-            freq=base_freq,
-            pressure=pressure,
-            shape=shape,
-            cycle_num=5,
-            initial_time=1e-6
-        )
-        
-        # Run simulations
-        # We need a small window. 5 cycles at 1MHz = 5us. 
-        # Add buffer. 10us total window.
-        res_a = run_simulation(bubble_a, pulse, units=units, save_spec=save_spec, window_s=10e-6)
-        res_b = run_simulation(bubble_b, pulse, units=units, save_spec=save_spec, window_s=10e-6)
-        
-        # Metrics: Max expansion ratio
-        max_r_a = jnp.max(res_a.radius) / bubble_a.R0
-        max_r_b = jnp.max(res_b.radius) / bubble_b.R0
-        
-        return max_r_a, max_r_b
+    MIN_RAD = 1.5e-6
+    MAX_RAD = 7.0e-6 # More typical contrast agent range
+    
+    MIN_CHI = 0.2  # ~0.0 is unrealistic (zero tension). 0.1 is soft lipid.
+    MAX_CHI = 0.8  # 1.0 is quite stiff. Default is ~0.38.
 
-    # We want to perform TWO optimizations:
-    # 1. Trigger A (MaxR > 2.0), Ignore B (MaxR < 2.0)
-    # 2. Trigger B (MaxR > 2.0), Ignore A (MaxR < 2.0)
-    
-    # --- Strategy ---
-    # We use CMA-ES from evosax
+    pressure_fixed = 300e3
+
+    @jax.jit
+    def decode_genome(genome):
+        # Helper to map [0,1] or standard normal to physical ranges
+        # We assume genome is somewhat centered around 0 with std 1 (CMA-ES), 
+        # but we can use sigmoid to map to bounds.
+        
+        def map_val(val, min_v, max_v):
+            return min_v + (max_v - min_v) * jax.nn.sigmoid(val)
+        
+        # Pulse A
+        shape_a_coeffs = genome[0:NUM_SHAPE]
+        freq_a = map_val(genome[NUM_SHAPE], MIN_FREQ, MAX_FREQ)
+        r0_a = map_val(genome[NUM_SHAPE+1], MIN_RAD, MAX_RAD)
+        chi_a = map_val(genome[NUM_SHAPE+2], MIN_CHI, MAX_CHI)
+        
+        # Pulse B
+        offset = NUM_SHAPE + 3
+        shape_b_coeffs = genome[offset:offset+NUM_SHAPE]
+        freq_b = map_val(genome[offset+NUM_SHAPE], MIN_FREQ, MAX_FREQ)
+        r0_b = map_val(genome[offset+NUM_SHAPE+1], MIN_RAD, MAX_RAD)
+        chi_b = map_val(genome[offset+NUM_SHAPE+2], MIN_CHI, MAX_CHI)
+        
+        return (shape_a_coeffs, freq_a, r0_a, chi_a), (shape_b_coeffs, freq_b, r0_b, chi_b)
+
+    @jax.jit
+    def fitness_fn(genome):
+        (s_a, f_a, r_a, c_a), (s_b, f_b, r_b, c_b) = decode_genome(genome)
+        
+        # Construct objects
+        shape_obj_a = ParametricFourierShape(s_a)
+        shape_obj_b = ParametricFourierShape(s_b)
+        
+        pulse_a = Pulse(freq=f_a, pressure=200e3, shape=shape_obj_a, cycle_num=5, initial_time=1e-6)
+        pulse_b = Pulse(freq=f_b, pressure=200e3, shape=shape_obj_b, cycle_num=5, initial_time=1e-6)
+        
+        bubble_a = Bubble(R0=r_a, chi=c_a)
+        bubble_b = Bubble(R0=r_b, chi=c_b)
+        
+        # Simulations (Window adapts to lower freq)
+        min_freq = jnp.minimum(f_a, f_b)
+        window = 10.0 / min_freq # Ensure enough time
+        
+        # Cross-Talk Matrix:
+        # P_A -> B_A (Target: High)
+        # P_A -> B_B (Target: Low)
+        # P_B -> B_A (Target: Low)
+        # P_B -> B_B (Target: High)
+        
+        # 1. Pulse A on both
+        res_aa = run_simulation(bubble_a, pulse_a, units=units, save_spec=save_spec, window_s=window)
+        res_ab = run_simulation(bubble_b, pulse_a, units=units, save_spec=save_spec, window_s=window)
+        
+        # 2. Pulse B on both
+        res_ba = run_simulation(bubble_a, pulse_b, units=units, save_spec=save_spec, window_s=window)
+        res_bb = run_simulation(bubble_b, pulse_b, units=units, save_spec=save_spec, window_s=window)
+        
+        max_aa = jnp.max(res_aa.radius) / r_a
+        max_ab = jnp.max(res_ab.radius) / r_b
+        max_ba = jnp.max(res_ba.radius) / r_a
+        max_bb = jnp.max(res_bb.radius) / r_b
+        
+        # Objectives
+        # We want diagonals > 2.0, off-diagonals < 1.5
+        
+        # Score A: Pulse A good?
+        score_a_target = jnp.maximum(0.0, 2.5 - max_aa) # Penalty if < 2.5
+        score_a_avoid  = jnp.maximum(0.0, max_ab - 1.2) # Penalty if > 1.2
+        
+        # Score B: Pulse B good?
+        score_b_target = jnp.maximum(0.0, 2.5 - max_bb) # Penalty if < 2.5
+        score_b_avoid  = jnp.maximum(0.0, max_ba - 1.2) # Penalty if > 1.2
+        
+        # Constraint: Distinct bubbles?
+        # Penalty if radii are too close
+        radius_diff = jnp.abs(r_a - r_b)
+        score_distinct = jnp.maximum(0.0, 1.0e-6 - radius_diff) * 1000 # Large penalty if diff < 1um
+        
+        return score_a_target + score_a_avoid + score_b_target + score_b_avoid + score_distinct, (max_aa, max_ab, max_ba, max_bb)
+
+    # --- Optimization ---
     rng = jax.random.PRNGKey(42)
-    # New API: passes solution template instead of num_dims?
-    # Based on inspect output: (self, population_size: int, solution: Any, ...)
-    solution_template = jnp.zeros(num_coeffs)
-    strategy = CMA_ES(population_size=32, solution=solution_template)
+    solution_template = jnp.zeros(GENOME_SIZE)
+    strategy = CMA_ES(population_size=64, solution=solution_template)
     es_params = strategy.default_params
     
-    num_generations = 50
+    state = strategy.init(rng, solution_template, es_params)
     
-    # --- Optimization 1: Target A, Avoid B ---
-    print("\n--- Optimizing: Target A, Avoid B ---")
+    num_gens = 100
+    print(f"Optimizing for {num_gens} generations...")
     
-    @jax.jit
-    def loss_target_a(coeffs):
-        r_a, r_b = fitness_fn(coeffs)
-        # We want r_a > 2.0, r_b < 2.0
-        # Loss = ReLU(2.0 - r_a) + ReLU(r_b - 1.5) 
-        # (Using 1.5 as a safer "avoid" threshold to handle oscillation, or just use 1.9?)
-        # Let's use soft penalties.
-        
-        loss_a = jnp.maximum(0.0, 2.2 - r_a) # Penalty if A < 2.2
-        loss_b = jnp.maximum(0.0, r_b - 1.8) # Penalty if B > 1.8
-        
-        return loss_a + loss_b
-
-    state_a = strategy.init(rng, jnp.zeros(num_coeffs), es_params)
+    best_fitness_history = []
     
-    for gen in range(num_generations):
+    for gen in range(num_gens):
         rng, rng_gen, rng_eval = jax.random.split(rng, 3)
-        x, state_a = strategy.ask(rng_gen, state_a, es_params)
+        x, state = strategy.ask(rng_gen, state, es_params)
         
-        # Evaluate population
-        loss_vals = jax.vmap(loss_target_a)(x)
+        loss_vals, metrics = jax.vmap(fitness_fn)(x)
+        # Metrics is a tuple of arrays, we only need losses for update
         
-        # Update strategy
-        state_a, _ = strategy.tell(rng_eval, x, loss_vals, state_a, es_params)
+        state, _ = strategy.tell(rng_eval, x, loss_vals, state, es_params)
+        
+        best_l = state.best_fitness
+        best_fitness_history.append(best_l)
         
         if gen % 10 == 0:
-            best_l = state_a.best_fitness
             print(f"Gen {gen}: Best Loss = {best_l:.4f}")
 
-    best_coeffs_a = state_a.best_solution
-    print(f"Final Loss (Target A): {state_a.best_fitness:.4f}")
+    print(f"Final Loss: {state.best_fitness:.4f}")
+    best_genome = state.best_solution
     
+    # --- Analysis ---
+    (s_a, f_a, r_a, c_a), (s_b, f_b, r_b, c_b) = decode_genome(best_genome)
+    print("\n--- Optimized System ---")
+    print("Bubble A:")
+    print(f"  Radius: {r_a*1e6:.2f} um")
+    print(f"  Chi:    {c_a:.2f}")
+    print("Bubble B:")
+    print(f"  Radius: {r_b*1e6:.2f} um")
+    print(f"  Chi:    {c_b:.2f}")
+    print("Pulse A:")
+    print(f"  Freq:   {f_a/1e6:.2f} MHz")
+    print("Pulse B:")
+    print(f"  Freq:   {f_b/1e6:.2f} MHz")
     
-    # --- Optimization 2: Target B, Avoid A ---
-    print("\n--- Optimizing: Target B, Avoid A ---")
+    # Re-run best to plotting
+    # We need to construct result objects.
+    # We'll just perform the 4 sims again.
     
-    @jax.jit
-    def loss_target_b(coeffs):
-        r_a, r_b = fitness_fn(coeffs)
-        # We want r_b > 2.2, r_a < 1.8
-        
-        loss_b = jnp.maximum(0.0, 2.2 - r_b) # Penalty if B < 2.2
-        loss_a = jnp.maximum(0.0, r_a - 1.8) # Penalty if A > 1.8
-        
-        return loss_a + loss_b
-
-    state_b = strategy.init(rng, jnp.zeros(num_coeffs), es_params)
+    shape_obj_a = ParametricFourierShape(s_a)
+    shape_obj_b = ParametricFourierShape(s_b)
     
-    for gen in range(num_generations):
-        rng, rng_gen, rng_eval = jax.random.split(rng, 3)
-        x, state_b = strategy.ask(rng_gen, state_b, es_params)
-        
-        loss_vals = jax.vmap(loss_target_b)(x)
-        state_b, _ = strategy.tell(rng_eval, x, loss_vals, state_b, es_params)
-        
-        if gen % 10 == 0:
-            best_l = state_b.best_fitness
-            print(f"Gen {gen}: Best Loss = {best_l:.4f}")
-
-    best_coeffs_b = state_b.best_solution
-    print(f"Final Loss (Target B): {state_b.best_fitness:.4f}")
-
-    # --- Analysis & Plotting ---
-    print("\nSimulating best solutions...")
-    res_a_target_a, res_b_target_a = check_solution(best_coeffs_a, bubble_a, bubble_b, units, base_freq, pressure)
-    res_a_target_b, res_b_target_b = check_solution(best_coeffs_b, bubble_a, bubble_b, units, base_freq, pressure)
+    pulse_a = Pulse(freq=f_a, pressure=pressure_fixed, shape=shape_obj_a, cycle_num=5, initial_time=1e-6)
+    pulse_b = Pulse(freq=f_b, pressure=pressure_fixed, shape=shape_obj_b, cycle_num=5, initial_time=1e-6)
+    bubble_a = Bubble(R0=r_a, chi=c_a)
+    bubble_b = Bubble(R0=r_b, chi=c_b)
     
-    # Plotting
+    min_freq = min(f_a, f_b)
+    window = 10.0 / min_freq
+    save_spec_plot = SaveSpec(num_samples=1000)
+    
+    # Run 4 combinations
+    res_aa = run_simulation(bubble_a, pulse_a, units=units, save_spec=save_spec_plot, window_s=window)
+    res_ab = run_simulation(bubble_b, pulse_a, units=units, save_spec=save_spec_plot, window_s=window)
+    res_ba = run_simulation(bubble_a, pulse_b, units=units, save_spec=save_spec_plot, window_s=window)
+    res_bb = run_simulation(bubble_b, pulse_b, units=units, save_spec=save_spec_plot, window_s=window)
+    
+    max_aa = jnp.max(res_aa.radius) / r_a
+    max_ab = jnp.max(res_ab.radius) / r_b
+    max_ba = jnp.max(res_ba.radius) / r_a
+    max_bb = jnp.max(res_bb.radius) / r_b
+    
+    print("\n--- Cross-Talk Matrix (R_max/R_0) ---")
+    print(f"P_A -> B_A: {max_aa:.2f} (Target > 2.5)")
+    print(f"P_A -> B_B: {max_ab:.2f} (Avoid  < 1.2)")
+    print(f"P_B -> B_A: {max_ba:.2f} (Avoid  < 1.2)")
+    print(f"P_B -> B_B: {max_bb:.2f} (Target > 2.5)")
+    
+    # Plot
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
     
-    # Row 1: Target A (Avoid B)
-    t_axis = res_a_target_a.ts * 1e6 # microseconds
-    
-    # Plot Pulse
+    # Row 1: Pulse A
+    # Left: Pulse Shape
+    # Right: Responses
     ax = axes[0, 0]
-    pulse_obj_a = Pulse(freq=base_freq, pressure=pressure, shape=ParametricFourierShape(best_coeffs_a), cycle_num=5, initial_time=1e-6)
-    # We can just use the pressure from the result or recompute pulse
-    # But result doesn't store full pulse array unless we did save_spec?
-    # Actually run_simulation uses the pulse object.
-    # Let's reconstruct the pulse array for plotting
-    p_values = pulse_obj_a(res_a_target_a.ts)
-    ax.plot(t_axis, p_values / 1e3, color='black')
-    ax.set_title("Optimized Pulse (Target A)")
+    ts_a = res_aa.ts
+    p_vals_a = pulse_a(ts_a)
+    ax.plot(ts_a*1e6, p_vals_a/1e3, 'k')
+    ax.set_title(f"Pulse A (Freq={f_a/1e6:.2f} MHz)")
     ax.set_ylabel("Pressure (kPa)")
-    ax.grid(True, alpha=0.3)
     
-    # Plot Response
     ax = axes[0, 1]
-    ax.plot(t_axis, res_a_target_a.radius / bubble_a.R0, label="Bubble A (Target)", color='blue')
-    ax.plot(t_axis, res_b_target_a.radius / bubble_b.R0, label="Bubble B (Avoid)", color='red', linestyle='--')
-    ax.axhline(2.0, color='gray', linestyle=':', label='Threshold (2.0)')
-    ax.set_title("Bubble Response")
-    ax.set_ylabel("expansion ratio (R/R0)")
+    ax.plot(ts_a*1e6, res_aa.radius / r_a, 'b', label=f"Bubble A ({r_a*1e6:.1f}um)")
+    ax.plot(ts_a*1e6, res_ab.radius / r_b, 'r--', label=f"Bubble B ({r_b*1e6:.1f}um)")
+    ax.axhline(2.0, color='gray', linestyle=':')
+    ax.set_title("Response to Pulse A")
+    ax.set_ylabel("R/R0")
     ax.legend()
-    ax.grid(True, alpha=0.3)
-    
-    # Row 2: Target B (Avoid A)
-    # Plot Pulse
+
+    # Row 2: Pulse B
     ax = axes[1, 0]
-    pulse_obj_b = Pulse(freq=base_freq, pressure=pressure, shape=ParametricFourierShape(best_coeffs_b), cycle_num=5, initial_time=1e-6)
-    p_values = pulse_obj_b(res_a_target_b.ts)
-    ax.plot(t_axis, p_values / 1e3, color='black')
-    ax.set_title("Optimized Pulse (Target B)")
+    ts_b = res_bb.ts
+    p_vals_b = pulse_b(ts_b)
+    ax.plot(ts_b*1e6, p_vals_b/1e3, 'k')
+    ax.set_title(f"Pulse B (Freq={f_b/1e6:.2f} MHz)")
     ax.set_ylabel("Pressure (kPa)")
-    ax.set_xlabel("Time (µs)")
-    ax.grid(True, alpha=0.3)
+    ax.set_xlabel("Time (us)")
     
-    # Plot Response
     ax = axes[1, 1]
-    ax.plot(t_axis, res_a_target_b.radius / bubble_a.R0, label="Bubble A (Avoid)", color='blue', linestyle='--')
-    ax.plot(t_axis, res_b_target_b.radius / bubble_b.R0, label="Bubble B (Target)", color='red')
-    ax.axhline(2.0, color='gray', linestyle=':', label='Threshold (2.0)')
-    ax.set_title("Bubble Response")
-    ax.set_ylabel("expansion ratio (R/R0)")
-    ax.set_xlabel("Time (µs)")
+    ax.plot(ts_b*1e6, res_ba.radius / r_a, 'b--', label=f"Bubble A")
+    ax.plot(ts_b*1e6, res_bb.radius / r_b, 'r', label=f"Bubble B")
+    ax.axhline(2.0, color='gray', linestyle=':')
+    ax.set_title("Response to Pulse B")
+    ax.set_ylabel("R/R0")
+    ax.set_xlabel("Time (us)")
     ax.legend()
-    ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig("selective_triggering_results.png")
-    print("\nResults saved to selective_triggering_results.png")
+    plt.savefig("co_design_results.png")
+    print("\nSaved results to co_design_results.png")
     plt.show()
-
-def check_solution(coeffs, bubble_a, bubble_b, units, freq, pressure):
-    shape = ParametricFourierShape(coeffs)
-    pulse = Pulse(
-        freq=freq,
-        pressure=pressure,
-        shape=shape,
-        cycle_num=5,
-        initial_time=1e-6
-    )
-    # Use higher resolution for final check/plot
-    save_spec = SaveSpec(num_samples=1000)
-    res_a = run_simulation(bubble_a, pulse, units=units, save_spec=save_spec, window_s=10e-6)
-    res_b = run_simulation(bubble_b, pulse, units=units, save_spec=save_spec, window_s=10e-6)
-    
-    print(f"  Bubble A Max R/R0: {jnp.max(res_a.radius)/bubble_a.R0:.2f}")
-    print(f"  Bubble B Max R/R0: {jnp.max(res_b.radius)/bubble_b.R0:.2f}")
-    return res_a, res_b
-
 
 if __name__ == "__main__":
     run_optimization()
