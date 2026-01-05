@@ -17,7 +17,7 @@ class Pulse(eqx.Module):
     phase: float = 0.0
     initial_time: float = 0.0
     cycle_num: float = 4.0
-    apply_hann: bool = False
+    apply_hann: bool = eqx.field(default=False, static=True)
 
     def __call__(self, t: jax.Array) -> jax.Array:
         pulse_span = self.cycle_num / self.freq
