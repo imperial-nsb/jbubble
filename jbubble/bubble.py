@@ -49,8 +49,17 @@ class Bubble(eqx.Module):
         self.c_L = c_L
         self.P_amb = P_amb
         self.sigma_L = sigma_L
-        self.R_break = 1.2 * self.R0
-        self.sigma_break = ((self.R_break / self.R_buckle) ** 2 - 1.0) * self.chi
+
+        # Use jnp.where to tolerate tracing (e.g. inside vmap/jit)
+        self.R_break = jnp.where(
+            self.chi > 0,
+            self.R_buckle * (1.0 + self.sigma_L / self.chi)**0.5,
+            1.0e30, # Use a very large number to effectively disable break-up when chi <= 0
+        ) # type: ignore (TODO: improve types for bubble params)
+
+        # After rupture, surface tension is sigma_L (water tension)
+        self.sigma_break = self.sigma_L
+
         self.sigma_R0 = self.chi * ((self.R0**2 / self.R_buckle**2) - 1.0)
         self.vdw = self.R0 / vdw_divisor
 
@@ -61,7 +70,7 @@ class Bubble(eqx.Module):
         return jnp.where(
             R <= self.R_buckle,
             0.0,
-            jnp.where(R >= self.R_break, self.sigma_break, sigma_elastic),
+            jnp.where(R >= self.R_break, self.sigma_L, sigma_elastic),
         )
 
     def get_scaled(self, units: Units) -> "Bubble":
