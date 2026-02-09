@@ -55,7 +55,7 @@ class Bubble(eqx.Module):
             self.chi > 0,
             self.R_buckle * (1.0 + self.sigma_L / self.chi)**0.5,
             1.0e30, # Use a very large number to effectively disable break-up when chi <= 0
-        ) # type: ignore (TODO: improve types for bubble params)
+        )
 
         # After rupture, surface tension is sigma_L (water tension)
         self.sigma_break = self.sigma_L
