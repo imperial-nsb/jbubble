@@ -1,6 +1,7 @@
 """jbubble: differentiable microbubble dynamics primitives."""
 
 from .units import Units
+from .signal import DrivingSignal, Waveform
 from .bubble import Bubble
 from .pulse import Pulse
 from .shapes import (
@@ -28,6 +29,8 @@ from .simulation import (
 
 __all__ = [
     "Units",
+    "DrivingSignal",
+    "Waveform",
     "Bubble",
     "Pulse",
     "PulseShape",

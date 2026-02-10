@@ -8,7 +8,7 @@ import diffrax
 import numpy as np
 
 from .bubble import Bubble
-from .pulse import Pulse
+from .signal import DrivingSignal
 from .solver import SaveSpec, solve_bubble
 from .units import Units
 
@@ -19,7 +19,7 @@ class SimulationResult(eqx.Module):
     driving_pressure: jax.Array
     converged: jax.Array
     bubble: Bubble
-    pulse: Pulse
+    pulse: DrivingSignal
     units: Units
 
     @property
@@ -34,7 +34,7 @@ class SimulationResult(eqx.Module):
 
 def run_simulation(
     bubble: Bubble,
-    pulse: Pulse,
+    pulse: DrivingSignal,
     *,
     units: Units,
     save_spec: SaveSpec,

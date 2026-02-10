@@ -4,12 +4,17 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
+from .signal import DrivingSignal
 from .units import Units
 from .shapes import PulseShape
 
 
-class Pulse(eqx.Module):
-    """Pulse envelope shared between differentiable and interactive runs."""
+class Pulse(DrivingSignal):
+    """Analytic driving pulse built from a carrier frequency, amplitude, and envelope.
+
+    This is the original frequency-based signal definition.  For arbitrary
+    time-domain waveforms, see :class:`~jbubble.signal.Waveform`.
+    """
 
     freq: float
     pressure: float
@@ -30,6 +35,14 @@ class Pulse(eqx.Module):
 
         val = self.shape(t, self.freq, self.phase, self.initial_time)
         return val * self.pressure * window
+
+    @property
+    def duration(self) -> float:
+        return self.cycle_num / self.freq
+
+    @property
+    def start_time(self) -> float:
+        return self.initial_time
 
     def get_scaled(self, units: Units) -> "Pulse":
         return Pulse(

@@ -8,12 +8,12 @@ import jax.numpy as jnp
 import equinox as eqx
 
 from .bubble import Bubble
-from .pulse import Pulse
+from .signal import DrivingSignal
 
 jax.config.update("jax_enable_x64", True)
 
 State = jax.Array
-Args = Tuple[Bubble, Pulse]
+Args = Tuple[Bubble, DrivingSignal]
 
 
 def bubble_equation(t: Any, state: State, args: Args) -> State:
@@ -60,7 +60,7 @@ class SaveSpec(eqx.Module):
 
 def solve_bubble(
     bubble: Bubble,
-    pulse: Pulse,
+    pulse: DrivingSignal,
     *,
     t_span: Tuple[float, float] | None = None,
     dt0: float = 1e-3,
@@ -71,8 +71,7 @@ def solve_bubble(
     max_steps: int = 10_000,
 ) -> diffrax.Solution:
     if t_span is None:
-        pulse_duration = pulse.cycle_num / pulse.freq
-        t_span = (0.0, pulse.initial_time + 2.0 * pulse_duration)
+        t_span = (0.0, pulse.start_time + 2.0 * pulse.duration)
 
     if save_spec is None:
         save_spec = SaveSpec(num_samples=1000)
