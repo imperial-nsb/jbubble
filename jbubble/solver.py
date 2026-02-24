@@ -84,7 +84,7 @@ def solve_bubble(
         stepsize_controller = diffrax.PIDController(rtol=1e-3, atol=1e-6)
 
     t0, t1 = t_span
-    y0 = jnp.array([bubble.R0, 0.0])
+    y0 = jnp.stack([bubble.R0, jnp.zeros_like(bubble.R0)])
     saveat = save_spec.build(t0, t1)
     term = diffrax.ODETerm(bubble_equation)
     progress_meter = diffrax.TextProgressMeter() if progress else diffrax.NoProgressMeter()
