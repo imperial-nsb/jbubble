@@ -1,7 +1,7 @@
 """jbubble: differentiable microbubble dynamics primitives."""
 
 from .units import Units
-from .bubble import Bubble
+from .bubble import BubbleBase
 from .pulse import Pulse
 from .shapes import (
     PulseShape,
@@ -17,7 +17,7 @@ from .shapes import (
     TimeDomainSawtooth,
     TimeDomainTriangle,
 )
-from .solver import bubble_equation, solve_bubble, SaveSpec
+from .solver import solve_bubble, SaveSpec
 from .simulation import (
     SimulationResult,
     run_simulation,
@@ -28,7 +28,7 @@ from .simulation import (
 
 __all__ = [
     "Units",
-    "Bubble",
+    "BubbleBase",
     "Pulse",
     "PulseShape",
     "Sine",
