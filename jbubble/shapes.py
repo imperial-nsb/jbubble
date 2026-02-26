@@ -5,8 +5,6 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-import numpy as np 
-
 NUM_FOURIER_TERMS = 10
 
 # Analytical normalization factors are based on infinite series limits or coefficient sums
@@ -247,8 +245,6 @@ class Rect75(FourierPulseShape):
         return 0.75
 
     def term(self, m, t, freq, phase):
-        # Convert m to float inside JAX tracing
-        m = m.astype(jnp.float32)
 
         # Constants
         D = self.duty
@@ -275,7 +271,7 @@ class Rect75(FourierPulseShape):
         t = t - initial_time
 
         # JAX array of harmonics
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=jnp.float32)
+        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=float)
 
         # Vectorized evaluation of each term
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
@@ -285,6 +281,7 @@ class Rect75(FourierPulseShape):
 
         return y + dc
 
+
 class Rect25(FourierPulseShape):
     """25% duty rectangular waveform (+1 for 75%, -1 for 25%)."""
 
@@ -293,8 +290,6 @@ class Rect25(FourierPulseShape):
         return 0.25  # D = 3/4
 
     def term(self, m, t, freq, phase):
-        # Convert m to float inside JAX tracing
-        m = m.astype(jnp.float32)
 
         # Constants
         D = self.duty
@@ -321,7 +316,7 @@ class Rect25(FourierPulseShape):
         t = t - initial_time
 
         # JAX array of harmonics
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=jnp.float32)
+        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=float)
 
         # Vectorized evaluation of each term and sum
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
@@ -330,7 +325,6 @@ class Rect25(FourierPulseShape):
         dc = 2.0 * (1-self.duty)- 1.0  # = +0.5 at D=0.75
 
         return y + dc
-
 
 
 class Mono99(FourierPulseShape):
@@ -365,8 +359,6 @@ class Mono99(FourierPulseShape):
         return 1.98 * jnp.pi
 
     def term(self, m, t, freq, phase):
-        # Convert m to float inside JAX tracing
-        m = m.astype(jnp.float32)
 
         # Constants
         D = self.duty
@@ -398,7 +390,7 @@ class Mono99(FourierPulseShape):
         t = t - initial_time
 
         # Harmonic indices
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=jnp.float32)
+        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=float)
 
         # Sum harmonic contributions
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
@@ -410,8 +402,6 @@ class Mono99(FourierPulseShape):
         dc = A * D + B * (1.0 - D)
 
         return y + dc
-
-
 
 
 class Mono95(FourierPulseShape):
@@ -446,8 +436,6 @@ class Mono95(FourierPulseShape):
         return 1.9 * jnp.pi
 
     def term(self, m, t, freq, phase):
-        # Convert m to float inside JAX tracing
-        m = m.astype(jnp.float32)
 
         # Constants
         D = self.duty
@@ -479,7 +467,7 @@ class Mono95(FourierPulseShape):
         t = t - initial_time
 
         # Harmonic indices
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=jnp.float32)
+        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=float)
 
         # Sum harmonic contributions
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
@@ -524,8 +512,6 @@ class Rect75NegPos(FourierPulseShape):
         return 1.5 * jnp.pi
 
     def term(self, m, t, freq, phase):
-        # Convert m to float inside JAX tracing
-        m = m.astype(jnp.float32)
 
         # Constants
         D = 1-self.duty
@@ -557,7 +543,7 @@ class Rect75NegPos(FourierPulseShape):
         t = t - initial_time
 
         # Harmonic indices
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=jnp.float32)
+        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=float)
 
         # Sum harmonic contributions
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
@@ -570,8 +556,6 @@ class Rect75NegPos(FourierPulseShape):
 
         return y + dc
 
-
-# from your_module import FourierPulseShape, NUM_FOURIER_TERMS
 
 class Rect25NegPos(FourierPulseShape):
     """
@@ -604,8 +588,6 @@ class Rect25NegPos(FourierPulseShape):
         return 0.5 * jnp.pi
 
     def term(self, m, t, freq, phase):
-        # Convert m to float inside JAX tracing
-        m = m.astype(jnp.float32)
 
         # Constants
         D = 1-self.duty
@@ -637,7 +619,7 @@ class Rect25NegPos(FourierPulseShape):
         t = t - initial_time
 
         # Harmonic indices
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=jnp.float32)
+        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=float)
 
         # Sum harmonic contributions
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
@@ -682,8 +664,6 @@ class SquareNegPos(FourierPulseShape):
         return jnp.pi
 
     def term(self, m, t, freq, phase):
-        # Convert m to float inside JAX tracing
-        m = m.astype(jnp.float32)
 
         # Constants
         D = 1-self.duty
@@ -717,14 +697,14 @@ class SquareNegPos(FourierPulseShape):
         t = t - initial_time
 
         # Harmonic indices
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=jnp.float32)
+        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=float)
 
         # Sum harmonic contributions
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
 
         # DC = A*D + B*(1-D) = 1*0.5 + (-1)*0.5 = 0
         return y
-    
+
 class Rect95(FourierPulseShape):
     """
     Rectangular waveform:
@@ -756,7 +736,6 @@ class Rect95(FourierPulseShape):
 
     def term(self, m, t, freq, phase):
         # Ensure float inside JAX tracing
-        m = m.astype(jnp.float32)
 
         D = 1-self.duty
         A = self.high_level
@@ -785,7 +764,7 @@ class Rect95(FourierPulseShape):
         t = t - initial_time
 
         # Harmonics
-        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=jnp.float32)
+        m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=float)
 
         # Sum harmonics
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
