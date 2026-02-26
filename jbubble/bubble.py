@@ -43,7 +43,7 @@ class Bubble(eqx.Module):
         raise NotImplementedError
     
     def initial_state(self) -> jax.Array:
-        raise NotImplementedError
+        return jnp.array([self.R0, 0.0])
 
     def rescale_state(self, state: jax.Array, units: Units) -> jax.Array:
         """Rescale the state variables back to physical units.
@@ -128,9 +128,6 @@ class RayleighPlesset(Bubble):
         R_ddot = (forces / self.rho_L - 1.5 * R_dot**2) / R
 
         return jnp.stack([R_dot, R_ddot])
-    
-    def initial_state(self) -> jax.Array:   
-        return jnp.array([self.R0, 0.0])
 
 
 class Marmottant(Bubble):
@@ -252,9 +249,6 @@ class Marmottant(Bubble):
         R_ddot = (forces / self.rho_L - 1.5 * R_dot**2) / R
 
         return jnp.stack([R_dot, R_ddot])
-    
-    def initial_state(self) -> jax.Array:
-        return jnp.array([self.R0, 0.0])
 
 
 class MarmottantGompertz(Bubble):
@@ -400,10 +394,6 @@ class MarmottantGompertz(Bubble):
         R_ddot = (forces / self.rho_L - 1.5 * R_dot**2) / R
 
         return jnp.stack([R_dot, R_ddot])
-    
-    
-    def initial_state(self) -> jax.Array:
-        return jnp.array([self.R0, 0.0])
 
 
 class KelvinVoigtGompertz(Bubble):
@@ -531,9 +521,6 @@ class KelvinVoigtGompertz(Bubble):
         R_ddot = (forces / self.rho_m - 1.5 * R_dot**2) / R
 
         return jnp.stack([R_dot, R_ddot])
-    
-    def initial_state(self) -> jax.Array:
-        return jnp.array([self.R0, 0.0])
 
 
 class KellerMiksisGompertz(Bubble):
@@ -644,9 +631,6 @@ class KellerMiksisGompertz(Bubble):
 
         R_ddot = D / C
         return jnp.stack([R_dot, R_ddot])
-    
-    def initial_state(self) -> jax.Array:
-        return jnp.array([self.R0, 0.0])
 
 
 class LeightonGompertz(Bubble):
@@ -776,9 +760,6 @@ class LeightonGompertz(Bubble):
 
         R_ddot = (rhs - inert) / denom
         return jnp.stack([R_dot, R_ddot])
-    
-    def initial_state(self) -> jax.Array:
-        return jnp.array([self.R0, 0.0])
 
 
 class SphericalConfinement(Bubble):
