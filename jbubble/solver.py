@@ -1,4 +1,4 @@
-"""Diffrax-based Rayleigh-Plesset solver."""
+"""Diffrax-based solver for multiple bubble models using multibubble.py."""
 
 from typing import Any, Tuple
 
@@ -6,47 +6,11 @@ import diffrax
 import jax
 import jax.numpy as jnp
 import equinox as eqx
-
-from .bubble import Bubble
 from .pulse import Pulse
-
+from .bubble import Bubble
 jax.config.update("jax_enable_x64", True)
 
 State = jax.Array
-Args = Tuple[Bubble, Pulse]
-
-
-def bubble_equation(t: Any, state: State, args: Args) -> State:
-    R, R_dot = state
-    bubble, pulse = args
-
-    R0 = bubble.R0
-    vdw = bubble.vdw
-    gamma = bubble.gamma
-    c_L = bubble.c_L
-    P_amb = bubble.P_amb
-    rho_L = bubble.rho_L
-    mu_L = bubble.mu_L
-    kappa_s = bubble.kappa_s
-    sigma_R0 = bubble.sigma_R0
-
-    sigma = bubble.surface_tension(R)
-    P_drive = pulse(t)
-
-    P_gas0 = P_amb + 2.0 * sigma_R0 / R0
-    P_gas = P_gas0 * ((R0**3 - vdw**3) / (R**3 - vdw**3)) ** gamma
-
-    P_surf = 2.0 * sigma / R
-    P_visc = 4.0 * mu_L * R_dot / R
-    P_surf_visc = 4.0 * kappa_s * R_dot / (R**2)
-
-    damping_term = 1.0 - (3.0 * gamma * (R**3) * R_dot) / (c_L * (R**3 - vdw**3))
-
-    forces = (P_gas * damping_term) - P_surf - P_visc - P_surf_visc - P_drive - P_amb
-    R_ddot = (forces / rho_L - 1.5 * R_dot**2) / R
-
-    return jnp.stack([R_dot, R_ddot])
-
 
 class SaveSpec(eqx.Module):
     """Convenience wrapper for controlling solver outputs."""
@@ -70,6 +34,36 @@ def solve_bubble(
     progress: bool = False,
     max_steps: int = 10_000,
 ) -> diffrax.Solution:
+    """
+    Solve the bubble dynamics for any bubble model with a given pulse.
+    
+    Parameters
+    ----------
+    bubble : BubbleBase
+        Bubble model instance (e.g., MarmottantBubble, MarmottantGompertz)
+        Must have bubble_equation(t, state, pulse) method
+    pulse : Pulse
+        Driving pulse
+    t_span : Tuple[float, float], optional
+        Time span (t0, t1). If None, computed from pulse duration
+    dt0 : float
+        Initial time step
+    save_spec : SaveSpec, optional
+        Output specification. Default: 1000 samples
+    solver : diffrax.AbstractSolver, optional
+        ODE solver. Default: Kvaerno5
+    stepsize_controller : diffrax.AbstractStepSizeController, optional
+        Step size controller. Default: PIDController(rtol=1e-3, atol=1e-6)
+    progress : bool
+        Show progress meter
+    max_steps : int
+        Maximum number of steps
+    
+    Returns
+    -------
+    diffrax.Solution
+        Solution object with ts, ys (radius and velocity over time)
+    """
     if t_span is None:
         pulse_duration = pulse.cycle_num / pulse.freq
         t_span = (0.0, pulse.initial_time + 2.0 * pulse_duration)
@@ -84,9 +78,15 @@ def solve_bubble(
         stepsize_controller = diffrax.PIDController(rtol=1e-3, atol=1e-6)
 
     t0, t1 = t_span
-    y0 = jnp.stack([bubble.R0, jnp.zeros_like(bubble.R0)])
+    y0 = bubble.initial_state()
     saveat = save_spec.build(t0, t1)
-    term = diffrax.ODETerm(bubble_equation)
+    
+    # Create ODE term that calls bubble.bubble_equation
+    def ode_func(t, state, args):
+        bubble_model, pulse_model = args
+        return bubble_model.bubble_equation(t, state, pulse_model)
+    
+    term = diffrax.ODETerm(ode_func)
     progress_meter = diffrax.TextProgressMeter() if progress else diffrax.NoProgressMeter()
 
     return diffrax.diffeqsolve(
