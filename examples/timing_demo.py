@@ -8,7 +8,7 @@ from jbubble import (
     run_simulation,
 )
 import jbubble.shapes as shapes
-from jbubble.bubble import Bubble
+from jbubble.bubble import Marmottant
 from jbubble.pulse import Pulse
 import time
 from jax import jit
@@ -16,7 +16,7 @@ from jax import jit
 
 def demo():
     units = Units()
-    bubbles = [Bubble(radius) for radius in [
+    bubbles = [Marmottant(radius) for radius in [
         1e-6,
         2e-6,
         3e-6,
