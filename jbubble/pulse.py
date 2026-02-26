@@ -13,7 +13,7 @@ class Pulse(eqx.Module):
 
     freq: float
     pressure: float
-    shape: PulseShape = eqx.field(static=True)
+    shape: PulseShape
     phase: float = 0.0
     initial_time: float = 0.0
     cycle_num: float = 4.0
