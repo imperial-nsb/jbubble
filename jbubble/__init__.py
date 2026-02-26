@@ -1,7 +1,7 @@
 """jbubble: differentiable microbubble dynamics primitives."""
 
 from .units import Units
-from .bubble import RayleighPlesset as Bubble
+from .bubble import Marmottant as Bubble
 from .pulse import Pulse
 from .shapes import (
     PulseShape,
