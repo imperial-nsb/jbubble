@@ -11,9 +11,6 @@ from jbubble import (
 )
 import jbubble.shapes as shapes
 
-# Enable 64-bit precision for better stability in physical simulations
-from jax import config
-config.update("jax_enable_x64", True)
 
 def run_2d_sweep(x_values, y_values, kernel_func, x_name="X", y_name="Y"):
     """
