@@ -2,20 +2,20 @@ import matplotlib.pyplot as plt
 from jbubble import (
     Units,
     SaveSpec,
-    Bubble,
     Pulse,
     run_simulation,
 )
+from jbubble.bubble import Marmottant
 import jbubble.shapes as shapes
 
 
-bubble = Bubble(R0=3.0e-6)
+bubble = Marmottant(R0=3.0e-6)
 save_spec = SaveSpec(num_samples=1000)
 units = Units()
 
 pulse_A = Pulse(
     freq=500e3,
-    pressure=50e3,
+    pressure=25e3,
     shape=shapes.Sine(),
     cycle_num=5,
     initial_time=1e-6,
@@ -24,7 +24,7 @@ pulse_A = Pulse(
 
 pulse_B = Pulse(
     freq=500e3,
-    pressure=200e3,
+    pressure=100e3,
     shape=shapes.Sine(),
     cycle_num=5,
     initial_time=1e-6,
