@@ -2,8 +2,8 @@
 Multibubble module
 
 Bubble material model definitions for single-bubble dynamics.
-Includes Rayleigh–Plesset, Marmottant, Gompertz-smoothed shell,
-and Kelvin–Voigt viscoelastic models.
+Includes Rayleigh-Plesset, Marmottant, Gompertz-smoothed shell,
+and Kelvin-Voigt viscoelastic models.
 """
 
 import equinox as eqx
@@ -14,10 +14,6 @@ from .pulse import Pulse
 from typing import Any, Tuple
 
 State = jax.Array
-
-# # =================================================================================================================================
-# Base Class
-# # =================================================================================================================================
 
 
 class Bubble(eqx.Module):
@@ -57,13 +53,9 @@ class Bubble(eqx.Module):
         return state * scale_factors
 
 
-# =================================================================================================================================
-# Rayleigh–Plesset Model
-# =================================================================================================================================
-
 class RayleighPlesset(Bubble):
     """
-    Rayleigh–Plesset model for an uncoated gas bubble
+    Rayleigh-Plesset model for an uncoated gas bubble
     in an incompressible Newtonian liquid.
 
     Assumptions:
@@ -140,13 +132,11 @@ class RayleighPlesset(Bubble):
     def initial_state(self) -> jax.Array:   
         return jnp.array([self.R0, 0.0])
 
-# =================================================================================================================================
-# Marmottant Model (A lipid-coated microbubble in a Newtonian fluid following a discontinuous piecewise surface tension law)
-# =================================================================================================================================
 
 class Marmottant(Bubble):
     """
     Marmottant shell model for encapsulated microbubbles.
+    A lipid-coated microbubble in a Newtonian fluid following a discontinuous piecewise surface tension law.
 
     Surface tension follows three regimes:
         1) Buckled:     σ = 0
@@ -266,9 +256,6 @@ class Marmottant(Bubble):
     def initial_state(self) -> jax.Array:
         return jnp.array([self.R0, 0.0])
 
-# =================================================================================================================================
-# Marmottant-Gompertz Model (A lipid-coated microbubble in a Newtonian fluid following a differentiable surface tension law)
-# =================================================================================================================================
 
 class MarmottantGompertz(Bubble):
     """
@@ -419,16 +406,12 @@ class MarmottantGompertz(Bubble):
         return jnp.array([self.R0, 0.0])
 
 
-# =================================================================================================================================
-# Kelvin-Voigt-Gompertz Model (A lipid-coated microbubble in a viscoelastic medium following a differentiable surface tension law)
-# =================================================================================================================================
-
 class KelvinVoigtGompertz(Bubble):
     """
-    Bubble in a Kelvin–Voigt viscoelastic medium with
+    Lipid-coated microbubble in a Kelvin-Voigt viscoelastic medium with
     Gompertz shell surface tension.
 
-    The surrounding material is modeled as a Kelvin–Voigt solid:
+    The surrounding material is modeled as a Kelvin-Voigt solid:
         σ_medium = G * strain + μ_m * strain_rate
 
     Includes:
@@ -552,23 +535,20 @@ class KelvinVoigtGompertz(Bubble):
     def initial_state(self) -> jax.Array:
         return jnp.array([self.R0, 0.0])
 
-# =================================================================================================================================
-# Keller-Miksis-Gompertz Model (A lipid-coated microbubble in a non-newtonian fluid following a differentiable surface tension law)
-# =================================================================================================================================
 
 class KellerMiksisGompertz(Bubble):
     """
-    Keller–Miksis bubble model with Gompertz surface tension law.
+    Keller-Miksis-Gompertz Model:
+    A lipid-coated microbubble in a non-newtonian fluid following a differentiable surface tension law (Gompertz)
 
     Includes:
         - Shell elasticity and viscosity (chi and kappa_s)
         - Smooth Gompertz surface tension
         - Polytropic gas law
-        - Liquid compressibility correction based on Keller–Miksis formulation
+        - Liquid compressibility correction based on Keller-Miksis formulation
 
     """
 
-    # ---- Declare fields just like your other models ----
     R0: jax.Array
     R_buckle: float
     gamma: float
@@ -598,8 +578,6 @@ class KellerMiksisGompertz(Bubble):
         P_amb: float = 101.3e3,
         sigma_L: float = 72e-3,
     ) -> None:
-
-        # Normal assignments now work because fields are declared above
         self.R0 = R0
         self.R_buckle = 0.99 * self.R0 if R_buckle is None else R_buckle
         self.gamma = gamma
@@ -669,13 +647,12 @@ class KellerMiksisGompertz(Bubble):
     
     def initial_state(self) -> jax.Array:
         return jnp.array([self.R0, 0.0])
-# =================================================================================================================================
-# Leighton Model (A lipid-coated microbubble confined in a rigid-walled tube and following a differentiable surface tension law)
-# =================================================================================================================================
+
 
 class LeightonGompertz(Bubble):
     """
-    Leighton bubble model with Gompertz surface tension law.
+    Leighton Model:
+    A lipid-coated microbubble confined in a rigid-walled tube and following a differentiable surface tension law (Gompertz)
 
     Models a bubble confined within a rigid-walled tube, incorporating:
     - Shell elasticity and viscosity (chi and kappa_s)
@@ -769,7 +746,6 @@ class LeightonGompertz(Bubble):
     def bubble_equation(self, t: Any, state: jax.Array, pulse) -> jax.Array:
         R, R_dot = state
 
-
         sigma = self.surface_tension(R)
 
         tuberad = self.tube_radius     # Γ1 (tube radius)
@@ -803,10 +779,7 @@ class LeightonGompertz(Bubble):
     
     def initial_state(self) -> jax.Array:
         return jnp.array([self.R0, 0.0])
-    
-# =================================================================================================================================
-# An Approximate Model for Confinement (A spherical lipid-coated microbubble confined in an elastic, spherical container and following a differentiable surface tension law)
-# =================================================================================================================================
+
 
 class SphericalConfinement(Bubble):
     """
