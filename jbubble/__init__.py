@@ -1,7 +1,7 @@
 """jbubble: differentiable microbubble dynamics primitives."""
 
 from .units import Units
-from .bubble import BubbleBase
+from .bubble import RayleighPlesset as Bubble
 from .pulse import Pulse
 from .shapes import (
     PulseShape,
@@ -28,7 +28,7 @@ from .simulation import (
 
 __all__ = [
     "Units",
-    "BubbleBase",
+    "Bubble",
     "Pulse",
     "PulseShape",
     "Sine",

@@ -20,7 +20,7 @@ State = jax.Array
 # # =================================================================================================================================
 
 
-class BubbleBase(eqx.Module):
+class Bubble(eqx.Module):
     """
     Abstract base class for bubble material models.
 
@@ -49,13 +49,19 @@ class BubbleBase(eqx.Module):
     def initial_state(self) -> jax.Array:
         raise NotImplementedError
 
-Args = Tuple[BubbleBase, Pulse]
+    def rescale_state(self, state: jax.Array, units: Units) -> jax.Array:
+        """Rescale the state variables back to physical units.
+        Override this for models with different state definitions.
+        """
+        scale_factors = jnp.array([units.L_scale, units.vel_scale])
+        return state * scale_factors
+
 
 # =================================================================================================================================
 # Rayleigh–Plesset Model
 # =================================================================================================================================
 
-class ReyleighPlesset(BubbleBase):
+class RayleighPlesset(Bubble):
     """
     Rayleigh–Plesset model for an uncoated gas bubble
     in an incompressible Newtonian liquid.
@@ -102,8 +108,8 @@ class ReyleighPlesset(BubbleBase):
     def chi_R(self, R: jax.Array) -> jax.Array:
         return jnp.zeros_like(R)
 
-    def get_scaled(self, units: Units) -> "ReyleighPlesset":
-        return ReyleighPlesset(
+    def get_scaled(self, units: Units) -> "RayleighPlesset":
+        return RayleighPlesset(
             R0=self.R0 / units.L_scale,
             gamma=self.gamma,
             mu_L=self.mu_L / units.mu_scale,
@@ -138,7 +144,7 @@ class ReyleighPlesset(BubbleBase):
 # Marmottant Model (A lipid-coated microbubble in a Newtonian fluid following a discontinuous piecewise surface tension law)
 # =================================================================================================================================
 
-class Marmottant(BubbleBase):
+class Marmottant(Bubble):
     """
     Marmottant shell model for encapsulated microbubbles.
 
@@ -264,7 +270,7 @@ class Marmottant(BubbleBase):
 # Marmottant-Gompertz Model (A lipid-coated microbubble in a Newtonian fluid following a differentiable surface tension law)
 # =================================================================================================================================
 
-class MarmottantGompertz(BubbleBase):
+class MarmottantGompertz(Bubble):
     """
     Smooth Gompertz-based variant of the Marmottant shell model.
 
@@ -417,7 +423,7 @@ class MarmottantGompertz(BubbleBase):
 # Kelvin-Voigt-Gompertz Model (A lipid-coated microbubble in a viscoelastic medium following a differentiable surface tension law)
 # =================================================================================================================================
 
-class KelvinVoigtGompertz(BubbleBase):
+class KelvinVoigtGompertz(Bubble):
     """
     Bubble in a Kelvin–Voigt viscoelastic medium with
     Gompertz shell surface tension.
@@ -550,7 +556,7 @@ class KelvinVoigtGompertz(BubbleBase):
 # Keller-Miksis-Gompertz Model (A lipid-coated microbubble in a non-newtonian fluid following a differentiable surface tension law)
 # =================================================================================================================================
 
-class KellerMiksisGompertz(BubbleBase):
+class KellerMiksisGompertz(Bubble):
     """
     Keller–Miksis bubble model with Gompertz surface tension law.
 
@@ -667,7 +673,7 @@ class KellerMiksisGompertz(BubbleBase):
 # Leighton Model (A lipid-coated microbubble confined in a rigid-walled tube and following a differentiable surface tension law)
 # =================================================================================================================================
 
-class LeightonGompertz(BubbleBase):
+class LeightonGompertz(Bubble):
     """
     Leighton bubble model with Gompertz surface tension law.
 
@@ -802,7 +808,7 @@ class LeightonGompertz(BubbleBase):
 # An Approximate Model for Confinement (A spherical lipid-coated microbubble confined in an elastic, spherical container and following a differentiable surface tension law)
 # =================================================================================================================================
 
-class SphericalConfinement(BubbleBase):
+class SphericalConfinement(Bubble):
     """
     Spherical confinement model with Gompertz surface tension law.
 
@@ -963,3 +969,9 @@ class SphericalConfinement(BubbleBase):
     
     def initial_state(self) -> jax.Array:   
         return jnp.array([self.R0, 0.0, self.vessel_radius, 0.0])
+
+    def rescale_state(self, state: jax.Array, units: Units) -> jax.Array:
+        scale_factors = jnp.array([
+            units.L_scale, units.vel_scale, units.L_scale, units.vel_scale
+        ])
+        return state * scale_factors

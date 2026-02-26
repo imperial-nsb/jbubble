@@ -6,7 +6,7 @@ Test script for comparing Marmottant and MarmottantGompertz bubble models.
 
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from jbubble.bubble import MarmottantGompertz, Marmottant, ReyleighPlesset
+from jbubble.bubble import MarmottantGompertz, Marmottant, RayleighPlesset
 
 
 def plot_surface_tension_comparison(bubbles, labels=None, R_min=None, R_max=None, num_points=500):
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # Create bubble models with R0 = 4 µm
     bubble_marmottant = Marmottant(R0=4e-6, chi = 0.5)  # R0 = 4 µm
     bubble_marmottant_gompertz = MarmottantGompertz(R0=4e-6, chi = 0.5)  # R0 = 4 µm
-    bubble_rayleigh_plesset = ReyleighPlesset(R0=4e-6)  # R0 = 4 µm
+    bubble_rayleigh_plesset = RayleighPlesset(R0=4e-6)  # R0 = 4 µm
     print("=" * 70)
     print("MARMOTTANT BUBBLE MODEL")
     print("=" * 70)

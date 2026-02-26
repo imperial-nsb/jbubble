@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from jbubble import shapes
-from jbubble.bubble import BubbleBase, Marmottant, MarmottantGompertz, ReyleighPlesset, KellerMiksisGompertz, SphericalConfinement, LeightonGompertz
+from jbubble.bubble import Marmottant, MarmottantGompertz, RayleighPlesset, KellerMiksisGompertz, SphericalConfinement, LeightonGompertz
 from jbubble.units import Units
 from jbubble.pulse import Pulse
 from jbubble.solver import SaveSpec
@@ -34,7 +34,7 @@ units = Units()
 save_spec = SaveSpec(num_samples=1000)
 
 result_rayleigh_plesset = run_simulation(
-    bubble=ReyleighPlesset(R0=2.5e-6),  # R0 = 4 µm
+    bubble=RayleighPlesset(R0=2.5e-6),  # R0 = 4 µm
     pulse=pulse,
     units=units,
     save_spec=save_spec,

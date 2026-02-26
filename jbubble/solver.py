@@ -7,7 +7,7 @@ import jax
 import jax.numpy as jnp
 import equinox as eqx
 from .pulse import Pulse
-from .bubble import BubbleBase
+from .bubble import Bubble
 jax.config.update("jax_enable_x64", True)
 
 State = jax.Array
@@ -23,7 +23,7 @@ class SaveSpec(eqx.Module):
 
 
 def solve_bubble(
-    bubble: BubbleBase,
+    bubble: Bubble,
     pulse: Pulse,
     *,
     t_span: Tuple[float, float] | None = None,

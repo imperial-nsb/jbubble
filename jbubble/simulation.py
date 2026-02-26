@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import diffrax
 import numpy as np
 
-from .bubble import BubbleBase
+from .bubble import Bubble
 from .pulse import Pulse
 from .solver import SaveSpec, solve_bubble
 from .units import Units
@@ -19,7 +19,7 @@ class SimulationResult(eqx.Module):
     ys: jax.Array
     driving_pressure: jax.Array
     converged: jax.Array
-    bubble: BubbleBase
+    bubble: Bubble
     pulse: Pulse
     units: Units
 
@@ -58,7 +58,7 @@ class SimulationResult(eqx.Module):
 
 
 def run_simulation(
-    bubble: BubbleBase,
+    bubble: Bubble,
     pulse: Pulse,
     *,
     units: Units,
@@ -112,13 +112,7 @@ def run_simulation(
     assert sol.ts is not None and sol.ys is not None
 
     ts = sol.ts * units.T_scale
-    radius = sol.ys[:, 0] * units.L_scale
-    ys = sol.ys * jnp.array([
-    units.L_scale,
-    units.vel_scale,
-    units.L_scale,
-    units.vel_scale
-])[: sol.ys.shape[1]]
+    ys = bubble.rescale_state(sol.ys, units)
     driving_pressure = jax.vmap(scaled_pulse)(sol.ts) * units.P_scale
 
     return SimulationResult(
