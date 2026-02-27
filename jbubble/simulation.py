@@ -16,7 +16,11 @@ from .units import Units
 class SimulationResult(eqx.Module):
     """Results from a bubble simulation."""
     ts: jax.Array
-    ys: jax.Array
+    radius: jax.Array               # R    [m]
+    radial_velocity: jax.Array      # Ṙ   [m/s]
+    radial_acceleration: jax.Array  # R̈  [m/s²], computed analytically from ODE RHS
+    vessel_radius: jax.Array | None     # R_v  [m]   (vessel models only)
+    vessel_velocity: jax.Array | None   # Ṙ_v [m/s]  (vessel models only)
     driving_pressure: jax.Array
     converged: jax.Array
     bubble: Bubble
@@ -24,37 +28,28 @@ class SimulationResult(eqx.Module):
     units: Units
 
     @property
-    def radius(self) -> jax.Array:
-        """Bubble radius over time."""
-        return self.ys[..., 0]
-
-    @property
-    def radial_velocity(self) -> jax.Array:
-        """Radial velocity over time."""
-        return self.ys[..., 1]
-    
-    @property
-    def acceleration(self) -> jax.Array:
-        """Acceleration."""
-        t = self.ts
-        v = self.radial_velocity
-        return jnp.gradient(v, t, axis=-1)
-    
-    @property
     def has_vessel(self) -> bool:
-        return self.ys.shape[-1] >= 4
+        return self.vessel_radius is not None
 
-    @property
-    def vessel_radius(self) -> jax.Array | None:
-        if self.has_vessel:
-            return self.ys[..., 2]
-        return None
+    def radiated_pressure(self, d: float) -> jax.Array:
+        """Far-field radiated pressure at sensor distance *d* [m].
 
-    @property
-    def vessel_velocity(self) -> jax.Array | None:
-        if self.has_vessel:
-            return self.ys[..., 3]
-        return None
+        Uses the acoustic monopole approximation (Leighton 1994)::
+
+            P_rad = (ρ R / d) (R R̈ + 2 Ṁ²) − (ρ/4) Ṁ² (R/d)⁴
+
+        Parameters
+        ----------
+        d : float
+            Distance from the bubble centre to the sensor [m].
+        """
+        R     = self.radius
+        Rdot  = self.radial_velocity
+        Rddot = self.radial_acceleration
+        rho   = self.bubble.rho_L
+        term1 = (rho * R / d) * (R * Rddot + 2.0 * Rdot**2)
+        term2 = (rho / 4.0) * Rdot**2 * (R / d)**4
+        return term1 - term2
 
 
 def run_simulation(
@@ -112,12 +107,23 @@ def run_simulation(
     assert sol.ts is not None and sol.ys is not None
 
     ts = sol.ts * units.T_scale
-    ys = bubble.rescale_state(sol.ys, units)
+    ys = bubble.rescale_state(sol.ys, units)   # (T, 2) or (T, 4) for vessel
     driving_pressure = jax.vmap(scaled_pulse)(sol.ts) * units.P_scale
+
+    # Compute acceleration analytically from the ODE RHS.
+    def _rddot(t, state):
+        return scaled_bubble.bubble_equation(t, state, scaled_pulse)[1]
+    rddot = jax.vmap(_rddot)(sol.ts, sol.ys) * units.acc_scale  # (T,)
+
+    has_vessel = ys.shape[-1] >= 4  # shape is static, safe outside jit
 
     return SimulationResult(
         ts=ts,
-        ys=ys,
+        radius=ys[..., 0],
+        radial_velocity=ys[..., 1],
+        radial_acceleration=rddot,
+        vessel_radius=ys[..., 2] if has_vessel else None,
+        vessel_velocity=ys[..., 3] if has_vessel else None,
         driving_pressure=driving_pressure,
         converged=diffrax.is_successful(sol.result),
         bubble=bubble,

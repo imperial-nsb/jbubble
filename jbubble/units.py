@@ -50,3 +50,7 @@ class Units(eqx.Module):
     @property
     def freq_scale(self) -> float:
         return 1.0 / self.T_scale
+
+    @property
+    def acc_scale(self) -> float:
+        return self.L_scale / self.T_scale**2
