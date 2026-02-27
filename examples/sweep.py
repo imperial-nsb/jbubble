@@ -69,7 +69,7 @@ def run_2d_sweep(x_values, y_values, kernel_func, x_name="X", y_name="Y"):
 
 def plot_heatmap(x_grid, y_grid, data, x_label, y_label, title, cbar_label):
     plt.figure(figsize=(10, 8))
-    plt.pcolormesh(x_grid, y_grid, data, shading='auto', cmap='viridis')
+    plt.pcolormesh(x_grid, y_grid, data, shading='auto', cmap='inferno', edgecolors = 'none', antialiased=False, linewidth=0,rasterized=True)
     plt.colorbar(label=cbar_label)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
@@ -85,7 +85,7 @@ def main():
     print("\n--- Sweep 1: Frequency vs Initial Radius ---")
 
     def freq_r0_kernel(freq, r0):
-        bubble = Bubble(R0=r0)
+        bubble = Bubble(R0=r0, chi = 5)
         pulse = Pulse(
             freq=freq,
             pressure=100e3,
@@ -95,8 +95,8 @@ def main():
         )
         return run_simulation(bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6)
 
-    r0_values = jnp.linspace(1.0e-6, 10.0e-6, 50)
-    freq_values = jnp.linspace(0.1e6, 1.5e6, 50)
+    r0_values = jnp.linspace(1.0e-6, 10.0e-6, 100)
+    freq_values = jnp.linspace(0.1e6, 1.5e6, 100)
 
     # Note: run_2d_sweep takes (x_values, y_values). 
     # We want Freq on X and R0 on Y.
@@ -132,8 +132,8 @@ def main():
         )
         return run_simulation(bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6)
 
-    r0_values_2 = jnp.linspace(1.0e-6, 10.0e-6, 50)
-    chi_values = jnp.linspace(0.0, 1.0, 50)
+    r0_values_2 = jnp.linspace(1.0e-6, 10.0e-6, 100)
+    chi_values = jnp.linspace(0.0, 1.0, 100)
 
     # We want R0 on X and Chi on Y
     res_2, r0_grid_2, chi_grid_2 = run_2d_sweep(
@@ -165,8 +165,70 @@ def main():
         )
         return run_simulation(bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6)
 
-    pressure_values = jnp.linspace(10e3, 500e3, 50) # 10 kPa to 500 kPa
-    r0_values_3 = jnp.linspace(1.0e-6, 10.0e-6, 50)
+    pressure_values = jnp.linspace(10e3, 500e3, 100) # 10 kPa to 500 kPa
+    r0_values_3 = jnp.linspace(1.0e-6, 10.0e-6, 100)
+
+    # We want Pressure on X and R0 on Y
+    res_3, p_grid_3, r0_grid_3 = run_2d_sweep(
+        pressure_values, r0_values_3, pressure_r0_kernel, x_name="Pressure", y_name="R0"
+    )
+
+    expansion_ratio_3 = res_3.radius.max(axis=-1) / res_3.bubble.R0
+    plot_heatmap(
+        p_grid_3 / 1e3, 
+        r0_grid_3 * 1e6, 
+        expansion_ratio_3,
+        "Driving Pressure (kPa)", 
+        "Initial Radius (µm)", 
+        f"Max Expansion Ratio: Pressure vs R0 (Freq={fixed_freq/1e6} MHz)",
+        "$R_{max}/R_0$"
+    )
+    
+    
+    def pressure_r0_kernel(pressure, r0):
+        bubble = Bubble(R0=r0)
+        pulse = Pulse(
+            freq=fixed_freq,
+            pressure=pressure,
+            shape=shapes.Asymmetrical(),
+            cycle_num=5,
+            initial_time=1e-6
+        )
+        return run_simulation(bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6)
+
+    pressure_values = jnp.linspace(10e3, 500e3, 100) # 10 kPa to 500 kPa
+    r0_values_3 = jnp.linspace(1.0e-6, 10.0e-6, 100)
+
+    # We want Pressure on X and R0 on Y
+    res_3, p_grid_3, r0_grid_3 = run_2d_sweep(
+        pressure_values, r0_values_3, pressure_r0_kernel, x_name="Pressure", y_name="R0"
+    )
+
+    expansion_ratio_3 = res_3.radius.max(axis=-1) / res_3.bubble.R0
+    plot_heatmap(
+        p_grid_3 / 1e3, 
+        r0_grid_3 * 1e6, 
+        expansion_ratio_3,
+        "Driving Pressure (kPa)", 
+        "Initial Radius (µm)", 
+        f"Max Expansion Ratio: Pressure vs R0 (Freq={fixed_freq/1e6} MHz)",
+        "$R_{max}/R_0$"
+    )
+    
+    
+    def pressure_r0_kernel(pressure, r0):
+        bubble = Bubble(R0=r0)
+        pulse = Pulse(
+            freq=fixed_freq,
+            pressure=pressure,
+            shape=shapes.Asymmetrical(),
+            cycle_num=5,
+            initial_time=1e-6
+        )
+        return run_simulation(bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6)
+
+    pressure_values = jnp.linspace(10e3, 500e3, 100) # 10 kPa to 500 kPa
+    r0_values_3 = jnp.linspace(1.0e-6, 10.0e-6, 100)
 
     # We want Pressure on X and R0 on Y
     res_3, p_grid_3, r0_grid_3 = run_2d_sweep(
