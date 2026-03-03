@@ -121,7 +121,7 @@ def test_grad_through_bubble_equation_wrt_R0(jax_units, jax_pulse):
     scaled_p = jax_pulse.get_scaled(jax_units)
 
     def loss(r0_physical: jax.Array) -> jax.Array:
-        b = MarmottantGompertz(R0=r0_physical)
+        b = MarmottantGompertz(R0=r0_physical)  # type: ignore
         scaled_b = b.get_scaled(jax_units)
         # Perturbed dimensionless state: R = 1.2 * R0_dim, Ṙ = 0
         r0_dim = r0_physical / jax_units.L_scale
