@@ -27,3 +27,5 @@ coverage.xml
 *.env.test.local
 *.env.production.local
 
+# Saved data files
+data/*
