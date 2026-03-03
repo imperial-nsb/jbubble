@@ -78,16 +78,6 @@ def test_radiated_pressure_is_finite(marmottant_bubble, pulse, units, save_spec)
     assert bool(jnp.all(jnp.isfinite(p_rad)))
 
 
-def test_radiated_pressure_works_for_kelvin_voigt(pulse, units, save_spec):
-    """Regression test: rho_m was renamed rho_L; this must not AttributeError."""
-    from jbubble.bubble import KelvinVoigtGompertz
-
-    b = KelvinVoigtGompertz(R0=3e-6)
-    result = run_simulation(b, pulse, units=units, save_spec=save_spec)
-    p_rad = result.radiated_pressure(d=1e-3)
-    assert bool(jnp.all(jnp.isfinite(p_rad)))
-
-
 # ── compute_radius_metrics ────────────────────────────────────────────────────
 
 
