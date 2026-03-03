@@ -41,7 +41,7 @@ def plot_surface_tension_comparison(
 
     # Plot all bubbles
     colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]
-    for i, (bubble, label) in enumerate(zip(bubbles, labels)):
+    for i, (bubble, label) in enumerate(zip(bubbles, labels, strict=True)):
         sigma_vals = bubble.surface_tension(R_vals)
         plt.plot(
             R_vals * 1e6,

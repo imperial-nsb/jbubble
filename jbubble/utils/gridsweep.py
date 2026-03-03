@@ -39,7 +39,8 @@ Notes
 from __future__ import annotations
 
 import math
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import jax
 import jax.numpy as jnp
@@ -104,7 +105,7 @@ class GridSweep:
     @property
     def axes(self) -> dict[str, jnp.ndarray]:
         """Parameter axes in sweep order."""
-        return dict(zip(self._keys, self._axes))
+        return dict(zip(self._keys, self._axes, strict=True))
 
     # ── core primitive ───────────────────────────────────────────
 

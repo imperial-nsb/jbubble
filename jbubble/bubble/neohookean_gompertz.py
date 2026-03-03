@@ -3,7 +3,6 @@ Neo-Hookean finite-strain viscoelastic model with Gompertz surface tension.
 """
 
 import jax
-import jax.numpy as jnp
 
 from .kelvin_voigt_gompertz import KelvinVoigtGompertz
 
