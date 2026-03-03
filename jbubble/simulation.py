@@ -49,10 +49,10 @@ class SimulationResult(eqx.Module):
     """
 
     ts: jax.Array
-    radius: jax.Array  # R    [m]
-    radial_velocity: jax.Array  # Ṙ   [m/s]
-    radial_acceleration: jax.Array  # R̈  [m/s²], computed analytically from ODE RHS
-    vessel_radius: jax.Array | None  # R_v  [m]   (vessel models only)
+    radius: jax.Array  # R [m]
+    radial_velocity: jax.Array  # Ṙ [m/s]
+    radial_acceleration: jax.Array  # R̈ [m/s²], computed analytically from ODE RHS
+    vessel_radius: jax.Array | None  # R_v [m]   (vessel models only)
     vessel_velocity: jax.Array | None  # Ṙ_v [m/s]  (vessel models only)
     driving_pressure: jax.Array
     converged: jax.Array
