@@ -1,5 +1,5 @@
 """
-Marmottant model with smooth Gompertz surface tension law.
+Church (1995) thick-shell model with Gompertz surface tension.
 """
 
 from typing import Any
@@ -11,31 +11,37 @@ from . import _defaults, _pressure
 from .base import GompertzBubble
 
 
-class MarmottantGompertz(GompertzBubble):
+class ChurchGompertz(GompertzBubble):
     """
-    Smooth Gompertz-based variant of the Marmottant shell model.
+    Church (1995) thick elastic shell model with Gompertz surface tension.
 
-    The discontinuous piecewise surface tension law is replaced with
-    a differentiable Gompertz function, making the model suitable for
-    automatic differentiation, gradient-based optimisation, and inverse
-    problems.
+    Models a lipid-coated microbubble with a thick, viscoelastic shell
+    following Church (1995). Shell mechanics are parameterised directly via
+    shell thickness *d_s*, shear modulus *G_s*, and shell viscosity *mu_s*.
+
+    The shell contributions to the pressure balance are::
+
+        P_elastic = (4/3) G_s (d_s/R₀) [1 − (R₀/R)³]
+        P_shell_visc = 4 μ_s d_s Ṙ / R²
 
     Includes:
-        - Shell elasticity and shell viscosity
-        - Van der Waals gas correction
-        - Liquid compressibility correction
+        - Thick-shell elasticity (G_s, d_s)
+        - Thick-shell viscosity (mu_s, d_s)
+        - Smooth Gompertz surface tension (chi)
+        - Liquid viscosity (mu_L)
+        - Polytropic gas law
     """
 
     R0: float
     gamma: float = _defaults.GAMMA_LIPID
     chi: float = _defaults.CHI_LIPID
     mu_L: float = _defaults.MU_WATER
-    kappa_s: float = _defaults.KAPPA_S_LIPID
     rho_L: float = _defaults.RHO_WATER
-    c_L: float = _defaults.C_WATER
     P_amb: float = _defaults.P_ATM
     sigma_L: float = _defaults.SIGMA_WATER
-    vdw_divisor: float = _defaults.VDW_DIVISOR
+    d_s: float = 4e-9
+    G_s: float = 10e6
+    mu_s: float = 0.5
     R_buckle_ratio: float = _defaults.R_BUCKLE_RATIO
 
     @property
@@ -54,10 +60,6 @@ class MarmottantGompertz(GompertzBubble):
     def R_break(self):
         return _defaults.R_BREAK_RATIO * self.R0
 
-    @property
-    def vdw(self):
-        return self.R0 / self.vdw_divisor
-
     def bubble_equation(self, t: Any, state: jax.Array, pulse) -> jax.Array:
 
         R, R_dot = state
@@ -68,26 +70,19 @@ class MarmottantGompertz(GompertzBubble):
         P_gas0 = _pressure.gas_pressure_equilibrium(
             self.P_amb, self.sigma_R0, self.R0
         )
-        P_gas = (
-            P_gas0
-            * ((self.R0**3 - self.vdw**3) / (R**3 - self.vdw**3)) ** self.gamma
-        )
+        P_gas = _pressure.gas_pressure(P_gas0, self.R0, R, self.gamma)
 
         P_surf = _pressure.laplace_pressure(sigma, R)
         P_visc = _pressure.viscous_pressure(self.mu_L, R_dot, R)
-        P_surf_visc = _pressure.shell_viscous_pressure(self.kappa_s, R_dot, R)
 
-        damping_term = 1.0 - (3.0 * self.gamma * R_dot * R**3) / (
-            self.c_L * (R**3 - self.vdw**3)
+        # Church (1995) thick-shell elastic and viscous contributions
+        P_elastic = (
+            (4.0 / 3.0) * self.G_s * (self.d_s / self.R0) * (1.0 - (self.R0 / R) ** 3)
         )
+        P_shell_visc = 4.0 * self.mu_s * self.d_s * R_dot / R**2
 
         forces = (
-            P_gas * damping_term
-            - P_surf
-            - P_visc
-            - P_surf_visc
-            - P_drive
-            - self.P_amb
+            P_gas - P_surf - P_visc - P_elastic - P_shell_visc - P_drive - self.P_amb
         )
 
         R_ddot = (forces / self.rho_L - 1.5 * R_dot**2) / R

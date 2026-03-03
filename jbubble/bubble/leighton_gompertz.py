@@ -7,132 +7,56 @@ from typing import Any
 import jax
 import jax.numpy as jnp
 
-from ..units import Units
-from ._gompertz import gompertz_surface_tension
-from .base import Bubble
+from . import _defaults, _pressure
+from .base import GompertzBubble
 
 
-class LeightonGompertz(Bubble):
+class LeightonGompertz(GompertzBubble):
     """
-    Leighton Model:
-    A lipid-coated microbubble confined in a rigid-walled tube and following a differentiable surface tension law (Gompertz)
+    Leighton model for a bubble confined in a rigid-walled tube with
+    Gompertz surface tension.
 
     Models a bubble confined within a rigid-walled tube, incorporating:
-    - Shell elasticity and viscosity (chi and kappa_s)
-    - Smooth Gompertz surface tension
-    - Polytropic gas law
-    - Tube wall inertia and geometry effects
-    - Liquid compressibility correction
+        - Shell elasticity and viscosity (chi and kappa_s)
+        - Smooth Gompertz surface tension
+        - Polytropic gas law
+        - Tube wall inertia and geometry effects
+        - Liquid compressibility correction
     """
 
     R0: float
-    R_buckle: float
-    gamma: float
-    chi: float
-    mu_L: float
-    kappa_s: float
-    rho_L: float
-    c_L: float
-    P_amb: float
-    sigma_L: float
-    tube_radius: float
-    tube_length: float
+    gamma: float = _defaults.GAMMA_LIPID
+    chi: float = _defaults.CHI_LIPID
+    mu_L: float = _defaults.MU_WATER
+    kappa_s: float = _defaults.KAPPA_S_LIPID
+    rho_L: float = _defaults.RHO_WATER
+    c_L: float = _defaults.C_WATER
+    P_amb: float = _defaults.P_ATM
+    sigma_L: float = _defaults.SIGMA_WATER
+    tube_radius: float = 10.0e-6
+    tube_length: float = 100.0e-6
+    R_buckle_ratio: float = _defaults.R_BUCKLE_RATIO
 
-    R_break: float
-    sigma_break: float
-    sigma_R0: float
-    P_gas0: float
+    @property
+    def R_buckle(self):
+        return self.R0 * self.R_buckle_ratio
 
-    def __init__(
-        self,
-        R0: float,
-        R_buckle: float | None = None,
-        gamma: float = 1.07,
-        chi: float = 0.38,
-        mu_L: float = 0.00089,
-        kappa_s: float = 2.4e-9,
-        rho_L: float = 1000.0,
-        c_L: float = 1498.0,
-        P_amb: float = 101.3e3,
-        sigma_L: float = 72e-3,
-        tube_radius: float = 10.0e-6,
-        tube_length: float = 100.0e-6,
-    ) -> None:
-        """Initialise a LeightonGompertz bubble model.
+    @property
+    def sigma_R0(self):
+        return self.chi * ((self.R0 / self.R_buckle) ** 2 - 1.0)
 
-        Parameters
-        ----------
-        R0 : float
-            Equilibrium bubble radius [m].
-        R_buckle : float, optional
-            Shell buckling radius [m].  Defaults to ``0.99 * R0``.
-        gamma : float
-            Polytropic exponent of the enclosed gas.  Typical lipid shell:
-            1.07; air: 1.4.
-        chi : float
-            Shell elasticity modulus [N/m].  Typical lipid shell: 0.2–0.6 N/m.
-        mu_L : float
-            Dynamic viscosity of the surrounding liquid [Pa·s].
-        kappa_s : float
-            Shell surface dilatational viscosity [N·s/m].
-        rho_L : float
-            Liquid density [kg/m³].
-        c_L : float
-            Speed of sound in the liquid [m/s].
-        P_amb : float
-            Ambient pressure [Pa].
-        sigma_L : float
-            Surface tension of the bare liquid–gas interface [N/m].
-        tube_radius : float
-            Internal radius of the confining rigid tube [m].
-        tube_length : float
-            Length of the confining rigid tube [m].
-        """
-        self.R0 = R0
-        self.R_buckle = 0.99 * self.R0 if R_buckle is None else R_buckle
-        self.gamma = gamma
-        self.chi = chi
-        self.mu_L = mu_L
-        self.kappa_s = kappa_s
-        self.rho_L = rho_L
-        self.c_L = c_L
-        self.P_amb = P_amb
-        self.sigma_L = sigma_L
-        self.tube_radius = tube_radius
-        self.tube_length = tube_length
+    @property
+    def sigma_break(self):
+        return self.sigma_L
 
-        # Shell rupture
-        self.R_break = 1.1 * R0
-        self.sigma_break = sigma_L
-        self.sigma_R0 = chi * ((R0**2 / self.R_buckle**2) - 1.0)
+    @property
+    def R_break(self):
+        return _defaults.R_BREAK_RATIO * self.R0
 
-        # Precompute gas pressure at equilibrium
-        self.P_gas0 = self.P_amb + 2.0 * self.sigma_R0 / self.R0
-
-    def surface_tension(self, R: jax.Array) -> jax.Array:
-        return gompertz_surface_tension(
-            R,
-            R0=self.R0,
-            R_buckle=self.R_buckle,
-            chi=self.chi,
-            sigma_break=self.sigma_break,
-            sigma_R0=self.sigma_R0,
-        )
-
-    def get_scaled(self, units: Units) -> "LeightonGompertz":
-        return LeightonGompertz(
-            R0=self.R0 / units.L_scale,
-            R_buckle=self.R_buckle / units.L_scale,
-            gamma=self.gamma,
-            chi=self.chi / units.chi_scale,
-            mu_L=self.mu_L / units.mu_scale,
-            kappa_s=self.kappa_s / units.kappa_scale,
-            rho_L=self.rho_L / units.rho_scale,
-            c_L=self.c_L / units.vel_scale,
-            P_amb=self.P_amb / units.P_scale,
-            sigma_L=self.sigma_L / units.sigma_scale,
-            tube_radius=self.tube_radius / units.L_scale,
-            tube_length=self.tube_length / units.L_scale,
+    @property
+    def P_gas0(self):
+        return _pressure.gas_pressure_equilibrium(
+            self.P_amb, self.sigma_R0, self.R0
         )
 
     def bubble_equation(self, t: Any, state: jax.Array, pulse) -> jax.Array:
@@ -151,12 +75,14 @@ class LeightonGompertz(Bubble):
         # Driving & gas term with small-order compressibility
         P_drive = pulse(t)
         damping_term = 1.0 - (3.0 * self.gamma * R_dot) / self.c_L
-        P_gas = self.P_gas0 * (self.R0 / R) ** (3.0 * self.gamma) * damping_term
+        P_gas = (
+            _pressure.gas_pressure(self.P_gas0, self.R0, R, self.gamma) * damping_term
+        )
 
         # Dissipative and capillary terms
-        P_surface_visc = 4.0 * self.kappa_s * R_dot / (R**2)
-        P_liq_visc = 4.0 * self.mu_L * R_dot / R
-        P_Laplace = 2.0 * sigma / R
+        P_surface_visc = _pressure.shell_viscous_pressure(self.kappa_s, R_dot, R)
+        P_liq_visc = _pressure.viscous_pressure(self.mu_L, R_dot, R)
+        P_Laplace = _pressure.laplace_pressure(sigma, R)
 
         # Net forcing (right-hand side)
         rhs = (

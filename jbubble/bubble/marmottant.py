@@ -7,14 +7,16 @@ from typing import Any
 import jax
 import jax.numpy as jnp
 
-from ..units import Units
+from . import _defaults, _pressure
 from .base import Bubble
 
 
 class Marmottant(Bubble):
     """
     Marmottant shell model for encapsulated microbubbles.
-    A lipid-coated microbubble in a Newtonian fluid following a discontinuous piecewise surface tension law.
+
+    A lipid-coated microbubble in a Newtonian fluid following a
+    discontinuous piecewise surface tension law.
 
     Surface tension follows three regimes:
         1) Buckled:     σ = 0
@@ -27,103 +29,45 @@ class Marmottant(Bubble):
         - Liquid compressibility correction
     """
 
-    R0: jax.Array
-    R_buckle: float
-    gamma: float
-    chi: float
-    mu_L: float
-    kappa_s: float
-    rho_L: float
-    c_L: float
-    P_amb: float
-    sigma_L: float
+    R0: float
+    gamma: float = _defaults.GAMMA_LIPID
+    chi: float = _defaults.CHI_LIPID
+    mu_L: float = _defaults.MU_WATER
+    kappa_s: float = _defaults.KAPPA_S_LIPID
+    rho_L: float = _defaults.RHO_WATER
+    c_L: float = _defaults.C_WATER
+    P_amb: float = _defaults.P_ATM
+    sigma_L: float = _defaults.SIGMA_WATER
+    vdw_divisor: float = _defaults.VDW_DIVISOR
+    R_buckle_ratio: float = _defaults.R_BUCKLE_RATIO
 
-    R_break: float
-    sigma_break: float
-    sigma_R0: float
-    vdw: float
+    @property
+    def R_buckle(self):
+        return self.R0 * self.R_buckle_ratio
 
-    def __init__(
-        self,
-        R0: float,
-        R_buckle: float | None = None,
-        gamma: float = 1.07,
-        chi: float = 0.38,
-        mu_L: float = 0.00089,
-        kappa_s: float = 2.4e-9,
-        rho_L: float = 1000.0,
-        c_L: float = 1498.0,
-        P_amb: float = 101.3e3,
-        sigma_L: float = 72e-3,
-        vdw_divisor: float = 5.61,
-    ) -> None:
-        """Initialise a Marmottant bubble model.
+    @property
+    def sigma_R0(self):
+        return self.chi * ((self.R0 / self.R_buckle) ** 2 - 1.0)
 
-        Parameters
-        ----------
-        R0 : float
-            Equilibrium bubble radius [m].
-        R_buckle : float, optional
-            Shell buckling radius [m].  Defaults to ``0.99 * R0``.
-        gamma : float
-            Polytropic exponent of the enclosed gas.  Typical lipid shell:
-            1.07; air: 1.4.
-        chi : float
-            Shell elasticity modulus [N/m].  Typical lipid shell: 0.2–0.6 N/m.
-        mu_L : float
-            Dynamic viscosity of the surrounding liquid [Pa·s].
-        kappa_s : float
-            Shell surface dilatational viscosity [N·s/m].
-        rho_L : float
-            Liquid density [kg/m³].
-        c_L : float
-            Speed of sound in the liquid [m/s].
-        P_amb : float
-            Ambient pressure [Pa].
-        sigma_L : float
-            Surface tension of the bare liquid–gas interface [N/m].
-        vdw_divisor : float
-            Sets the Van der Waals hard-core radius ``a = R0 / vdw_divisor``.
-        """
-        self.R0 = R0
-        self.R_buckle = 0.99 * self.R0 if R_buckle is None else R_buckle
-        self.gamma = gamma
-        self.chi = chi
-        self.mu_L = mu_L
-        self.kappa_s = kappa_s
-        self.rho_L = rho_L
-        self.c_L = c_L
-        self.P_amb = P_amb
-        self.sigma_L = sigma_L
+    @property
+    def sigma_break(self):
+        return self.sigma_L
 
-        self.sigma_break = self.sigma_L
-        self.R_break = jnp.sqrt((self.sigma_break / self.chi) + 1) * self.R_buckle
-        self.sigma_R0 = self.chi * ((self.R0**2 / self.R_buckle**2) - 1.0)
-        self.vdw = self.R0 / vdw_divisor
+    @property
+    def R_break(self):
+        return jnp.sqrt((self.sigma_break / self.chi) + 1) * self.R_buckle
+
+    @property
+    def vdw(self):
+        return self.R0 / self.vdw_divisor
 
     def surface_tension(self, R: jax.Array) -> jax.Array:
-
         sigma_elastic = self.chi * ((R**2 / self.R_buckle**2) - 1.0)
 
         return jnp.where(
             self.R_buckle >= R,
             0.0,
             jnp.where(self.R_break <= R, self.sigma_L, sigma_elastic),
-        )
-
-    def get_scaled(self, units: Units) -> "Marmottant":
-        return Marmottant(
-            R0=self.R0 / units.L_scale,
-            R_buckle=self.R_buckle / units.L_scale,
-            gamma=self.gamma,
-            chi=self.chi / units.chi_scale,
-            mu_L=self.mu_L / units.mu_scale,
-            kappa_s=self.kappa_s / units.kappa_scale,
-            rho_L=self.rho_L / units.rho_scale,
-            c_L=self.c_L / units.vel_scale,
-            P_amb=self.P_amb / units.P_scale,
-            sigma_L=self.sigma_L / units.sigma_scale,
-            vdw_divisor=5.61,  # Keep vdw scaling consistent with R0
         )
 
     def bubble_equation(self, t: Any, state: jax.Array, pulse) -> jax.Array:
@@ -133,21 +77,29 @@ class Marmottant(Bubble):
         sigma = self.surface_tension(R)
         P_drive = pulse(t)
 
-        P_gas0 = self.P_amb + 2.0 * self.sigma_R0 / self.R0
+        P_gas0 = _pressure.gas_pressure_equilibrium(
+            self.P_amb, self.sigma_R0, self.R0
+        )
         P_gas = (
-            P_gas0 * ((self.R0**3 - self.vdw**3) / (R**3 - self.vdw**3)) ** self.gamma
+            P_gas0
+            * ((self.R0**3 - self.vdw**3) / (R**3 - self.vdw**3)) ** self.gamma
         )
 
-        P_surf = 2.0 * sigma / R
-        P_visc = 4.0 * self.mu_L * R_dot / R
-        P_surf_visc = 4.0 * self.kappa_s * R_dot / R**2
+        P_surf = _pressure.laplace_pressure(sigma, R)
+        P_visc = _pressure.viscous_pressure(self.mu_L, R_dot, R)
+        P_surf_visc = _pressure.shell_viscous_pressure(self.kappa_s, R_dot, R)
 
         damping_term = 1.0 - (3.0 * self.gamma * R_dot * R**3) / (
             self.c_L * (R**3 - self.vdw**3)
         )
 
         forces = (
-            P_gas * damping_term - P_surf - P_visc - P_surf_visc - P_drive - self.P_amb
+            P_gas * damping_term
+            - P_surf
+            - P_visc
+            - P_surf_visc
+            - P_drive
+            - self.P_amb
         )
 
         R_ddot = (forces / self.rho_L - 1.5 * R_dot**2) / R

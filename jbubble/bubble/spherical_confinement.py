@@ -8,157 +8,63 @@ import jax
 import jax.numpy as jnp
 
 from ..units import Units
-from ._gompertz import gompertz_surface_tension
-from .base import Bubble
+from . import _defaults, _pressure
+from .base import GompertzBubble
 
 
-class SphericalConfinement(Bubble):
+class SphericalConfinement(GompertzBubble):
     """
     Spherical confinement model with Gompertz surface tension law.
 
-    Models a lipid-coated bubble confined within an thin, elastic and spherical shell.
+    Models a lipid-coated bubble confined within a thin, elastic
+    spherical shell. Captures key qualitative effects of confinement
+    on bubble dynamics, such as the presence of two normal modes.
 
-    This model captures the key qualitative effects of confinement on bubble dynamics, such as the presence of two normal modes, while maintaining computational tractability.
     Includes:
-    - Shell elasticity and viscosity (chi and kappa_s)
-    - Smooth Gompertz surface tension
-    - Polytropic gas law
-    - Confinement force based on linear elasticity of the shell
-    - Liquid compressibility correction.
+        - Shell elasticity and viscosity (chi and kappa_s)
+        - Smooth Gompertz surface tension
+        - Polytropic gas law
+        - Confinement force based on linear elasticity of the vessel
+        - Liquid compressibility correction
     """
 
     R0: float
-    R_buckle: float
-    gamma: float
-    chi: float
-    mu_L: float
-    kappa_s: float
-    rho_L: float
-    c_L: float
-    P_amb: float
-    sigma_L: float
-    vessel_radius: float
-    vessel_rho: float
-    vessel_E: float
-    vessel_d: float
-    tissue_rho: float
-    tissue_d: float
+    gamma: float = _defaults.GAMMA_LIPID
+    chi: float = _defaults.CHI_LIPID
+    mu_L: float = _defaults.MU_WATER
+    kappa_s: float = _defaults.KAPPA_S_LIPID
+    rho_L: float = _defaults.RHO_WATER
+    c_L: float = _defaults.C_WATER
+    P_amb: float = _defaults.P_ATM
+    sigma_L: float = _defaults.SIGMA_WATER
+    vessel_radius: float = 15.0e-6
+    vessel_rho: float = 900.0
+    vessel_E: float = 1.0e6
+    vessel_d: float = 1.0e-6
+    tissue_rho: float = 900.0
+    tissue_d: float = 1.0e-6
+    R_buckle_ratio: float = _defaults.R_BUCKLE_RATIO
 
-    R_break: float
-    sigma_break: float
-    sigma_R0: float
-    P_gas0: float
+    @property
+    def R_buckle(self):
+        return self.R0 * self.R_buckle_ratio
 
-    def __init__(
-        self,
-        R0: float,
-        R_buckle: float | None = None,
-        gamma: float = 1.07,
-        chi: float = 0.38,
-        mu_L: float = 0.00089,
-        kappa_s: float = 2.4e-9,
-        rho_L: float = 1000.0,
-        c_L: float = 1498.0,
-        P_amb: float = 101.3e3,
-        sigma_L: float = 72e-3,
-        vessel_radius: float = 15.0e-6,
-        vessel_rho: float = 900.0,
-        vessel_E: float = 1.0e6,
-        vessel_d: float = 1.0e-6,
-        tissue_rho: float = 900.0,
-        tissue_d: float = 1.0e-6,
-    ) -> None:
-        """Initialise a SphericalConfinement bubble model.
+    @property
+    def sigma_R0(self):
+        return self.chi * ((self.R0 / self.R_buckle) ** 2 - 1.0)
 
-        Parameters
-        ----------
-        R0 : float
-            Equilibrium bubble radius [m].
-        R_buckle : float, optional
-            Shell buckling radius [m].  Defaults to ``0.99 * R0``.
-        gamma : float
-            Polytropic exponent of the enclosed gas.  Typical lipid shell:
-            1.07; air: 1.4.
-        chi : float
-            Shell elasticity modulus [N/m].  Typical lipid shell: 0.2–0.6 N/m.
-        mu_L : float
-            Dynamic viscosity of the surrounding liquid [Pa·s].
-        kappa_s : float
-            Shell surface dilatational viscosity [N·s/m].
-        rho_L : float
-            Liquid density [kg/m³].
-        c_L : float
-            Speed of sound in the liquid [m/s].
-        P_amb : float
-            Ambient pressure [Pa].
-        sigma_L : float
-            Surface tension of the bare liquid–gas interface [N/m].
-        vessel_radius : float
-            Equilibrium inner radius of the confining elastic vessel [m].
-        vessel_rho : float
-            Vessel wall material density [kg/m³].
-        vessel_E : float
-            Young's modulus of the vessel wall [Pa].
-        vessel_d : float
-            Vessel wall thickness [m].
-        tissue_rho : float
-            Surrounding tissue density [kg/m³].
-        tissue_d : float
-            Effective tissue layer thickness contributing to inertia [m].
-        """
-        self.R0 = R0
-        self.R_buckle = 0.99 * self.R0 if R_buckle is None else R_buckle
-        self.gamma = gamma
-        self.chi = chi
-        self.mu_L = mu_L
-        self.kappa_s = kappa_s
-        self.rho_L = rho_L
-        self.c_L = c_L
-        self.P_amb = P_amb
-        self.sigma_L = sigma_L
-        self.vessel_radius = vessel_radius
-        self.vessel_rho = vessel_rho
-        self.vessel_E = vessel_E
-        self.vessel_d = vessel_d
-        self.tissue_rho = tissue_rho
-        self.tissue_d = tissue_d
+    @property
+    def sigma_break(self):
+        return self.sigma_L
 
-        # Shell rupture
-        self.R_break = 1.1 * R0
-        self.sigma_break = sigma_L
-        self.sigma_R0 = chi * ((R0**2 / self.R_buckle**2) - 1.0)
+    @property
+    def R_break(self):
+        return _defaults.R_BREAK_RATIO * self.R0
 
-        # Precompute gas pressure at equilibrium
-        self.P_gas0 = self.P_amb + 2.0 * self.sigma_R0 / self.R0
-
-    def surface_tension(self, R: jax.Array) -> jax.Array:
-        return gompertz_surface_tension(
-            R,
-            R0=self.R0,
-            R_buckle=self.R_buckle,
-            chi=self.chi,
-            sigma_break=self.sigma_break,
-            sigma_R0=self.sigma_R0,
-        )
-
-    def get_scaled(self, units: Units) -> "SphericalConfinement":
-        return SphericalConfinement(
-            R0=self.R0 / units.L_scale,
-            R_buckle=self.R_buckle / units.L_scale,
-            gamma=self.gamma,
-            chi=self.chi * units.sigma_scale,
-            mu_L=self.mu_L / units.mu_scale,
-            kappa_s=self.kappa_s / (units.mu_scale * units.L_scale),
-            rho_L=self.rho_L / units.rho_scale,
-            c_L=self.c_L / units.vel_scale,
-            P_amb=self.P_amb / units.P_scale,
-            sigma_L=self.sigma_L / units.sigma_scale,
-            vessel_radius=self.vessel_radius / units.L_scale,
-            vessel_rho=self.vessel_rho / units.rho_scale,
-            vessel_E=self.vessel_E / units.P_scale,
-            vessel_d=self.vessel_d / units.L_scale,
-            tissue_rho=self.tissue_rho / units.rho_scale,
-            tissue_d=self.tissue_d / units.L_scale,
+    @property
+    def P_gas0(self):
+        return _pressure.gas_pressure_equilibrium(
+            self.P_amb, self.sigma_R0, self.R0
         )
 
     def bubble_equation(self, t: Any, state: jax.Array, pulse) -> jax.Array:
@@ -192,16 +98,15 @@ class SphericalConfinement(Bubble):
         F = (
             P_gas
             - 2.0 * R * R_dot * rhoL * (1.0 / R - 1.0 / a)
-            - 2.0 * sigma / R
+            - _pressure.laplace_pressure(sigma, R)
             - 4.0 * mu * (R_dot / R + a_dot / a)
-            - 4.0 * ks * R_dot / R**2
+            - _pressure.shell_viscous_pressure(ks, R_dot, R)
             - P_wall
             - P0
             - P_drive
         )
 
         Delta = A * D - B * C
-
         Delta = jnp.where(jnp.abs(Delta) < 1e-14, 1e-14, Delta)
 
         R_ddot = (E * D - B * F) / Delta

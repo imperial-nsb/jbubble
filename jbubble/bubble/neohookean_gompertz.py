@@ -1,5 +1,5 @@
 """
-Kelvin-Voigt viscoelastic medium model with Gompertz surface tension.
+Neo-Hookean finite-strain viscoelastic model with Gompertz surface tension.
 """
 
 from typing import Any
@@ -11,17 +11,22 @@ from . import _defaults, _pressure
 from .base import GompertzBubble
 
 
-class KelvinVoigtGompertz(GompertzBubble):
+class NeoHookeanGompertz(GompertzBubble):
     """
-    Lipid-coated microbubble in a Kelvin-Voigt viscoelastic medium with
+    Lipid-coated microbubble in a Neo-Hookean finite-strain medium with
     Gompertz shell surface tension.
 
-    The surrounding material is modeled as a Kelvin-Voigt solid::
+    Identical to ``KelvinVoigtGompertz`` except the elastic medium stress
+    uses the Neo-Hookean constitutive law rather than the linear
+    Kelvin-Voigt formulation::
 
-        σ_medium = G · strain + μ_m · strain_rate
+        P_elastic = (4/3) G [(R₀/R)³ − (R/R₀)³]
+
+    This correctly captures finite-strain behaviour (large oscillation
+    amplitudes) where the Kelvin-Voigt linear approximation breaks down.
 
     Includes:
-        - Medium viscosity (μ_m) and linear elastic modulus (G)
+        - Medium viscosity (μ_m) and finite-strain elasticity (G)
         - Shell elasticity and viscosity (chi and kappa_s)
         - Smooth Gompertz surface tension
         - Polytropic gas law
@@ -72,7 +77,8 @@ class KelvinVoigtGompertz(GompertzBubble):
         P_visc = _pressure.viscous_pressure(self.mu_m, R_dot, R)
         P_surf_visc = _pressure.shell_viscous_pressure(self.kappa_s, R_dot, R)
 
-        P_elastic = (4.0 / 3.0) * self.G * ((R**3 - self.R0**3) / self.R0**3)
+        # Neo-Hookean finite-strain elastic term
+        P_elastic = (4.0 / 3.0) * self.G * ((self.R0 / R) ** 3 - (R / self.R0) ** 3)
 
         forces = (
             P_gas - P_surf - P_visc - P_surf_visc - P_drive - self.P_amb - P_elastic
