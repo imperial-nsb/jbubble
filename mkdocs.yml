@@ -1,0 +1,61 @@
+site_name: jbubble
+site_description: Differentiable microbubble dynamics primitives in JAX
+repo_url: https://github.com/imperial-nsb/jbubble
+repo_name: imperial-nsb/jbubble
+
+theme:
+  name: material
+  palette:
+    primary: blue
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+            merge_init_into_class: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Guide:
+    - Installation: guide/installation.md
+    - Quickstart: guide/quickstart.md
+    - Bubble models: guide/bubble_models.md
+    - Pulse shapes: guide/pulse_shapes.md
+    - Units & scaling: guide/units.md
+    - JAX tips: guide/jax_tips.md
+  - API reference:
+    - Overview: api/index.md
+    - bubble: api/bubble.md
+    - units: api/units.md
+    - pulse: api/pulse.md
+    - shapes: api/shapes.md
+    - solver: api/solver.md
+    - simulation: api/simulation.md
+    - utils: api/utils.md
