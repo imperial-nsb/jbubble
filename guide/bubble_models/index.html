@@ -1,0 +1,2279 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Differentiable microbubble dynamics primitives in JAX">
+      
+      
+      
+      
+        <link rel="prev" href="../quickstart/">
+      
+      
+        <link rel="next" href="../pulse_shapes/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Bubble models - jbubble</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#bubble-models" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="jbubble" class="md-header__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            jbubble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Bubble models
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../installation/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="jbubble" class="md-nav__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    jbubble
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bubble models
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bubble models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#model-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#class-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Class hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shared-physics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared physics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shared physics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#equilibrium-gas-pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Equilibrium gas pressure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polytropic-gas-law" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Polytropic gas law
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#van-der-waals-gas-law-marmottant-variants-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Van der Waals gas law (Marmottant variants only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#laplace-pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Laplace pressure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#liquid-viscous-pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Liquid viscous pressure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shell-surface-dilatational-viscous-pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shell surface-dilatational viscous pressure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gompertz-surface-tension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gompertz surface tension
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-physical-constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default physical constants
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-descriptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model descriptions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Model descriptions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rayleighplesset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RayleighPlesset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marmottant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marmottant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marmottantgompertz" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MarmottantGompertz
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kelvinvoigtgompertz" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KelvinVoigtGompertz
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neohookeangompertz" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NeoHookeanGompertz
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kellermiksisgompertz" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KellerMiksisGompertz
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#churchgompertz" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ChurchGompertz
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#leightongompertz" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LeightonGompertz
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sphericalconfinement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SphericalConfinement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pulse_shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pulse shapes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & scaling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jax_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JAX tips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/bubble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bubble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    units
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pulse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pulse
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    shapes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/solver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    solver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="bubble-models">Bubble models<a class="headerlink" href="#bubble-models" title="Permanent link">&para;</a></h1>
+<p>jbubble provides nine bubble models covering a range of physical assumptions.
+Choosing the right model depends on whether your bubble has a phospholipid shell,
+what medium surrounds it, and whether liquid compressibility or spatial
+confinement are important.</p>
+<h2 id="model-overview">Model overview<a class="headerlink" href="#model-overview" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Shell</th>
+<th>Surrounding medium</th>
+<th>Compressibility</th>
+<th>Geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RayleighPlesset</code></td>
+<td>None (bare gas)</td>
+<td>Newtonian liquid</td>
+<td>Incompressible</td>
+<td>Free field</td>
+</tr>
+<tr>
+<td><code>Marmottant</code></td>
+<td>Piecewise <span class="arithmatex">\(\sigma(R)\)</span></td>
+<td>Newtonian liquid</td>
+<td>1st-order damping</td>
+<td>Free field</td>
+</tr>
+<tr>
+<td><code>MarmottantGompertz</code></td>
+<td>Smooth Gompertz <span class="arithmatex">\(\sigma(R)\)</span></td>
+<td>Newtonian liquid</td>
+<td>1st-order damping</td>
+<td>Free field</td>
+</tr>
+<tr>
+<td><code>KellerMiksisGompertz</code></td>
+<td>Smooth Gompertz <span class="arithmatex">\(\sigma(R)\)</span></td>
+<td>Newtonian liquid</td>
+<td>Full Keller--Miksis</td>
+<td>Free field</td>
+</tr>
+<tr>
+<td><code>KelvinVoigtGompertz</code></td>
+<td>Smooth Gompertz <span class="arithmatex">\(\sigma(R)\)</span></td>
+<td>Kelvin--Voigt viscoelastic solid</td>
+<td>None</td>
+<td>Free field</td>
+</tr>
+<tr>
+<td><code>NeoHookeanGompertz</code></td>
+<td>Smooth Gompertz <span class="arithmatex">\(\sigma(R)\)</span></td>
+<td>Neo-Hookean viscoelastic solid</td>
+<td>None</td>
+<td>Free field</td>
+</tr>
+<tr>
+<td><code>ChurchGompertz</code></td>
+<td>Thick shell (<span class="arithmatex">\(G_s\)</span>, <span class="arithmatex">\(d_s\)</span>, <span class="arithmatex">\(\mu_s\)</span>) + Gompertz</td>
+<td>Newtonian liquid</td>
+<td>None</td>
+<td>Free field</td>
+</tr>
+<tr>
+<td><code>LeightonGompertz</code></td>
+<td>Smooth Gompertz <span class="arithmatex">\(\sigma(R)\)</span></td>
+<td>Newtonian liquid</td>
+<td>1st-order</td>
+<td>Rigid tube</td>
+</tr>
+<tr>
+<td><code>SphericalConfinement</code></td>
+<td>Smooth Gompertz <span class="arithmatex">\(\sigma(R)\)</span></td>
+<td>Newtonian liquid</td>
+<td>1st-order</td>
+<td>Elastic vessel</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">Choosing a model</p>
+<p>Start with <code>MarmottantGompertz</code> for most encapsulated microbubble work. Use
+<code>KellerMiksisGompertz</code> when peak radial velocities exceed ~10% of the speed
+of sound in the liquid, <code>KelvinVoigtGompertz</code> or <code>NeoHookeanGompertz</code> for
+tissue-embedded bubbles (prefer Neo-Hookean at large strains), <code>ChurchGompertz</code>
+for albumin-shelled agents, and <code>LeightonGompertz</code> or <code>SphericalConfinement</code>
+when vessel geometry matters.</p>
+</div>
+<h2 id="class-hierarchy">Class hierarchy<a class="headerlink" href="#class-hierarchy" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Bubble (abstract)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── RayleighPlesset
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── _MarmottantEquation, Bubble
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│   └── Marmottant
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>└── GompertzBubble (abstract; smooth Gompertz surface tension)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    ├── _MarmottantEquation, GompertzBubble
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    │   └── MarmottantGompertz
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ├── KelvinVoigtGompertz
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    │   └── NeoHookeanGompertz
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    ├── KellerMiksisGompertz
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    ├── ChurchGompertz
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    ├── LeightonGompertz
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    └── SphericalConfinement
+</code></pre></div>
+<hr />
+<h2 id="shared-physics">Shared physics<a class="headerlink" href="#shared-physics" title="Permanent link">&para;</a></h2>
+<h3 id="equilibrium-gas-pressure">Equilibrium gas pressure<a class="headerlink" href="#equilibrium-gas-pressure" title="Permanent link">&para;</a></h3>
+<div class="arithmatex">\[
+P_{\text{gas},0} = P_{\text{amb}} + \frac{2\,\sigma(R_0)}{R_0}
+\]</div>
+<h3 id="polytropic-gas-law">Polytropic gas law<a class="headerlink" href="#polytropic-gas-law" title="Permanent link">&para;</a></h3>
+<div class="arithmatex">\[
+P_{\text{gas}} = P_{\text{gas},0}\!\left(\frac{R_0}{R}\right)^{\!3\gamma}
+\]</div>
+<h3 id="van-der-waals-gas-law-marmottant-variants-only">Van der Waals gas law (Marmottant variants only)<a class="headerlink" href="#van-der-waals-gas-law-marmottant-variants-only" title="Permanent link">&para;</a></h3>
+<div class="arithmatex">\[
+P_{\text{gas}} = P_{\text{gas},0}\!\left(
+  \frac{R_0^3 - b^3}{R^3 - b^3}
+\right)^{\!\gamma},
+\qquad b = \frac{R_0}{5.61}
+\]</div>
+<h3 id="laplace-pressure">Laplace pressure<a class="headerlink" href="#laplace-pressure" title="Permanent link">&para;</a></h3>
+<div class="arithmatex">\[
+P_{\text{Laplace}} = \frac{2\,\sigma}{R}
+\]</div>
+<h3 id="liquid-viscous-pressure">Liquid viscous pressure<a class="headerlink" href="#liquid-viscous-pressure" title="Permanent link">&para;</a></h3>
+<div class="arithmatex">\[
+P_{\mu} = \frac{4\,\mu_L\,\dot{R}}{R}
+\]</div>
+<h3 id="shell-surface-dilatational-viscous-pressure">Shell surface-dilatational viscous pressure<a class="headerlink" href="#shell-surface-dilatational-viscous-pressure" title="Permanent link">&para;</a></h3>
+<div class="arithmatex">\[
+P_{\kappa} = \frac{4\,\kappa_s\,\dot{R}}{R^2}
+\]</div>
+<h3 id="gompertz-surface-tension">Gompertz surface tension<a class="headerlink" href="#gompertz-surface-tension" title="Permanent link">&para;</a></h3>
+<p>The piecewise <span class="arithmatex">\(\sigma(R)\)</span> of the original Marmottant model is not
+differentiable at the transition radii, which prevents the use of <code>jax.grad</code>
+through the bubble ODE. All <code>*Gompertz</code> models replace the piecewise law with
+a smooth Gompertz sigmoid:</p>
+<div class="arithmatex">\[
+\sigma(R) = a\,\exp\!\bigl(-b\,\exp\!\bigl(c\,(1 - R/R_{\text{buckle}})\bigr)\bigr)
+\]</div>
+<p>with</p>
+<div class="arithmatex">\[
+a = \sigma_{\text{break}}, \qquad
+c = \frac{2\chi}{a}\sqrt{1 + \frac{a}{2\chi}}, \qquad
+b = \frac{-\ln(\sigma_{R_0}/a)}{\exp\!\bigl(c\,(1-R_0/R_{\text{buckle}})\bigr)}
+\]</div>
+<p>Boundary behaviour:</p>
+<table>
+<thead>
+<tr>
+<th>Limit</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="arithmatex">\(R \to 0\)</span> (buckled)</td>
+<td><span class="arithmatex">\(\sigma \to 0\)</span></td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(R = R_0\)</span> (equilibrium)</td>
+<td><span class="arithmatex">\(\sigma = \sigma_{R_0} = \chi\bigl((R_0/R_{\text{buckle}})^2 - 1\bigr)\)</span></td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(R \to \infty\)</span> (ruptured)</td>
+<td><span class="arithmatex">\(\sigma \to \sigma_{\text{break}}\)</span></td>
+</tr>
+</tbody>
+</table>
+<h3 id="default-physical-constants">Default physical constants<a class="headerlink" href="#default-physical-constants" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Value</th>
+<th>Units</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="arithmatex">\(\gamma_{\text{lipid}}\)</span></td>
+<td>1.07</td>
+<td>--</td>
+<td>Polytropic exponent (lipid shell)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\gamma_{\text{air}}\)</span></td>
+<td>1.4</td>
+<td>--</td>
+<td>Polytropic exponent (air)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\chi\)</span></td>
+<td>0.38</td>
+<td>N/m</td>
+<td>Shell elasticity modulus</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\kappa_s\)</span></td>
+<td><span class="arithmatex">\(2.4 \times 10^{-9}\)</span></td>
+<td>N s/m</td>
+<td>Shell surface-dilatational viscosity</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\mu_L\)</span></td>
+<td><span class="arithmatex">\(8.9 \times 10^{-4}\)</span></td>
+<td>Pa s</td>
+<td>Dynamic viscosity (water)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\rho_L\)</span></td>
+<td>1000</td>
+<td>kg/m<span class="arithmatex">\(^3\)</span></td>
+<td>Liquid density (water)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(c_L\)</span></td>
+<td>1498</td>
+<td>m/s</td>
+<td>Speed of sound (water)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(P_{\text{amb}}\)</span></td>
+<td><span class="arithmatex">\(1.013 \times 10^5\)</span></td>
+<td>Pa</td>
+<td>Atmospheric pressure</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sigma_L\)</span></td>
+<td><span class="arithmatex">\(72 \times 10^{-3}\)</span></td>
+<td>N/m</td>
+<td>Surface tension (air--water)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(R_{\text{buckle}}/R_0\)</span></td>
+<td>0.99</td>
+<td>--</td>
+<td>Buckling radius ratio</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(R_{\text{break}}/R_0\)</span></td>
+<td>1.1</td>
+<td>--</td>
+<td>Rupture radius ratio</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="model-descriptions">Model descriptions<a class="headerlink" href="#model-descriptions" title="Permanent link">&para;</a></h2>
+<h3 id="rayleighplesset">RayleighPlesset<a class="headerlink" href="#rayleighplesset" title="Permanent link">&para;</a></h3>
+<p>The classical Rayleigh--Plesset equation for an uncoated gas bubble in an
+incompressible, Newtonian liquid. Appropriate as a baseline or for bare gas
+bubbles. No shell parameters are required.</p>
+<p><strong>Governing equation</strong></p>
+<div class="arithmatex">\[
+R\,\ddot{R} + \frac{3}{2}\dot{R}^2
+= \frac{1}{\rho_L}\Bigl[
+  P_{\text{gas}} - \frac{2\sigma_L}{R} - \frac{4\mu_L\dot{R}}{R}
+  - P_{\text{drive}}(t) - P_{\text{amb}}
+\Bigr]
+\]</div>
+<p><strong>Surface tension:</strong> <span class="arithmatex">\(\sigma(R) = \sigma_L\)</span> (constant).</p>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Symbol</th>
+<th>Default</th>
+<th>Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gamma</code></td>
+<td><span class="arithmatex">\(\gamma\)</span></td>
+<td>1.4</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>mu_L</code></td>
+<td><span class="arithmatex">\(\mu_L\)</span></td>
+<td><span class="arithmatex">\(8.9 \times 10^{-4}\)</span></td>
+<td>Pa s</td>
+</tr>
+<tr>
+<td><code>rho_L</code></td>
+<td><span class="arithmatex">\(\rho_L\)</span></td>
+<td>1000</td>
+<td>kg/m<span class="arithmatex">\(^3\)</span></td>
+</tr>
+<tr>
+<td><code>c_L</code></td>
+<td><span class="arithmatex">\(c_L\)</span></td>
+<td>1498</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td><code>sigma_L</code></td>
+<td><span class="arithmatex">\(\sigma_L\)</span></td>
+<td><span class="arithmatex">\(72 \times 10^{-3}\)</span></td>
+<td>N/m</td>
+</tr>
+</tbody>
+</table>
+<p><strong>References</strong></p>
+<ul>
+<li>Rayleigh, Lord (1917). "On the pressure developed in a liquid during the
+  collapse of a spherical cavity." <em>Philosophical Magazine</em>, 34(200), 94--98.</li>
+<li>Plesset, M. S. (1949). "The dynamics of cavitation bubbles." <em>Journal of
+  Applied Mechanics</em>, 16(3), 277--282.</li>
+</ul>
+<hr />
+<h3 id="marmottant">Marmottant<a class="headerlink" href="#marmottant" title="Permanent link">&para;</a></h3>
+<p>Extends the Rayleigh--Plesset equation with the piecewise Marmottant shell model,
+which defines the effective surface tension <span class="arithmatex">\(\sigma(R)\)</span> in three regimes: buckled,
+elastic, and ruptured. Radiation damping and van der Waals gas correction are
+included. This is the reference model for phospholipid-coated contrast agents.</p>
+<p><strong>Governing equation</strong></p>
+<div class="arithmatex">\[
+R\,\ddot{R} + \frac{3}{2}\dot{R}^2
+= \frac{1}{\rho_L}\Bigl[
+  P_{\text{gas}}\,\delta_c
+  - \frac{2\sigma}{R}
+  - \frac{4\mu_L\dot{R}}{R}
+  - \frac{4\kappa_s\dot{R}}{R^2}
+  - P_{\text{drive}} - P_{\text{amb}}
+\Bigr]
+\]</div>
+<p>with Van der Waals gas pressure and compressibility damping:</p>
+<div class="arithmatex">\[
+P_{\text{gas}} = P_{\text{gas},0}\!\left(
+  \frac{R_0^3 - b^3}{R^3 - b^3}
+\right)^{\!\gamma}, \qquad
+\delta_c = 1 - \frac{3\gamma\,\dot{R}\,R^3}{c_L\,(R^3 - b^3)}
+\]</div>
+<p><strong>Surface tension (piecewise)</strong></p>
+<div class="arithmatex">\[
+\sigma(R) =
+\begin{cases}
+  0 &amp; R \le R_{\text{buckle}} \\[4pt]
+  \chi\!\left(\dfrac{R^2}{R_{\text{buckle}}^2} - 1\right)
+    &amp; R_{\text{buckle}} &lt; R &lt; R_{\text{break}} \\[6pt]
+  \sigma_L &amp; R \ge R_{\text{break}}
+\end{cases}
+\]</div>
+<p>where <span class="arithmatex">\(R_{\text{break}} = R_{\text{buckle}}\sqrt{\sigma_L/\chi + 1}\)</span>.</p>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Symbol</th>
+<th>Default</th>
+<th>Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gamma</code></td>
+<td><span class="arithmatex">\(\gamma\)</span></td>
+<td>1.07</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>chi</code></td>
+<td><span class="arithmatex">\(\chi\)</span></td>
+<td>0.38</td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>mu_L</code></td>
+<td><span class="arithmatex">\(\mu_L\)</span></td>
+<td><span class="arithmatex">\(8.9 \times 10^{-4}\)</span></td>
+<td>Pa s</td>
+</tr>
+<tr>
+<td><code>kappa_s</code></td>
+<td><span class="arithmatex">\(\kappa_s\)</span></td>
+<td><span class="arithmatex">\(2.4 \times 10^{-9}\)</span></td>
+<td>N s/m</td>
+</tr>
+<tr>
+<td><code>rho_L</code></td>
+<td><span class="arithmatex">\(\rho_L\)</span></td>
+<td>1000</td>
+<td>kg/m<span class="arithmatex">\(^3\)</span></td>
+</tr>
+<tr>
+<td><code>c_L</code></td>
+<td><span class="arithmatex">\(c_L\)</span></td>
+<td>1498</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td><code>sigma_L</code></td>
+<td><span class="arithmatex">\(\sigma_L\)</span></td>
+<td><span class="arithmatex">\(72 \times 10^{-3}\)</span></td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>vdw_divisor</code></td>
+<td>--</td>
+<td>5.61</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>R_buckle_ratio</code></td>
+<td><span class="arithmatex">\(R_{\text{buckle}}/R_0\)</span></td>
+<td>0.99</td>
+<td>--</td>
+</tr>
+</tbody>
+</table>
+<p><strong>References</strong></p>
+<ul>
+<li>Marmottant, P., van der Meer, S., Emmer, M., Versluis, M., de Jong, N.,
+  Hilgenfeldt, S., &amp; Lohse, D. (2005). "A model for large amplitude
+  oscillations of coated bubbles accounting for buckling and rupture."
+  <em>Journal of the Acoustical Society of America</em>, 118(6), 3499--3505.</li>
+</ul>
+<hr />
+<h3 id="marmottantgompertz">MarmottantGompertz<a class="headerlink" href="#marmottantgompertz" title="Permanent link">&para;</a></h3>
+<p>Replaces the piecewise <span class="arithmatex">\(\sigma(R)\)</span> of the Marmottant model with a smooth
+Gompertz sigmoid. The smooth surface tension law is everywhere differentiable,
+making this model suitable for gradient-based parameter fitting with
+<code>jax.grad</code>. The governing equation is otherwise identical.</p>
+<p><strong>Governing equation:</strong> Same as <a href="#marmottant">Marmottant</a> (shared via
+<code>_MarmottantEquation</code> mixin).</p>
+<p><strong>Surface tension:</strong> Gompertz (see <a href="#gompertz-surface-tension">Shared physics</a>)
+with <span class="arithmatex">\(\sigma_{\text{break}} = \sigma_L\)</span>.</p>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Symbol</th>
+<th>Default</th>
+<th>Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chi</code></td>
+<td><span class="arithmatex">\(\chi\)</span></td>
+<td>0.38</td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>gamma</code></td>
+<td><span class="arithmatex">\(\gamma\)</span></td>
+<td>1.07</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>rho_L</code></td>
+<td><span class="arithmatex">\(\rho_L\)</span></td>
+<td>1000</td>
+<td>kg/m<span class="arithmatex">\(^3\)</span></td>
+</tr>
+<tr>
+<td><code>R_buckle_ratio</code></td>
+<td><span class="arithmatex">\(R_{\text{buckle}}/R_0\)</span></td>
+<td>0.99</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>mu_L</code></td>
+<td><span class="arithmatex">\(\mu_L\)</span></td>
+<td><span class="arithmatex">\(8.9 \times 10^{-4}\)</span></td>
+<td>Pa s</td>
+</tr>
+<tr>
+<td><code>kappa_s</code></td>
+<td><span class="arithmatex">\(\kappa_s\)</span></td>
+<td><span class="arithmatex">\(2.4 \times 10^{-9}\)</span></td>
+<td>N s/m</td>
+</tr>
+<tr>
+<td><code>c_L</code></td>
+<td><span class="arithmatex">\(c_L\)</span></td>
+<td>1498</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td><code>sigma_L</code></td>
+<td><span class="arithmatex">\(\sigma_L\)</span></td>
+<td><span class="arithmatex">\(72 \times 10^{-3}\)</span></td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>vdw_divisor</code></td>
+<td>--</td>
+<td>5.61</td>
+<td>--</td>
+</tr>
+</tbody>
+</table>
+<p><strong>References</strong></p>
+<ul>
+<li>Marmottant et al. (2005) -- see <a href="#marmottant">Marmottant</a>.</li>
+</ul>
+<hr />
+<h3 id="kelvinvoigtgompertz">KelvinVoigtGompertz<a class="headerlink" href="#kelvinvoigtgompertz" title="Permanent link">&para;</a></h3>
+<p>Models the bubble inside a Kelvin--Voigt viscoelastic solid (e.g. brain tissue
+or a gel phantom). The surrounding material exhibits both elastic restoring
+stress and viscous dissipation, with a linear (small-strain) elastic
+approximation. The Gompertz shell is retained. Liquid compressibility is
+neglected.</p>
+<p><strong>Governing equation</strong></p>
+<div class="arithmatex">\[
+R\,\ddot{R} + \frac{3}{2}\dot{R}^2
+= \frac{1}{\rho_L}\Bigl[
+  P_{\text{gas}}
+  - \frac{2\sigma}{R}
+  - \frac{4\mu_m\dot{R}}{R}
+  - \frac{4\kappa_s\dot{R}}{R^2}
+  - P_{\text{elastic}}
+  - P_{\text{drive}} - P_{\text{amb}}
+\Bigr]
+\]</div>
+<p>with</p>
+<div class="arithmatex">\[
+P_{\text{elastic}} = \frac{4}{3}\,G\,\frac{R^3 - R_0^3}{R_0^3}
+\]</div>
+<p><strong>Surface tension:</strong> Gompertz with <span class="arithmatex">\(\sigma_{\text{break}} = \sigma_m\)</span>.</p>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Symbol</th>
+<th>Default</th>
+<th>Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chi</code></td>
+<td><span class="arithmatex">\(\chi\)</span></td>
+<td>0.38</td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>gamma</code></td>
+<td><span class="arithmatex">\(\gamma\)</span></td>
+<td>1.07</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>rho_L</code></td>
+<td><span class="arithmatex">\(\rho_L\)</span></td>
+<td>1000</td>
+<td>kg/m<span class="arithmatex">\(^3\)</span></td>
+</tr>
+<tr>
+<td><code>R_buckle_ratio</code></td>
+<td><span class="arithmatex">\(R_{\text{buckle}}/R_0\)</span></td>
+<td>0.99</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>mu_m</code></td>
+<td><span class="arithmatex">\(\mu_m\)</span></td>
+<td><span class="arithmatex">\(8.9 \times 10^{-4}\)</span></td>
+<td>Pa s</td>
+</tr>
+<tr>
+<td><code>kappa_s</code></td>
+<td><span class="arithmatex">\(\kappa_s\)</span></td>
+<td><span class="arithmatex">\(2.4 \times 10^{-9}\)</span></td>
+<td>N s/m</td>
+</tr>
+<tr>
+<td><code>sigma_m</code></td>
+<td><span class="arithmatex">\(\sigma_m\)</span></td>
+<td><span class="arithmatex">\(72 \times 10^{-3}\)</span></td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>G</code></td>
+<td><span class="arithmatex">\(G\)</span></td>
+<td>0</td>
+<td>Pa</td>
+</tr>
+</tbody>
+</table>
+<p><strong>References</strong></p>
+<ul>
+<li>Yang, X. &amp; Church, C. C. (2005). "A model for the dynamics of gas bubbles
+  in soft tissue." <em>Journal of the Acoustical Society of America</em>, 118(6),
+  3595--3606.</li>
+</ul>
+<hr />
+<h3 id="neohookeangompertz">NeoHookeanGompertz<a class="headerlink" href="#neohookeangompertz" title="Permanent link">&para;</a></h3>
+<p>Identical to the Kelvin--Voigt model except the elastic pressure uses the
+Neo-Hookean finite-strain constitutive law. This correctly captures large
+oscillation amplitudes where the linear Kelvin--Voigt approximation breaks
+down. Inherits all other physics from <code>KelvinVoigtGompertz</code>.</p>
+<p><strong>Governing equation:</strong> Same as <a href="#kelvinvoigtgompertz">KelvinVoigtGompertz</a>,
+replacing the elastic term:</p>
+<div class="arithmatex">\[
+P_{\text{elastic}} = \frac{4}{3}\,G\!\left[
+  \left(\frac{R_0}{R}\right)^{\!3} - \left(\frac{R}{R_0}\right)^{\!3}
+\right]
+\]</div>
+<p><strong>Surface tension:</strong> Gompertz with <span class="arithmatex">\(\sigma_{\text{break}} = \sigma_m\)</span> (inherited).</p>
+<p><strong>Parameters:</strong> Same as <a href="#kelvinvoigtgompertz">KelvinVoigtGompertz</a> (all inherited).</p>
+<p><strong>References</strong></p>
+<ul>
+<li>Yang, X. &amp; Church, C. C. (2005) -- see <a href="#kelvinvoigtgompertz">KelvinVoigtGompertz</a>.</li>
+<li>Gaudron, R., Warnez, M., &amp; Johnsen, E. (2015). "Bubble dynamics in a
+  viscoelastic medium with nonlinear elasticity." <em>Journal of Fluid
+  Mechanics</em>, 766, 54--75.</li>
+</ul>
+<hr />
+<h3 id="kellermiksisgompertz">KellerMiksisGompertz<a class="headerlink" href="#kellermiksisgompertz" title="Permanent link">&para;</a></h3>
+<p>Like <code>MarmottantGompertz</code> but uses the full Keller--Miksis formulation for
+acoustic radiation rather than the approximate correction used in <code>Marmottant</code>.
+Accounts for acoustic radiation losses via time derivatives of the pressure
+terms (computed with <code>jax.grad</code>). Recommended when the Mach number of the
+bubble wall is non-negligible (strongly driven bubbles or low-viscosity host
+media).</p>
+<p><strong>Governing equation</strong></p>
+<div class="arithmatex">\[
+R\,\ddot{R}\!\left(1 - \frac{\dot{R}}{c_L}\right)
++ \frac{3}{2}\dot{R}^2\!\left(1 - \frac{\dot{R}}{3c_L}\right)
+= \frac{1}{\rho_L}\!\left(1 + \frac{\dot{R}}{c_L}\right)\!P_{\text{net}}
++ \frac{R}{\rho_L c_L}\dot{P}_{\text{net}}
+\]</div>
+<p>where</p>
+<div class="arithmatex">\[
+P_{\text{net}} = P_{\text{gas}}
+  - \frac{2\sigma}{R}
+  - \frac{4\mu_L\dot{R}}{R}
+  - \frac{4\kappa_s\dot{R}}{R^2}
+  - P_{\text{drive}} - P_{\text{amb}}
+\]</div>
+<p>The implementation rearranges this into the explicit form
+<span class="arithmatex">\(\ddot{R} = D / C\)</span> where <span class="arithmatex">\(C\)</span> and <span class="arithmatex">\(D\)</span> collect the <span class="arithmatex">\(\dot{R}\)</span>-dependent
+coefficients and time-derivative contributions.</p>
+<p><strong>Surface tension:</strong> Gompertz with <span class="arithmatex">\(\sigma_{\text{break}} = \sigma_L\)</span>.</p>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Symbol</th>
+<th>Default</th>
+<th>Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chi</code></td>
+<td><span class="arithmatex">\(\chi\)</span></td>
+<td>0.38</td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>gamma</code></td>
+<td><span class="arithmatex">\(\gamma\)</span></td>
+<td>1.07</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>rho_L</code></td>
+<td><span class="arithmatex">\(\rho_L\)</span></td>
+<td>1000</td>
+<td>kg/m<span class="arithmatex">\(^3\)</span></td>
+</tr>
+<tr>
+<td><code>R_buckle_ratio</code></td>
+<td><span class="arithmatex">\(R_{\text{buckle}}/R_0\)</span></td>
+<td>0.99</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>mu_L</code></td>
+<td><span class="arithmatex">\(\mu_L\)</span></td>
+<td><span class="arithmatex">\(8.9 \times 10^{-4}\)</span></td>
+<td>Pa s</td>
+</tr>
+<tr>
+<td><code>kappa_s</code></td>
+<td><span class="arithmatex">\(\kappa_s\)</span></td>
+<td><span class="arithmatex">\(2.4 \times 10^{-9}\)</span></td>
+<td>N s/m</td>
+</tr>
+<tr>
+<td><code>c_L</code></td>
+<td><span class="arithmatex">\(c_L\)</span></td>
+<td>1498</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td><code>sigma_L</code></td>
+<td><span class="arithmatex">\(\sigma_L\)</span></td>
+<td><span class="arithmatex">\(72 \times 10^{-3}\)</span></td>
+<td>N/m</td>
+</tr>
+</tbody>
+</table>
+<p><strong>References</strong></p>
+<ul>
+<li>Keller, J. B. &amp; Miksis, M. (1980). "Bubble oscillations of large
+  amplitude." <em>Journal of the Acoustical Society of America</em>, 68(2),
+  628--633.</li>
+</ul>
+<hr />
+<h3 id="churchgompertz">ChurchGompertz<a class="headerlink" href="#churchgompertz" title="Permanent link">&para;</a></h3>
+<p>Thick-shell model following Church (1995). The shell has finite thickness
+<span class="arithmatex">\(d_s\)</span>, shear modulus <span class="arithmatex">\(G_s\)</span>, and viscosity <span class="arithmatex">\(\mu_s\)</span>, parametrised directly
+rather than through effective surface quantities. The shell contributions
+scale with <span class="arithmatex">\(d_s / R_0\)</span>.</p>
+<p><strong>Governing equation</strong></p>
+<div class="arithmatex">\[
+R\,\ddot{R} + \frac{3}{2}\dot{R}^2
+= \frac{1}{\rho_L}\Bigl[
+  P_{\text{gas}}
+  - \frac{2\sigma}{R}
+  - \frac{4\mu_L\dot{R}}{R}
+  - P_{\text{elastic}}
+  - P_{\text{shell,visc}}
+  - P_{\text{drive}} - P_{\text{amb}}
+\Bigr]
+\]</div>
+<p>with Church's thick-shell terms:</p>
+<div class="arithmatex">\[
+P_{\text{elastic}} = \frac{4}{3}\,G_s\,\frac{d_s}{R_0}\!\left[
+  1 - \left(\frac{R_0}{R}\right)^{\!3}
+\right], \qquad
+P_{\text{shell,visc}} = \frac{4\,\mu_s\,d_s\,\dot{R}}{R^2}
+\]</div>
+<p><strong>Surface tension:</strong> Gompertz with <span class="arithmatex">\(\sigma_{\text{break}} = \sigma_L\)</span>.</p>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Symbol</th>
+<th>Default</th>
+<th>Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chi</code></td>
+<td><span class="arithmatex">\(\chi\)</span></td>
+<td>0.38</td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>gamma</code></td>
+<td><span class="arithmatex">\(\gamma\)</span></td>
+<td>1.07</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>rho_L</code></td>
+<td><span class="arithmatex">\(\rho_L\)</span></td>
+<td>1000</td>
+<td>kg/m<span class="arithmatex">\(^3\)</span></td>
+</tr>
+<tr>
+<td><code>R_buckle_ratio</code></td>
+<td><span class="arithmatex">\(R_{\text{buckle}}/R_0\)</span></td>
+<td>0.99</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>mu_L</code></td>
+<td><span class="arithmatex">\(\mu_L\)</span></td>
+<td><span class="arithmatex">\(8.9 \times 10^{-4}\)</span></td>
+<td>Pa s</td>
+</tr>
+<tr>
+<td><code>sigma_L</code></td>
+<td><span class="arithmatex">\(\sigma_L\)</span></td>
+<td><span class="arithmatex">\(72 \times 10^{-3}\)</span></td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>d_s</code></td>
+<td><span class="arithmatex">\(d_s\)</span></td>
+<td><span class="arithmatex">\(4 \times 10^{-9}\)</span></td>
+<td>m</td>
+</tr>
+<tr>
+<td><code>G_s</code></td>
+<td><span class="arithmatex">\(G_s\)</span></td>
+<td><span class="arithmatex">\(10 \times 10^{6}\)</span></td>
+<td>Pa</td>
+</tr>
+<tr>
+<td><code>mu_s</code></td>
+<td><span class="arithmatex">\(\mu_s\)</span></td>
+<td>0.5</td>
+<td>Pa s</td>
+</tr>
+</tbody>
+</table>
+<p><strong>References</strong></p>
+<ul>
+<li>Church, C. C. (1995). "The effects of an elastic solid surface layer on
+  the radial pulsations of gas bubbles." <em>Journal of the Acoustical Society
+  of America</em>, 97(3), 1510--1521.</li>
+</ul>
+<hr />
+<h3 id="leightongompertz">LeightonGompertz<a class="headerlink" href="#leightongompertz" title="Permanent link">&para;</a></h3>
+<p>Extends <code>MarmottantGompertz</code> to account for the presence of a rigid
+cylindrical tube (e.g. a vessel or catheter). Tube geometry modifies the
+inertial terms on the left-hand side of the Rayleigh--Plesset equation via
+aspect-ratio-dependent multipliers <span class="arithmatex">\(\alpha\)</span> and <span class="arithmatex">\(\beta\)</span>. Uses the Leighton
+confinement correction with first-order compressibility. Appropriate when
+the bubble-to-vessel size ratio is non-negligible.</p>
+<p><strong>Governing equation</strong></p>
+<div class="arithmatex">\[
+R\,\ddot{R}\!\left[1 + \frac{R}{\Gamma_1}\beta\right]
++ \frac{3}{2}\dot{R}^2\!\left[1 + \frac{4R}{3\Gamma_1}\beta\right]
+= \frac{1}{\rho_L}\Bigl[
+  P_{\text{gas}}\,\delta_c
+  - \frac{2\sigma}{R}
+  - \frac{4\mu_L\dot{R}}{R}
+  - \frac{4\kappa_s\dot{R}}{R^2}
+  - P_{\text{drive}} - P_{\text{amb}}
+\Bigr]
+\]</div>
+<p>where <span class="arithmatex">\(\Gamma_1\)</span> is the tube radius, <span class="arithmatex">\(\zeta_1 = L_{\text{tube}}/2\)</span> is the
+half-length, and:</p>
+<div class="arithmatex">\[
+\alpha = \frac{\zeta_1}{\Gamma_1}\!\left(
+  1 + \frac{8\Gamma_1}{3\pi\zeta_1}
+\right) - 1, \qquad
+\beta = 2\alpha, \qquad
+\delta_c = 1 - \frac{3\gamma\dot{R}}{c_L}
+\]</div>
+<p><strong>Surface tension:</strong> Gompertz with <span class="arithmatex">\(\sigma_{\text{break}} = \sigma_L\)</span>.</p>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Symbol</th>
+<th>Default</th>
+<th>Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chi</code></td>
+<td><span class="arithmatex">\(\chi\)</span></td>
+<td>0.38</td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>gamma</code></td>
+<td><span class="arithmatex">\(\gamma\)</span></td>
+<td>1.07</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>rho_L</code></td>
+<td><span class="arithmatex">\(\rho_L\)</span></td>
+<td>1000</td>
+<td>kg/m<span class="arithmatex">\(^3\)</span></td>
+</tr>
+<tr>
+<td><code>R_buckle_ratio</code></td>
+<td><span class="arithmatex">\(R_{\text{buckle}}/R_0\)</span></td>
+<td>0.99</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>mu_L</code></td>
+<td><span class="arithmatex">\(\mu_L\)</span></td>
+<td><span class="arithmatex">\(8.9 \times 10^{-4}\)</span></td>
+<td>Pa s</td>
+</tr>
+<tr>
+<td><code>kappa_s</code></td>
+<td><span class="arithmatex">\(\kappa_s\)</span></td>
+<td><span class="arithmatex">\(2.4 \times 10^{-9}\)</span></td>
+<td>N s/m</td>
+</tr>
+<tr>
+<td><code>c_L</code></td>
+<td><span class="arithmatex">\(c_L\)</span></td>
+<td>1498</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td><code>sigma_L</code></td>
+<td><span class="arithmatex">\(\sigma_L\)</span></td>
+<td><span class="arithmatex">\(72 \times 10^{-3}\)</span></td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>tube_radius</code></td>
+<td><span class="arithmatex">\(\Gamma_1\)</span></td>
+<td><span class="arithmatex">\(10 \times 10^{-6}\)</span></td>
+<td>m</td>
+</tr>
+<tr>
+<td><code>tube_length</code></td>
+<td><span class="arithmatex">\(L_{\text{tube}}\)</span></td>
+<td><span class="arithmatex">\(100 \times 10^{-6}\)</span></td>
+<td>m</td>
+</tr>
+</tbody>
+</table>
+<p><strong>References</strong></p>
+<ul>
+<li>Leighton, T. G. (2011). "The inertial terms in equations of motion for
+  bubbles in tubular vessels or parties of bubbles in general." <em>Journal of
+  the Acoustical Society of America</em>, 130(5), 3184--3204.</li>
+</ul>
+<hr />
+<h3 id="sphericalconfinement">SphericalConfinement<a class="headerlink" href="#sphericalconfinement" title="Permanent link">&para;</a></h3>
+<p>Models a bubble inside an elastic spherical shell (e.g. a compliant blood
+vessel). The bubble radius <span class="arithmatex">\(R\)</span> and vessel inner radius <span class="arithmatex">\(a\)</span> are coupled via a
+<span class="arithmatex">\(2 \times 2\)</span> linear system, giving rise to two normal modes. The state vector
+is four-dimensional: <span class="arithmatex">\([R,\,\dot{R},\,a,\,\dot{a}]\)</span>.</p>
+<p><strong>Governing equations</strong></p>
+<p>The coupled system is written as:</p>
+<div class="arithmatex">\[
+\begin{pmatrix} A &amp; B \\ C &amp; D \end{pmatrix}
+\begin{pmatrix} \ddot{R} \\ \ddot{a} \end{pmatrix}
+=
+\begin{pmatrix} E \\ F \end{pmatrix}
+\]</div>
+<p>with</p>
+<div class="arithmatex">\[
+\begin{aligned}
+A &amp;= R^2, \quad B = -a^2, \quad
+C = \rho_L R^2\!\left(\frac{1}{R} - \frac{1}{a}\right), \quad
+D = \rho_v d_v + \rho_t d_t \\[6pt]
+E &amp;= 2a\dot{a}^2 - 2R\dot{R}^2 \\[6pt]
+F &amp;= P_{\text{gas}}
+   - 2R\dot{R}\rho_L\!\left(\frac{1}{R} - \frac{1}{a}\right)
+   - \frac{2\sigma}{R}
+   - 4\mu_L\!\left(\frac{\dot{R}}{R} + \frac{\dot{a}}{a}\right)
+   - \frac{4\kappa_s\dot{R}}{R^2}
+   - P_{\text{wall}}
+   - P_{\text{amb}} - P_{\text{drive}}
+\end{aligned}
+\]</div>
+<p>where</p>
+<div class="arithmatex">\[
+P_{\text{gas}} = P_{\text{gas},0}\!\left(\frac{R_0}{R}\right)^{\!3\gamma}
+\!\left(1 - \frac{3\gamma\dot{R}}{c_L}\right), \qquad
+P_{\text{wall}} = \frac{E_v\,(a - a_0)}{(1 - \nu^2)\,a^2}, \quad \nu = 0.5
+\]</div>
+<p>The accelerations are solved by Cramer's rule:</p>
+<div class="arithmatex">\[
+\ddot{R} = \frac{ED - BF}{\Delta}, \qquad
+\ddot{a} = \frac{AF - CE}{\Delta}, \qquad
+\Delta = AD - BC
+\]</div>
+<p><strong>Surface tension:</strong> Gompertz with <span class="arithmatex">\(\sigma_{\text{break}} = \sigma_L\)</span>.</p>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Symbol</th>
+<th>Default</th>
+<th>Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chi</code></td>
+<td><span class="arithmatex">\(\chi\)</span></td>
+<td>0.38</td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>gamma</code></td>
+<td><span class="arithmatex">\(\gamma\)</span></td>
+<td>1.07</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>rho_L</code></td>
+<td><span class="arithmatex">\(\rho_L\)</span></td>
+<td>1000</td>
+<td>kg/m<span class="arithmatex">\(^3\)</span></td>
+</tr>
+<tr>
+<td><code>R_buckle_ratio</code></td>
+<td><span class="arithmatex">\(R_{\text{buckle}}/R_0\)</span></td>
+<td>0.99</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>mu_L</code></td>
+<td><span class="arithmatex">\(\mu_L\)</span></td>
+<td><span class="arithmatex">\(8.9 \times 10^{-4}\)</span></td>
+<td>Pa s</td>
+</tr>
+<tr>
+<td><code>kappa_s</code></td>
+<td><span class="arithmatex">\(\kappa_s\)</span></td>
+<td><span class="arithmatex">\(2.4 \times 10^{-9}\)</span></td>
+<td>N s/m</td>
+</tr>
+<tr>
+<td><code>c_L</code></td>
+<td><span class="arithmatex">\(c_L\)</span></td>
+<td>1498</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td><code>sigma_L</code></td>
+<td><span class="arithmatex">\(\sigma_L\)</span></td>
+<td><span class="arithmatex">\(72 \times 10^{-3}\)</span></td>
+<td>N/m</td>
+</tr>
+<tr>
+<td><code>vessel_radius</code></td>
+<td><span class="arithmatex">\(a_0\)</span></td>
+<td><span class="arithmatex">\(15 \times 10^{-6}\)</span></td>
+<td>m</td>
+</tr>
+<tr>
+<td><code>vessel_rho</code></td>
+<td><span class="arithmatex">\(\rho_v\)</span></td>
+<td>900</td>
+<td>kg/m<span class="arithmatex">\(^3\)</span></td>
+</tr>
+<tr>
+<td><code>vessel_E</code></td>
+<td><span class="arithmatex">\(E_v\)</span></td>
+<td><span class="arithmatex">\(1 \times 10^{6}\)</span></td>
+<td>Pa</td>
+</tr>
+<tr>
+<td><code>vessel_d</code></td>
+<td><span class="arithmatex">\(d_v\)</span></td>
+<td><span class="arithmatex">\(1 \times 10^{-6}\)</span></td>
+<td>m</td>
+</tr>
+<tr>
+<td><code>tissue_rho</code></td>
+<td><span class="arithmatex">\(\rho_t\)</span></td>
+<td>900</td>
+<td>kg/m<span class="arithmatex">\(^3\)</span></td>
+</tr>
+<tr>
+<td><code>tissue_d</code></td>
+<td><span class="arithmatex">\(d_t\)</span></td>
+<td><span class="arithmatex">\(1 \times 10^{-6}\)</span></td>
+<td>m</td>
+</tr>
+</tbody>
+</table>
+<p><strong>References</strong></p>
+<ul>
+<li>Sassaroli, E. &amp; Hynynen, K. (2005). "Resonance frequency of microbubbles
+  in small blood vessels: a numerical study." <em>Physics in Medicine and
+  Biology</em>, 50(22), 5293--5305.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
