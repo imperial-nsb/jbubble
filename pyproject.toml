@@ -7,7 +7,7 @@ name = "jbubble"
 dynamic = ["version"]
 description = "Differentiable microbubble dynamics primitives"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
   {name = "Callum Rhys Tilbury"},
 ]
@@ -27,7 +27,7 @@ dev = [
     "pytest>=8.0",
     "pytest-xdist>=3.5",
     "ruff>=0.4",
-    "mypy>=1.10",
+    "ty>=0.0.20",
     "pre-commit>=3.7",
 ]
 docs = [
@@ -53,7 +53,7 @@ fallback_version = "0.1.0"
 # ── Ruff: linting + formatting ────────────────────────────────────────────────
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 88
 src = ["jbubble", "tests"]
 
@@ -74,15 +74,10 @@ ignore = [
 quote-style = "double"
 indent-style = "space"
 
-# ── Mypy: type checking ───────────────────────────────────────────────────────
+# ── ty: type checking ─────────────────────────────────────────────────────────
 
-[tool.mypy]
-python_version = "3.9"
-ignore_missing_imports = true     # jax/equinox stubs are incomplete
-check_untyped_defs = false        # start lenient
-warn_return_any = false
-warn_unused_ignores = true
-exclude = ["examples/", "docs/", "jbubble/_version.py"]
+[tool.ty.environment]
+python-version = "3.10"
 
 # ── Pytest ────────────────────────────────────────────────────────────────────
 
