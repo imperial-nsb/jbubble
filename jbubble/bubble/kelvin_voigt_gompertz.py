@@ -38,6 +38,10 @@ class KelvinVoigtGompertz(GompertzBubble):
     def sigma_break(self):
         return self.sigma_m
 
+    def elastic_pressure(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
+        """Linear Kelvin-Voigt elastic medium pressure."""
+        return (4.0 / 3.0) * self.G * ((R**3 - self.R0**3) / self.R0**3)
+
     def bubble_equation(self, t: Any, state: jax.Array, pulse) -> jax.Array:
 
         R, R_dot = state
@@ -51,7 +55,7 @@ class KelvinVoigtGompertz(GompertzBubble):
         P_visc = _pressure.viscous_pressure(self.mu_m, R_dot, R)
         P_surf_visc = _pressure.shell_viscous_pressure(self.kappa_s, R_dot, R)
 
-        P_elastic = (4.0 / 3.0) * self.G * ((R**3 - self.R0**3) / self.R0**3)
+        P_elastic = self.elastic_pressure(R, R_dot)
 
         forces = (
             P_gas - P_surf - P_visc - P_surf_visc - P_drive - self.P_amb - P_elastic
