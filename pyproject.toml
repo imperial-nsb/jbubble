@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "jbubble"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Differentiable microbubble dynamics primitives"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -19,6 +19,22 @@ dependencies = [
     "numpy>=2.0.0",
     "chex>=0.1.91",
     "optax>=0.2.3",
+    "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-xdist>=3.5",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "pre-commit>=3.7",
+]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.25",
+    "pymdown-extensions>=10.0",
 ]
 
 [project.urls]
@@ -27,3 +43,56 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 include = ["jbubble*"]
+
+[tool.setuptools_scm]
+write_to = "jbubble/_version.py"
+version_scheme = "no-guess-dev"
+local_scheme = "no-local-version"
+fallback_version = "0.1.0"
+
+# ── Ruff: linting + formatting ────────────────────────────────────────────────
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+src = ["jbubble", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",  # line too long — handled by formatter
+    "B008",  # function call in default argument (common JAX pattern)
+    "SIM108",  # ternary operator — often less readable in scientific code
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]      # allow assert in tests
+"examples/*" = ["E402", "I001", "B007", "B023", "F841"]  # example scripts are more lenient
+"jbubble/__init__.py" = ["E402"]  # jax.config.update must precede all imports
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ── Mypy: type checking ───────────────────────────────────────────────────────
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true     # jax/equinox stubs are incomplete
+check_untyped_defs = false        # start lenient
+warn_return_any = false
+warn_unused_ignores = true
+exclude = ["examples/", "docs/", "jbubble/_version.py"]
+
+# ── Pytest ────────────────────────────────────────────────────────────────────
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning:jax",
+    "ignore::UserWarning:diffrax",
+]
+markers = [
+    "slow: marks tests that are slow (e.g. vmap over many radii)",
+]

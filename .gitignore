@@ -13,6 +13,9 @@ build/*
 # poetry
 poetry.lock
 
+# setuptools-scm generated version file
+jbubble/_version.py
+
 # Testing
 .coverage
 coverage.xml
@@ -23,3 +26,4 @@ coverage.xml
 *.env.development.local
 *.env.test.local
 *.env.production.local
+
