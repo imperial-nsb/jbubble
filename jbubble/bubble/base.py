@@ -87,7 +87,9 @@ class Bubble(eqx.Module, abc.ABC):
     def P_gas0(self) -> float:
         """Equilibrium gas pressure, using the surface tension evaluated at R0."""
         return _pressure.gas_pressure_equilibrium(
-            self.P_amb, self.surface_tension(self.R0), self.R0
+            self.P_amb,
+            self.surface_tension(self.R0),  # type: ignore
+            self.R0,
         )
 
     def chi_R(self, R: jax.Array) -> jax.Array:
