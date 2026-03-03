@@ -9,6 +9,26 @@ class Units(eqx.Module):
     The defaults normalise micrometre radii and microsecond times, which keeps
     the Rayleigh-Plesset solver numerically well-conditioned while remaining
     easy to interpret when converting back to SI units later on.
+
+    Physical quantities are divided by the corresponding scale before being
+    passed to the solver, and multiplied back when returning results.
+
+    Parameters
+    ----------
+    L_scale : float
+        Length scale [m]. Default: 1 µm.
+    T_scale : float
+        Time scale [s]. Default: 1 µs.
+    M_scale : float
+        Mass scale [kg]. Default: 10⁻¹⁵ kg (femtogram).
+
+    Examples
+    --------
+    >>> u = Units()
+    >>> u.P_scale   # pressure base unit: 1 kPa
+    1000.0
+    >>> u.vel_scale  # velocity base unit: 1 m/s
+    1.0
     """
 
     L_scale: float = 1e-6

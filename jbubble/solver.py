@@ -1,19 +1,24 @@
 """Diffrax-based solver for multiple bubble models using multibubble.py."""
 
-from typing import Any, Tuple
-
 import diffrax
+import equinox as eqx
 import jax
 import jax.numpy as jnp
-import equinox as eqx
-from .pulse import Pulse
+
 from .bubble import Bubble
-jax.config.update("jax_enable_x64", True)
+from .pulse import Pulse
 
 State = jax.Array
 
+
 class SaveSpec(eqx.Module):
-    """Convenience wrapper for controlling solver outputs."""
+    """Specification for ODE output sampling.
+
+    Parameters
+    ----------
+    num_samples : int
+        Number of evenly-spaced time points to record.  Default: 1024.
+    """
 
     num_samples: int = eqx.field(default=1024, static=True)
 
@@ -26,7 +31,7 @@ def solve_bubble(
     bubble: Bubble,
     pulse: Pulse,
     *,
-    t_span: Tuple[float, float] | None = None,
+    t_span: tuple[float, float] | None = None,
     dt0: float = 1e-3,
     save_spec: SaveSpec | None = None,
     solver: diffrax.AbstractSolver | None = None,
@@ -36,12 +41,12 @@ def solve_bubble(
 ) -> diffrax.Solution:
     """
     Solve the bubble dynamics for any bubble model with a given pulse.
-    
+
     Parameters
     ----------
-    bubble : BubbleBase
-        Bubble model instance (e.g., MarmottantBubble, MarmottantGompertz)
-        Must have bubble_equation(t, state, pulse) method
+    bubble : Bubble
+        Bubble model instance (e.g., Marmottant, MarmottantGompertz).
+        Must have a ``bubble_equation(t, state, pulse)`` method.
     pulse : Pulse
         Driving pulse
     t_span : Tuple[float, float], optional
@@ -58,7 +63,7 @@ def solve_bubble(
         Show progress meter
     max_steps : int
         Maximum number of steps
-    
+
     Returns
     -------
     diffrax.Solution
@@ -80,14 +85,16 @@ def solve_bubble(
     t0, t1 = t_span
     y0 = bubble.initial_state()
     saveat = save_spec.build(t0, t1)
-    
+
     # Create ODE term that calls bubble.bubble_equation
     def ode_func(t, state, args):
         bubble_model, pulse_model = args
         return bubble_model.bubble_equation(t, state, pulse_model)
-    
+
     term = diffrax.ODETerm(ode_func)
-    progress_meter = diffrax.TextProgressMeter() if progress else diffrax.NoProgressMeter()
+    progress_meter = (
+        diffrax.TextProgressMeter() if progress else diffrax.NoProgressMeter()
+    )
 
     return diffrax.diffeqsolve(
         term,

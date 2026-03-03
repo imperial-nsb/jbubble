@@ -1,10 +1,11 @@
 """High-level helpers for running and post-processing simulations with multiple bubble models."""
 
 from dataclasses import dataclass
+
+import diffrax
 import equinox as eqx
 import jax
 import jax.numpy as jnp
-import diffrax
 import numpy as np
 
 from .bubble import Bubble
@@ -14,13 +15,45 @@ from .units import Units
 
 
 class SimulationResult(eqx.Module):
-    """Results from a bubble simulation."""
+    """Output of :func:`run_simulation`.
+
+    All array quantities are in SI units and sampled at ``ts``.
+
+    Attributes
+    ----------
+    ts : jax.Array, shape (N,)
+        Time points [s].
+    radius : jax.Array, shape (N,)
+        Bubble wall radius R(t) [m].
+    radial_velocity : jax.Array, shape (N,)
+        Bubble wall velocity Ṙ(t) [m/s].
+    radial_acceleration : jax.Array, shape (N,)
+        Bubble wall acceleration R̈(t) [m/s²], computed analytically from the
+        ODE right-hand side (not numerical differentiation).
+    vessel_radius : jax.Array or None, shape (N,)
+        Vessel wall radius Rᵥ(t) [m]. Non-``None`` only for
+        :class:`~jbubble.bubble.SphericalConfinement`.
+    vessel_velocity : jax.Array or None, shape (N,)
+        Vessel wall velocity Ṙᵥ(t) [m/s]. Non-``None`` only for
+        :class:`~jbubble.bubble.SphericalConfinement`.
+    driving_pressure : jax.Array, shape (N,)
+        Applied acoustic pressure at the bubble [Pa].
+    converged : jax.Array
+        Boolean scalar; ``True`` if the ODE solver converged successfully.
+    bubble : Bubble
+        The bubble model used (physical-unit copy).
+    pulse : Pulse
+        The driving pulse used (physical-unit copy).
+    units : Units
+        Non-dimensionalisation factors used during the simulation.
+    """
+
     ts: jax.Array
-    radius: jax.Array               # R    [m]
-    radial_velocity: jax.Array      # Ṙ   [m/s]
+    radius: jax.Array  # R    [m]
+    radial_velocity: jax.Array  # Ṙ   [m/s]
     radial_acceleration: jax.Array  # R̈  [m/s²], computed analytically from ODE RHS
-    vessel_radius: jax.Array | None     # R_v  [m]   (vessel models only)
-    vessel_velocity: jax.Array | None   # Ṙ_v [m/s]  (vessel models only)
+    vessel_radius: jax.Array | None  # R_v  [m]   (vessel models only)
+    vessel_velocity: jax.Array | None  # Ṙ_v [m/s]  (vessel models only)
     driving_pressure: jax.Array
     converged: jax.Array
     bubble: Bubble
@@ -43,12 +76,12 @@ class SimulationResult(eqx.Module):
         d : float
             Distance from the bubble centre to the sensor [m].
         """
-        R     = self.radius
-        Rdot  = self.radial_velocity
+        R = self.radius
+        Rdot = self.radial_velocity
         Rddot = self.radial_acceleration
-        rho   = self.bubble.rho_L
+        rho = self.bubble.rho_L
         term1 = (rho * R / d) * (R * Rddot + 2.0 * Rdot**2)
-        term2 = (rho / 4.0) * Rdot**2 * (R / d)**4
+        term2 = (rho / 4.0) * Rdot**2 * (R / d) ** 4
         return term1 - term2
 
 
@@ -65,7 +98,7 @@ def run_simulation(
 ) -> SimulationResult:
     """
     Run a simulation: scale bubble and pulse, solve ODE, rescale results.
-    
+
     Parameters
     ----------
     bubble : BubbleBase
@@ -84,7 +117,7 @@ def run_simulation(
         Maximum ODE steps
     progress : bool
         Show progress meter
-        
+
     Returns
     -------
     SimulationResult
@@ -104,15 +137,14 @@ def run_simulation(
         max_steps=max_steps,
     )
 
-    assert sol.ts is not None and sol.ys is not None
-
     ts = sol.ts * units.T_scale
-    ys = bubble.rescale_state(sol.ys, units)   # (T, 2) or (T, 4) for vessel
+    ys = bubble.rescale_state(sol.ys, units)  # (T, 2) or (T, 4) for vessel
     driving_pressure = jax.vmap(scaled_pulse)(sol.ts) * units.P_scale
 
     # Compute acceleration analytically from the ODE RHS.
     def _rddot(t, state):
         return scaled_bubble.bubble_equation(t, state, scaled_pulse)[1]
+
     rddot = jax.vmap(_rddot)(sol.ts, sol.ys) * units.acc_scale  # (T,)
 
     has_vessel = ys.shape[-1] >= 4  # shape is static, safe outside jit

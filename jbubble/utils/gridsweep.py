@@ -45,11 +45,11 @@ import jax
 import jax.numpy as jnp
 from tqdm import tqdm
 
-
 PyTree = Any
 
 
 # ── main class ────────────────────────────────────────────────────────────────
+
 
 class GridSweep:
     """Batched Cartesian-product sweep over named parameter axes.
@@ -76,16 +76,16 @@ class GridSweep:
         batch_size: int = 512,
         progress: bool = True,
     ) -> None:
-        self.fn           = fn
+        self.fn = fn
         self.search_space = search_space
-        self.batch_size   = batch_size
-        self.progress     = progress
+        self.batch_size = batch_size
+        self.progress = progress
 
         # Stable ordering so multi-index resolution is deterministic
-        self._keys  = sorted(search_space)
-        self._axes  = [jnp.asarray(search_space[k]) for k in self._keys]
+        self._keys = sorted(search_space)
+        self._axes = [jnp.asarray(search_space[k]) for k in self._keys]
         self._sizes = [int(len(a)) for a in self._axes]
-        self._N     = math.prod(self._sizes)
+        self._N = math.prod(self._sizes)
 
         self._eval_batch = jax.jit(jax.vmap(lambda p: self.fn(**p)))
 
@@ -119,13 +119,17 @@ class GridSweep:
             Corresponding vmapped outputs from ``fn``.
         """
         n_batches = math.ceil(self._N / self.batch_size)
-        bar = tqdm(range(n_batches), desc="Grid sweep") if self.progress else range(n_batches)
+        bar = (
+            tqdm(range(n_batches), desc="Grid sweep")
+            if self.progress
+            else range(n_batches)
+        )
         for b in bar:
             start = b * self.batch_size
-            end   = min(start + self.batch_size, self._N)
-            flat  = jnp.arange(start, end)
+            end = min(start + self.batch_size, self._N)
+            flat = jnp.arange(start, end)
             multi = jnp.unravel_index(flat, self._sizes)
-            params  = {k: self._axes[i][multi[i]] for i, k in enumerate(self._keys)}
+            params = {k: self._axes[i][multi[i]] for i, k in enumerate(self._keys)}
             outputs = self._eval_batch(params)
             yield params, outputs
 
@@ -163,5 +167,3 @@ class GridSweep:
             lambda x: x.reshape(*shape, *x.shape[1:]),
             outputs,
         )
-
-

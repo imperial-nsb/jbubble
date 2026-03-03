@@ -1,6 +1,7 @@
 """Library of differentiable-enough pulse shapes."""
 
 import abc
+
 import equinox as eqx
 import jax
 import jax.numpy as jnp
@@ -10,8 +11,8 @@ NUM_FOURIER_TERMS = 10
 # Analytical normalization factors are based on infinite series limits or coefficient sums
 # For divergent series, we normalize by the sum of absolute coefficients
 
-class PulseShape(eqx.Module):
 
+class PulseShape(eqx.Module):
     @abc.abstractmethod
     def __call__(
         self, t: jax.Array, freq: float, phase: float, initial_time: float
@@ -34,7 +35,7 @@ class FourierPulseShape(PulseShape):
         pass
 
     def __call__(self, t, freq, phase, initial_time):
-        
+
         t = t - initial_time
         m = jnp.arange(1, NUM_FOURIER_TERMS + 1)
 
@@ -55,7 +56,6 @@ class Sine(PulseShape):
 
 
 class Sawtooth(FourierPulseShape):
-
     def term(self, m, t, freq, phase):
         return -((-1) ** m / m) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
 
@@ -67,8 +67,8 @@ class Sawtooth(FourierPulseShape):
     def name(self) -> str:
         return "sawtooth"
 
-class InvertedSawtooth(FourierPulseShape):
 
+class InvertedSawtooth(FourierPulseShape):
     def term(self, m, t, freq, phase):
         # Flip the sign of the Fourier expansion
         return ((-1) ** m / m) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
@@ -80,9 +80,9 @@ class InvertedSawtooth(FourierPulseShape):
     @property
     def name(self) -> str:
         return "inverted_sawtooth"
-    
-class Triangle(FourierPulseShape):
 
+
+class Triangle(FourierPulseShape):
     def term(self, m, t, freq, phase):
         return -((1 - (-1) ** m) / (m**2)) * jnp.cos(
             2.0 * jnp.pi * m * freq * (t + (1.0 / (4.0 * freq))) - m * phase
@@ -90,7 +90,7 @@ class Triangle(FourierPulseShape):
 
     @property
     def norm_factor(self) -> float | jax.Array:
-        return (jnp.pi ** 2) / 4.0
+        return (jnp.pi**2) / 4.0
 
     @property
     def name(self) -> str:
@@ -98,7 +98,6 @@ class Triangle(FourierPulseShape):
 
 
 class Quadratic(FourierPulseShape):
-
     def term(self, m, t, freq, phase):
         p = jnp.pi / jnp.sqrt(3.0)
         return ((-1) ** m / (m**2)) * jnp.cos(
@@ -107,7 +106,7 @@ class Quadratic(FourierPulseShape):
 
     @property
     def norm_factor(self) -> float | jax.Array:
-        return (jnp.pi ** 2) / 6.0
+        return (jnp.pi**2) / 6.0
 
     @property
     def name(self) -> str:
@@ -124,15 +123,14 @@ class NegativeQuadratic(Quadratic):
 
 
 class Asymmetrical(FourierPulseShape):
-
     def term(self, m, t, freq, phase):
-        return (1.0 / (m**2)) * jnp.cos(
-            2.0 * jnp.pi * m * freq * t - m * phase
-        ) - (1.0 / m) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
+        return (1.0 / (m**2)) * jnp.cos(2.0 * jnp.pi * m * freq * t - m * phase) - (
+            1.0 / m
+        ) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
 
     @property
     def norm_factor(self) -> float | jax.Array:
-        return -((jnp.pi ** 2) / 6.0 + jnp.pi / 2.0)
+        return -((jnp.pi**2) / 6.0 + jnp.pi / 2.0)
 
     @property
     def name(self) -> str:
@@ -140,11 +138,8 @@ class Asymmetrical(FourierPulseShape):
 
 
 class SlantedSine(FourierPulseShape):
-
     def term(self, m, t, freq, phase):
-        return ((-1) ** m / (m**2)) * jnp.sin(
-            2.0 * jnp.pi * m * freq * t - m * phase
-        )
+        return ((-1) ** m / (m**2)) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
 
     @property
     def norm_factor(self) -> float | jax.Array:
@@ -156,7 +151,6 @@ class SlantedSine(FourierPulseShape):
 
 
 class Square(FourierPulseShape):
-
     def term(self, m, t, freq, phase):
         return (1.0 / (2 * m - 1)) * jnp.sin(
             2.0 * jnp.pi * (2 * m - 1) * freq * t - (2 * m - 1) * phase
@@ -204,7 +198,6 @@ class TimeDomainTriangle(PulseShape):
 
 
 class Pulse9(FourierPulseShape):
-
     def term(self, m, t, freq, phase):
         p = jnp.pi / jnp.sqrt(3.0)
         return ((-1) ** m / m) * jnp.cos(
@@ -221,7 +214,6 @@ class Pulse9(FourierPulseShape):
 
 
 class Pulse10(FourierPulseShape):
-
     def term(self, m, t, freq, phase):
         return ((-1) ** m / m) * jnp.sin(
             2.0 * jnp.pi * (2 * m - 1) * freq * t - (2 * m - 1) * phase
@@ -230,7 +222,6 @@ class Pulse10(FourierPulseShape):
     @property
     def norm_factor(self) -> float | jax.Array:
         return jnp.sum(1.0 / jnp.arange(1, NUM_FOURIER_TERMS + 1))
-
 
     @property
     def name(self) -> str:
@@ -277,7 +268,7 @@ class Rect75(FourierPulseShape):
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
 
         # DC offset for duty‑cycle rectangular waves
-        dc = 2.0 * (1-self.duty) - 1.0  # = -0.5 at D=0.25
+        dc = 2.0 * (1 - self.duty) - 1.0  # = -0.5 at D=0.25
 
         return y + dc
 
@@ -322,7 +313,7 @@ class Rect25(FourierPulseShape):
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
 
         # DC offset for duty-cycle rectangular waves: DC = 2D - 1
-        dc = 2.0 * (1-self.duty)- 1.0  # = +0.5 at D=0.75
+        dc = 2.0 * (1 - self.duty) - 1.0  # = +0.5 at D=0.75
 
         return y + dc
 
@@ -369,7 +360,7 @@ class Mono99(FourierPulseShape):
         # Fourier coefficients for general A,B,D
         # a_m = (A-B)/(π m) * sin(2π m D)
         # b_m = (A-B)/(π m) * (1 - cos(2π m D))
-        factor = (A - B) / (jnp.pi * m)   # here = 1/(π m)
+        factor = (A - B) / (jnp.pi * m)  # here = 1/(π m)
         a_m = factor * jnp.sin(2.0 * jnp.pi * m * D)
         b_m = factor * (1.0 - jnp.cos(2.0 * jnp.pi * m * D))
 
@@ -514,7 +505,7 @@ class Rect75NegPos(FourierPulseShape):
     def term(self, m, t, freq, phase):
 
         # Constants
-        D = 1-self.duty
+        D = 1 - self.duty
         A = self.high_level
         B = self.low_level
         omega = 2.0 * jnp.pi * freq
@@ -549,7 +540,7 @@ class Rect75NegPos(FourierPulseShape):
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
 
         # DC component: DC = A*D + B*(1-D) = +1*0.25 + (-1)*0.75 = -0.5
-        D = 1-self.duty
+        D = 1 - self.duty
         A = self.high_level
         B = self.low_level
         dc = A * D + B * (1.0 - D)
@@ -590,7 +581,7 @@ class Rect25NegPos(FourierPulseShape):
     def term(self, m, t, freq, phase):
 
         # Constants
-        D = 1-self.duty
+        D = 1 - self.duty
         A = self.high_level
         B = self.low_level
         omega = 2.0 * jnp.pi * freq
@@ -625,7 +616,7 @@ class Rect25NegPos(FourierPulseShape):
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
 
         # DC component: DC = A*D + B*(1-D) = +1*0.75 + (-1)*0.25 = +0.5
-        D = 1-self.duty
+        D = 1 - self.duty
         A = self.high_level
         B = self.low_level
         dc = A * D + B * (1.0 - D)
@@ -666,7 +657,7 @@ class SquareNegPos(FourierPulseShape):
     def term(self, m, t, freq, phase):
 
         # Constants
-        D = 1-self.duty
+        D = 1 - self.duty
         A = self.high_level
         B = self.low_level
         omega = 2.0 * jnp.pi * freq
@@ -677,8 +668,10 @@ class SquareNegPos(FourierPulseShape):
         #   b_m = (2/(π m)) * (1 - cos(π m)) = 0 for even m, 4/(π m) for odd m
         # We'll use the general form for clarity/JIT-friendliness:
         factor = (A - B) / (jnp.pi * m)  # = 2/(π m)
-        a_m = factor * jnp.sin(2.0 * jnp.pi * m * D)                  # -> 0
-        b_m = factor * (1.0 - jnp.cos(2.0 * jnp.pi * m * D))          # -> 0 (even m), 4/(π m) (odd m)
+        a_m = factor * jnp.sin(2.0 * jnp.pi * m * D)  # -> 0
+        b_m = factor * (
+            1.0 - jnp.cos(2.0 * jnp.pi * m * D)
+        )  # -> 0 (even m), 4/(π m) (odd m)
 
         # Apply the fixed phase offset so +1 occupies the second half
         angle = m * (omega * t - (phase + self.phase_offset))
@@ -704,6 +697,7 @@ class SquareNegPos(FourierPulseShape):
 
         # DC = A*D + B*(1-D) = 1*0.5 + (-1)*0.5 = 0
         return y
+
 
 class Rect95(FourierPulseShape):
     """
@@ -737,7 +731,7 @@ class Rect95(FourierPulseShape):
     def term(self, m, t, freq, phase):
         # Ensure float inside JAX tracing
 
-        D = 1-self.duty
+        D = 1 - self.duty
         A = self.high_level
         B = self.low_level
         omega = 2.0 * jnp.pi * freq
@@ -770,7 +764,7 @@ class Rect95(FourierPulseShape):
         y = jnp.sum(jax.vmap(lambda k: self.term(k, t, freq, phase))(m), axis=0)
 
         # DC = A*D + B*(1-D) = +1*0.05 + (-1)*0.95 = -0.90
-        D = 1-self.duty
+        D = 1 - self.duty
         A = self.high_level
         B = self.low_level
         dc = A * D + B * (1.0 - D)
