@@ -1243,17 +1243,15 @@ when vessel geometry matters.</p>
 <h2 id="class-hierarchy">Class hierarchy<a class="headerlink" href="#class-hierarchy" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Bubble (abstract)
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── RayleighPlesset
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── _MarmottantEquation, Bubble
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│   └── Marmottant
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>└── GompertzBubble (abstract; smooth Gompertz surface tension)
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    ├── _MarmottantEquation, GompertzBubble
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    │   └── MarmottantGompertz
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ├── KelvinVoigtGompertz
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    │   └── NeoHookeanGompertz
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    ├── KellerMiksisGompertz
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    ├── ChurchGompertz
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    ├── LeightonGompertz
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    └── SphericalConfinement
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── Marmottant
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>└── GompertzBubble (abstract; smooth Gompertz surface tension)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    ├── MarmottantGompertz
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    ├── KelvinVoigtGompertz
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    │   └── NeoHookeanGompertz
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ├── KellerMiksisGompertz
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    ├── ChurchGompertz
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    ├── LeightonGompertz
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    └── SphericalConfinement
 </code></pre></div>
 <hr />
 <h2 id="shared-physics">Shared physics<a class="headerlink" href="#shared-physics" title="Permanent link">&para;</a></h2>
@@ -1580,8 +1578,7 @@ P_{\text{gas}} = P_{\text{gas},0}\!\left(
 Gompertz sigmoid. The smooth surface tension law is everywhere differentiable,
 making this model suitable for gradient-based parameter fitting with
 <code>jax.grad</code>. The governing equation is otherwise identical.</p>
-<p><strong>Governing equation:</strong> Same as <a href="#marmottant">Marmottant</a> (shared via
-<code>_MarmottantEquation</code> mixin).</p>
+<p><strong>Governing equation:</strong> Same as <a href="#marmottant">Marmottant</a>.</p>
 <p><strong>Surface tension:</strong> Gompertz (see <a href="#gompertz-surface-tension">Shared physics</a>)
 with <span class="arithmatex">\(\sigma_{\text{break}} = \sigma_L\)</span>.</p>
 <p><strong>Parameters</strong></p>
