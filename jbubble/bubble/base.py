@@ -74,6 +74,8 @@ class Bubble(eqx.Module, abc.ABC):
     ``Bubble`` itself cannot be instantiated; import it for type annotations.
     """
 
+    R0: float
+
     @abc.abstractmethod
     def surface_tension(self, R: jax.Array) -> jax.Array:
         """Return the interface surface tension at radius R."""
@@ -129,6 +131,20 @@ class GompertzBubble(Bubble, abc.ABC):
     ``R_buckle``, ``chi``, ``sigma_break``, and ``sigma_R0``.
     This class provides the shared ``surface_tension()`` implementation.
     """
+
+    chi: float
+
+    @property
+    @abc.abstractmethod
+    def R_buckle(self) -> float: ...
+
+    @property
+    @abc.abstractmethod
+    def sigma_break(self) -> float: ...
+
+    @property
+    @abc.abstractmethod
+    def sigma_R0(self) -> float: ...
 
     def surface_tension(self, R: jax.Array) -> jax.Array:
         """Evaluate Gompertz surface tension at radius *R*."""

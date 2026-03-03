@@ -79,7 +79,7 @@ class SimulationResult(eqx.Module):
         R = self.radius
         Rdot = self.radial_velocity
         Rddot = self.radial_acceleration
-        rho = self.bubble.rho_L
+        rho = self.bubble.rho_L  # type: ignore
         term1 = (rho * R / d) * (R * Rddot + 2.0 * Rdot**2)
         term2 = (rho / 4.0) * Rdot**2 * (R / d) ** 4
         return term1 - term2
@@ -137,6 +137,8 @@ def run_simulation(
         max_steps=max_steps,
     )
 
+    assert sol.ts is not None
+    assert sol.ys is not None
     ts = sol.ts * units.T_scale
     ys = bubble.rescale_state(sol.ys, units)  # (T, 2) or (T, 4) for vessel
     driving_pressure = jax.vmap(scaled_pulse)(sol.ts) * units.P_scale
