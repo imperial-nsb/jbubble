@@ -16,11 +16,14 @@ from jax import jit
 
 def demo():
     units = Units()
-    bubbles = [Marmottant(radius) for radius in [
-        1e-6,
-        2e-6,
-        3e-6,
-    ]]
+    bubbles = [
+        Marmottant(radius)
+        for radius in [
+            1e-6,
+            2e-6,
+            3e-6,
+        ]
+    ]
     freq = 300e3
     pressure = 100e3
     pulse = Pulse(
@@ -53,7 +56,7 @@ def demo():
         if idx == 0:
             print(f"First run (+ JIT): {end - start:.4f} seconds")
         else:
-            print(f"Subsequent run #{idx+1}: {end - start:.4f} seconds")
+            print(f"Subsequent run #{idx + 1}: {end - start:.4f} seconds")
 
         metrics = compute_radius_metrics(result)
         arrays = arrays_from_result(result)

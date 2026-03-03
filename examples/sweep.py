@@ -56,26 +56,39 @@ def run_2d_sweep(x_values, y_values, kernel_func, x_name="X", y_name="Y"):
 
     end_time = time.time()
     duration = end_time - start_time
-    print(f"Sweep completed in {duration:.2f} seconds ({duration/x_flat.size:.2e} s/sim)")
-    
+    print(
+        f"Sweep completed in {duration:.2f} seconds ({duration / x_flat.size:.2e} s/sim)"
+    )
+
     # Reshape results back to 2D grid
     # We use jax.tree.map to handle the PyTree structure of the result object
     results_grid = jax.tree.map(
-        lambda x: x.reshape(*x_grid.shape, *x.shape[1:]), 
-        results_flat
+        lambda x: x.reshape(*x_grid.shape, *x.shape[1:]), results_flat
     )
 
     return results_grid, x_grid, y_grid
 
+
 def plot_heatmap(x_grid, y_grid, data, x_label, y_label, title, cbar_label):
     plt.figure(figsize=(10, 8))
-    plt.pcolormesh(x_grid, y_grid, data, shading='auto', cmap='inferno', edgecolors = 'none', antialiased=False, linewidth=0,rasterized=True)
+    plt.pcolormesh(
+        x_grid,
+        y_grid,
+        data,
+        shading="auto",
+        cmap="inferno",
+        edgecolors="none",
+        antialiased=False,
+        linewidth=0,
+        rasterized=True,
+    )
     plt.colorbar(label=cbar_label)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.title(title)
     # plt.gca().invert_yaxis() # Optional, depends on preference
     plt.show()
+
 
 def main():
     units = Units()
@@ -85,20 +98,22 @@ def main():
     print("\n--- Sweep 1: Frequency vs Initial Radius ---")
 
     def freq_r0_kernel(freq, r0):
-        bubble = Bubble(R0=r0, chi = 5)
+        bubble = Bubble(R0=r0, chi=5)
         pulse = Pulse(
             freq=freq,
             pressure=100e3,
             shape=shapes.Asymmetrical(),
             cycle_num=5,
-            initial_time=1e-6
+            initial_time=1e-6,
         )
-        return run_simulation(bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6)
+        return run_simulation(
+            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+        )
 
     r0_values = jnp.linspace(1.0e-6, 10.0e-6, 100)
     freq_values = jnp.linspace(0.1e6, 1.5e6, 100)
 
-    # Note: run_2d_sweep takes (x_values, y_values). 
+    # Note: run_2d_sweep takes (x_values, y_values).
     # We want Freq on X and R0 on Y.
     res_1, freq_grid_1, r0_grid_1 = run_2d_sweep(
         freq_values, r0_values, freq_r0_kernel, x_name="Frequency", y_name="R0"
@@ -106,13 +121,13 @@ def main():
 
     expansion_ratio_1 = res_1.radius.max(axis=-1) / res_1.bubble.R0
     plot_heatmap(
-        freq_grid_1 / 1e6, 
-        r0_grid_1 * 1e6, 
+        freq_grid_1 / 1e6,
+        r0_grid_1 * 1e6,
         expansion_ratio_1,
-        "Frequency (MHz)", 
-        "Initial Radius (µm)", 
+        "Frequency (MHz)",
+        "Initial Radius (µm)",
         "Max Expansion Ratio: Freq vs R0",
-        "$R_{max}/R_0$"
+        "$R_{max}/R_0$",
     )
 
     # --- Sweep 2: Initial Radius vs Shell Elasticity (Chi) ---
@@ -128,9 +143,11 @@ def main():
             pressure=100e3,
             shape=shapes.Asymmetrical(),
             cycle_num=5,
-            initial_time=1e-6
+            initial_time=1e-6,
         )
-        return run_simulation(bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6)
+        return run_simulation(
+            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+        )
 
     r0_values_2 = jnp.linspace(1.0e-6, 10.0e-6, 100)
     chi_values = jnp.linspace(0.0, 1.0, 100)
@@ -142,13 +159,13 @@ def main():
 
     expansion_ratio_2 = res_2.radius.max(axis=-1) / res_2.bubble.R0
     plot_heatmap(
-        r0_grid_2 * 1e6, 
-        chi_grid_2, 
+        r0_grid_2 * 1e6,
+        chi_grid_2,
         expansion_ratio_2,
-        "Initial Radius (µm)", 
-        r"Shell Elasticity $\chi$ (N/m)", 
-        f"Max Expansion Ratio: R0 vs Chi (Freq={fixed_freq/1e6} MHz)",
-        "$R_{max}/R_0$"
+        "Initial Radius (µm)",
+        r"Shell Elasticity $\chi$ (N/m)",
+        f"Max Expansion Ratio: R0 vs Chi (Freq={fixed_freq / 1e6} MHz)",
+        "$R_{max}/R_0$",
     )
 
     # --- Sweep 3: Driving Pressure vs Initial Radius ---
@@ -161,11 +178,13 @@ def main():
             pressure=pressure,
             shape=shapes.Asymmetrical(),
             cycle_num=5,
-            initial_time=1e-6
+            initial_time=1e-6,
         )
-        return run_simulation(bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6)
+        return run_simulation(
+            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+        )
 
-    pressure_values = jnp.linspace(10e3, 500e3, 100) # 10 kPa to 500 kPa
+    pressure_values = jnp.linspace(10e3, 500e3, 100)  # 10 kPa to 500 kPa
     r0_values_3 = jnp.linspace(1.0e-6, 10.0e-6, 100)
 
     # We want Pressure on X and R0 on Y
@@ -175,16 +194,15 @@ def main():
 
     expansion_ratio_3 = res_3.radius.max(axis=-1) / res_3.bubble.R0
     plot_heatmap(
-        p_grid_3 / 1e3, 
-        r0_grid_3 * 1e6, 
+        p_grid_3 / 1e3,
+        r0_grid_3 * 1e6,
         expansion_ratio_3,
-        "Driving Pressure (kPa)", 
-        "Initial Radius (µm)", 
-        f"Max Expansion Ratio: Pressure vs R0 (Freq={fixed_freq/1e6} MHz)",
-        "$R_{max}/R_0$"
+        "Driving Pressure (kPa)",
+        "Initial Radius (µm)",
+        f"Max Expansion Ratio: Pressure vs R0 (Freq={fixed_freq / 1e6} MHz)",
+        "$R_{max}/R_0$",
     )
-    
-    
+
     def pressure_r0_kernel(pressure, r0):
         bubble = Bubble(R0=r0)
         pulse = Pulse(
@@ -192,11 +210,13 @@ def main():
             pressure=pressure,
             shape=shapes.Asymmetrical(),
             cycle_num=5,
-            initial_time=1e-6
+            initial_time=1e-6,
         )
-        return run_simulation(bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6)
+        return run_simulation(
+            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+        )
 
-    pressure_values = jnp.linspace(10e3, 500e3, 100) # 10 kPa to 500 kPa
+    pressure_values = jnp.linspace(10e3, 500e3, 100)  # 10 kPa to 500 kPa
     r0_values_3 = jnp.linspace(1.0e-6, 10.0e-6, 100)
 
     # We want Pressure on X and R0 on Y
@@ -206,16 +226,15 @@ def main():
 
     expansion_ratio_3 = res_3.radius.max(axis=-1) / res_3.bubble.R0
     plot_heatmap(
-        p_grid_3 / 1e3, 
-        r0_grid_3 * 1e6, 
+        p_grid_3 / 1e3,
+        r0_grid_3 * 1e6,
         expansion_ratio_3,
-        "Driving Pressure (kPa)", 
-        "Initial Radius (µm)", 
-        f"Max Expansion Ratio: Pressure vs R0 (Freq={fixed_freq/1e6} MHz)",
-        "$R_{max}/R_0$"
+        "Driving Pressure (kPa)",
+        "Initial Radius (µm)",
+        f"Max Expansion Ratio: Pressure vs R0 (Freq={fixed_freq / 1e6} MHz)",
+        "$R_{max}/R_0$",
     )
-    
-    
+
     def pressure_r0_kernel(pressure, r0):
         bubble = Bubble(R0=r0)
         pulse = Pulse(
@@ -223,11 +242,13 @@ def main():
             pressure=pressure,
             shape=shapes.Asymmetrical(),
             cycle_num=5,
-            initial_time=1e-6
+            initial_time=1e-6,
         )
-        return run_simulation(bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6)
+        return run_simulation(
+            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+        )
 
-    pressure_values = jnp.linspace(10e3, 500e3, 100) # 10 kPa to 500 kPa
+    pressure_values = jnp.linspace(10e3, 500e3, 100)  # 10 kPa to 500 kPa
     r0_values_3 = jnp.linspace(1.0e-6, 10.0e-6, 100)
 
     # We want Pressure on X and R0 on Y
@@ -237,14 +258,15 @@ def main():
 
     expansion_ratio_3 = res_3.radius.max(axis=-1) / res_3.bubble.R0
     plot_heatmap(
-        p_grid_3 / 1e3, 
-        r0_grid_3 * 1e6, 
+        p_grid_3 / 1e3,
+        r0_grid_3 * 1e6,
         expansion_ratio_3,
-        "Driving Pressure (kPa)", 
-        "Initial Radius (µm)", 
-        f"Max Expansion Ratio: Pressure vs R0 (Freq={fixed_freq/1e6} MHz)",
-        "$R_{max}/R_0$"
+        "Driving Pressure (kPa)",
+        "Initial Radius (µm)",
+        f"Max Expansion Ratio: Pressure vs R0 (Freq={fixed_freq / 1e6} MHz)",
+        "$R_{max}/R_0$",
     )
+
 
 if __name__ == "__main__":
     main()

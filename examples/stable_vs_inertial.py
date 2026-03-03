@@ -46,13 +46,13 @@ result_B = run_simulation(
 )
 
 # ---
-time_axis_A = result_A.ts # [s]
-pressure_input_A = pulse_A(time_axis_A) # [Pa]
-radius_output_A = result_A.radius # [m]
+time_axis_A = result_A.ts  # [s]
+pressure_input_A = pulse_A(time_axis_A)  # [Pa]
+radius_output_A = result_A.radius  # [m]
 
-time_axis_B = result_B.ts # [s]
-pressure_input_B = pulse_B(time_axis_B) # [Pa]
-radius_output_B = result_B.radius # [m]
+time_axis_B = result_B.ts  # [s]
+pressure_input_B = pulse_B(time_axis_B)  # [Pa]
+radius_output_B = result_B.radius  # [m]
 
 # --- PLOT A ---
 # Plot the results with shared time axis
@@ -66,7 +66,7 @@ ax1.set_ylim(-220, 220)
 ax1.grid(True)
 
 # Bottom plot: Radius
-ax2.plot(time_axis_A * 1e6, radius_output_A * 1e6, color='blue')
+ax2.plot(time_axis_A * 1e6, radius_output_A * 1e6, color="blue")
 ax2.set_ylabel("Radius (µm)")
 ax2.set_xlabel("Time (µs)")
 ax2.set_ylim(0.7, 6.2)
@@ -87,7 +87,7 @@ ax1.set_ylim(-220, 220)
 ax1.grid(True)
 
 # Bottom plot: Radius
-ax2.plot(time_axis_B * 1e6, radius_output_B * 1e6, color='blue')
+ax2.plot(time_axis_B * 1e6, radius_output_B * 1e6, color="blue")
 ax2.set_ylabel("Radius (µm)")
 ax2.set_xlabel("Time (µs)")
 ax2.set_ylim(0.7, 6.2)
