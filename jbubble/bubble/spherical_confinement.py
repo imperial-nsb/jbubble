@@ -2,13 +2,14 @@
 Spherical confinement model with Gompertz surface tension.
 """
 
-import jax
-import jax.numpy as jnp
 from typing import Any
 
+import jax
+import jax.numpy as jnp
+
 from ..units import Units
-from .base import Bubble
 from ._gompertz import gompertz_surface_tension
+from .base import Bubble
 
 
 class SphericalConfinement(Bubble):
@@ -67,7 +68,44 @@ class SphericalConfinement(Bubble):
         tissue_rho: float = 900.0,
         tissue_d: float = 1.0e-6,
     ) -> None:
+        """Initialise a SphericalConfinement bubble model.
 
+        Parameters
+        ----------
+        R0 : float
+            Equilibrium bubble radius [m].
+        R_buckle : float, optional
+            Shell buckling radius [m].  Defaults to ``0.99 * R0``.
+        gamma : float
+            Polytropic exponent of the enclosed gas.  Typical lipid shell:
+            1.07; air: 1.4.
+        chi : float
+            Shell elasticity modulus [N/m].  Typical lipid shell: 0.2–0.6 N/m.
+        mu_L : float
+            Dynamic viscosity of the surrounding liquid [Pa·s].
+        kappa_s : float
+            Shell surface dilatational viscosity [N·s/m].
+        rho_L : float
+            Liquid density [kg/m³].
+        c_L : float
+            Speed of sound in the liquid [m/s].
+        P_amb : float
+            Ambient pressure [Pa].
+        sigma_L : float
+            Surface tension of the bare liquid–gas interface [N/m].
+        vessel_radius : float
+            Equilibrium inner radius of the confining elastic vessel [m].
+        vessel_rho : float
+            Vessel wall material density [kg/m³].
+        vessel_E : float
+            Young's modulus of the vessel wall [Pa].
+        vessel_d : float
+            Vessel wall thickness [m].
+        tissue_rho : float
+            Surrounding tissue density [kg/m³].
+        tissue_d : float
+            Effective tissue layer thickness contributing to inertia [m].
+        """
         self.R0 = R0
         self.R_buckle = 0.99 * self.R0 if R_buckle is None else R_buckle
         self.gamma = gamma
@@ -129,18 +167,21 @@ class SphericalConfinement(Bubble):
         P_drive = pulse(t)
 
         rhoL = self.rho_L
-        mu   = self.mu_L
-        ks   = self.kappa_s
-        P0   = self.P_amb
-        a0   = self.vessel_radius
-        Ev   = self.vessel_E
-        nu   = 0.5   # nearly incompressible wall
+        mu = self.mu_L
+        ks = self.kappa_s
+        P0 = self.P_amb
+        a0 = self.vessel_radius
+        Ev = self.vessel_E
+        nu = 0.5  # nearly incompressible wall
 
-        P_gas = self.P_gas0 * (self.R0 / R) ** (3.0 * self.gamma) \
-                * (1.0 - 3.0 * self.gamma * R_dot / self.c_L)
+        P_gas = (
+            self.P_gas0
+            * (self.R0 / R) ** (3.0 * self.gamma)
+            * (1.0 - 3.0 * self.gamma * R_dot / self.c_L)
+        )
 
         A = R**2
-        B = -a**2
+        B = -(a**2)
         C = rhoL * R**2 * (1.0 / R - 1.0 / a)
         D = self.vessel_rho * self.vessel_d + self.tissue_rho * self.tissue_d
 
@@ -172,7 +213,7 @@ class SphericalConfinement(Bubble):
         return jnp.array([self.R0, 0.0, self.vessel_radius, 0.0])
 
     def rescale_state(self, state: jax.Array, units: Units) -> jax.Array:
-        scale_factors = jnp.array([
-            units.L_scale, units.vel_scale, units.L_scale, units.vel_scale
-        ])
+        scale_factors = jnp.array(
+            [units.L_scale, units.vel_scale, units.L_scale, units.vel_scale]
+        )
         return state * scale_factors

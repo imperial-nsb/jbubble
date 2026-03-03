@@ -2,13 +2,14 @@
 Marmottant model with smooth Gompertz surface tension law.
 """
 
-import jax
-import jax.numpy as jnp
 from typing import Any
 
+import jax
+import jax.numpy as jnp
+
 from ..units import Units
-from .base import Bubble
 from ._gompertz import gompertz_surface_tension
+from .base import Bubble
 
 
 class MarmottantGompertz(Bubble):
@@ -59,7 +60,34 @@ class MarmottantGompertz(Bubble):
         sigma_L: float = 72e-3,
         vdw_divisor: float = 5.61,
     ) -> None:
+        """Initialise a MarmottantGompertz bubble model.
 
+        Parameters
+        ----------
+        R0 : float
+            Equilibrium bubble radius [m].
+        R_buckle : float, optional
+            Shell buckling radius [m].  Defaults to ``0.99 * R0``.
+        gamma : float
+            Polytropic exponent of the enclosed gas.  Typical lipid shell:
+            1.07 (slightly non-adiabatic); air: 1.4.
+        chi : float
+            Shell elasticity modulus [N/m].  Typical lipid shell: 0.2–0.6 N/m.
+        mu_L : float
+            Dynamic viscosity of the surrounding liquid [Pa·s].
+        kappa_s : float
+            Shell surface dilatational viscosity [N·s/m].
+        rho_L : float
+            Liquid density [kg/m³].
+        c_L : float
+            Speed of sound in the liquid [m/s].
+        P_amb : float
+            Ambient pressure [Pa].
+        sigma_L : float
+            Surface tension of the bare liquid–gas interface [N/m].
+        vdw_divisor : float
+            Sets the Van der Waals hard-core radius ``a = R0 / vdw_divisor``.
+        """
         self.R0 = R0
         self.R_buckle = 0.99 * self.R0 if R_buckle is None else R_buckle
         self.gamma = gamma
@@ -109,26 +137,20 @@ class MarmottantGompertz(Bubble):
         P_drive = pulse(t)
 
         P_gas0 = self.P_amb + 2.0 * self.sigma_R0 / self.R0
-        P_gas = P_gas0 * (
-            (self.R0**3 - self.vdw**3) /
-            (R**3 - self.vdw**3)
-        ) ** self.gamma
+        P_gas = (
+            P_gas0 * ((self.R0**3 - self.vdw**3) / (R**3 - self.vdw**3)) ** self.gamma
+        )
 
         P_surf = 2.0 * sigma / R
         P_visc = 4.0 * self.mu_L * R_dot / R
         P_surf_visc = 4.0 * self.kappa_s * R_dot / R**2
 
-        damping_term = 1.0 - (
-            3.0 * self.gamma * R_dot * R**3
-        ) / (self.c_L * (R**3 - self.vdw**3))
+        damping_term = 1.0 - (3.0 * self.gamma * R_dot * R**3) / (
+            self.c_L * (R**3 - self.vdw**3)
+        )
 
         forces = (
-            P_gas * damping_term
-            - P_surf
-            - P_visc
-            - P_surf_visc
-            - P_drive
-            - self.P_amb
+            P_gas * damping_term - P_surf - P_visc - P_surf_visc - P_drive - self.P_amb
         )
 
         R_ddot = (forces / self.rho_L - 1.5 * R_dot**2) / R

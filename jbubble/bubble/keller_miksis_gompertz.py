@@ -2,13 +2,14 @@
 Keller-Miksis model with Gompertz surface tension law.
 """
 
-import jax
-import jax.numpy as jnp
 from typing import Any
 
+import jax
+import jax.numpy as jnp
+
 from ..units import Units
-from .base import Bubble
 from ._gompertz import gompertz_surface_tension
+from .base import Bubble
 
 
 class KellerMiksisGompertz(Bubble):
@@ -52,6 +53,32 @@ class KellerMiksisGompertz(Bubble):
         P_amb: float = 101.3e3,
         sigma_L: float = 72e-3,
     ) -> None:
+        """Initialise a KellerMiksisGompertz bubble model.
+
+        Parameters
+        ----------
+        R0 : float
+            Equilibrium bubble radius [m].
+        R_buckle : float, optional
+            Shell buckling radius [m].  Defaults to ``0.99 * R0``.
+        gamma : float
+            Polytropic exponent of the enclosed gas.  Typical lipid shell:
+            1.07; air: 1.4.
+        chi : float
+            Shell elasticity modulus [N/m].  Typical lipid shell: 0.2–0.6 N/m.
+        mu_L : float
+            Dynamic viscosity of the surrounding liquid [Pa·s].
+        kappa_s : float
+            Shell surface dilatational viscosity [N·s/m].
+        rho_L : float
+            Liquid density [kg/m³].
+        c_L : float
+            Speed of sound in the liquid [m/s].
+        P_amb : float
+            Ambient pressure [Pa].
+        sigma_L : float
+            Surface tension of the bare liquid–gas interface [N/m].
+        """
         self.R0 = R0
         self.R_buckle = 0.99 * self.R0 if R_buckle is None else R_buckle
         self.gamma = gamma
@@ -107,18 +134,37 @@ class KellerMiksisGompertz(Bubble):
         P_visc = 4.0 * self.mu_L * R_dot / R
         P_surf_visc = 4.0 * self.kappa_s * R_dot / R**2
 
-        dPg_dt = (-3.0 * self.gamma) * self.P_gas0 * (R_dot / R) * (self.R0 / R) ** (3 * self.gamma)
+        dPg_dt = (
+            (-3.0 * self.gamma)
+            * self.P_gas0
+            * (R_dot / R)
+            * (self.R0 / R) ** (3 * self.gamma)
+        )
         dPdrive_dt = jax.grad(lambda t_val: pulse(t_val))(t)
         dLaplace_dt = 2 * R_dot * (dsigma_dR / R - sigma / R**2)
 
         P_int = self.P_gas0 * (self.R0 / R) ** (3 * self.gamma)
 
-        A = (1 / self.rho_L) * ((1 + R_dot / self.c_L) * (P_int - P_drive - self.P_amb - P_Laplace - P_visc - P_surf_visc))
+        A = (1 / self.rho_L) * (
+            (1 + R_dot / self.c_L)
+            * (P_int - P_drive - self.P_amb - P_Laplace - P_visc - P_surf_visc)
+        )
         B = dPg_dt - dPdrive_dt - dLaplace_dt
-        C = R * (1 - R_dot / self.c_L) + (1 / self.rho_L) * (R / self.c_L) * (4 * self.kappa_s / R**2 + 4 * self.mu_L / R)
+        C = R * (1 - R_dot / self.c_L) + (1 / self.rho_L) * (R / self.c_L) * (
+            4 * self.kappa_s / R**2 + 4 * self.mu_L / R
+        )
 
-        D = A + (1 / self.rho_L) * (R / self.c_L) * (B + (8 * self.kappa_s * R_dot**2 / R**3) + (4 * self.mu_L * R_dot**2 / R**2)) \
+        D = (
+            A
+            + (1 / self.rho_L)
+            * (R / self.c_L)
+            * (
+                B
+                + (8 * self.kappa_s * R_dot**2 / R**3)
+                + (4 * self.mu_L * R_dot**2 / R**2)
+            )
             - 1.5 * (1 - R_dot / (3 * self.c_L)) * R_dot**2
+        )
 
         R_ddot = D / C
         return jnp.stack([R_dot, R_ddot])

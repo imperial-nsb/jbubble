@@ -3,11 +3,11 @@ Base class for bubble material models.
 """
 
 import abc
+from typing import Any
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
-from typing import Any
 
 from ..units import Units
 

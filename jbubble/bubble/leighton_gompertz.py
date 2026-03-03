@@ -2,13 +2,14 @@
 Leighton model for a bubble confined in a rigid-walled tube.
 """
 
-import jax
-import jax.numpy as jnp
 from typing import Any
 
+import jax
+import jax.numpy as jnp
+
 from ..units import Units
-from .base import Bubble
 from ._gompertz import gompertz_surface_tension
+from .base import Bubble
 
 
 class LeightonGompertz(Bubble):
@@ -57,7 +58,36 @@ class LeightonGompertz(Bubble):
         tube_radius: float = 10.0e-6,
         tube_length: float = 100.0e-6,
     ) -> None:
+        """Initialise a LeightonGompertz bubble model.
 
+        Parameters
+        ----------
+        R0 : float
+            Equilibrium bubble radius [m].
+        R_buckle : float, optional
+            Shell buckling radius [m].  Defaults to ``0.99 * R0``.
+        gamma : float
+            Polytropic exponent of the enclosed gas.  Typical lipid shell:
+            1.07; air: 1.4.
+        chi : float
+            Shell elasticity modulus [N/m].  Typical lipid shell: 0.2–0.6 N/m.
+        mu_L : float
+            Dynamic viscosity of the surrounding liquid [Pa·s].
+        kappa_s : float
+            Shell surface dilatational viscosity [N·s/m].
+        rho_L : float
+            Liquid density [kg/m³].
+        c_L : float
+            Speed of sound in the liquid [m/s].
+        P_amb : float
+            Ambient pressure [Pa].
+        sigma_L : float
+            Surface tension of the bare liquid–gas interface [N/m].
+        tube_radius : float
+            Internal radius of the confining rigid tube [m].
+        tube_length : float
+            Length of the confining rigid tube [m].
+        """
         self.R0 = R0
         self.R_buckle = 0.99 * self.R0 if R_buckle is None else R_buckle
         self.gamma = gamma
@@ -110,13 +140,13 @@ class LeightonGompertz(Bubble):
 
         sigma = self.surface_tension(R)
 
-        tuberad = self.tube_radius     # Γ1 (tube radius)
+        tuberad = self.tube_radius  # Γ1 (tube radius)
         zeta = self.tube_length / 2.0  # ζ1 (half-length)
 
         # Geometry factor per Leighton:
         # alpha = (ζ1/Γ1) * (1 + 8Γ1/(3πζ1)) - 1
         alpha = (zeta / tuberad) * (1.0 + (8.0 * tuberad) / (3.0 * jnp.pi * zeta)) - 1.0
-        beta  = 2.0 * alpha  # curly-brace factor in the paper
+        beta = 2.0 * alpha  # curly-brace factor in the paper
 
         # Driving & gas term with small-order compressibility
         P_drive = pulse(t)
@@ -125,16 +155,18 @@ class LeightonGompertz(Bubble):
 
         # Dissipative and capillary terms
         P_surface_visc = 4.0 * self.kappa_s * R_dot / (R**2)
-        P_liq_visc     = 4.0 * self.mu_L * R_dot / R
-        P_Laplace      = 2.0 * sigma / R
+        P_liq_visc = 4.0 * self.mu_L * R_dot / R
+        P_Laplace = 2.0 * sigma / R
 
         # Net forcing (right-hand side)
-        rhs = (P_gas - P_Laplace - P_liq_visc - P_surface_visc - P_drive - self.P_amb) / self.rho_L
+        rhs = (
+            P_gas - P_Laplace - P_liq_visc - P_surface_visc - P_drive - self.P_amb
+        ) / self.rho_L
 
         # Leighton tube-inertia multipliers:
         # R*R̈ * [1 + (R/Γ1) β] + (3/2) Ṙ² * [1 + (4R/(3Γ1)) β] = rhs
         denom = R * (1.0 + (R / tuberad) * beta)
-        inert = 1.5 * (R_dot ** 2) * (1.0 + (4.0 * R) / (3.0 * tuberad) * beta)
+        inert = 1.5 * (R_dot**2) * (1.0 + (4.0 * R) / (3.0 * tuberad) * beta)
 
         R_ddot = (rhs - inert) / denom
         return jnp.stack([R_dot, R_ddot])

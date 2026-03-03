@@ -2,23 +2,43 @@
 Rayleigh-Plesset model for an uncoated gas bubble.
 """
 
+from typing import Any
+
 import jax
 import jax.numpy as jnp
-from typing import Any
 
 from ..units import Units
 from .base import Bubble, State
 
 
 class RayleighPlesset(Bubble):
-    """
-    Rayleigh-Plesset model for an uncoated gas bubble
-    in an incompressible Newtonian liquid.
+    """Rayleigh-Plesset model for an uncoated gas bubble.
 
-    Assumptions:
-        - Constant surface tension
-        - Polytropic gas behavior
-        - Incompressible surrounding liquid
+    Classic model for a spherical gas bubble in an incompressible Newtonian
+    liquid. Surface tension is constant (no shell effects). This is the
+    simplest available model and is useful as a baseline or for uncoated
+    bubbles (e.g. air cavitation).
+
+    The governing equation (incompressible, no shell) is::
+
+        R R̈ + (3/2) Ṙ² = [P_gas(R) − 2σ/R − 4μṘ/R − P_amb − P_drive(t)] / ρ
+
+    Parameters
+    ----------
+    R0 : float
+        Equilibrium bubble radius [m].
+    gamma : float
+        Polytropic exponent of the gas. Default 1.4 (adiabatic air).
+    mu_L : float
+        Dynamic viscosity of the surrounding liquid [Pa·s].
+    rho_L : float
+        Liquid density [kg/m³].
+    c_L : float
+        Speed of sound in the liquid [m/s] (used only in scaled output).
+    P_amb : float
+        Ambient (static) pressure [Pa].
+    sigma_L : float
+        Liquid–gas surface tension [N/m].
     """
 
     R0: jax.Array
