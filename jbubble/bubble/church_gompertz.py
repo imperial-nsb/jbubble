@@ -32,33 +32,15 @@ class ChurchGompertz(GompertzBubble):
         - Polytropic gas law
     """
 
-    R0: float
-    gamma: float = _defaults.GAMMA_LIPID
-    chi: float = _defaults.CHI_LIPID
     mu_L: float = _defaults.MU_WATER
-    rho_L: float = _defaults.RHO_WATER
-    P_amb: float = _defaults.P_ATM
     sigma_L: float = _defaults.SIGMA_WATER
     d_s: float = 4e-9
     G_s: float = 10e6
     mu_s: float = 0.5
-    R_buckle_ratio: float = _defaults.R_BUCKLE_RATIO
-
-    @property
-    def R_buckle(self):
-        return self.R0 * self.R_buckle_ratio
-
-    @property
-    def sigma_R0(self):
-        return self.chi * ((self.R0 / self.R_buckle) ** 2 - 1.0)
 
     @property
     def sigma_break(self):
         return self.sigma_L
-
-    @property
-    def R_break(self):
-        return _defaults.R_BREAK_RATIO * self.R0
 
     def bubble_equation(self, t: Any, state: jax.Array, pulse) -> jax.Array:
 
@@ -67,10 +49,7 @@ class ChurchGompertz(GompertzBubble):
         sigma = self.surface_tension(R)
         P_drive = pulse(t)
 
-        P_gas0 = _pressure.gas_pressure_equilibrium(
-            self.P_amb, self.sigma_R0, self.R0
-        )
-        P_gas = _pressure.gas_pressure(P_gas0, self.R0, R, self.gamma)
+        P_gas = _pressure.gas_pressure(self.P_gas0, self.R0, R, self.gamma)
 
         P_surf = _pressure.laplace_pressure(sigma, R)
         P_visc = _pressure.viscous_pressure(self.mu_L, R_dot, R)

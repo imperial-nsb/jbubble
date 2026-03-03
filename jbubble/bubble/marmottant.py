@@ -29,14 +29,12 @@ class Marmottant(Bubble):
         - Liquid compressibility correction
     """
 
-    R0: float
     gamma: float = _defaults.GAMMA_LIPID
     chi: float = _defaults.CHI_LIPID
     mu_L: float = _defaults.MU_WATER
     kappa_s: float = _defaults.KAPPA_S_LIPID
     rho_L: float = _defaults.RHO_WATER
     c_L: float = _defaults.C_WATER
-    P_amb: float = _defaults.P_ATM
     sigma_L: float = _defaults.SIGMA_WATER
     vdw_divisor: float = _defaults.VDW_DIVISOR
     R_buckle_ratio: float = _defaults.R_BUCKLE_RATIO
@@ -77,11 +75,8 @@ class Marmottant(Bubble):
         sigma = self.surface_tension(R)
         P_drive = pulse(t)
 
-        P_gas0 = _pressure.gas_pressure_equilibrium(
-            self.P_amb, self.sigma_R0, self.R0
-        )
         P_gas = (
-            P_gas0
+            self.P_gas0
             * ((self.R0**3 - self.vdw**3) / (R**3 - self.vdw**3)) ** self.gamma
         )
 

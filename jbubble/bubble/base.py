@@ -11,6 +11,7 @@ import jax
 import jax.numpy as jnp
 
 from ..units import Units
+from . import _defaults, _pressure
 
 State = jax.Array
 
@@ -75,11 +76,19 @@ class Bubble(eqx.Module, abc.ABC):
     """
 
     R0: float
+    P_amb: float = _defaults.P_ATM
 
     @abc.abstractmethod
     def surface_tension(self, R: jax.Array) -> jax.Array:
         """Return the interface surface tension at radius R."""
         ...
+
+    @property
+    def P_gas0(self) -> float:
+        """Equilibrium gas pressure, using the surface tension evaluated at R0."""
+        return _pressure.gas_pressure_equilibrium(
+            self.P_amb, self.surface_tension(self.R0), self.R0
+        )
 
     def chi_R(self, R: jax.Array) -> jax.Array:
         """
@@ -127,24 +136,30 @@ class GompertzBubble(Bubble, abc.ABC):
     """
     Intermediate base class for models using Gompertz surface tension.
 
-    Subclasses must provide (as fields or properties): ``R0``,
-    ``R_buckle``, ``chi``, ``sigma_break``, and ``sigma_R0``.
+    Subclasses must provide (as fields or properties): ``sigma_break``.
     This class provides the shared ``surface_tension()`` implementation.
     """
 
-    chi: float
+    chi: float = _defaults.CHI_LIPID
+    gamma: float = _defaults.GAMMA_LIPID
+    rho_L: float = _defaults.RHO_WATER
+    R_buckle_ratio: float = _defaults.R_BUCKLE_RATIO
 
     @property
-    @abc.abstractmethod
-    def R_buckle(self) -> float: ...
+    def R_buckle(self) -> float:
+        return self.R0 * self.R_buckle_ratio
+
+    @property
+    def sigma_R0(self) -> float:
+        return self.chi * ((self.R0 / self.R_buckle) ** 2 - 1.0)
+
+    @property
+    def R_break(self) -> float:
+        return _defaults.R_BREAK_RATIO * self.R0
 
     @property
     @abc.abstractmethod
     def sigma_break(self) -> float: ...
-
-    @property
-    @abc.abstractmethod
-    def sigma_R0(self) -> float: ...
 
     def surface_tension(self, R: jax.Array) -> jax.Array:
         """Evaluate Gompertz surface tension at radius *R*."""

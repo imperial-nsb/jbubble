@@ -25,38 +25,14 @@ class KellerMiksisGompertz(GompertzBubble):
         - Liquid compressibility correction (Keller-Miksis formulation)
     """
 
-    R0: float
-    gamma: float = _defaults.GAMMA_LIPID
-    chi: float = _defaults.CHI_LIPID
     mu_L: float = _defaults.MU_WATER
     kappa_s: float = _defaults.KAPPA_S_LIPID
-    rho_L: float = _defaults.RHO_WATER
     c_L: float = _defaults.C_WATER
-    P_amb: float = _defaults.P_ATM
     sigma_L: float = _defaults.SIGMA_WATER
-    R_buckle_ratio: float = _defaults.R_BUCKLE_RATIO
-
-    @property
-    def R_buckle(self):
-        return self.R0 * self.R_buckle_ratio
-
-    @property
-    def sigma_R0(self):
-        return self.chi * ((self.R0 / self.R_buckle) ** 2 - 1.0)
 
     @property
     def sigma_break(self):
         return self.sigma_L
-
-    @property
-    def R_break(self):
-        return _defaults.R_BREAK_RATIO * self.R0
-
-    @property
-    def P_gas0(self):
-        return _pressure.gas_pressure_equilibrium(
-            self.P_amb, self.sigma_R0, self.R0
-        )
 
     def bubble_equation(self, t: Any, state: jax.Array, pulse) -> jax.Array:
         R, R_dot = state

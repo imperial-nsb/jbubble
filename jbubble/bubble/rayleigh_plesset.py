@@ -24,12 +24,10 @@ class RayleighPlesset(Bubble):
         R R̈ + (3/2) Ṙ² = [P_gas(R) − 2σ/R − 4μṘ/R − P_amb − P_drive(t)] / ρ
     """
 
-    R0: float
     gamma: float = _defaults.GAMMA_AIR
     mu_L: float = _defaults.MU_WATER
     rho_L: float = _defaults.RHO_WATER
     c_L: float = _defaults.C_WATER
-    P_amb: float = _defaults.P_ATM
     sigma_L: float = _defaults.SIGMA_WATER
 
     def surface_tension(self, R: jax.Array) -> jax.Array:
@@ -45,8 +43,7 @@ class RayleighPlesset(Bubble):
         sigma = self.surface_tension(R)
         P_drive = pulse(t)
 
-        P_gas0 = _pressure.gas_pressure_equilibrium(self.P_amb, self.sigma_L, self.R0)
-        P_gas = _pressure.gas_pressure(P_gas0, self.R0, R, self.gamma)
+        P_gas = _pressure.gas_pressure(self.P_gas0, self.R0, R, self.gamma)
 
         P_surf = _pressure.laplace_pressure(sigma, R)
         P_visc = _pressure.viscous_pressure(self.mu_L, R_dot, R)
