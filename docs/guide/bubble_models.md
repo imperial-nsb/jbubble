@@ -32,11 +32,9 @@ confinement are important.
 ```
 Bubble (abstract)
 ├── RayleighPlesset
-├── _MarmottantEquation, Bubble
-│   └── Marmottant
+├── Marmottant
 └── GompertzBubble (abstract; smooth Gompertz surface tension)
-    ├── _MarmottantEquation, GompertzBubble
-    │   └── MarmottantGompertz
+    ├── MarmottantGompertz
     ├── KelvinVoigtGompertz
     │   └── NeoHookeanGompertz
     ├── KellerMiksisGompertz
@@ -245,8 +243,7 @@ Gompertz sigmoid. The smooth surface tension law is everywhere differentiable,
 making this model suitable for gradient-based parameter fitting with
 `jax.grad`. The governing equation is otherwise identical.
 
-**Governing equation:** Same as [Marmottant](#marmottant) (shared via
-`_MarmottantEquation` mixin).
+**Governing equation:** Same as [Marmottant](#marmottant).
 
 **Surface tension:** Gompertz (see [Shared physics](#gompertz-surface-tension))
 with $\sigma_{\text{break}} = \sigma_L$.
