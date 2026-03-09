@@ -29,7 +29,13 @@ from .components import (
     VanDerWaalsGas,
 )
 from .components import RayleighPlesset as RayleighPlessetEoM
-from .interfaces import EquationOfMotion, GasModel, MediumModel, ShellModel, SurfaceTensionModel
+from .interfaces import (
+    EquationOfMotion,
+    GasModel,
+    MediumModel,
+    ShellModel,
+    SurfaceTensionModel,
+)
 from .keller_miksis_gompertz import KellerMiksisGompertz
 from .kelvin_voigt_gompertz import KelvinVoigtGompertz
 from .leighton_gompertz import LeightonGompertz
