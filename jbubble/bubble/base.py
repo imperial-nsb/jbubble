@@ -10,8 +10,9 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
+from .._old import _pressure
 from ..units import Units
-from . import _defaults, _pressure
+from . import _defaults
 
 State = jax.Array
 
@@ -133,45 +134,3 @@ class Bubble(eqx.Module, abc.ABC):
         scale_factors = jnp.array([units.L_scale, units.vel_scale])
         return state * scale_factors
 
-
-class GompertzBubble(Bubble, abc.ABC):
-    """
-    Intermediate base class for models using Gompertz surface tension.
-
-    Subclasses must provide (as fields or properties): ``sigma_break``.
-    This class provides the shared ``surface_tension()`` implementation.
-    """
-
-    chi: float = _defaults.CHI_LIPID
-    gamma: float = _defaults.GAMMA_LIPID
-    rho_L: float = _defaults.RHO_WATER
-    R_buckle_ratio: float = _defaults.R_BUCKLE_RATIO
-
-    @property
-    def R_buckle(self) -> float:
-        return self.R0 * self.R_buckle_ratio
-
-    @property
-    def sigma_R0(self) -> float:
-        return self.chi * ((self.R0 / self.R_buckle) ** 2 - 1.0)
-
-    @property
-    def R_break(self) -> float:
-        return _defaults.R_BREAK_RATIO * self.R0
-
-    @property
-    @abc.abstractmethod
-    def sigma_break(self) -> float: ...
-
-    def surface_tension(self, R: jax.Array) -> jax.Array:
-        """Evaluate Gompertz surface tension at radius *R*."""
-        from ._gompertz import gompertz_surface_tension
-
-        return gompertz_surface_tension(
-            R,
-            R0=self.R0,
-            R_buckle=self.R_buckle,
-            chi=self.chi,
-            sigma_break=self.sigma_break,
-            sigma_R0=self.sigma_R0,
-        )
