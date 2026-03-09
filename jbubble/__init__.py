@@ -23,7 +23,7 @@ from .simulation import (
     compute_radius_metrics,
     run_simulation,
 )
-from .solver import SaveSpec, solve_bubble
+from .solver import SaveSpec, solve_bubble, solve_eom
 from .units import Units
 
 __all__ = [
@@ -44,6 +44,7 @@ __all__ = [
     "TimeDomainTriangle",
     "bubble_equation",
     "solve_bubble",
+    "solve_eom",
     "SaveSpec",
     "SimulationResult",
     "run_simulation",

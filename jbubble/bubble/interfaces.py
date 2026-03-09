@@ -9,10 +9,11 @@ independent physical components:
 This module defines the four abstract component types that compose
 into a full bubble dynamics model:
 
-- ``GasModel``         — internal gas pressure  p_gas(R)
-- ``ShellModel``       — shell/coating stress   p_shell(R, Rdot)  and  sigma(R)
-- ``MediumModel``      — surrounding medium     p_medium(R, Rdot)
-- ``EquationOfMotion`` — macroscopic EoM assembling components into an ODE
+- ``GasModel``              — internal gas pressure  p_gas(R)
+- ``SurfaceTensionModel``   — surface tension  sigma(R)
+- ``ShellModel``            — shell/coating stress   p_shell(R, Rdot)
+- ``MediumModel``           — surrounding medium     p_medium(R, Rdot)
+- ``EquationOfMotion``      — macroscopic EoM assembling components into an ODE
 """
 
 import abc
@@ -58,22 +59,18 @@ class GasModel(eqx.Module, abc.ABC):
         ...
 
 
-class ShellModel(eqx.Module, abc.ABC):
-    """Bubble shell / coating model.
+class SurfaceTensionModel(eqx.Module, abc.ABC):
+    """Surface tension law sigma(R).
 
-    Computes the total inward stress from the shell, including:
+    Defines how surface tension depends on the instantaneous radius.
+    Separated from the shell mechanics so that any surface tension law
+    can be paired with any shell model.
 
-    - Laplace pressure from surface tension:  2 sigma(R) / R
-    - Shell viscous dissipation  (e.g. 4 kappa_s Rdot / R^2)
-    - Shell elastic restoring forces  (for thick shells)
-
-    ``surface_tension`` is exposed as a separate method because sigma(R0)
-    is needed externally to compute the equilibrium gas pressure
-    P_gas0 = P_amb + 2 sigma(R0) / R0.
+    Examples: constant (uncoated), piecewise Marmottant, smooth Gompertz.
     """
 
     @abc.abstractmethod
-    def surface_tension(self, R: jax.Array) -> jax.Array:
+    def __call__(self, R: jax.Array) -> jax.Array:
         """Compute surface tension sigma(R).
 
         Parameters
@@ -87,6 +84,29 @@ class ShellModel(eqx.Module, abc.ABC):
             Surface tension sigma(R)  [N/m].
         """
         ...
+
+
+class ShellModel(eqx.Module, abc.ABC):
+    """Bubble shell / coating model.
+
+    Computes the total inward stress from the shell, including:
+
+    - Laplace pressure from surface tension:  2 sigma(R) / R
+    - Shell viscous dissipation  (e.g. 4 kappa_s Rdot / R^2)
+    - Shell elastic restoring forces  (for thick shells)
+
+    Every ``ShellModel`` holds a ``SurfaceTensionModel`` as its ``sigma``
+    field, separating the surface tension law from the shell mechanics.
+    The ``surface_tension`` convenience method delegates to ``sigma(R)``
+    and is used externally to compute equilibrium gas pressure
+    P_gas0 = P_amb + 2 sigma(R0) / R0.
+    """
+
+    sigma: SurfaceTensionModel
+
+    def surface_tension(self, R: jax.Array) -> jax.Array:
+        """Compute surface tension sigma(R) by delegating to the inner model."""
+        return self.sigma(R)
 
     @abc.abstractmethod
     def __call__(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
