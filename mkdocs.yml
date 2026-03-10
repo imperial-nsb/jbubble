@@ -52,7 +52,7 @@ nav:
     - JAX tips: guide/jax_tips.md
   - API reference:
     - Overview: api/index.md
-    - bubble: api/bubble.md
+    - bubble components: api/bubble.md
     - units: api/units.md
     - pulse: api/pulse.md
     - shapes: api/shapes.md

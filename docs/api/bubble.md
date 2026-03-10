@@ -1,17 +1,53 @@
-# Bubble models
+# Bubble components
 
-::: jbubble.bubble.Bubble
+## Interfaces
+
+::: jbubble.bubble.EquationOfMotion
+
+::: jbubble.bubble.GasModel
+
+::: jbubble.bubble.SurfaceTensionModel
+
+::: jbubble.bubble.ShellModel
+
+::: jbubble.bubble.MediumModel
+
+## Gas models
+
+::: jbubble.bubble.PolytropicGas
+
+::: jbubble.bubble.VanDerWaalsGas
+
+## Surface tension models
+
+::: jbubble.bubble.ConstantSigma
+
+::: jbubble.bubble.MarmottantSigma
+
+::: jbubble.bubble.GompertzSigma
+
+## Shell models
+
+::: jbubble.bubble.NoShell
+
+::: jbubble.bubble.LipidShell
+
+::: jbubble.bubble.ThickShell
+
+## Medium models
+
+::: jbubble.bubble.KelvinVoigtMedium
+
+::: jbubble.bubble.NeoHookeanMedium
+
+## Equations of motion
 
 ::: jbubble.bubble.RayleighPlesset
 
-::: jbubble.bubble.Marmottant
+::: jbubble.bubble.ModifiedRayleighPlesset
 
-::: jbubble.bubble.MarmottantGompertz
+::: jbubble.bubble.KellerMiksis
 
-::: jbubble.bubble.KellerMiksisGompertz
-
-::: jbubble.bubble.KelvinVoigtGompertz
-
-::: jbubble.bubble.LeightonGompertz
+::: jbubble.bubble.LeightonTube
 
 ::: jbubble.bubble.SphericalConfinement

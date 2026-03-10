@@ -44,9 +44,23 @@ print(units.P_scale)    # ~1000 Pa
 print(units.vel_scale)  # 1.0 m/s
 ```
 
-`Units` is passed to `run_simulation` and to the bubble model internals. The
-solver operates entirely in dimensionless variables; `SimulationResult` converts
-back to SI when returning `radius`, `ts`, and `radiated_pressure`.
+## How scaling works
+
+When you call `run_simulation`, it automatically:
+
+1. Scales the EoM via `eom.get_scaled(units)` — recursively non-dimensionalises
+   all sub-modules (gas, shell, medium) and their scalar fields
+2. Scales the pulse via `pulse.get_scaled(units)`
+3. Solves the ODE in dimensionless variables
+4. Rescales the output back to SI via `eom.rescale_state(state, units)`
+
+You can also scale manually if needed:
+
+```python
+scaled_eom = eom.get_scaled(units)
+print(scaled_eom.R0)     # R0 / L_scale (dimensionless)
+print(scaled_eom.P_amb)  # P_amb / P_scale (dimensionless)
+```
 
 ## Custom scales
 

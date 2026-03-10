@@ -23,23 +23,32 @@ the same argument shapes skip compilation and run significantly faster:
 
 ```python
 import jax
-from jbubble import MarmottantGompertz, Units, run_simulation
+from jbubble import (
+    PolytropicGas, GompertzSigma, LipidShell, KelvinVoigtMedium,
+    KellerMiksis, Units, run_simulation,
+)
 from jbubble.pulse import Pulse
 from jbubble import shapes
 from jbubble.solver import SaveSpec
 
-bubble = MarmottantGompertz(R0=3e-6)
-pulse  = Pulse(freq=2e6, pressure=200e3, cycle_num=3, shape=shapes.Sine())
-units  = Units()
-spec   = SaveSpec(64)
+R0 = 3e-6
+sigma  = GompertzSigma.from_R0(R0=R0)
+shell  = LipidShell(sigma=sigma)
+gas    = PolytropicGas.from_equilibrium(R0=R0, gamma=1.07, P_amb=101325.0, sigma_R0=sigma.sigma_R0)
+medium = KelvinVoigtMedium(R0=R0)
+eom    = KellerMiksis(gas=gas, shell=shell, medium=medium, R0=R0, P_amb=101325.0, rho_L=998.0, c_L=1481.0)
+
+pulse = Pulse(freq=2e6, pressure=200e3, cycle_num=3, shape=shapes.Sine())
+units = Units()
+spec  = SaveSpec(64)
 
 sim = jax.jit(run_simulation)
 
 # First call: compilation + execution (~seconds)
-result = sim(bubble, pulse, units=units, save_spec=spec, window_s=20e-6)
+result = sim(eom, pulse, units=units, save_spec=spec, window_s=20e-6)
 
 # Subsequent calls: execution only (~milliseconds)
-result = sim(bubble, pulse, units=units, save_spec=spec, window_s=20e-6)
+result = sim(eom, pulse, units=units, save_spec=spec, window_s=20e-6)
 ```
 
 !!! tip
@@ -56,16 +65,23 @@ radii:
 ```python
 import jax
 import jax.numpy as jnp
-from jbubble import MarmottantGompertz, Units, run_simulation
+from jbubble import (
+    PolytropicGas, GompertzSigma, LipidShell, KelvinVoigtMedium,
+    KellerMiksis, Units, run_simulation,
+)
 from jbubble.pulse import Pulse
 from jbubble import shapes
 from jbubble.solver import SaveSpec
 
 def sim_for_r0(r0):
-    bubble = MarmottantGompertz(R0=r0)
+    sigma  = GompertzSigma.from_R0(R0=r0)
+    shell  = LipidShell(sigma=sigma)
+    gas    = PolytropicGas.from_equilibrium(R0=r0, gamma=1.07, P_amb=101325.0, sigma_R0=sigma.sigma_R0)
+    medium = KelvinVoigtMedium(R0=r0)
+    eom    = KellerMiksis(gas=gas, shell=shell, medium=medium, R0=r0, P_amb=101325.0, rho_L=998.0, c_L=1481.0)
     pulse  = Pulse(freq=2e6, pressure=200e3, cycle_num=3, shape=shapes.Sine())
     return run_simulation(
-        bubble, pulse,
+        eom, pulse,
         units=Units(),
         save_spec=SaveSpec(64),
         window_s=20e-6,
@@ -92,16 +108,23 @@ radius–time curves:
 
 ```python
 import jax
-from jbubble import MarmottantGompertz, Units, run_simulation
+from jbubble import (
+    PolytropicGas, GompertzSigma, LipidShell, KelvinVoigtMedium,
+    KellerMiksis, Units, run_simulation,
+)
 from jbubble.pulse import Pulse
 from jbubble import shapes
 from jbubble.solver import SaveSpec
 
 def loss(chi):
-    bubble = MarmottantGompertz(R0=3e-6, chi=chi)
+    sigma  = GompertzSigma.from_R0(R0=3e-6, chi=chi)
+    shell  = LipidShell(sigma=sigma)
+    gas    = PolytropicGas.from_equilibrium(R0=3e-6, gamma=1.07, P_amb=101325.0, sigma_R0=sigma.sigma_R0)
+    medium = KelvinVoigtMedium(R0=3e-6)
+    eom    = KellerMiksis(gas=gas, shell=shell, medium=medium, R0=3e-6, P_amb=101325.0, rho_L=998.0, c_L=1481.0)
     pulse  = Pulse(freq=2e6, pressure=200e3, cycle_num=3, shape=shapes.Sine())
     result = run_simulation(
-        bubble, pulse,
+        eom, pulse,
         units=Units(),
         save_spec=SaveSpec(64),
         window_s=20e-6,
@@ -112,9 +135,9 @@ grad_loss = jax.grad(loss)
 dL_dchi   = grad_loss(chi_init)
 ```
 
-Gradient computation requires the Gompertz-family models (`MarmottantGompertz`,
-`KellerMiksisGompertz`, etc.) rather than `Marmottant`, because the piecewise
-σ(R) of `Marmottant` is not differentiable at the transition radii.
+Gradient computation requires smooth surface tension models (e.g.
+`GompertzSigma`) rather than `MarmottantSigma`, because the piecewise
+$\sigma(R)$ of `MarmottantSigma` is not differentiable at the transition radii.
 
 ## 4. GridSweep for structured parameter sweeps
 
@@ -128,5 +151,5 @@ aggregation automatically. See the [API reference](../api/utils.md) for details.
 |---|---|---|
 | `ConcretizationTypeError` | Python `if` on a JAX array | Replace with `jax.lax.cond` |
 | Slow repeated calls | Missing `jax.jit` | Wrap the simulation function with `jit` |
-| NaN gradients | Piecewise σ(R) in `Marmottant` | Switch to `MarmottantGompertz` |
+| NaN gradients | Piecewise $\sigma(R)$ in `MarmottantSigma` | Switch to `GompertzSigma` |
 | Out-of-memory on vmap | Too large a batch | Reduce batch size or use `jax.lax.map` |
