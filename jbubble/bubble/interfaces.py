@@ -17,6 +17,7 @@ into a full bubble dynamics model:
 """
 
 import abc
+import dataclasses
 from typing import Any, Callable
 
 import equinox as eqx
@@ -25,6 +26,69 @@ import jax.numpy as jnp
 
 # Type alias for the ODE state vector (typically [R, Rdot]).
 State = jax.Array
+
+# ---------------------------------------------------------------------------
+# Field-scaling registry
+# ---------------------------------------------------------------------------
+# Maps field names to their corresponding ``Units`` attribute.  Used by
+# ``_scale_module()`` to non-dimensionalise constructor parameters.
+
+_FIELD_SCALES: dict[str, str] = {
+    # Lengths
+    "R0": "L_scale",
+    "h": "L_scale",
+    "d_s": "L_scale",
+    "R_buckle": "L_scale",
+    "tube_radius": "L_scale",
+    "tube_length": "L_scale",
+    "vessel_radius": "L_scale",
+    "vessel_d": "L_scale",
+    "tissue_d": "L_scale",
+    # Pressures / elastic moduli
+    "P_amb": "P_scale",
+    "P_gas0": "P_scale",
+    "G": "P_scale",
+    "G_s": "P_scale",
+    "vessel_E": "P_scale",
+    # Surface tensions / shell elasticity
+    "chi": "chi_scale",
+    "sigma_L": "sigma_scale",
+    "sigma_water": "sigma_scale",
+    "sigma_break": "sigma_scale",
+    # Dynamic viscosities
+    "mu": "mu_scale",
+    "mu_L": "mu_scale",
+    "mu_s": "mu_scale",
+    # Shell surface-dilatational viscosity
+    "kappa_s": "kappa_scale",
+    # Densities
+    "rho_L": "rho_scale",
+    "vessel_rho": "rho_scale",
+    "tissue_rho": "rho_scale",
+    # Velocities
+    "c_L": "vel_scale",
+    # Dimensionless
+    "gamma": "unit_scale",
+}
+
+
+def _scale_module(module: eqx.Module, units: Any) -> eqx.Module:
+    """Non-dimensionalise an Equinox module by scaling all dataclass fields.
+
+    Sub-modules (GasModel, ShellModel, etc.) are recursively scaled.
+    Scalar fields are divided by the appropriate unit scale from
+    ``_FIELD_SCALES``.  Fields not in the registry are left unchanged.
+    """
+    kwargs: dict[str, Any] = {}
+    for f in dataclasses.fields(module):
+        val = getattr(module, f.name)
+        if isinstance(val, eqx.Module):
+            kwargs[f.name] = _scale_module(val, units)
+        elif f.name in _FIELD_SCALES:
+            kwargs[f.name] = val / getattr(units, _FIELD_SCALES[f.name])
+        else:
+            kwargs[f.name] = val
+    return type(module)(**kwargs)
 
 
 class GasModel(eqx.Module, abc.ABC):
@@ -217,6 +281,28 @@ class EquationOfMotion(eqx.Module, abc.ABC):
         Override for coupled systems with a larger state vector.
         """
         return jnp.array([self.R0, 0.0])
+
+    def surface_tension(self, R: jax.Array) -> jax.Array:
+        """Surface tension sigma(R), delegated to the shell model."""
+        return self.shell.surface_tension(R)
+
+    def get_scaled(self, units: Any) -> "EquationOfMotion":
+        """Return a dimensionless copy scaled by *units*.
+
+        Recursively scales all sub-modules (gas, shell, medium) and
+        scalar fields using ``_FIELD_SCALES``.
+        """
+        return _scale_module(self, units)
+
+    def rescale_state(self, state: jax.Array, units: Any) -> jax.Array:
+        """Rescale the state variables back to physical units.
+
+        Default handles the standard 2-DOF state ``[R, Rdot]``.
+        Override for models with different state definitions (e.g.
+        ``SphericalConfinement`` with 4-DOF).
+        """
+        scale_factors = jnp.array([units.L_scale, units.vel_scale])
+        return state * scale_factors
 
     # -- abstract method ---------------------------------------------------
 

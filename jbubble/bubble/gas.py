@@ -1,3 +1,6 @@
+import jax
+
+from . import _defaults
 from .interfaces import GasModel
 
 

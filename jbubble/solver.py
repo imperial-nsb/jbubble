@@ -2,14 +2,10 @@
 
 import diffrax
 import equinox as eqx
-import jax
 import jax.numpy as jnp
 
-from .bubble import Bubble
 from .bubble.interfaces import EquationOfMotion
 from .pulse import Pulse
-
-State = jax.Array
 
 
 class SaveSpec(eqx.Module):
@@ -28,91 +24,6 @@ class SaveSpec(eqx.Module):
         return diffrax.SaveAt(ts=ts)
 
 
-def solve_bubble(
-    bubble: Bubble,
-    pulse: Pulse,
-    *,
-    t_span: tuple[float, float] | None = None,
-    dt0: float = 1e-3,
-    save_spec: SaveSpec | None = None,
-    solver: diffrax.AbstractSolver | None = None,
-    stepsize_controller: diffrax.AbstractStepSizeController | None = None,
-    progress: bool = False,
-    max_steps: int = 10_000,
-) -> diffrax.Solution:
-    """
-    Solve the bubble dynamics for any bubble model with a given pulse.
-
-    Parameters
-    ----------
-    bubble : Bubble
-        Bubble model instance (e.g., Marmottant, MarmottantGompertz).
-        Must have a ``bubble_equation(t, state, pulse)`` method.
-    pulse : Pulse
-        Driving pulse
-    t_span : Tuple[float, float], optional
-        Time span (t0, t1). If None, computed from pulse duration
-    dt0 : float
-        Initial time step
-    save_spec : SaveSpec, optional
-        Output specification. Default: 1000 samples
-    solver : diffrax.AbstractSolver, optional
-        ODE solver. Default: Kvaerno5
-    stepsize_controller : diffrax.AbstractStepSizeController, optional
-        Step size controller. Default: PIDController(rtol=1e-3, atol=1e-6)
-    progress : bool
-        Show progress meter
-    max_steps : int
-        Maximum number of steps
-
-    Returns
-    -------
-    diffrax.Solution
-        Solution object with ts, ys (radius and velocity over time)
-    """
-    if t_span is None:
-        pulse_duration = pulse.cycle_num / pulse.freq
-        t_span = (0.0, pulse.initial_time + 2.0 * pulse_duration)
-
-    if save_spec is None:
-        save_spec = SaveSpec(num_samples=1000)
-
-    if solver is None:
-        solver = diffrax.Kvaerno5()
-
-    if stepsize_controller is None:
-        stepsize_controller = diffrax.PIDController(rtol=1e-3, atol=1e-6)
-
-    t0, t1 = t_span
-    y0 = bubble.initial_state()
-    saveat = save_spec.build(t0, t1)
-
-    # Create ODE term that calls bubble.bubble_equation
-    def ode_func(t, state, args):
-        bubble_model, pulse_model = args
-        return bubble_model.bubble_equation(t, state, pulse_model)
-
-    term = diffrax.ODETerm(ode_func)
-    progress_meter = (
-        diffrax.TextProgressMeter() if progress else diffrax.NoProgressMeter()
-    )
-
-    return diffrax.diffeqsolve(
-        term,
-        solver,
-        t0=t0,
-        t1=t1,
-        dt0=dt0,
-        y0=y0,
-        args=(bubble, pulse),
-        saveat=saveat,
-        stepsize_controller=stepsize_controller,
-        max_steps=max_steps,
-        progress_meter=progress_meter,
-        throw=False,
-    )
-
-
 def solve_eom(
     eom: EquationOfMotion,
     pulse: Pulse,
@@ -125,11 +36,7 @@ def solve_eom(
     progress: bool = False,
     max_steps: int = 10_000,
 ) -> diffrax.Solution:
-    """Solve bubble dynamics for a modular ``EquationOfMotion``.
-
-    This is the solver entry point for the new composition-based
-    architecture.  It packages the EoM and pulse into a standard
-    ``diffrax.ODETerm`` and calls ``diffrax.diffeqsolve``.
+    """Solve bubble dynamics for an ``EquationOfMotion``.
 
     Parameters
     ----------

@@ -5,21 +5,28 @@ import json
 from pathlib import Path
 from typing import Any
 
+import equinox as eqx
 import jax.numpy as jnp
 import numpy as np
 
 from ..bubble import (
-    Bubble,
-    ChurchGompertz,
-    KellerMiksisGompertz,
-    KelvinVoigtGompertz,
-    LeightonGompertz,
-    Marmottant,
-    MarmottantGompertz,
-    NeoHookeanGompertz,
+    ConstantSigma,
+    GompertzSigma,
+    KellerMiksis,
+    KelvinVoigtMedium,
+    LeightonTube,
+    LipidShell,
+    MarmottantSigma,
+    ModifiedRayleighPlesset,
+    NeoHookeanMedium,
+    NoShell,
+    PolytropicGas,
     RayleighPlesset,
     SphericalConfinement,
+    ThickShell,
+    VanDerWaalsGas,
 )
+from ..bubble.interfaces import EquationOfMotion
 from ..pulse import Pulse
 from ..shapes import (
     Asymmetrical,
@@ -49,18 +56,30 @@ from ..shapes import (
 from ..simulation import SimulationResult
 from ..units import Units
 
-_BUBBLE_REGISTRY: dict[str, type[Bubble]] = {
+# Registry of all concrete classes that can be serialised.
+_MODULE_REGISTRY: dict[str, type[eqx.Module]] = {
     cls.__name__: cls
     for cls in [
+        # EoMs
         RayleighPlesset,
-        Marmottant,
-        MarmottantGompertz,
-        KelvinVoigtGompertz,
-        NeoHookeanGompertz,
-        KellerMiksisGompertz,
-        ChurchGompertz,
-        LeightonGompertz,
+        ModifiedRayleighPlesset,
+        KellerMiksis,
+        LeightonTube,
         SphericalConfinement,
+        # Gas
+        PolytropicGas,
+        VanDerWaalsGas,
+        # Surface tension
+        ConstantSigma,
+        MarmottantSigma,
+        GompertzSigma,
+        # Shell
+        NoShell,
+        LipidShell,
+        ThickShell,
+        # Medium
+        KelvinVoigtMedium,
+        NeoHookeanMedium,
     ]
 }
 
@@ -105,6 +124,62 @@ _ARRAY_FIELDS = (
 _VESSEL_FIELDS = ("vessel_radius", "vessel_velocity")
 
 
+def _serialise_module(module: eqx.Module) -> dict[str, Any]:
+    """Recursively serialise an Equinox module to a nested dict."""
+    result: dict[str, Any] = {}
+    for f in dataclasses.fields(module):
+        val = getattr(module, f.name)
+        if isinstance(val, eqx.Module):
+            result[f.name] = _serialise_module(val)
+        else:
+            result[f.name] = val
+    return result
+
+
+def _collect_class_names(module: eqx.Module) -> dict[str, Any]:
+    """Recursively collect the class name of each sub-module."""
+    result: dict[str, str | dict] = {"__class__": type(module).__name__}
+    for f in dataclasses.fields(module):
+        val = getattr(module, f.name)
+        if isinstance(val, eqx.Module):
+            result[f.name] = _collect_class_names(val)
+    return result
+
+
+def _deserialise_module(
+    data: dict[str, Any],
+    class_info: dict[str, Any],
+) -> eqx.Module:
+    """Recursively reconstruct an Equinox module from serialised data."""
+    cls = _MODULE_REGISTRY[class_info["__class__"]]
+    kwargs: dict[str, Any] = {}
+    for f in dataclasses.fields(cls):
+        val = data[f.name]
+        if f.name in class_info and isinstance(class_info[f.name], dict):
+            kwargs[f.name] = _deserialise_module(val, class_info[f.name])
+        else:
+            kwargs[f.name] = _to_python(val)
+    return cls(**kwargs)
+
+
+def _to_jax(v: Any) -> Any:
+    """Convert numpy arrays to jax arrays, leave Python scalars alone."""
+    if isinstance(v, np.ndarray):
+        return jnp.asarray(v)
+    return v
+
+
+def _to_python(v: Any) -> Any:
+    """Convert numpy scalars to Python scalars for module constructors."""
+    if isinstance(v, np.generic):
+        return v.item()
+    if isinstance(v, np.ndarray) and v.ndim == 0:
+        return v.item()
+    if isinstance(v, np.ndarray):
+        return jnp.asarray(v)
+    return v
+
+
 def save(
     path: str | Path,
     result: SimulationResult,
@@ -135,13 +210,10 @@ def save(
         for name in _VESSEL_FIELDS:
             state[name] = getattr(result, name)
 
-    # Bubble fields (all scalars or vmapped arrays).
-    state["bubble"] = {
-        f.name: getattr(result.bubble, f.name)
-        for f in dataclasses.fields(result.bubble)
-    }
+    # EoM fields (recursively serialised, including gas/shell/medium).
+    state["eom"] = _serialise_module(result.eom)
 
-    # Pulse fields — skip `shape` (nested module) and `apply_hann` (static bool).
+    # Pulse fields -- skip `shape` (nested module) and `apply_hann` (static bool).
     state["pulse"] = {
         f.name: getattr(result.pulse, f.name)
         for f in dataclasses.fields(result.pulse)
@@ -167,7 +239,7 @@ def save(
 
     # -- Write sidecar JSON ----------------------------------------------------
     meta = {
-        "bubble_class": type(result.bubble).__name__,
+        "eom_classes": _collect_class_names(result.eom),
         "pulse_shape_class": type(result.pulse.shape).__name__,
         "apply_hann": bool(result.pulse.apply_hann),
         "has_vessel": has_vessel,
@@ -197,29 +269,11 @@ def load(path: str | Path) -> tuple[SimulationResult, dict[str, Any]]:
 
     # -- Read sidecar ----------------------------------------------------------
     meta = json.loads((path / "meta.json").read_text())
-    bubble_cls = _BUBBLE_REGISTRY[meta["bubble_class"]]
     shape_cls = _SHAPE_REGISTRY[meta["pulse_shape_class"]]
 
     # -- Restore orbax state ---------------------------------------------------
     with ocp.StandardCheckpointer() as ckptr:
         state = ckptr.restore(path / "state")
-
-    # -- Helpers to convert numpy scalars/arrays back to jax/python types ------
-    def _to_jax(v: Any) -> Any:
-        """Convert numpy arrays to jax arrays, leave Python scalars alone."""
-        if isinstance(v, np.ndarray):
-            return jnp.asarray(v)
-        return v
-
-    def _to_python(v: Any) -> Any:
-        """Convert numpy scalars to Python scalars for module constructors."""
-        if isinstance(v, np.generic):
-            return v.item()
-        if isinstance(v, np.ndarray) and v.ndim == 0:
-            return v.item()
-        if isinstance(v, np.ndarray):
-            return jnp.asarray(v)
-        return v
 
     # -- Reconstruct modules ---------------------------------------------------
     shape_dict = {k: _to_python(v) for k, v in state.get("shape", {}).items()}
@@ -228,8 +282,7 @@ def load(path: str | Path) -> tuple[SimulationResult, dict[str, Any]]:
     pulse_dict = {k: _to_python(v) for k, v in state["pulse"].items()}
     pulse = Pulse(shape=pulse_shape, apply_hann=meta["apply_hann"], **pulse_dict)
 
-    bubble_dict = {k: _to_python(v) for k, v in state["bubble"].items()}
-    bubble = bubble_cls(**bubble_dict)
+    eom = _deserialise_module(state["eom"], meta["eom_classes"])
 
     units_dict = {k: _to_python(v) for k, v in state["units"].items()}
     units = Units(**units_dict)
@@ -246,7 +299,7 @@ def load(path: str | Path) -> tuple[SimulationResult, dict[str, Any]]:
         vessel_velocity=(
             _to_jax(state["vessel_velocity"]) if meta["has_vessel"] else None
         ),
-        bubble=bubble,
+        eom=eom,
         pulse=pulse,
         units=units,
     )

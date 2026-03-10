@@ -1,6 +1,27 @@
 """jbubble: differentiable microbubble dynamics primitives."""
 
-from .bubble import Marmottant as Bubble
+from .bubble import (
+    ConstantSigma,
+    EquationOfMotion,
+    GasModel,
+    GompertzSigma,
+    KellerMiksis,
+    KelvinVoigtMedium,
+    LeightonTube,
+    LipidShell,
+    MarmottantSigma,
+    MediumModel,
+    ModifiedRayleighPlesset,
+    NeoHookeanMedium,
+    NoShell,
+    PolytropicGas,
+    RayleighPlesset,
+    ShellModel,
+    SphericalConfinement,
+    SurfaceTensionModel,
+    ThickShell,
+    VanDerWaalsGas,
+)
 from .pulse import Pulse
 from .shapes import (
     Asymmetrical,
@@ -23,12 +44,15 @@ from .simulation import (
     compute_radius_metrics,
     run_simulation,
 )
-from .solver import SaveSpec, solve_bubble, solve_eom
+from .solver import SaveSpec, solve_eom
 from .units import Units
 
 __all__ = [
+    # Units & solver
     "Units",
-    "Bubble",
+    "SaveSpec",
+    "solve_eom",
+    # Pulse
     "Pulse",
     "PulseShape",
     "Sine",
@@ -42,13 +66,36 @@ __all__ = [
     "TimeDomainSquare",
     "TimeDomainSawtooth",
     "TimeDomainTriangle",
-    "bubble_equation",
-    "solve_bubble",
-    "solve_eom",
-    "SaveSpec",
+    # Simulation
     "SimulationResult",
     "run_simulation",
     "compute_radius_metrics",
     "PlotArrays",
     "arrays_from_result",
+    # Bubble interfaces
+    "GasModel",
+    "SurfaceTensionModel",
+    "ShellModel",
+    "MediumModel",
+    "EquationOfMotion",
+    # Gas models
+    "PolytropicGas",
+    "VanDerWaalsGas",
+    # Surface tension models
+    "ConstantSigma",
+    "MarmottantSigma",
+    "GompertzSigma",
+    # Shell models
+    "NoShell",
+    "LipidShell",
+    "ThickShell",
+    # Medium models
+    "KelvinVoigtMedium",
+    "NeoHookeanMedium",
+    # Equations of motion
+    "RayleighPlesset",
+    "ModifiedRayleighPlesset",
+    "KellerMiksis",
+    "LeightonTube",
+    "SphericalConfinement",
 ]

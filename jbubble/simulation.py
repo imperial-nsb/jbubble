@@ -1,4 +1,4 @@
-"""High-level helpers for running and post-processing simulations with multiple bubble models."""
+"""High-level helpers for running and post-processing bubble dynamics simulations."""
 
 from dataclasses import dataclass
 
@@ -8,9 +8,9 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from .bubble import Bubble
+from .bubble.interfaces import EquationOfMotion
 from .pulse import Pulse
-from .solver import SaveSpec, solve_bubble
+from .solver import SaveSpec, solve_eom
 from .units import Units
 
 
@@ -26,22 +26,22 @@ class SimulationResult(eqx.Module):
     radius : jax.Array, shape (N,)
         Bubble wall radius R(t) [m].
     radial_velocity : jax.Array, shape (N,)
-        Bubble wall velocity Ṙ(t) [m/s].
+        Bubble wall velocity dR/dt [m/s].
     radial_acceleration : jax.Array, shape (N,)
-        Bubble wall acceleration R̈(t) [m/s²], computed analytically from the
-        ODE right-hand side (not numerical differentiation).
+        Bubble wall acceleration d2R/dt2 [m/s^2], computed analytically
+        from the ODE right-hand side (not numerical differentiation).
     vessel_radius : jax.Array or None, shape (N,)
-        Vessel wall radius Rᵥ(t) [m]. Non-``None`` only for
+        Vessel wall radius [m].  Non-``None`` only for
         :class:`~jbubble.bubble.SphericalConfinement`.
     vessel_velocity : jax.Array or None, shape (N,)
-        Vessel wall velocity Ṙᵥ(t) [m/s]. Non-``None`` only for
+        Vessel wall velocity [m/s].  Non-``None`` only for
         :class:`~jbubble.bubble.SphericalConfinement`.
     driving_pressure : jax.Array, shape (N,)
         Applied acoustic pressure at the bubble [Pa].
     converged : jax.Array
         Boolean scalar; ``True`` if the ODE solver converged successfully.
-    bubble : Bubble
-        The bubble model used (physical-unit copy).
+    eom : EquationOfMotion
+        The equation of motion used (physical-unit copy).
     pulse : Pulse
         The driving pulse used (physical-unit copy).
     units : Units
@@ -49,14 +49,14 @@ class SimulationResult(eqx.Module):
     """
 
     ts: jax.Array
-    radius: jax.Array  # R [m]
-    radial_velocity: jax.Array  # Ṙ [m/s]
-    radial_acceleration: jax.Array  # R̈ [m/s²], computed analytically from ODE RHS
-    vessel_radius: jax.Array | None  # R_v [m]   (vessel models only)
-    vessel_velocity: jax.Array | None  # Ṙ_v [m/s]  (vessel models only)
+    radius: jax.Array
+    radial_velocity: jax.Array
+    radial_acceleration: jax.Array
+    vessel_radius: jax.Array | None
+    vessel_velocity: jax.Array | None
     driving_pressure: jax.Array
     converged: jax.Array
-    bubble: Bubble
+    eom: EquationOfMotion
     pulse: Pulse
     units: Units
 
@@ -69,7 +69,7 @@ class SimulationResult(eqx.Module):
 
         Uses the acoustic monopole approximation (Leighton 1994)::
 
-            P_rad = (ρ R / d) (R R̈ + 2 Ṁ²) − (ρ/4) Ṁ² (R/d)⁴
+            P_rad = (rho R / d) (R Rddot + 2 Rdot^2) - (rho/4) Rdot^2 (R/d)^4
 
         Parameters
         ----------
@@ -79,56 +79,55 @@ class SimulationResult(eqx.Module):
         R = self.radius
         Rdot = self.radial_velocity
         Rddot = self.radial_acceleration
-        rho = self.bubble.rho_L  # type: ignore
+        rho = self.eom.rho_L
         term1 = (rho * R / d) * (R * Rddot + 2.0 * Rdot**2)
         term2 = (rho / 4.0) * Rdot**2 * (R / d) ** 4
         return term1 - term2
 
 
 def run_simulation(
-    bubble: Bubble,
+    eom: EquationOfMotion,
     pulse: Pulse,
     *,
     units: Units,
     save_spec: SaveSpec,
-    window_s: float = 20e-6,  # [s]
+    window_s: float = 20e-6,
     dt0: float = 1e-3,
     max_steps: int = 10_000,
     progress: bool = False,
 ) -> SimulationResult:
-    """
-    Run a simulation: scale bubble and pulse, solve ODE, rescale results.
+    """Run a simulation: scale EoM and pulse, solve ODE, rescale results.
 
     Parameters
     ----------
-    bubble : BubbleBase
-        Bubble model instance (e.g., MarmottantBubble, MarmottantGompertz)
+    eom : EquationOfMotion
+        Assembled equation of motion (e.g. ``KellerMiksis``).
     pulse : Pulse
-        Driving pulse
+        Driving pulse.
     units : Units
-        Unit scaling object
+        Unit scaling object.
     save_spec : SaveSpec
-        Output specification (number of samples)
+        Output specification (number of samples).
     window_s : float
-        Simulation time window in seconds
+        Simulation time window in seconds.
     dt0 : float
-        Initial time step
+        Initial time step.
     max_steps : int
-        Maximum ODE steps
+        Maximum ODE steps.
     progress : bool
-        Show progress meter
+        Show progress meter.
 
     Returns
     -------
     SimulationResult
-        Scaled results with time, radius, velocity, pressure, convergence info
+        Scaled results with time, radius, velocity, pressure, convergence info.
     """
-    scaled_bubble = bubble.get_scaled(units)
+    scaled_eom = eom.get_scaled(units)
     scaled_pulse = pulse.get_scaled(units)
     scaled_t_span = (0.0, window_s / units.T_scale)
 
-    sol = solve_bubble(
-        scaled_bubble,
+    sol = solve_eom(
+        scaled_eom,
         scaled_pulse,
         t_span=scaled_t_span,
         dt0=dt0,
@@ -140,14 +139,14 @@ def run_simulation(
     assert sol.ts is not None
     assert sol.ys is not None
     ts = sol.ts * units.T_scale
-    ys = bubble.rescale_state(sol.ys, units)  # (T, 2) or (T, 4) for vessel
+    ys = eom.rescale_state(sol.ys, units)
     driving_pressure = jax.vmap(scaled_pulse)(sol.ts) * units.P_scale
 
     # Compute acceleration analytically from the ODE RHS.
     def _rddot(t, state):
-        return scaled_bubble.bubble_equation(t, state, scaled_pulse)[1]
+        return scaled_eom(t, state, scaled_pulse)[1]
 
-    rddot = jax.vmap(_rddot)(sol.ts, sol.ys) * units.acc_scale  # (T,)
+    rddot = jax.vmap(_rddot)(sol.ts, sol.ys) * units.acc_scale
 
     has_vessel = ys.shape[-1] >= 4  # shape is static, safe outside jit
 
@@ -160,7 +159,7 @@ def run_simulation(
         vessel_velocity=ys[..., 3] if has_vessel else None,
         driving_pressure=driving_pressure,
         converged=diffrax.is_successful(sol.result),
-        bubble=bubble,
+        eom=eom,
         pulse=pulse,
         units=units,
     )
@@ -169,7 +168,7 @@ def run_simulation(
 def compute_radius_metrics(result: SimulationResult) -> dict[str, float]:
     """Compute key radius metrics from simulation result."""
     R = result.radius
-    R0 = result.bubble.R0
+    R0 = result.eom.R0
     max_R = float(jnp.max(R))
     min_R = float(jnp.min(R))
     return {
