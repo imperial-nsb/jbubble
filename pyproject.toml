@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 authors = [
   {name = "Callum Rhys Tilbury"},
 ]
+license = {text = "MIT"}
 dependencies = [
     "jax==0.8.1",
     "jaxlib==0.8.1",

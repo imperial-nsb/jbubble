@@ -74,3 +74,7 @@ jupyter lab
 ```
 
 This will open a browser window. Navigate to the `examples` folder and open `intro.ipynb` to explore the library interactively.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
