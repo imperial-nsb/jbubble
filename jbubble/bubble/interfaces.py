@@ -282,10 +282,6 @@ class EquationOfMotion(eqx.Module, abc.ABC):
         """
         return jnp.array([self.R0, 0.0])
 
-    def surface_tension(self, R: jax.Array) -> jax.Array:
-        """Surface tension sigma(R), delegated to the shell model."""
-        return self.shell.surface_tension(R)
-
     def get_scaled(self, units: Any) -> "EquationOfMotion":
         """Return a dimensionless copy scaled by *units*.
 
