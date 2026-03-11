@@ -188,15 +188,6 @@ class LeightonTube(EquationOfMotion):
     tube_radius: float
     tube_length: float
 
-    def p_L(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
-        """Boundary pressure with simplified gas compressibility damping.
-
-        The gas pressure is multiplied by ``(1 - 3 gamma R_dot / c_L)``
-        before entering the standard force balance.
-        """
-        damping = 1.0 - 3.0 * self.gas.gamma * R_dot / self.c_L
-        return self.gas(R) * damping - self.shell(R, R_dot) - self.medium(R, R_dot)
-
     def __call__(
         self,
         t: Any,
@@ -208,13 +199,17 @@ class LeightonTube(EquationOfMotion):
         p_L_val = self.p_L(R, R_dot)
         p_ac = p_ac_fn(t)
 
+        # Gas radiation damping: dp_gas/dt = (dp_gas/dR) * Rdot
+        dp_gas_dt = jax.grad(self.gas)(R) * R_dot
+        radiation_damping = (R / self.c_L) * dp_gas_dt
+
         # Tube geometry factors
         Gamma = self.tube_radius
         zeta = self.tube_length / 2.0
         alpha = (zeta / Gamma) * (1.0 + (8.0 * Gamma) / (3.0 * jnp.pi * zeta)) - 1.0
         beta = 2.0 * alpha
 
-        rhs = (p_L_val - self.P_amb - p_ac) / self.rho_L
+        rhs = (p_L_val + radiation_damping - self.P_amb - p_ac) / self.rho_L
 
         # Modified inertia: R Rddot [1 + (R/Gamma) beta]
         #                 + 3/2 Rdot^2 [1 + 4R/(3 Gamma) beta] = rhs
@@ -298,8 +293,10 @@ class SphericalConfinement(EquationOfMotion):
         R, R_dot, a, a_dot = state
         p_ac = p_ac_fn(t)
 
-        # Gas pressure with simplified compressibility damping
-        p_gas_damped = self.gas(R) * (1.0 - 3.0 * self.gas.gamma * R_dot / self.c_L)
+        # Gas pressure with first-order compressibility damping
+        p_gas = self.gas(R)
+        dp_gas_dt = jax.grad(self.gas)(R) * R_dot
+        p_gas_damped = p_gas + (R / self.c_L) * dp_gas_dt
 
         # Shell and medium contributions at the bubble wall
         p_shell = self.shell(R, R_dot)
