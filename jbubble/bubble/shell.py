@@ -80,4 +80,3 @@ class ThickShell(ShellModel):
         )
         p_visc = 4.0 * self.mu_s * self.d_s * R_dot / R**2
         return p_laplace + p_elastic + p_visc
-

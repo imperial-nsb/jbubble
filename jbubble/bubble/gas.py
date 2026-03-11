@@ -112,4 +112,3 @@ class VanDerWaalsGas(GasModel):
         return (
             self.P_gas0 * ((self.R0**3 - self.h**3) / (R**3 - self.h**3)) ** self.gamma
         )
-

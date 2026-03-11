@@ -24,9 +24,7 @@ def test_run_simulation_ts_shape(rp_eom, pulse, units, save_spec):
     assert result.ts.shape == (save_spec.num_samples,)
 
 
-def test_run_simulation_array_shapes_consistent(
-    km_eom, pulse, units, save_spec
-):
+def test_run_simulation_array_shapes_consistent(km_eom, pulse, units, save_spec):
     result = run_simulation(km_eom, pulse, units=units, save_spec=save_spec)
     n = save_spec.num_samples
     assert result.radius.shape == (n,)

@@ -195,11 +195,7 @@ class LeightonTube(EquationOfMotion):
         before entering the standard force balance.
         """
         damping = 1.0 - 3.0 * self.gas.gamma * R_dot / self.c_L
-        return (
-            self.gas(R) * damping
-            - self.shell(R, R_dot)
-            - self.medium(R, R_dot)
-        )
+        return self.gas(R) * damping - self.shell(R, R_dot) - self.medium(R, R_dot)
 
     def __call__(
         self,
@@ -215,10 +211,7 @@ class LeightonTube(EquationOfMotion):
         # Tube geometry factors
         Gamma = self.tube_radius
         zeta = self.tube_length / 2.0
-        alpha = (
-            (zeta / Gamma) * (1.0 + (8.0 * Gamma) / (3.0 * jnp.pi * zeta))
-            - 1.0
-        )
+        alpha = (zeta / Gamma) * (1.0 + (8.0 * Gamma) / (3.0 * jnp.pi * zeta)) - 1.0
         beta = 2.0 * alpha
 
         rhs = (p_L_val - self.P_amb - p_ac) / self.rho_L
@@ -306,9 +299,7 @@ class SphericalConfinement(EquationOfMotion):
         p_ac = p_ac_fn(t)
 
         # Gas pressure with simplified compressibility damping
-        p_gas_damped = (
-            self.gas(R) * (1.0 - 3.0 * self.gas.gamma * R_dot / self.c_L)
-        )
+        p_gas_damped = self.gas(R) * (1.0 - 3.0 * self.gas.gamma * R_dot / self.c_L)
 
         # Shell and medium contributions at the bubble wall
         p_shell = self.shell(R, R_dot)
