@@ -196,6 +196,9 @@ class MediumModel(eqx.Module, abc.ABC):
     surrounding medium on the bubble wall.  For a Newtonian liquid this is
     just 4 mu Rdot / R.  Viscoelastic media (Kelvin-Voigt, Neo-Hookean, etc.)
     add elastic restoring forces.
+    Subclasses must implement separate methods for the viscous and elastic
+    contributions, which are then summed in the default ``__call__`` to get
+    the total medium pressure p_medium(R, Rdot).
     """
 
     @abc.abstractmethod
