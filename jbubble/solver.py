@@ -4,7 +4,7 @@ import diffrax
 import equinox as eqx
 import jax.numpy as jnp
 
-from .bubble.interfaces import EquationOfMotion
+from .bubble.eom import EquationOfMotion
 from .pulse import Pulse
 
 

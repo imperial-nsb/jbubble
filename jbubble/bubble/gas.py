@@ -1,7 +1,42 @@
+"""Gas pressure models.
+
+Computes the outward gas pressure p_gas as a function of the
+instantaneous bubble state.
+"""
+
+import abc
+
+import equinox as eqx
 import jax
 
-from . import _defaults
-from .interfaces import GasModel
+from .state import BubbleState
+
+
+class GasModel(eqx.Module, abc.ABC):
+    """Internal gas pressure model.
+
+    Computes the outward gas pressure p_gas as a function of the
+    instantaneous radius R only.  The gas state is determined by bubble
+    volume, so it has no dependence on wall velocity Rdot.
+
+    Examples: polytropic law, van der Waals corrected gas.
+    """
+
+    @abc.abstractmethod
+    def __call__(self, state: BubbleState) -> jax.Array:
+        """Compute gas pressure p_gas(R).
+
+        Parameters
+        ----------
+        state : BubbleState
+            Current bubble state.
+
+        Returns
+        -------
+        scalar
+            Gas pressure p_gas(R).
+        """
+        ...
 
 
 class PolytropicGas(GasModel):
@@ -50,8 +85,8 @@ class PolytropicGas(GasModel):
         P_gas0 = P_amb + 2.0 * sigma_R0 / R0
         return cls(P_gas0=P_gas0, R0=R0, gamma=gamma)
 
-    def __call__(self, R: jax.Array) -> jax.Array:
-        return self.P_gas0 * (self.R0 / R) ** (3.0 * self.gamma)
+    def __call__(self, state: BubbleState) -> jax.Array:
+        return self.P_gas0 * (self.R0 / state.R) ** (3.0 * self.gamma)
 
 
 class VanDerWaalsGas(GasModel):
@@ -86,7 +121,7 @@ class VanDerWaalsGas(GasModel):
         gamma: float,
         P_amb: float,
         sigma_R0: float,
-        h_divisor: float = _defaults.VDW_DIVISOR,
+        h_divisor: float = 5.61,
     ) -> "VanDerWaalsGas":
         """Construct from equilibrium conditions.
 
@@ -108,7 +143,8 @@ class VanDerWaalsGas(GasModel):
         P_gas0 = P_amb + 2.0 * sigma_R0 / R0
         return cls(P_gas0=P_gas0, R0=R0, gamma=gamma, h=R0 / h_divisor)
 
-    def __call__(self, R: jax.Array) -> jax.Array:
+    def __call__(self, state: BubbleState) -> jax.Array:
+        R = state.R
         return (
             self.P_gas0 * ((self.R0**3 - self.h**3) / (R**3 - self.h**3)) ** self.gamma
         )

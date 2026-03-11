@@ -8,7 +8,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from .bubble.interfaces import EquationOfMotion
+from .bubble.eom import EquationOfMotion
+from .bubble.state import ConfinedBubbleState
 from .pulse import Pulse
 from .solver import SaveSpec, solve_eom
 from .units import Units
@@ -144,19 +145,19 @@ def run_simulation(
 
     # Compute acceleration analytically from the ODE RHS.
     def _rddot(t, state):
-        return scaled_eom(t, state, scaled_pulse)[1]
+        return scaled_eom(t, state, scaled_pulse).R_dot
 
     rddot = jax.vmap(_rddot)(sol.ts, sol.ys) * units.acc_scale
 
-    has_vessel = ys.shape[-1] >= 4  # shape is static, safe outside jit
+    has_vessel = isinstance(ys, ConfinedBubbleState)
 
     return SimulationResult(
         ts=ts,
-        radius=ys[..., 0],
-        radial_velocity=ys[..., 1],
+        radius=ys.R,
+        radial_velocity=ys.R_dot,
         radial_acceleration=rddot,
-        vessel_radius=ys[..., 2] if has_vessel else None,
-        vessel_velocity=ys[..., 3] if has_vessel else None,
+        vessel_radius=ys.a if has_vessel else None,
+        vessel_velocity=ys.a_dot if has_vessel else None,
         driving_pressure=driving_pressure,
         converged=diffrax.is_successful(sol.result),
         eom=eom,

@@ -10,15 +10,16 @@ import jax.numpy as jnp
 import numpy as np
 
 from ..bubble import (
-    ConstantSigma,
-    GompertzSigma,
+    ConstantProperty,
+    GompertzSurfaceTension,
     KellerMiksis,
     KelvinVoigtMedium,
     LeightonTube,
     LipidShell,
-    MarmottantSigma,
+    MarmottantSurfaceTension,
     ModifiedRayleighPlesset,
     NeoHookeanMedium,
+    NewtonianMedium,
     NoShell,
     PolytropicGas,
     RayleighPlesset,
@@ -26,7 +27,7 @@ from ..bubble import (
     ThickShell,
     VanDerWaalsGas,
 )
-from ..bubble.interfaces import EquationOfMotion
+from ..bubble.eom import EquationOfMotion
 from ..pulse import Pulse
 from ..shapes import (
     Asymmetrical,
@@ -69,15 +70,16 @@ _MODULE_REGISTRY: dict[str, type[eqx.Module]] = {
         # Gas
         PolytropicGas,
         VanDerWaalsGas,
-        # Surface tension
-        ConstantSigma,
-        MarmottantSigma,
-        GompertzSigma,
+        # Properties
+        ConstantProperty,
+        GompertzSurfaceTension,
+        MarmottantSurfaceTension,
         # Shell
         NoShell,
         LipidShell,
         ThickShell,
         # Medium
+        NewtonianMedium,
         KelvinVoigtMedium,
         NeoHookeanMedium,
     ]

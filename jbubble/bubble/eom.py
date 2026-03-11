@@ -1,9 +1,127 @@
+"""Macroscopic equations of motion for bubble dynamics.
+
+Each concrete ``EquationOfMotion`` assembles a ``GasModel``,
+``ShellModel``, and ``MediumModel`` into a complete ODE right-hand side
+that returns a ``BubbleState`` (time derivative).
+"""
+
+import abc
 from typing import Any, Callable
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from .interfaces import EquationOfMotion, State
+from ._scaling import _scale_module
+from .gas import GasModel
+from .medium import MediumModel
+from .shell import ShellModel
+from .state import BubbleState, ConfinedBubbleState
+
+
+class EquationOfMotion(eqx.Module, abc.ABC):
+    """Macroscopic equation of motion for bubble dynamics.
+
+    Assembles a ``GasModel``, ``ShellModel``, and ``MediumModel`` into a
+    complete ODE right-hand side.  Concrete subclasses encode different
+    EoM formulations (Rayleigh-Plesset, Keller-Miksis, ...) which differ
+    in how they relate p_L to the radial acceleration Rddot.
+
+    The liquid-side boundary pressure is computed by the concrete helper
+    ``p_L`` as::
+
+        p_L = gas(state) - shell(state) - medium(state)
+
+    Because ``p_L`` is a regular method on an Equinox module, JAX can
+    differentiate through it automatically.  EoMs that require dp_L/dt
+    (e.g. Keller-Miksis) can use ``jax.grad(self.p_L)`` instead of
+    hand-coding analytical derivatives for every component combination.
+
+    The driving acoustic pressure is received as a callable ``p_ac_fn``
+    so that EoMs needing dp_ac/dt can compute it via ``jax.grad``.
+
+    Fields
+    ------
+    gas : GasModel
+        Internal gas pressure model.
+    shell : ShellModel
+        Shell / coating model.
+    medium : MediumModel
+        Surrounding medium model.
+    R0 : float
+        Equilibrium bubble radius  [m].
+    P_amb : float
+        Ambient (far-field) pressure  [Pa].
+    rho_L : float
+        Liquid density  [kg/m^3].
+    """
+
+    gas: GasModel
+    shell: ShellModel
+    medium: MediumModel
+
+    R0: float
+    P_amb: float
+    rho_L: float
+
+    def p_L(self, state: BubbleState) -> jax.Array:
+        """Liquid-side boundary pressure.
+
+        p_L = p_gas(state) - p_shell(state) - p_medium(state)
+        """
+        return self.gas(state) - self.shell(state) - self.medium(state)
+
+    def initial_state(self) -> BubbleState:
+        """Default initial state: equilibrium radius, zero velocity.
+
+        Override for coupled systems with a larger state vector.
+        """
+        return BubbleState(R=jnp.array(self.R0), R_dot=jnp.array(0.0))
+
+    def get_scaled(self, units: Any) -> "EquationOfMotion":
+        """Return a dimensionless copy scaled by *units*.
+
+        Recursively scales all sub-modules (gas, shell, medium) and
+        scalar fields using ``_FIELD_SCALES``.
+        """
+        return _scale_module(self, units)
+
+    def rescale_state(self, state: BubbleState, units: Any) -> BubbleState:
+        """Rescale the state variables back to physical units.
+
+        Default handles the standard 2-DOF ``BubbleState``.
+        Override for models with different state definitions (e.g.
+        ``SphericalConfinement`` with 4-DOF).
+        """
+        return BubbleState(
+            R=state.R * units.L_scale,
+            R_dot=state.R_dot * units.vel_scale,
+        )
+
+    @abc.abstractmethod
+    def __call__(
+        self,
+        t: Any,
+        state: BubbleState,
+        p_ac_fn: Callable,
+    ) -> BubbleState:
+        """Compute the ODE right-hand side  d(state)/dt.
+
+        Parameters
+        ----------
+        t : scalar
+            Current time.
+        state : BubbleState
+            Current bubble state.
+        p_ac_fn : callable  (t -> scalar)
+            Driving acoustic pressure as a function of time.
+
+        Returns
+        -------
+        BubbleState
+            Time derivative of the state (R_dot, R_ddot, ...).
+        """
+        ...
 
 
 class RayleighPlesset(EquationOfMotion):
@@ -18,14 +136,14 @@ class RayleighPlesset(EquationOfMotion):
     def __call__(
         self,
         t: Any,
-        state: State,
+        state: BubbleState,
         p_ac_fn: Callable,
-    ) -> State:
-        R, R_dot = state
-        p_L_val = self.p_L(R, R_dot)
+    ) -> BubbleState:
+        R, R_dot = state.R, state.R_dot
+        p_L_val = self.p_L(state)
         p_ac = p_ac_fn(t)
         R_ddot = ((p_L_val - self.P_amb - p_ac) / self.rho_L - 1.5 * R_dot**2) / R
-        return jnp.stack([R_dot, R_ddot])
+        return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
 class ModifiedRayleighPlesset(EquationOfMotion):
@@ -37,21 +155,10 @@ class ModifiedRayleighPlesset(EquationOfMotion):
         R Rddot + 3/2 Rdot^2
             = (1/rho) (p_L + (R/c) dp_gas/dt - P_amb - p_ac)
 
-    where dp_gas/dt = (dp_gas/dR) Rdot is computed via autodiff.  This
-    sits between the plain Rayleigh-Plesset (no compressibility) and
-    the full Keller-Miksis (first-order compressibility on all of p_L).
+    where dp_gas/dt = (dp_gas/dR) Rdot is computed via autodiff.
 
     Fields
     ------
-    gas : GasModel
-    shell : ShellModel
-    medium : MediumModel
-    R0 : float
-        Equilibrium bubble radius  [m].
-    P_amb : float
-        Ambient pressure  [Pa].
-    rho_L : float
-        Liquid density  [kg/m^3].
     c_L : float
         Speed of sound in the liquid  [m/s].
     """
@@ -61,21 +168,22 @@ class ModifiedRayleighPlesset(EquationOfMotion):
     def __call__(
         self,
         t: Any,
-        state: State,
+        state: BubbleState,
         p_ac_fn: Callable,
-    ) -> State:
-        R, R_dot = state
+    ) -> BubbleState:
+        R, R_dot = state.R, state.R_dot
 
-        p_L_val = self.p_L(R, R_dot)
+        p_L_val = self.p_L(state)
         p_ac = p_ac_fn(t)
 
         # Gas radiation damping: dp_gas/dt = (dp_gas/dR) * Rdot
-        dp_gas_dR = jax.grad(self.gas)(R)
+        gas_tangent = jax.grad(self.gas)(state)
+        dp_gas_dR = gas_tangent.R
         dp_gas_dt = dp_gas_dR * R_dot
 
         forces = p_L_val + (R / self.c_L) * dp_gas_dt - self.P_amb - p_ac
         R_ddot = (forces / self.rho_L - 1.5 * R_dot**2) / R
-        return jnp.stack([R_dot, R_ddot])
+        return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
 class KellerMiksis(EquationOfMotion):
@@ -95,15 +203,6 @@ class KellerMiksis(EquationOfMotion):
 
     Fields
     ------
-    gas : GasModel
-    shell : ShellModel
-    medium : MediumModel
-    R0 : float
-        Equilibrium bubble radius  [m].
-    P_amb : float
-        Ambient pressure  [Pa].
-    rho_L : float
-        Liquid density  [kg/m^3].
     c_L : float
         Speed of sound in the liquid  [m/s].
     """
@@ -113,16 +212,17 @@ class KellerMiksis(EquationOfMotion):
     def __call__(
         self,
         t: Any,
-        state: State,
+        state: BubbleState,
         p_ac_fn: Callable,
-    ) -> State:
-        R, R_dot = state
+    ) -> BubbleState:
+        R, R_dot = state.R, state.R_dot
         M = R_dot / self.c_L  # Mach number
 
         # -- boundary pressure and its partial derivatives (autodiff) ------
-        p_L_val = self.p_L(R, R_dot)
-        dp_L_dR = jax.grad(self.p_L, argnums=0)(R, R_dot)
-        dp_L_dRdot = jax.grad(self.p_L, argnums=1)(R, R_dot)
+        p_L_val = self.p_L(state)
+        tangent = jax.grad(self.p_L)(state)
+        dp_L_dR = tangent.R
+        dp_L_dRdot = tangent.R_dot
 
         # -- driving pressure and its time derivative ----------------------
         p_ac = p_ac_fn(t)
@@ -145,7 +245,7 @@ class KellerMiksis(EquationOfMotion):
         )
 
         R_ddot = numer / denom
-        return jnp.stack([R_dot, R_ddot])
+        return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
 class LeightonTube(EquationOfMotion):
@@ -161,27 +261,14 @@ class LeightonTube(EquationOfMotion):
     ``alpha = (zeta/Gamma)(1 + 8 Gamma / (3 pi zeta)) - 1`` encodes
     the tube geometry (Gamma = tube radius, zeta = half-length).
 
-    A simplified gas compressibility damping is included::
-
-        p_gas_damped = p_gas(R) * (1 - 3 gamma Rdot / c_L)
-
     Fields
     ------
-    gas : GasModel
-    shell : ShellModel
-    medium : MediumModel
-    R0 : float
-        Equilibrium bubble radius [m].
-    P_amb : float
-        Ambient pressure [Pa].
-    rho_L : float
-        Liquid density [kg/m^3].
     c_L : float
-        Speed of sound in the liquid [m/s].
+        Speed of sound in the liquid  [m/s].
     tube_radius : float
-        Inner radius of the confining tube [m].
+        Inner radius of the confining tube  [m].
     tube_length : float
-        Length of the confining tube [m].
+        Length of the confining tube  [m].
     """
 
     c_L: float
@@ -191,16 +278,17 @@ class LeightonTube(EquationOfMotion):
     def __call__(
         self,
         t: Any,
-        state: State,
+        state: BubbleState,
         p_ac_fn: Callable,
-    ) -> State:
-        R, R_dot = state
+    ) -> BubbleState:
+        R, R_dot = state.R, state.R_dot
 
-        p_L_val = self.p_L(R, R_dot)
+        p_L_val = self.p_L(state)
         p_ac = p_ac_fn(t)
 
         # Gas radiation damping: dp_gas/dt = (dp_gas/dR) * Rdot
-        dp_gas_dt = jax.grad(self.gas)(R) * R_dot
+        gas_tangent = jax.grad(self.gas)(state)
+        dp_gas_dt = gas_tangent.R * R_dot
         radiation_damping = (R / self.c_L) * dp_gas_dt
 
         # Tube geometry factors
@@ -217,15 +305,15 @@ class LeightonTube(EquationOfMotion):
         inertia = 1.5 * R_dot**2 * (1.0 + (4.0 * R) / (3.0 * Gamma) * beta)
 
         R_ddot = (rhs - inertia) / denom
-        return jnp.stack([R_dot, R_ddot])
+        return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
 class SphericalConfinement(EquationOfMotion):
     """Bubble confined inside a thin elastic spherical vessel.
 
     Couples the bubble wall dynamics to the vessel wall motion, producing
-    a 4-DOF state vector ``[R, Rdot, a, a_dot]`` where *a* is the
-    vessel wall radius.
+    a 4-DOF state (``ConfinedBubbleState``) where *a* is the vessel wall
+    radius.
 
     The coupled system is::
 
@@ -234,35 +322,22 @@ class SphericalConfinement(EquationOfMotion):
 
     solved via Cramer's rule at each time step.
 
-    A simplified gas compressibility damping is included::
-
-        p_gas_damped = p_gas(R) * (1 - 3 gamma Rdot / c_L)
-
     Fields
     ------
-    gas : GasModel
-    shell : ShellModel
-    medium : MediumModel
-    R0 : float
-        Equilibrium bubble radius [m].
-    P_amb : float
-        Ambient pressure [Pa].
-    rho_L : float
-        Liquid density [kg/m^3].
     c_L : float
-        Speed of sound in the liquid [m/s].
+        Speed of sound in the liquid  [m/s].
     vessel_radius : float
-        Equilibrium vessel wall radius [m].
+        Equilibrium vessel wall radius  [m].
     vessel_rho : float
-        Vessel wall density [kg/m^3].
+        Vessel wall density  [kg/m^3].
     vessel_E : float
-        Vessel Young's modulus [Pa].
+        Vessel Young's modulus  [Pa].
     vessel_d : float
-        Vessel wall thickness [m].
+        Vessel wall thickness  [m].
     tissue_rho : float
-        Surrounding tissue density [kg/m^3].
+        Surrounding tissue density  [kg/m^3].
     tissue_d : float
-        Surrounding tissue thickness [m].
+        Surrounding tissue thickness  [m].
     """
 
     c_L: float
@@ -273,33 +348,44 @@ class SphericalConfinement(EquationOfMotion):
     tissue_rho: float
     tissue_d: float
 
-    def initial_state(self) -> State:
-        """Initial state ``[R0, 0, vessel_radius, 0]``."""
-        return jnp.array([self.R0, 0.0, self.vessel_radius, 0.0])
-
-    def rescale_state(self, state: jax.Array, units) -> jax.Array:
-        """Rescale 4-DOF state ``[R, Rdot, a, a_dot]`` to physical units."""
-        scale_factors = jnp.array(
-            [units.L_scale, units.vel_scale, units.L_scale, units.vel_scale]
+    def initial_state(self) -> ConfinedBubbleState:
+        """Initial state: equilibrium bubble and vessel radii, zero velocities."""
+        return ConfinedBubbleState(
+            R=jnp.array(self.R0),
+            R_dot=jnp.array(0.0),
+            a=jnp.array(self.vessel_radius),
+            a_dot=jnp.array(0.0),
         )
-        return state * scale_factors
+
+    def rescale_state(
+        self, state: ConfinedBubbleState, units: Any
+    ) -> ConfinedBubbleState:
+        """Rescale 4-DOF state to physical units."""
+        return ConfinedBubbleState(
+            R=state.R * units.L_scale,
+            R_dot=state.R_dot * units.vel_scale,
+            a=state.a * units.L_scale,
+            a_dot=state.a_dot * units.vel_scale,
+        )
 
     def __call__(
         self,
         t: Any,
-        state: State,
+        state: ConfinedBubbleState,
         p_ac_fn: Callable,
-    ) -> State:
-        R, R_dot, a, a_dot = state
+    ) -> ConfinedBubbleState:
+        R, R_dot = state.R, state.R_dot
+        a, a_dot = state.a, state.a_dot
         p_ac = p_ac_fn(t)
 
         # Gas pressure with first-order compressibility damping
-        p_gas = self.gas(R)
-        dp_gas_dt = jax.grad(self.gas)(R) * R_dot
+        p_gas = self.gas(state)
+        gas_tangent = jax.grad(self.gas)(state)
+        dp_gas_dt = gas_tangent.R * R_dot
         p_gas_damped = p_gas + (R / self.c_L) * dp_gas_dt
 
         # Shell and medium contributions at the bubble wall
-        p_shell = self.shell(R, R_dot)
+        p_shell = self.shell(state)
         p_medium_visc = 4.0 * self.medium.mu * (R_dot / R + a_dot / a)
 
         # Vessel wall pressure (thin shell, nearly-incompressible nu=0.5)
@@ -332,4 +418,9 @@ class SphericalConfinement(EquationOfMotion):
         R_ddot = (E * D - B * F) / Delta
         a_ddot = (A * F - C * E) / Delta
 
-        return jnp.stack([R_dot, R_ddot, a_dot, a_ddot])
+        return ConfinedBubbleState(
+            R=R_dot,
+            R_dot=R_ddot,
+            a=a_dot,
+            a_dot=a_ddot,
+        )

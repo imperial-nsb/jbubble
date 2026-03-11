@@ -1,24 +1,27 @@
 """jbubble: differentiable microbubble dynamics primitives."""
 
 from .bubble import (
-    ConstantSigma,
+    BubbleState,
+    ConfinedBubbleState,
+    ConstantProperty,
     EquationOfMotion,
     GasModel,
-    GompertzSigma,
+    GompertzSurfaceTension,
     KellerMiksis,
     KelvinVoigtMedium,
     LeightonTube,
     LipidShell,
-    MarmottantSigma,
+    MarmottantSurfaceTension,
     MediumModel,
     ModifiedRayleighPlesset,
     NeoHookeanMedium,
+    NewtonianMedium,
     NoShell,
     PolytropicGas,
+    Property,
     RayleighPlesset,
     ShellModel,
     SphericalConfinement,
-    SurfaceTensionModel,
     ThickShell,
     VanDerWaalsGas,
 )
@@ -72,24 +75,28 @@ __all__ = [
     "compute_radius_metrics",
     "PlotArrays",
     "arrays_from_result",
+    # State
+    "BubbleState",
+    "ConfinedBubbleState",
     # Bubble interfaces
     "GasModel",
-    "SurfaceTensionModel",
+    "Property",
     "ShellModel",
     "MediumModel",
     "EquationOfMotion",
+    # Property models
+    "ConstantProperty",
+    "GompertzSurfaceTension",
+    "MarmottantSurfaceTension",
     # Gas models
     "PolytropicGas",
     "VanDerWaalsGas",
-    # Surface tension models
-    "ConstantSigma",
-    "MarmottantSigma",
-    "GompertzSigma",
     # Shell models
     "NoShell",
     "LipidShell",
     "ThickShell",
     # Medium models
+    "NewtonianMedium",
     "KelvinVoigtMedium",
     "NeoHookeanMedium",
     # Equations of motion

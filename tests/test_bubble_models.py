@@ -1,8 +1,9 @@
 """Tests for all concrete EoM compositions."""
 
+import jax
 import jax.numpy as jnp
 import pytest
-from jbubble.bubble import SphericalConfinement
+from jbubble.bubble import ConfinedBubbleState, SphericalConfinement
 
 from conftest import ALL_EOM_FACTORIES, make_confinement
 
@@ -13,36 +14,41 @@ _R0 = 3e-6
 
 
 @pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
-def test_initial_state_is_1d(factory):
+def test_initial_state_has_R_field(factory):
     eom = factory(_R0)
     s = eom.initial_state()
-    assert s.ndim == 1
+    assert hasattr(s, "R")
+    assert hasattr(s, "R_dot")
 
 
 @pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
-def test_initial_state_size(factory):
+def test_initial_state_type(factory):
     eom = factory(_R0)
     s = eom.initial_state()
-    expected = 4 if isinstance(eom, SphericalConfinement) else 2
-    assert s.shape == (expected,)
+    if isinstance(eom, SphericalConfinement):
+        assert isinstance(s, ConfinedBubbleState)
+    else:
+        from jbubble.bubble import BubbleState
+
+        assert isinstance(s, BubbleState)
 
 
 @pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
-def test_initial_state_first_element_is_R0(factory):
+def test_initial_state_R_is_R0(factory):
     eom = factory(_R0)
     s = eom.initial_state()
-    assert float(s[0]) == pytest.approx(_R0)
+    assert float(s.R) == pytest.approx(_R0)
 
 
 # ── __call__ (ODE RHS) ──────────────────────────────────────────────────────
 
 
 @pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
-def test_call_output_shape(factory, pulse):
+def test_call_output_is_same_type(factory, pulse):
     eom = factory(_R0)
     s0 = eom.initial_state()
     dsdt = eom(jnp.array(0.0), s0, pulse)
-    assert dsdt.shape == s0.shape
+    assert type(dsdt) is type(s0)
 
 
 @pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
@@ -50,16 +56,17 @@ def test_call_is_finite(factory, pulse):
     eom = factory(_R0)
     s0 = eom.initial_state()
     dsdt = eom(jnp.array(0.0), s0, pulse)
-    assert bool(jnp.all(jnp.isfinite(dsdt)))
+    leaves = jax.tree.leaves(dsdt)
+    assert all(bool(jnp.isfinite(leaf)) for leaf in leaves)
 
 
 @pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
-def test_call_first_element_is_velocity(factory, pulse):
-    # d(R)/dt = Rdot; at initial state Rdot=0, so dsdt[0] should be 0
+def test_call_R_dot_is_velocity(factory, pulse):
+    # d(R)/dt = Rdot; at initial state Rdot=0, so dsdt.R should be 0
     eom = factory(_R0)
     s0 = eom.initial_state()
     dsdt = eom(jnp.array(0.0), s0, pulse)
-    assert float(dsdt[0]) == pytest.approx(0.0, abs=1e-10)
+    assert float(dsdt.R) == pytest.approx(0.0, abs=1e-10)
 
 
 # ── get_scaled ───────────────────────────────────────────────────────────────
@@ -110,22 +117,26 @@ def test_has_rho_L_attribute(factory):
 
 
 @pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
-def test_rescale_state_shape(factory, units):
+def test_rescale_state_same_type(factory, units):
     eom = factory(_R0)
     s0 = eom.initial_state()
-    ones = jnp.ones_like(s0)
-    rescaled = eom.rescale_state(ones, units)
-    assert rescaled.shape == s0.shape
+    rescaled = eom.rescale_state(s0, units)
+    assert type(rescaled) is type(s0)
 
 
 def test_confinement_rescale_state_4dof(units):
     """SphericalConfinement should rescale all four state components."""
     eom = make_confinement(_R0)
-    ones = jnp.ones(4)
+    ones = ConfinedBubbleState(
+        R=jnp.array(1.0),
+        R_dot=jnp.array(1.0),
+        a=jnp.array(1.0),
+        a_dot=jnp.array(1.0),
+    )
     rescaled = eom.rescale_state(ones, units)
-    assert rescaled.shape == (4,)
+    assert isinstance(rescaled, ConfinedBubbleState)
     # R and a should get L_scale, Rdot and a_dot should get vel_scale
-    assert float(rescaled[0]) == pytest.approx(units.L_scale)
-    assert float(rescaled[1]) == pytest.approx(units.vel_scale)
-    assert float(rescaled[2]) == pytest.approx(units.L_scale)
-    assert float(rescaled[3]) == pytest.approx(units.vel_scale)
+    assert float(rescaled.R) == pytest.approx(units.L_scale)
+    assert float(rescaled.R_dot) == pytest.approx(units.vel_scale)
+    assert float(rescaled.a) == pytest.approx(units.L_scale)
+    assert float(rescaled.a_dot) == pytest.approx(units.vel_scale)
