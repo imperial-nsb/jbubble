@@ -207,7 +207,7 @@ class LeightonTube(EquationOfMotion):
         Gamma = self.tube_radius
         zeta = self.tube_length / 2.0
         alpha = (zeta / Gamma) * (1.0 + (8.0 * Gamma) / (3.0 * jnp.pi * zeta)) - 1.0
-        beta = 2.0 * alpha
+        beta = 2.0 * alpha - 1.0  # TODO: check the -1.0
 
         rhs = (p_L_val + radiation_damping - self.P_amb - p_ac) / self.rho_L
 
