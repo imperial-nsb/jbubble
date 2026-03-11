@@ -163,11 +163,20 @@ class ShellModel(eqx.Module, abc.ABC):
 
     sigma: SurfaceTensionModel
 
-    def surface_tension(self, R: jax.Array) -> jax.Array:
-        """Compute surface tension sigma(R) by delegating to the inner model."""
-        return self.sigma(R)
+    def p_laplace(self, R: jax.Array) -> jax.Array:
+        """Laplace pressure contribution from surface tension."""
+        return 2.0 * self.sigma(R) / R
 
     @abc.abstractmethod
+    def p_elastic(self, R: jax.Array) -> jax.Array:
+        """Elastic contribution from the shell."""
+        ...
+
+    @abc.abstractmethod
+    def p_viscous(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
+        """Viscous contribution from the shell."""
+        ...
+
     def __call__(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
         """Compute total shell pressure p_shell(R, Rdot).
 
@@ -186,7 +195,7 @@ class ShellModel(eqx.Module, abc.ABC):
         scalar
             Total inward shell pressure.
         """
-        ...
+        return self.p_laplace(R) + self.p_elastic(R) + self.p_viscous(R, R_dot)
 
 
 class MediumModel(eqx.Module, abc.ABC):

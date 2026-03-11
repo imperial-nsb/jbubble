@@ -14,8 +14,11 @@ class NoShell(ShellModel):
     ``SurfaceTensionModel`` if desired.
     """
 
-    def __call__(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
-        return 2.0 * self.sigma(R) / R
+    def p_elastic(self, R: jax.Array) -> jax.Array:
+        return 0.0
+
+    def p_viscous(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
+        return 0.0
 
 
 class LipidShell(ShellModel):
@@ -37,8 +40,11 @@ class LipidShell(ShellModel):
 
     kappa_s: float = _defaults.KAPPA_S_LIPID
 
-    def __call__(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
-        return 2.0 * self.sigma(R) / R + 4.0 * self.kappa_s * R_dot / R**2
+    def p_elastic(self, R: jax.Array) -> jax.Array:
+        return 0.0
+
+    def p_viscous(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
+        return 4.0 * self.kappa_s * R_dot / R**2
 
 
 class ThickShell(ShellModel):
@@ -73,10 +79,10 @@ class ThickShell(ShellModel):
     G_s: float = 10e6
     mu_s: float = 0.5
 
-    def __call__(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
-        p_laplace = 2.0 * self.sigma(R) / R
-        p_elastic = (
+    def p_elastic(self, R: jax.Array) -> jax.Array:
+        return (
             (4.0 / 3.0) * self.G_s * (self.d_s / self.R0) * (1.0 - (self.R0 / R) ** 3)
         )
-        p_visc = 4.0 * self.mu_s * self.d_s * R_dot / R**2
-        return p_laplace + p_elastic + p_visc
+
+    def p_viscous(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
+        return 4.0 * self.mu_s * self.d_s * R_dot / R**2
