@@ -199,6 +199,15 @@ class MediumModel(eqx.Module, abc.ABC):
     """
 
     @abc.abstractmethod
+    def p_viscous(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
+        """Viscous contribution to the medium pressure."""
+        ...
+
+    @abc.abstractmethod
+    def p_elastic(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
+        """Elastic contribution to the medium pressure."""
+        ...
+
     def __call__(self, R: jax.Array, R_dot: jax.Array) -> jax.Array:
         """Compute total medium pressure p_medium(R, Rdot).
 
@@ -214,7 +223,7 @@ class MediumModel(eqx.Module, abc.ABC):
         scalar
             Total inward medium pressure (viscous + elastic).
         """
-        ...
+        return self.p_viscous(R, R_dot) + self.p_elastic(R, R_dot)
 
 
 # ---------------------------------------------------------------------------

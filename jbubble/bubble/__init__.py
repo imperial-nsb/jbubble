@@ -37,7 +37,11 @@ from .interfaces import (
     State,
     SurfaceTensionModel,
 )
-from .medium import KelvinVoigtMedium, NeoHookeanMedium
+from .medium import (
+    KelvinVoigtMedium,
+    NeoHookeanMedium,
+    NewtonianMedium,
+)
 from .shell import LipidShell, NoShell, ThickShell
 from .surface import (
     ConstantSigma,
@@ -67,6 +71,7 @@ __all__ = [
     "LipidShell",
     "ThickShell",
     # Medium models
+    "NewtonianMedium",
     "KelvinVoigtMedium",
     "NeoHookeanMedium",
     # Equations of motion
