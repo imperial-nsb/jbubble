@@ -62,20 +62,6 @@ def test_run_simulation_has_vessel_for_confinement(pulse, units, save_spec):
     assert result.has_vessel
 
 
-# ── radiated_pressure ─────────────────────────────────────────────────────────
-
-
-def test_radiated_pressure_shape(km_eom, pulse, units, save_spec):
-    result = run_simulation(km_eom, pulse, units=units, save_spec=save_spec)
-    p_rad = result.radiated_pressure(d=1e-3)
-    assert p_rad.shape == result.ts.shape
-
-
-def test_radiated_pressure_is_finite(km_eom, pulse, units, save_spec):
-    result = run_simulation(km_eom, pulse, units=units, save_spec=save_spec)
-    p_rad = result.radiated_pressure(d=1e-3)
-    assert bool(jnp.all(jnp.isfinite(p_rad)))
-
 
 # ── compute_radius_metrics ────────────────────────────────────────────────────
 

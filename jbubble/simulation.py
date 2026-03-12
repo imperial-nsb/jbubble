@@ -65,25 +65,6 @@ class SimulationResult(eqx.Module):
     def has_vessel(self) -> bool:
         return self.vessel_radius is not None
 
-    def radiated_pressure(self, d: float) -> jax.Array:
-        """Far-field radiated pressure at sensor distance *d* [m].
-
-        Uses the acoustic monopole approximation (Leighton 1994)::
-
-            P_rad = (rho R / d) (R Rddot + 2 Rdot^2) - (rho/4) Rdot^2 (R/d)^4
-
-        Parameters
-        ----------
-        d : float
-            Distance from the bubble centre to the sensor [m].
-        """
-        R = self.radius
-        Rdot = self.radial_velocity
-        Rddot = self.radial_acceleration
-        rho = self.eom.rho_L
-        term1 = (rho * R / d) * (R * Rddot + 2.0 * Rdot**2)
-        term2 = (rho / 4.0) * Rdot**2 * (R / d) ** 4
-        return term1 - term2
 
 
 def run_simulation(
