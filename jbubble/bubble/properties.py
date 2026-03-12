@@ -89,9 +89,9 @@ class GompertzSurfaceTension(Property):
         cls,
         *,
         R0: float,
-        R_buckle_ratio: float = 0.99,
-        chi: float = 0.38,
-        sigma_break: float = 72e-3,
+        R_buckle_ratio: float,
+        chi: float,
+        sigma_break: float,
     ) -> "GompertzSurfaceTension":
         """Construct from equilibrium radius and buckling ratio."""
         return cls(R0=R0, R_buckle=R0 * R_buckle_ratio, chi=chi, sigma_break=sigma_break)
@@ -130,30 +130,30 @@ class MarmottantSurfaceTension(Property):
         Buckling radius  [m].
     chi : float
         Shell elasticity  [N/m].
-    sigma_water : float
-        Water surface tension (post-rupture value)  [N/m].
+    sigma_rupture : float
+        Surface tension (post-rupture value)  [N/m].
     """
 
     R_buckle: float
     chi: float
-    sigma_water: float
+    sigma_rupture: float
 
     @classmethod
     def from_R0(
         cls,
         *,
         R0: float,
-        R_buckle_ratio: float = 0.99,
-        chi: float = 0.38,
-        sigma_water: float = 72e-3,
+        R_buckle_ratio: float,
+        chi: float,
+        sigma_rupture: float,
     ) -> "MarmottantSurfaceTension":
         """Construct from equilibrium radius and buckling ratio."""
-        return cls(R_buckle=R0 * R_buckle_ratio, chi=chi, sigma_water=sigma_water)
+        return cls(R_buckle=R0 * R_buckle_ratio, chi=chi, sigma_rupture=sigma_rupture)
 
     @property
     def R_rupture(self) -> float:
         """Rupture radius, derived from continuity of sigma at rupture."""
-        return self.R_buckle * jnp.sqrt(self.sigma_water / self.chi + 1.0)
+        return self.R_buckle * jnp.sqrt(self.sigma_rupture / self.chi + 1.0)
 
     def sigma_R0(self, R0: float) -> float:
         """Surface tension at a given R0."""
@@ -165,5 +165,5 @@ class MarmottantSurfaceTension(Property):
         return jnp.where(
             R <= self.R_buckle,
             0.0,
-            jnp.where(R >= self.R_rupture, self.sigma_water, sigma_elastic),
+            jnp.where(R >= self.R_rupture, self.sigma_rupture, sigma_elastic),
         )

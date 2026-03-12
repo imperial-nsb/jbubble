@@ -96,27 +96,6 @@ class LipidShell(ShellModel):
 
     kappa_s: Property
 
-    @classmethod
-    def marmottant_2005(
-        cls,
-        *,
-        sigma: Property,
-        kappa_s: float = 2.4e-9,
-    ) -> "LipidShell":
-        """Construct with literature values from Marmottant et al. (2005).
-
-        Parameters
-        ----------
-        sigma : Property
-            Surface tension law.
-        kappa_s : float
-            Shell surface viscosity  [N s/m]; default 2.4e-9.
-        """
-        return cls(
-            sigma=sigma,
-            kappa_s=ConstantProperty(val=kappa_s, _scale="kappa_scale"),
-        )
-
     def p_elastic(self, state: BubbleState) -> jax.Array:
         return state.R * 0.0
 
@@ -155,33 +134,6 @@ class ThickShell(ShellModel):
     d_s: float
     G_s: float
     mu_s: float
-
-    @classmethod
-    def church_1995(
-        cls,
-        *,
-        sigma: Property,
-        R0: float,
-        d_s: float = 4e-9,
-        G_s: float = 10e6,
-        mu_s: float = 0.5,
-    ) -> "ThickShell":
-        """Construct with literature values from Church (1995).
-
-        Parameters
-        ----------
-        sigma : Property
-            Surface tension law.
-        R0 : float
-            Equilibrium bubble radius  [m].
-        d_s : float
-            Shell thickness  [m]; default 4e-9.
-        G_s : float
-            Shell shear modulus  [Pa]; default 10 MPa.
-        mu_s : float
-            Shell viscosity  [Pa s]; default 0.5.
-        """
-        return cls(sigma=sigma, R0=R0, d_s=d_s, G_s=G_s, mu_s=mu_s)
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
         R = state.R

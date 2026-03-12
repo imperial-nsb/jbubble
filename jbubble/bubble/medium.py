@@ -10,6 +10,7 @@ import equinox as eqx
 import jax
 
 from .state import BubbleState
+from .properties import Property
 
 
 class MediumModel(eqx.Module, abc.ABC):
@@ -23,7 +24,12 @@ class MediumModel(eqx.Module, abc.ABC):
     Subclasses must implement separate methods for the viscous and elastic
     contributions, which are then summed in the default ``__call__`` to get
     the total medium pressure p_medium(state).
+
+    mu : float
+        Dynamic viscosity  [Pa s].
     """
+
+    mu: Property
 
     @abc.abstractmethod
     def p_viscous(self, state: BubbleState) -> jax.Array:
@@ -62,13 +68,6 @@ class NewtonianMedium(MediumModel):
         Dynamic viscosity  [Pa s].
     """
 
-    mu: float
-
-    @classmethod
-    def water(cls, mu: float = 0.00089) -> "NewtonianMedium":
-        """Construct with water viscosity (default 0.89 mPa s)."""
-        return cls(mu=mu)
-
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.mu * state.R_dot / state.R
 
@@ -87,33 +86,10 @@ class KelvinVoigtMedium(MediumModel):
         Equilibrium bubble radius  [m].
     G : float
         Shear modulus  [Pa].
-    mu : float
-        Dynamic viscosity  [Pa s].
     """
 
     R0: float
     G: float
-    mu: float
-
-    @classmethod
-    def water(
-        cls,
-        R0: float,
-        G: float,
-        mu: float = 0.00089,
-    ) -> "KelvinVoigtMedium":
-        """Construct with water-like viscosity.
-
-        Parameters
-        ----------
-        R0 : float
-            Equilibrium bubble radius  [m].
-        G : float
-            Shear modulus  [Pa].
-        mu : float
-            Dynamic viscosity  [Pa s]; default 0.89 mPa s.
-        """
-        return cls(R0=R0, G=G, mu=mu)
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.mu * state.R_dot / state.R
@@ -136,33 +112,10 @@ class NeoHookeanMedium(MediumModel):
         Equilibrium bubble radius  [m].
     G : float
         Shear modulus  [Pa].
-    mu : float
-        Dynamic viscosity  [Pa s].
     """
 
     R0: float
     G: float
-    mu: float
-
-    @classmethod
-    def water(
-        cls,
-        R0: float,
-        G: float,
-        mu: float = 0.00089,
-    ) -> "NeoHookeanMedium":
-        """Construct with water-like viscosity.
-
-        Parameters
-        ----------
-        R0 : float
-            Equilibrium bubble radius  [m].
-        G : float
-            Shear modulus  [Pa].
-        mu : float
-            Dynamic viscosity  [Pa s]; default 0.89 mPa s.
-        """
-        return cls(R0=R0, G=G, mu=mu)
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.mu * state.R_dot / state.R

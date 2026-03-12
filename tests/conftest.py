@@ -35,105 +35,119 @@ from jbubble.bubble import (  # noqa: E402
 
 def make_rp(R0):
     """RayleighPlesset with uncoated bubble (ConstantProperty sigma + NoShell)."""
+    from jbubble.presets import WATER_MU, WATER_RHO, AIR_GAMMA, make_polytropic_gas
     sigma = ConstantProperty(val=72e-3, _scale="sigma_scale")
     shell = NoShell(sigma=sigma)
-    gas = PolytropicGas.from_equilibrium(
+    gas = make_polytropic_gas(
         R0=R0,
-        gamma=1.4,
+        gamma=AIR_GAMMA,
         P_amb=101325.0,
-        sigma_R0=72e-3,
+        sigma=sigma,
     )
-    medium = KelvinVoigtMedium(R0=R0, G=0.0, mu=0.00089)
+    medium = KelvinVoigtMedium(R0=R0, G=0.0, mu=WATER_MU)
     return RayleighPlesset(
-        gas=gas, shell=shell, medium=medium, R0=R0, P_amb=101325.0, rho_L=998.0
+        gas=gas, shell=shell, medium=medium, R0=R0, P_amb=101325.0, rho_L=WATER_RHO
     )
 
 
 def make_gompertz_lipid(eom_cls, R0, **extra):
     """Compose an EoM with Gompertz + LipidShell + KelvinVoigtMedium."""
-    sigma = GompertzSurfaceTension.from_R0(R0=R0)
+    from jbubble.presets import WATER_MU, WATER_RHO, LIPID_CHI, WATER_SIGMA, LIPID_KAPPA_S, SF6_GAMMA, make_polytropic_gas
+    sigma = GompertzSurfaceTension.from_R0(
+        R0=R0, R_buckle_ratio=0.99, chi=LIPID_CHI, sigma_break=WATER_SIGMA
+    )
     shell = LipidShell(
         sigma=sigma,
-        kappa_s=ConstantProperty(val=2.4e-9, _scale="kappa_scale"),
+        kappa_s=ConstantProperty(val=LIPID_KAPPA_S, _scale="kappa_scale"),
     )
-    gas = PolytropicGas.from_equilibrium(
+    gas = make_polytropic_gas(
         R0=R0,
-        gamma=1.07,
+        gamma=SF6_GAMMA,
         P_amb=101325.0,
-        sigma_R0=sigma.sigma_R0,
+        sigma=sigma,
     )
-    medium = KelvinVoigtMedium(R0=R0, G=0.0, mu=0.00089)
+    medium = KelvinVoigtMedium(R0=R0, G=0.0, mu=WATER_MU)
     return eom_cls(
-        gas=gas, shell=shell, medium=medium, R0=R0, P_amb=101325.0, rho_L=998.0, **extra
+        gas=gas, shell=shell, medium=medium, R0=R0, P_amb=101325.0, rho_L=WATER_RHO, **extra
     )
 
 
 def make_neo_hookean(R0):
     """KellerMiksis with NeoHookeanMedium."""
-    sigma = GompertzSurfaceTension.from_R0(R0=R0)
+    from jbubble.presets import WATER_MU, WATER_RHO, LIPID_CHI, WATER_SIGMA, LIPID_KAPPA_S, WATER_C, SF6_GAMMA, make_polytropic_gas
+    sigma = GompertzSurfaceTension.from_R0(
+        R0=R0, R_buckle_ratio=0.99, chi=LIPID_CHI, sigma_break=WATER_SIGMA
+    )
     shell = LipidShell(
         sigma=sigma,
-        kappa_s=ConstantProperty(val=2.4e-9, _scale="kappa_scale"),
+        kappa_s=ConstantProperty(val=LIPID_KAPPA_S, _scale="kappa_scale"),
     )
-    gas = PolytropicGas.from_equilibrium(
+    gas = make_polytropic_gas(
         R0=R0,
-        gamma=1.07,
+        gamma=SF6_GAMMA,
         P_amb=101325.0,
-        sigma_R0=sigma.sigma_R0,
+        sigma=sigma,
     )
-    medium = NeoHookeanMedium(R0=R0, G=10e3, mu=0.00089)
+    medium = NeoHookeanMedium(R0=R0, G=10e3, mu=WATER_MU)
     return KellerMiksis(
         gas=gas,
         shell=shell,
         medium=medium,
         R0=R0,
         P_amb=101325.0,
-        rho_L=998.0,
-        c_L=1481.0,
+        rho_L=WATER_RHO,
+        c_L=WATER_C,
     )
 
 
 def make_thick_shell(R0):
     """RayleighPlesset with ThickShell (Church model)."""
-    sigma = GompertzSurfaceTension.from_R0(R0=R0)
-    shell = ThickShell(sigma=sigma, R0=R0, d_s=4e-9, G_s=10e6, mu_s=0.5)
-    gas = PolytropicGas.from_equilibrium(
-        R0=R0,
-        gamma=1.07,
-        P_amb=101325.0,
-        sigma_R0=sigma.sigma_R0,
+    from jbubble.presets import WATER_MU, WATER_RHO, WATER_SIGMA, LIPID_CHI, SF6_GAMMA, make_polytropic_gas, CHURCH_DS, CHURCH_GS, CHURCH_MUS
+    sigma = GompertzSurfaceTension.from_R0(
+        R0=R0, R_buckle_ratio=0.99, chi=LIPID_CHI, sigma_break=WATER_SIGMA
     )
-    medium = KelvinVoigtMedium(R0=R0, G=0.0, mu=0.00089)
+    shell = ThickShell(sigma=sigma, R0=R0, d_s=CHURCH_DS, G_s=CHURCH_GS, mu_s=CHURCH_MUS)
+    gas = make_polytropic_gas(
+        R0=R0,
+        gamma=SF6_GAMMA,
+        P_amb=101325.0,
+        sigma=sigma,
+    )
+    medium = KelvinVoigtMedium(R0=R0, G=0.0, mu=WATER_MU)
     return RayleighPlesset(
-        gas=gas, shell=shell, medium=medium, R0=R0, P_amb=101325.0, rho_L=998.0
+        gas=gas, shell=shell, medium=medium, R0=R0, P_amb=101325.0, rho_L=WATER_RHO
     )
 
 
 def make_confinement(R0):
     """SphericalConfinement with default vessel parameters."""
-    sigma = GompertzSurfaceTension.from_R0(R0=R0)
+    from jbubble.presets import WATER_MU, WATER_RHO, LIPID_CHI, WATER_SIGMA, LIPID_KAPPA_S, WATER_C, SF6_GAMMA, make_polytropic_gas
+    sigma = GompertzSurfaceTension.from_R0(
+        R0=R0, R_buckle_ratio=0.99, chi=LIPID_CHI, sigma_break=WATER_SIGMA
+    )
     shell = LipidShell(
         sigma=sigma,
-        kappa_s=ConstantProperty(val=2.4e-9, _scale="kappa_scale"),
+        kappa_s=ConstantProperty(val=LIPID_KAPPA_S, _scale="kappa_scale"),
     )
-    gas = PolytropicGas.from_equilibrium(
+    gas = make_polytropic_gas(
         R0=R0,
-        gamma=1.07,
+        gamma=SF6_GAMMA,
         P_amb=101325.0,
-        sigma_R0=sigma.sigma_R0,
+        sigma=sigma,
     )
-    medium = KelvinVoigtMedium(R0=R0, G=0.0, mu=0.00089)
+    medium = KelvinVoigtMedium(R0=R0, G=0.0, mu=WATER_MU)
     return SphericalConfinement(
         gas=gas,
         shell=shell,
         medium=medium,
         R0=R0,
         P_amb=101325.0,
-        rho_L=998.0,
-        c_L=1481.0,
+        rho_L=WATER_RHO,
+        c_L=WATER_C,
         vessel_radius=100e-6,
         vessel_rho=1100.0,
         vessel_E=1e6,
+        vessel_nu=0.5,
         vessel_d=5e-6,
         tissue_rho=1000.0,
         tissue_d=20e-6,

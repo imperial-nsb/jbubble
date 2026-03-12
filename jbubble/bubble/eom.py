@@ -344,6 +344,7 @@ class SphericalConfinement(EquationOfMotion):
     vessel_radius: float
     vessel_rho: float
     vessel_E: float
+    vessel_nu: float
     vessel_d: float
     tissue_rho: float
     tissue_d: float
@@ -388,8 +389,8 @@ class SphericalConfinement(EquationOfMotion):
         p_shell = self.shell(state)
         p_medium_visc = 4.0 * self.medium.mu * (R_dot / R + a_dot / a)
 
-        # Vessel wall pressure (thin shell, nearly-incompressible nu=0.5)
-        nu = 0.5
+        # Vessel wall pressure (thin shell, nearly-incompressible)
+        nu = self.vessel_nu
         a0 = self.vessel_radius
         P_wall = self.vessel_E * (a - a0) / ((1.0 - nu**2) * a**2)
 
