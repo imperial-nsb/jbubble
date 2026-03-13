@@ -137,9 +137,7 @@ class ThickShell(ShellModel):
     ------
     sigma : float or Property
         Surface tension law.
-    R0 : float
-        Equilibrium bubble radius  [m].
-    d_s : float
+    d_s : float or Property
         Shell thickness  [m].
     G_s : float or Property
         Shell shear modulus  [Pa].  May be state-dependent (e.g. strain-
@@ -149,8 +147,7 @@ class ThickShell(ShellModel):
         thinning).
     """
 
-    R0: float
-    d_s: float
+    d_s: Property = eqx.field(metadata={"property_scale": "length_scale"})
     G_s: Property = eqx.field(metadata={"property_scale": "P_scale"})
     mu_s: Property = eqx.field(metadata={"property_scale": "mu_scale"})
 
@@ -159,9 +156,9 @@ class ThickShell(ShellModel):
         return (
             (4.0 / 3.0)
             * self.G_s(state)
-            * (self.d_s / self.R0)
-            * (1.0 - (self.R0 / R) ** 3)
+            * (self.d_s(state) / state.R0)
+            * (1.0 - (state.R0 / R) ** 3)
         )
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
-        return 4.0 * self.mu_s(state) * self.d_s * state.R_dot / state.R**2
+        return 4.0 * self.mu_s(state) * self.d_s(state) * state.R_dot / state.R**2

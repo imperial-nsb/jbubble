@@ -109,14 +109,13 @@ class KelvinVoigtMedium(MediumModel):
         Shear modulus  [Pa].  May be state-dependent (e.g. strain-stiffening).
     """
 
-    R0: float
     G: Property = eqx.field(metadata={"property_scale": "P_scale"})
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.mu(state) * state.R_dot / state.R
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
-        return (4.0 / 3.0) * self.G(state) * ((state.R / self.R0) ** 3 - 1.0)
+        return (4.0 / 3.0) * self.G(state) * ((state.R / state.R0) ** 3 - 1.0)
 
 
 class NeoHookeanMedium(MediumModel):
@@ -138,12 +137,7 @@ class NeoHookeanMedium(MediumModel):
         state-dependent (e.g. strain-stiffening).
     """
 
-    R0: float
-    G: Property  # pass a plain float and it is auto-converted in __post_init__
-
-    def __post_init__(self):
-        super().__post_init__()  # converts mu
-        object.__setattr__(self, "G", as_property(self.G, "P_scale"))
+    G: Property = eqx.field(metadata={"property_scale": "P_scale"})
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.mu(state) * state.R_dot / state.R
@@ -152,5 +146,5 @@ class NeoHookeanMedium(MediumModel):
         return (
             (4.0 / 3.0)
             * self.G(state)
-            * ((self.R0 / state.R) ** 3 - (state.R / self.R0) ** 3)
+            * ((state.R0 / state.R) ** 3 - (state.R / state.R0) ** 3)
         )
