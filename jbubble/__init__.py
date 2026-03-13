@@ -1,5 +1,9 @@
 """jbubble: differentiable microbubble dynamics primitives."""
 
+import jax
+
+jax.config.update("jax_enable_x64", True)
+
 from .bubble import (
     BubbleState,
     ConfinedBubbleState,
