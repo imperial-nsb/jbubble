@@ -10,6 +10,7 @@ here as ``Property`` subclasses.
 """
 
 import abc
+import dataclasses
 
 import equinox as eqx
 import jax
@@ -67,36 +68,37 @@ class GompertzSurfaceTension(Property):
 
         sigma(R) = a exp(-b exp(c (1 - R / R_buckle)))
 
+    where R_buckle = R_buckle_ratio * state.R0.
+
+    The Gompertz parameters b and c are derived from chi and sigma_break
+    such that sigma(R0) matches the elastic regime and sigma -> sigma_break
+    as R -> infinity.  R0 is read from the state so this model stays
+    consistent when R0 evolves (e.g. rectified diffusion).
+
     Fields
     ------
-    R0 : float
-        Equilibrium bubble radius  [m].
-    R_buckle : float
-        Buckling radius  [m].
-    chi : float
+    R_buckle_ratio : float
+        Buckling radius as a fraction of R0  (dimensionless).
+    chi : float or Property
         Shell elasticity  [N/m].
-    sigma_break : float
+    sigma_break : float or Property
         Asymptotic (ruptured) surface tension  [N/m].
     """
 
-    R0: float
-    R_buckle: float
+    R_buckle_ratio: float
     chi: float
     sigma_break: float
 
-    @property
-    def sigma_R0(self) -> float:
-        """Surface tension at R0, from the elastic regime formula."""
-        return self.chi * ((self.R0 / self.R_buckle) ** 2 - 1.0)
-
     def __call__(self, state: BubbleState) -> jax.Array:
         R = state.R
+        R0 = state.R0
+        R_buckle = self.R_buckle_ratio * R0
+        chi = self.chi
         a = self.sigma_break
-        c = (2.0 * self.chi / a) * jnp.sqrt(1.0 + a / (2.0 * self.chi))
-        b = -jnp.log(self.sigma_R0 / a) / jnp.exp(
-            c * (1.0 - self.R0 / self.R_buckle)
-        )
-        return a * jnp.exp(-b * jnp.exp(c * (1.0 - R / self.R_buckle)))
+        c = (2.0 * chi / a) * jnp.sqrt(1.0 + a / (2.0 * chi))
+        sigma_R0 = chi * ((R0 / R_buckle) ** 2 - 1.0)
+        b = -jnp.log(sigma_R0 / a) / jnp.exp(c * (1.0 - R0 / R_buckle))
+        return a * jnp.exp(-b * jnp.exp(c * (1.0 - R / R_buckle)))
 
 
 class MarmottantSurfaceTension(Property):
@@ -106,7 +108,10 @@ class MarmottantSurfaceTension(Property):
 
         R <= R_buckle                :  sigma = 0               (buckled)
         R_buckle < R < R_rupture     :  sigma = chi ((R/R_b)^2 - 1)  (elastic)
-        R >= R_rupture               :  sigma = sigma_water     (ruptured)
+        R >= R_rupture               :  sigma = sigma_rupture   (ruptured)
+
+    where R_buckle = R_buckle_ratio * state.R0 and R_rupture is derived
+    from continuity of sigma at the elastic-to-ruptured transition.
 
     Note: sigma(R) has discontinuous first derivatives at the regime
     boundaries.  For applications requiring smooth gradients (e.g.
@@ -114,34 +119,35 @@ class MarmottantSurfaceTension(Property):
 
     Fields
     ------
-    R_buckle : float
-        Buckling radius  [m].
-    chi : float
+    R_buckle_ratio : float
+        Buckling radius as a fraction of R0  (dimensionless).
+    chi : float or Property
         Shell elasticity  [N/m].
-    sigma_rupture : float
+    sigma_rupture : float or Property
         Surface tension (post-rupture value)  [N/m].
     """
 
-    R_buckle: float
+    R_buckle_ratio: float
     chi: float
     sigma_rupture: float
 
-    @property
-    def R_rupture(self) -> float:
-        """Rupture radius, derived from continuity of sigma at rupture."""
-        return self.R_buckle * jnp.sqrt(self.sigma_rupture / self.chi + 1.0)
-
-    def sigma_R0(self, R0: float) -> float:
-        """Surface tension at a given R0."""
-        return self.chi * ((R0 / self.R_buckle) ** 2 - 1.0)
-
     def __call__(self, state: BubbleState) -> jax.Array:
         R = state.R
-        sigma_elastic = self.chi * ((R / self.R_buckle) ** 2 - 1.0)
+        R_buckle = self.R_buckle_ratio * state.R0
+        chi = self.chi
+        sigma_rupture = self.sigma_rupture
+        R_rupture = R_buckle * jnp.sqrt(sigma_rupture / chi + 1.0)
+        sigma_elastic = chi * ((R / R_buckle) ** 2 - 1.0)
+        in_elastic = (R_buckle < R) & (R_rupture > R)
+        in_ruptured = R_rupture <= R
         return jnp.where(
-            R <= self.R_buckle,
-            0.0,
-            jnp.where(R >= self.R_rupture, self.sigma_rupture, sigma_elastic),
+            in_ruptured,
+            sigma_rupture,
+            jnp.where(
+                in_elastic,
+                sigma_elastic,
+                0.0,
+            ),
         )
 
 
