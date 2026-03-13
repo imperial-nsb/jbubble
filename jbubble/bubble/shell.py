@@ -6,16 +6,17 @@ elastic restoring forces.
 """
 
 import abc
-import dataclasses
 
 import equinox as eqx
 import jax
 
-from .properties import Property, as_property
+from jbubble.bubble.base import Model
+
+from .properties import Property
 from .state import BubbleState
 
 
-class ShellModel(eqx.Module, abc.ABC):
+class ShellModel(Model, abc.ABC):
     """Bubble shell / coating model.
 
     Computes the total inward stress from the shell, including:
@@ -35,14 +36,6 @@ class ShellModel(eqx.Module, abc.ABC):
     """
 
     sigma: Property = eqx.field(metadata={"property_scale": "sigma_scale"})
-
-    def __post_init__(self):
-        for f in dataclasses.fields(self):
-            scale = f.metadata.get("property_scale")
-            if scale is not None:
-                object.__setattr__(
-                    self, f.name, as_property(getattr(self, f.name), scale)
-                )
 
     def p_laplace(self, state: BubbleState) -> jax.Array:
         """Laplace pressure contribution from surface tension."""
@@ -87,12 +80,6 @@ class NoShell(ShellModel):
     sigma : float or Property
         Surface tension law.
     """
-
-    def p_elastic(self, state: BubbleState) -> jax.Array:
-        return state.R * 0.0
-
-    def p_viscous(self, state: BubbleState) -> jax.Array:
-        return state.R * 0.0
 
 
 class LipidShell(ShellModel):

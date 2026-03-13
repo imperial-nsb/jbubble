@@ -13,10 +13,12 @@ import abc
 import equinox as eqx
 import jax
 
+from jbubble.bubble.base import Model
+
 from .state import BubbleState
 
 
-class GasModel(eqx.Module, abc.ABC):
+class GasModel(Model, abc.ABC):
     """Internal gas pressure model.
 
     Computes the outward gas pressure p_gas as a function of the

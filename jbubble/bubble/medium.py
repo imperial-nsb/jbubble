@@ -5,16 +5,17 @@ surrounding medium on the bubble wall.
 """
 
 import abc
-import dataclasses
 
 import equinox as eqx
 import jax
 
-from .properties import Property, as_property
+from jbubble.bubble.base import Model
+
+from .properties import Property
 from .state import BubbleState
 
 
-class MediumModel(eqx.Module, abc.ABC):
+class MediumModel(Model, abc.ABC):
     """Surrounding medium (fluid / tissue) model.
 
     Computes the total inward viscous and elastic stresses exerted by the
@@ -41,14 +42,6 @@ class MediumModel(eqx.Module, abc.ABC):
     """
 
     mu: Property = eqx.field(metadata={"property_scale": "mu_scale"})
-
-    def __post_init__(self):
-        for f in dataclasses.fields(self):
-            scale = f.metadata.get("property_scale")
-            if scale is not None:
-                object.__setattr__(
-                    self, f.name, as_property(getattr(self, f.name), scale)
-                )
 
     @abc.abstractmethod
     def p_viscous(self, state: BubbleState) -> jax.Array:
