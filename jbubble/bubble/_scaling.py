@@ -14,11 +14,16 @@ import equinox as eqx
 # Field-scaling registry
 # ---------------------------------------------------------------------------
 # Maps field names to their corresponding ``Units`` attribute.
+#
+# Notes:
+#  - Fields whose types are Property / eqx.Module subclasses are handled
+#    by the recursive branch in _scale_module and do NOT need an entry here.
+#  - Dimensionless fields (gamma, nu, h_frac, ...) are not listed; they fall
+#    through to the identity branch.
 
 _FIELD_SCALES: dict[str, str] = {
     # Lengths
     "R0": "L_scale",
-    "h": "L_scale",
     "d_s": "L_scale",
     "R_buckle": "L_scale",
     "tube_radius": "L_scale",
@@ -28,28 +33,18 @@ _FIELD_SCALES: dict[str, str] = {
     "tissue_d": "L_scale",
     # Pressures / elastic moduli
     "P_amb": "P_scale",
-    "P_gas0": "P_scale",
-    "G": "P_scale",
-    "G_s": "P_scale",
     "vessel_E": "P_scale",
     # Surface tensions / shell elasticity
     "chi": "chi_scale",
-    "sigma_L": "sigma_scale",
-    "sigma_water": "sigma_scale",
     "sigma_break": "sigma_scale",
-    # Dynamic viscosities
-    "mu": "mu_scale",
-    "mu_L": "mu_scale",
-    "mu_s": "mu_scale",
-    # Shell surface-dilatational viscosity
-    "kappa_s": "kappa_scale",
+    "sigma_rupture": "sigma_scale",
     # Densities
     "rho_L": "rho_scale",
     "vessel_rho": "rho_scale",
     "tissue_rho": "rho_scale",
     # Velocities
     "c_L": "vel_scale",
-    # Dimensionless
+    # Dimensionless (explicit no-op entries for documentation)
     "gamma": "unit_scale",
 }
 

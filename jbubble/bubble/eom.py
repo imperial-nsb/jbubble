@@ -40,6 +40,10 @@ class EquationOfMotion(eqx.Module, abc.ABC):
     The driving acoustic pressure is received as a callable ``p_ac_fn``
     so that EoMs needing dp_ac/dt can compute it via ``jax.grad``.
 
+    ``R0`` and ``P_gas0`` (equilibrium configuration) are seeded into the
+    state by ``initial_state()`` and carried as frozen constants by the
+    ODE (zero time derivatives in the standard case).
+
     Fields
     ------
     gas : GasModel
@@ -74,9 +78,14 @@ class EquationOfMotion(eqx.Module, abc.ABC):
     def initial_state(self) -> BubbleState:
         """Default initial state: equilibrium radius, zero velocity.
 
+        Seeds ``R0`` and ``P_gas0`` (Laplace equilibrium) into the state.
         Override for coupled systems with a larger state vector.
         """
-        return BubbleState(R=jnp.array(self.R0), R_dot=jnp.array(0.0))
+        R0 = jnp.asarray(self.R0)
+        # sigma only reads state.R; P_gas0 placeholder is inert here
+        s0 = BubbleState(R=R0, R_dot=jnp.zeros(()), R0=R0, P_gas0=jnp.zeros(()))
+        P_gas0 = self.P_amb + 2.0 * self.shell.sigma(s0) / R0
+        return BubbleState(R=R0, R_dot=jnp.zeros(()), R0=R0, P_gas0=P_gas0)
 
     def get_scaled(self, units: Any) -> "EquationOfMotion":
         """Return a dimensionless copy scaled by *units*.
@@ -87,15 +96,21 @@ class EquationOfMotion(eqx.Module, abc.ABC):
         return _scale_module(self, units)
 
     def rescale_state(self, state: BubbleState, units: Any) -> BubbleState:
-        """Rescale the state variables back to physical units.
-
-        Default handles the standard 2-DOF ``BubbleState``.
-        Override for models with different state definitions (e.g.
-        ``SphericalConfinement`` with 4-DOF).
-        """
+        """Rescale the dimensionless ODE state back to physical units."""
         return BubbleState(
             R=state.R * units.L_scale,
             R_dot=state.R_dot * units.vel_scale,
+            R0=state.R0 * units.L_scale,
+            P_gas0=state.P_gas0 * units.P_scale,
+        )
+
+    def scale_state(self, state: BubbleState, units: Any) -> BubbleState:
+        """Scale a physical-units state to dimensionless (inverse of rescale_state)."""
+        return BubbleState(
+            R=state.R / units.L_scale,
+            R_dot=state.R_dot / units.vel_scale,
+            R0=state.R0 / units.L_scale,
+            P_gas0=state.P_gas0 / units.P_scale,
         )
 
     @abc.abstractmethod
@@ -119,7 +134,8 @@ class EquationOfMotion(eqx.Module, abc.ABC):
         Returns
         -------
         BubbleState
-            Time derivative of the state (R_dot, R_ddot, ...).
+            Time derivative of the state.  ``R0`` and ``P_gas0``
+            derivatives are zero in the standard case.
         """
         ...
 
@@ -143,7 +159,7 @@ class RayleighPlesset(EquationOfMotion):
         p_L_val = self.p_L(state)
         p_ac = p_ac_fn(t)
         R_ddot = ((p_L_val - self.P_amb - p_ac) / self.rho_L - 1.5 * R_dot**2) / R
-        return BubbleState(R=R_dot, R_dot=R_ddot)
+        return BubbleState(R=R_dot, R_dot=R_ddot, R0=jnp.zeros(()), P_gas0=jnp.zeros(()))
 
 
 class ModifiedRayleighPlesset(EquationOfMotion):
@@ -183,7 +199,7 @@ class ModifiedRayleighPlesset(EquationOfMotion):
 
         forces = p_L_val + (R / self.c_L) * dp_gas_dt - self.P_amb - p_ac
         R_ddot = (forces / self.rho_L - 1.5 * R_dot**2) / R
-        return BubbleState(R=R_dot, R_dot=R_ddot)
+        return BubbleState(R=R_dot, R_dot=R_ddot, R0=jnp.zeros(()), P_gas0=jnp.zeros(()))
 
 
 class KellerMiksis(EquationOfMotion):
@@ -245,7 +261,7 @@ class KellerMiksis(EquationOfMotion):
         )
 
         R_ddot = numer / denom
-        return BubbleState(R=R_dot, R_dot=R_ddot)
+        return BubbleState(R=R_dot, R_dot=R_ddot, R0=jnp.zeros(()), P_gas0=jnp.zeros(()))
 
 
 class LeightonTube(EquationOfMotion):
@@ -305,7 +321,7 @@ class LeightonTube(EquationOfMotion):
         inertia = 1.5 * R_dot**2 * (1.0 + (4.0 * R) / (3.0 * Gamma) * beta)
 
         R_ddot = (rhs - inertia) / denom
-        return BubbleState(R=R_dot, R_dot=R_ddot)
+        return BubbleState(R=R_dot, R_dot=R_ddot, R0=jnp.zeros(()), P_gas0=jnp.zeros(()))
 
 
 class SphericalConfinement(EquationOfMotion):
@@ -351,11 +367,15 @@ class SphericalConfinement(EquationOfMotion):
 
     def initial_state(self) -> ConfinedBubbleState:
         """Initial state: equilibrium bubble and vessel radii, zero velocities."""
+        R0 = jnp.asarray(self.R0)
+        s0 = ConfinedBubbleState(
+            R=R0, R_dot=jnp.zeros(()), R0=R0, P_gas0=jnp.zeros(()),
+            a=jnp.asarray(self.vessel_radius), a_dot=jnp.zeros(()),
+        )
+        P_gas0 = self.P_amb + 2.0 * self.shell.sigma(s0) / R0
         return ConfinedBubbleState(
-            R=jnp.array(self.R0),
-            R_dot=jnp.array(0.0),
-            a=jnp.array(self.vessel_radius),
-            a_dot=jnp.array(0.0),
+            R=R0, R_dot=jnp.zeros(()), R0=R0, P_gas0=P_gas0,
+            a=jnp.asarray(self.vessel_radius), a_dot=jnp.zeros(()),
         )
 
     def rescale_state(
@@ -365,8 +385,23 @@ class SphericalConfinement(EquationOfMotion):
         return ConfinedBubbleState(
             R=state.R * units.L_scale,
             R_dot=state.R_dot * units.vel_scale,
+            R0=state.R0 * units.L_scale,
+            P_gas0=state.P_gas0 * units.P_scale,
             a=state.a * units.L_scale,
             a_dot=state.a_dot * units.vel_scale,
+        )
+
+    def scale_state(
+        self, state: ConfinedBubbleState, units: Any
+    ) -> ConfinedBubbleState:
+        """Scale physical 4-DOF state to dimensionless."""
+        return ConfinedBubbleState(
+            R=state.R / units.L_scale,
+            R_dot=state.R_dot / units.vel_scale,
+            R0=state.R0 / units.L_scale,
+            P_gas0=state.P_gas0 / units.P_scale,
+            a=state.a / units.L_scale,
+            a_dot=state.a_dot / units.vel_scale,
         )
 
     def __call__(
@@ -387,7 +422,7 @@ class SphericalConfinement(EquationOfMotion):
 
         # Shell and medium contributions at the bubble wall
         p_shell = self.shell(state)
-        p_medium_visc = 4.0 * self.medium.mu * (R_dot / R + a_dot / a)
+        p_medium_visc = 4.0 * self.medium.mu(state) * (R_dot / R + a_dot / a)
 
         # Vessel wall pressure (thin shell, nearly-incompressible)
         nu = self.vessel_nu
@@ -422,6 +457,8 @@ class SphericalConfinement(EquationOfMotion):
         return ConfinedBubbleState(
             R=R_dot,
             R_dot=R_ddot,
+            R0=jnp.zeros(()),
+            P_gas0=jnp.zeros(()),
             a=a_dot,
             a_dot=a_ddot,
         )

@@ -1,5 +1,7 @@
 """Diffrax-based ODE solvers for bubble dynamics."""
 
+from typing import Any
+
 import diffrax
 import equinox as eqx
 import jax.numpy as jnp
@@ -28,6 +30,7 @@ def solve_eom(
     eom: EquationOfMotion,
     pulse: Pulse,
     *,
+    y0: Any = None,
     t_span: tuple[float, float] | None = None,
     dt0: float = 1e-3,
     save_spec: SaveSpec | None = None,
@@ -44,13 +47,16 @@ def solve_eom(
         Assembled equation of motion (e.g. ``KellerMiksis``).
     pulse : Pulse
         Driving acoustic pulse.
+    y0 : BubbleState, optional
+        Initial state (dimensionless).  If *None*, derived from
+        ``eom.initial_state()``.
     t_span : tuple[float, float], optional
         Integration interval ``(t0, t1)``.  If *None*, derived from
         the pulse duration.
     dt0 : float
         Initial time step.
     save_spec : SaveSpec, optional
-        Output sampling specification.  Default: 1000 evenly-spaced
+        Output sampling specification.  Default: 1024 evenly-spaced
         time points.
     solver : diffrax.AbstractSolver, optional
         ODE solver.  Default: ``Kvaerno5()``.
@@ -72,7 +78,7 @@ def solve_eom(
         t_span = (0.0, pulse.initial_time + 2.0 * pulse_duration)
 
     if save_spec is None:
-        save_spec = SaveSpec(num_samples=1000)
+        save_spec = SaveSpec(num_samples=1024)
 
     if solver is None:
         solver = diffrax.Kvaerno5()
@@ -80,8 +86,10 @@ def solve_eom(
     if stepsize_controller is None:
         stepsize_controller = diffrax.PIDController(rtol=1e-3, atol=1e-6)
 
+    if y0 is None:
+        y0 = eom.initial_state()
+
     t0, t1 = t_span
-    y0 = eom.initial_state()
     saveat = save_spec.build(t0, t1)
 
     def ode_func(t, state, args):

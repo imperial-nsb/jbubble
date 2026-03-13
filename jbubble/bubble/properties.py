@@ -167,3 +167,24 @@ class MarmottantSurfaceTension(Property):
             0.0,
             jnp.where(R >= self.R_rupture, self.sigma_rupture, sigma_elastic),
         )
+
+
+def as_property(val: "float | Property", scale: str) -> "Property":
+    """Coerce a plain float to a ``ConstantProperty``, or pass through a ``Property``.
+
+    Parameters
+    ----------
+    val : float or Property
+        A plain scalar or an existing ``Property`` instance.
+    scale : str
+        Name of the ``Units`` attribute used to non-dimensionalise the value
+        (e.g. ``"sigma_scale"``, ``"mu_scale"``).  Ignored when *val* is
+        already a ``Property``.
+
+    Returns
+    -------
+    Property
+    """
+    if isinstance(val, Property):
+        return val
+    return ConstantProperty(val=float(val), _scale=scale)

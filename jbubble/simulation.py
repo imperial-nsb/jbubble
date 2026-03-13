@@ -1,6 +1,7 @@
 """High-level helpers for running and post-processing bubble dynamics simulations."""
 
 from dataclasses import dataclass
+from typing import Any, Optional
 
 import diffrax
 import equinox as eqx
@@ -9,7 +10,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from .bubble.eom import EquationOfMotion
-from .bubble.state import ConfinedBubbleState
+from .bubble.state import BubbleState, ConfinedBubbleState
 from .pulse import Pulse
 from .solver import SaveSpec, solve_eom
 from .units import Units
@@ -66,13 +67,13 @@ class SimulationResult(eqx.Module):
         return self.vessel_radius is not None
 
 
-
 def run_simulation(
     eom: EquationOfMotion,
     pulse: Pulse,
     *,
-    units: Units,
     save_spec: SaveSpec,
+    units: Units | None = None,
+    state0: Any = None,
     window_s: float = 20e-6,
     dt0: float = 1e-3,
     max_steps: int = 10_000,
@@ -86,14 +87,18 @@ def run_simulation(
         Assembled equation of motion (e.g. ``KellerMiksis``).
     pulse : Pulse
         Driving pulse.
-    units : Units
+    units : Units | None
         Unit scaling object.
     save_spec : SaveSpec
         Output specification (number of samples).
+    state0 : BubbleState, optional
+        Initial state in physical units.  Defaults to
+        ``eom.initial_state()``.  Useful for non-equilibrium starts or
+        continuing from a previous simulation.
     window_s : float
         Simulation time window in seconds.
     dt0 : float
-        Initial time step.
+        Initial (dimensionless) time step.
     max_steps : int
         Maximum ODE steps.
     progress : bool
@@ -104,13 +109,21 @@ def run_simulation(
     SimulationResult
         Scaled results with time, radius, velocity, pressure, convergence info.
     """
+    if state0 is None:
+        state0 = eom.initial_state()
+
+    if units is None:
+        units = Units()
+
     scaled_eom = eom.get_scaled(units)
     scaled_pulse = pulse.get_scaled(units)
     scaled_t_span = (0.0, window_s / units.T_scale)
+    scaled_state0 = eom.scale_state(state0, units)
 
     sol = solve_eom(
         scaled_eom,
         scaled_pulse,
+        y0=scaled_state0,
         t_span=scaled_t_span,
         dt0=dt0,
         save_spec=save_spec,

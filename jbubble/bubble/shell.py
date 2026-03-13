@@ -6,11 +6,12 @@ elastic restoring forces.
 """
 
 import abc
+import dataclasses
 
 import equinox as eqx
 import jax
 
-from .properties import ConstantProperty, Property
+from .properties import Property, as_property
 from .state import BubbleState
 
 
@@ -23,11 +24,25 @@ class ShellModel(eqx.Module, abc.ABC):
     - Shell viscous dissipation  (e.g. 4 kappa_s Rdot / R^2)
     - Shell elastic restoring forces  (for thick shells)
 
-    Every ``ShellModel`` holds a ``Property`` as its ``sigma`` field,
-    mapping the bubble state to the effective surface tension.
+    Every ``ShellModel`` holds a ``Property`` as its ``sigma`` field.
+    A plain float is accepted and auto-converted to a ``ConstantProperty``
+    in ``__post_init__``.
+
+    Subclasses can declare additional ``Property`` fields by annotating
+    them with ``eqx.field(metadata={"property_scale": "<scale_name>"})``
+    — the base ``__post_init__`` will convert them automatically.
+    No subclass ``__post_init__`` is needed.
     """
 
-    sigma: Property
+    sigma: Property = eqx.field(metadata={"property_scale": "sigma_scale"})
+
+    def __post_init__(self):
+        for f in dataclasses.fields(self):
+            scale = f.metadata.get("property_scale")
+            if scale is not None:
+                object.__setattr__(
+                    self, f.name, as_property(getattr(self, f.name), scale)
+                )
 
     def p_laplace(self, state: BubbleState) -> jax.Array:
         """Laplace pressure contribution from surface tension."""
@@ -45,9 +60,6 @@ class ShellModel(eqx.Module, abc.ABC):
 
     def __call__(self, state: BubbleState) -> jax.Array:
         """Compute total shell pressure p_shell(state).
-
-        This includes the Laplace pressure 2 sigma(R) / R plus any
-        additional viscous or elastic shell terms.
 
         Parameters
         ----------
@@ -67,8 +79,13 @@ class NoShell(ShellModel):
 
     p_shell = 2 sigma(R) / R
 
-    Suitable for uncoated gas bubbles.  Pair with a
-    ``ConstantProperty`` sigma for a standard Rayleigh-Plesset setup.
+    Suitable for uncoated gas bubbles.  Accepts a plain float for
+    ``sigma`` (e.g. 72e-3 for water).
+
+    Fields
+    ------
+    sigma : float or Property
+        Surface tension law.
     """
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
@@ -88,13 +105,13 @@ class LipidShell(ShellModel):
 
     Fields
     ------
-    sigma : Property
+    sigma : float or Property
         Surface tension law.
-    kappa_s : Property
+    kappa_s : float or Property
         Shell surface-dilatational viscosity  [N s/m].
     """
 
-    kappa_s: Property
+    kappa_s: Property = eqx.field(metadata={"property_scale": "kappa_scale"})
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
         return state.R * 0.0
@@ -118,28 +135,33 @@ class ThickShell(ShellModel):
 
     Fields
     ------
-    sigma : Property
+    sigma : float or Property
         Surface tension law.
     R0 : float
         Equilibrium bubble radius  [m].
     d_s : float
         Shell thickness  [m].
-    G_s : float
-        Shell shear modulus  [Pa].
-    mu_s : float
-        Shell viscosity  [Pa s].
+    G_s : float or Property
+        Shell shear modulus  [Pa].  May be state-dependent (e.g. strain-
+        stiffening / strain-softening).
+    mu_s : float or Property
+        Shell viscosity  [Pa s].  May be state-dependent (e.g. shear-
+        thinning).
     """
 
     R0: float
     d_s: float
-    G_s: float
-    mu_s: float
+    G_s: Property = eqx.field(metadata={"property_scale": "P_scale"})
+    mu_s: Property = eqx.field(metadata={"property_scale": "mu_scale"})
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
         R = state.R
         return (
-            (4.0 / 3.0) * self.G_s * (self.d_s / self.R0) * (1.0 - (self.R0 / R) ** 3)
+            (4.0 / 3.0)
+            * self.G_s(state)
+            * (self.d_s / self.R0)
+            * (1.0 - (self.R0 / R) ** 3)
         )
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
-        return 4.0 * self.mu_s * self.d_s * state.R_dot / state.R**2
+        return 4.0 * self.mu_s(state) * self.d_s * state.R_dot / state.R**2

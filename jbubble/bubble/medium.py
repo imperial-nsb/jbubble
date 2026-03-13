@@ -5,12 +5,13 @@ surrounding medium on the bubble wall.
 """
 
 import abc
+import dataclasses
 
 import equinox as eqx
 import jax
 
+from .properties import Property, as_property
 from .state import BubbleState
-from .properties import Property
 
 
 class MediumModel(eqx.Module, abc.ABC):
@@ -25,11 +26,29 @@ class MediumModel(eqx.Module, abc.ABC):
     contributions, which are then summed in the default ``__call__`` to get
     the total medium pressure p_medium(state).
 
-    mu : float
+    A plain float is accepted for ``mu`` and auto-converted to a
+    ``ConstantProperty`` in ``__post_init__``.
+
+    Subclasses can declare additional ``Property`` fields by annotating
+    them with ``eqx.field(metadata={"property_scale": "<scale_name>"})``
+    — the base ``__post_init__`` will convert them automatically.
+    No subclass ``__post_init__`` is needed.
+
+    Fields
+    ------
+    mu : float or Property
         Dynamic viscosity  [Pa s].
     """
 
-    mu: Property
+    mu: Property = eqx.field(metadata={"property_scale": "mu_scale"})
+
+    def __post_init__(self):
+        for f in dataclasses.fields(self):
+            scale = f.metadata.get("property_scale")
+            if scale is not None:
+                object.__setattr__(
+                    self, f.name, as_property(getattr(self, f.name), scale)
+                )
 
     @abc.abstractmethod
     def p_viscous(self, state: BubbleState) -> jax.Array:
@@ -64,12 +83,12 @@ class NewtonianMedium(MediumModel):
 
     Fields
     ------
-    mu : float
+    mu : float or Property
         Dynamic viscosity  [Pa s].
     """
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
-        return 4.0 * self.mu * state.R_dot / state.R
+        return 4.0 * self.mu(state) * state.R_dot / state.R
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
         return state.R * 0.0
@@ -82,20 +101,22 @@ class KelvinVoigtMedium(MediumModel):
 
     Fields
     ------
+    mu : float or Property
+        Dynamic viscosity  [Pa s].
     R0 : float
         Equilibrium bubble radius  [m].
-    G : float
-        Shear modulus  [Pa].
+    G : float or Property
+        Shear modulus  [Pa].  May be state-dependent (e.g. strain-stiffening).
     """
 
     R0: float
-    G: float
+    G: Property = eqx.field(metadata={"property_scale": "P_scale"})
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
-        return 4.0 * self.mu * state.R_dot / state.R
+        return 4.0 * self.mu(state) * state.R_dot / state.R
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
-        return (4.0 / 3.0) * self.G * ((state.R / self.R0) ** 3 - 1.0)
+        return (4.0 / 3.0) * self.G(state) * ((state.R / self.R0) ** 3 - 1.0)
 
 
 class NeoHookeanMedium(MediumModel):
@@ -108,19 +129,28 @@ class NeoHookeanMedium(MediumModel):
 
     Fields
     ------
+    mu : float or Property
+        Dynamic viscosity  [Pa s].  A plain float is auto-converted.
     R0 : float
         Equilibrium bubble radius  [m].
-    G : float
-        Shear modulus  [Pa].
+    G : float or Property
+        Shear modulus  [Pa].  A plain float is auto-converted.  May be
+        state-dependent (e.g. strain-stiffening).
     """
 
     R0: float
-    G: float
+    G: Property  # pass a plain float and it is auto-converted in __post_init__
+
+    def __post_init__(self):
+        super().__post_init__()  # converts mu
+        object.__setattr__(self, "G", as_property(self.G, "P_scale"))
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
-        return 4.0 * self.mu * state.R_dot / state.R
+        return 4.0 * self.mu(state) * state.R_dot / state.R
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
         return (
-            (4.0 / 3.0) * self.G * ((self.R0 / state.R) ** 3 - (state.R / self.R0) ** 3)
+            (4.0 / 3.0)
+            * self.G(state)
+            * ((self.R0 / state.R) ** 3 - (state.R / self.R0) ** 3)
         )
