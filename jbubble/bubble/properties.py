@@ -84,18 +84,6 @@ class GompertzSurfaceTension(Property):
     chi: float
     sigma_break: float
 
-    @classmethod
-    def from_R0(
-        cls,
-        *,
-        R0: float,
-        R_buckle_ratio: float,
-        chi: float,
-        sigma_break: float,
-    ) -> "GompertzSurfaceTension":
-        """Construct from equilibrium radius and buckling ratio."""
-        return cls(R0=R0, R_buckle=R0 * R_buckle_ratio, chi=chi, sigma_break=sigma_break)
-
     @property
     def sigma_R0(self) -> float:
         """Surface tension at R0, from the elastic regime formula."""
@@ -137,18 +125,6 @@ class MarmottantSurfaceTension(Property):
     R_buckle: float
     chi: float
     sigma_rupture: float
-
-    @classmethod
-    def from_R0(
-        cls,
-        *,
-        R0: float,
-        R_buckle_ratio: float,
-        chi: float,
-        sigma_rupture: float,
-    ) -> "MarmottantSurfaceTension":
-        """Construct from equilibrium radius and buckling ratio."""
-        return cls(R_buckle=R0 * R_buckle_ratio, chi=chi, sigma_rupture=sigma_rupture)
 
     @property
     def R_rupture(self) -> float:
