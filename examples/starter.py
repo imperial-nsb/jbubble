@@ -29,8 +29,7 @@ import matplotlib.pyplot as plt
 pressure = 300e3  # 200 kPa
 
 sigma = GompertzSurfaceTension(
-    R0=2e-6,
-    R_buckle=1.98e-6,
+    R_buckle_ratio=0.99,
     chi=0.38,
     sigma_break=72e-3,
 )
@@ -38,7 +37,7 @@ sigma = GompertzSurfaceTension(
 shell  = LipidShell(sigma=sigma, kappa_s=2.4e-9)
 gas    = PolytropicGas(gamma=1.07)
 mediumA = NewtonianMedium(mu=WATER_MU)
-mediumB = KelvinVoigtMedium(mu=WATER_MU, G=1e6, R0=2e-6)
+mediumB = KelvinVoigtMedium(mu=WATER_MU, G=1e6)
 
 eomA = RayleighPlesset(
     gas=gas,
