@@ -5,6 +5,7 @@ Compose gas laws, shell coatings, surrounding-medium rheologies, and
 equations of motion independently
 """
 
+from .base import BubbleState, ConfinedBubbleState, Property
 from .eom import (
     EquationOfMotion,
     KellerMiksis,
@@ -20,7 +21,6 @@ from .medium import (
     NeoHookeanMedium,
     NewtonianMedium,
 )
-from .properties import Property
 from .shell import (
     GompertzSurfaceTension,
     LipidShell,
@@ -29,20 +29,18 @@ from .shell import (
     ShellModel,
     ThickShell,
 )
-from .state import BubbleState, ConfinedBubbleState
 
 __all__ = [
     # State
     "BubbleState",
     "ConfinedBubbleState",
+    # Property
+    "Property",
     # Interfaces
     "GasModel",
-    "Property",
     "ShellModel",
     "MediumModel",
     "EquationOfMotion",
-    # Property models
-    "Property",
     # Gas models
     "PolytropicGas",
     "VanDerWaalsGas",

@@ -68,3 +68,35 @@ class ConfinedBubbleState(BubbleState):
 
     a: jax.Array
     a_dot: jax.Array
+
+
+class Property(eqx.Module):
+    """A property that returns a constant value regardless of state.
+
+    Fields
+    ------
+    val : float
+        The constant value.
+    """
+
+    val: float = eqx.field(default_factory=lambda: 0.0, kw_only=True)
+
+    def __call__(self, state: BubbleState) -> jax.Array:
+        return self.val + state.R * 0.0
+
+
+def as_property(val: float | Property) -> Property:
+    """Coerce a plain float to a ``Property``, or pass through a ``Property``.
+
+    Parameters
+    ----------
+    val : float or Property
+        A plain scalar or an existing ``Property`` instance.
+
+    Returns
+    -------
+    Property
+    """
+    if isinstance(val, Property):
+        return val
+    return Property(val=float(val))

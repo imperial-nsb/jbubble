@@ -9,8 +9,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from .bubble.base import BubbleState, ConfinedBubbleState
 from .bubble.eom import EquationOfMotion
-from .bubble.state import BubbleState, ConfinedBubbleState
 from .pulse import Pulse
 from .solver import SaveSpec, solve_eom
 

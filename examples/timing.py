@@ -20,7 +20,6 @@ from jbubble.bubble.eom import KellerMiksis
 from jbubble.bubble.gas import PolytropicGas, VanDerWaalsGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import LipidShell, GompertzSurfaceTension
-from jbubble.presets import WATER_MU
 from jbubble.pulse import Pulse
 from jbubble.shapes import Sine
 from jbubble.solver import SaveSpec
@@ -43,7 +42,7 @@ sigma = GompertzSurfaceTension(
 )
 shell  = LipidShell(sigma=sigma, kappa_s=2.4e-9)
 gas = VanDerWaalsGas(gamma=1.07, h_frac=1 / 5.61)
-medium = NewtonianMedium(mu=WATER_MU)
+medium = NewtonianMedium(mu=0.00089)
 
 pulse = Pulse(
     freq=1e6,

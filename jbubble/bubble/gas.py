@@ -13,9 +13,7 @@ import abc
 import equinox as eqx
 import jax
 
-from jbubble.bubble.properties import Property, as_property
-
-from .state import BubbleState
+from .base import BubbleState, Property, as_property
 
 
 class GasModel(eqx.Module, abc.ABC):

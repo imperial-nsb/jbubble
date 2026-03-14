@@ -12,10 +12,10 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
+from .base import BubbleState, ConfinedBubbleState
 from .gas import GasModel
 from .medium import MediumModel
 from .shell import ShellModel
-from .state import BubbleState, ConfinedBubbleState
 
 
 class EquationOfMotion(eqx.Module, abc.ABC):
