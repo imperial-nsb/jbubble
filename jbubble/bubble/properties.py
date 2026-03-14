@@ -27,7 +27,7 @@ class Property(eqx.Module):
         The constant value.
     """
 
-    val: float = eqx.field(default_factory=lambda: jnp.zeros(()), kw_only=True)
+    val: float = eqx.field(default_factory=lambda: 0.0, kw_only=True)
 
     def __call__(self, state: BubbleState) -> jax.Array:
         return self.val + state.R * 0.0
