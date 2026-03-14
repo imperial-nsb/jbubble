@@ -74,8 +74,7 @@ def solve_eom(
         Solution object with ``ts`` and ``ys``.
     """
     if t_span is None:
-        pulse_duration = pulse.cycle_num / pulse.freq
-        t_span = (0.0, pulse.initial_time + 2.0 * pulse_duration)
+        t_span = (0.0, pulse.t_end)
 
     if save_spec is None:
         save_spec = SaveSpec(num_samples=1024)

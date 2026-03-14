@@ -28,8 +28,16 @@ from ..bubble import (
     VanDerWaalsGas,
 )
 from ..bubble.eom import EquationOfMotion
-from ..pulse import Pulse
-from ..shapes import (
+from ..pulse import (
+    ChirpPulse,
+    HannEnvelope,
+    Pulse,
+    RectangularEnvelope,
+    SampledPulse,
+    ToneBurst,
+    TukeyEnvelope,
+)
+from ..pulse.shapes import (
     Asymmetrical,
     InvertedSawtooth,
     Mono95,
@@ -81,12 +89,15 @@ _MODULE_REGISTRY: dict[str, type[eqx.Module]] = {
         NewtonianMedium,
         KelvinVoigtMedium,
         NeoHookeanMedium,
-    ]
-}
-
-_SHAPE_REGISTRY: dict[str, type[PulseShape]] = {
-    cls.__name__: cls
-    for cls in [
+        # Envelopes
+        RectangularEnvelope,
+        HannEnvelope,
+        TukeyEnvelope,
+        # Pulse types
+        ToneBurst,
+        SampledPulse,
+        ChirpPulse,
+        # Shapes
         Sine,
         Sawtooth,
         InvertedSawtooth,
@@ -211,23 +222,9 @@ def save(
         for name in _VESSEL_FIELDS:
             state[name] = getattr(result, name)
 
-    # EoM fields (recursively serialised, including gas/shell/medium).
+    # EoM and pulse — both recursively serialised.
     state["eom"] = _serialise_module(result.eom)
-
-    # Pulse fields -- skip `shape` (nested module) and `apply_hann` (static bool).
-    state["pulse"] = {
-        f.name: getattr(result.pulse, f.name)
-        for f in dataclasses.fields(result.pulse)
-        if f.name not in ("shape", "apply_hann")
-    }
-
-    # PulseShape fields (usually empty; TimeDomainSquare has `sharpness`).
-    shape_fields = {
-        f.name: getattr(result.pulse.shape, f.name)
-        for f in dataclasses.fields(result.pulse.shape)
-    }
-    if shape_fields:
-        state["shape"] = shape_fields
+    state["pulse"] = _serialise_module(result.pulse)
 
     # -- Write orbax checkpoint ------------------------------------------------
     with ocp.StandardCheckpointer() as ckptr:
@@ -236,8 +233,7 @@ def save(
     # -- Write sidecar JSON ----------------------------------------------------
     meta = {
         "eom_classes": _collect_class_names(result.eom),
-        "pulse_shape_class": type(result.pulse.shape).__name__,
-        "apply_hann": bool(result.pulse.apply_hann),
+        "pulse_classes": _collect_class_names(result.pulse),
         "has_vessel": has_vessel,
         "metadata": metadata or {},
     }
@@ -265,20 +261,14 @@ def load(path: str | Path) -> tuple[SimulationResult, dict[str, Any]]:
 
     # -- Read sidecar ----------------------------------------------------------
     meta = json.loads((path / "meta.json").read_text())
-    shape_cls = _SHAPE_REGISTRY[meta["pulse_shape_class"]]
 
     # -- Restore orbax state ---------------------------------------------------
     with ocp.StandardCheckpointer() as ckptr:
         state = ckptr.restore(path / "state")
 
     # -- Reconstruct modules ---------------------------------------------------
-    shape_dict = {k: _to_python(v) for k, v in state.get("shape", {}).items()}
-    pulse_shape = shape_cls(**shape_dict)
-
-    pulse_dict = {k: _to_python(v) for k, v in state["pulse"].items()}
-    pulse = Pulse(shape=pulse_shape, apply_hann=meta["apply_hann"], **pulse_dict)
-
     eom = _deserialise_module(state["eom"], meta["eom_classes"])
+    pulse = _deserialise_module(state["pulse"], meta["pulse_classes"])
 
     # -- Assemble SimulationResult ---------------------------------------------
     result = SimulationResult(

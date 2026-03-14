@@ -28,20 +28,31 @@ from .bubble import (
     ThickShell,
     VanDerWaalsGas,
 )
-from .pulse import Pulse
-from .shapes import (
+from .pulse import (
     Asymmetrical,
+    ChirpPulse,
+    Envelope,
+    HannEnvelope,
     NegativeQuadratic,
+    NeuralPulse,
+    Pulse,
     PulseShape,
     Quadratic,
+    RectangularEnvelope,
+    SampledPulse,
     Sawtooth,
+    Scaled,
     Sine,
     SlantedSine,
     Square,
+    Summed,
     TimeDomainSawtooth,
     TimeDomainSquare,
     TimeDomainTriangle,
+    ToneBurst,
     Triangle,
+    TukeyEnvelope,
+    Windowed,
 )
 from .simulation import (
     PlotArrays,
@@ -56,8 +67,22 @@ __all__ = [
     # Solver
     "SaveSpec",
     "solve_eom",
-    # Pulse
+    # Pulse (base)
     "Pulse",
+    "Envelope",
+    "RectangularEnvelope",
+    "HannEnvelope",
+    "TukeyEnvelope",
+    # Pulse types
+    "ToneBurst",
+    "SampledPulse",
+    "ChirpPulse",
+    "NeuralPulse",
+    # Pulse composition
+    "Scaled",
+    "Summed",
+    "Windowed",
+    # Pulse shapes
     "PulseShape",
     "Sine",
     "Sawtooth",
@@ -86,7 +111,6 @@ __all__ = [
     "MediumModel",
     "EquationOfMotion",
     # Property models
-    "Property",
     "GompertzSurfaceTension",
     "MarmottantSurfaceTension",
     # Gas models
