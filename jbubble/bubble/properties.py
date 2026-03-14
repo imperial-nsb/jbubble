@@ -79,8 +79,7 @@ class GompertzSurfaceTension(Property):
     sigma_break: float
 
     def __call__(self, state: BubbleState) -> jax.Array:
-        R = state.R
-        R0 = state.R0
+        R, R0 = state.R, state.R0
         R_buckle = self.R_buckle_ratio * R0
         chi = self.chi
         a = self.sigma_break
@@ -121,8 +120,8 @@ class MarmottantSurfaceTension(Property):
     sigma_rupture: float
 
     def __call__(self, state: BubbleState) -> jax.Array:
-        R = state.R
-        R_buckle = self.R_buckle_ratio * state.R0
+        R, R0 = state.R, state.R0
+        R_buckle = self.R_buckle_ratio * R0
         chi = self.chi
         sigma_rupture = self.sigma_rupture
         R_rupture = R_buckle * jnp.sqrt(sigma_rupture / chi + 1.0)
