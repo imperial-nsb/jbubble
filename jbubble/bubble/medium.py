@@ -30,18 +30,13 @@ class MediumModel(Model, abc.ABC):
     A plain float is accepted for ``mu`` and auto-converted to a
     ``ConstantProperty`` in ``__post_init__``.
 
-    Subclasses can declare additional ``Property`` fields by annotating
-    them with ``eqx.field(metadata={"is_property": True})``
-    — the base ``__post_init__`` will convert them automatically.
-    No subclass ``__post_init__`` is needed.
-
     Fields
     ------
     mu : float or Property
         Dynamic viscosity  [Pa s].
     """
 
-    mu: Property = eqx.field(metadata={"is_property": True})
+    mu: Property
 
     @abc.abstractmethod
     def p_viscous(self, state: BubbleState) -> jax.Array:
@@ -102,7 +97,7 @@ class KelvinVoigtMedium(MediumModel):
         Shear modulus  [Pa].  May be state-dependent (e.g. strain-stiffening).
     """
 
-    G: Property = eqx.field(metadata={"is_property": True})
+    G: Property
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.mu(state) * state.R_dot / state.R
@@ -130,7 +125,7 @@ class NeoHookeanMedium(MediumModel):
         state-dependent (e.g. strain-stiffening).
     """
 
-    G: Property = eqx.field(metadata={"is_property": True})
+    G: Property
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.mu(state) * state.R_dot / state.R

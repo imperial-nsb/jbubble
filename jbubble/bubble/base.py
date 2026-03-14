@@ -4,7 +4,7 @@ import dataclasses
 import equinox as eqx
 import jax
 
-from .properties import as_property
+from .properties import Property, as_property
 from .state import BubbleState
 
 
@@ -18,7 +18,7 @@ class Model(eqx.Module, abc.ABC):
 
     def __post_init__(self):
         for f in dataclasses.fields(self):
-            if f.metadata.get("is_property"):
+            if f.type is Property:
                 object.__setattr__(
                     self,
                     f.name,
