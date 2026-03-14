@@ -13,6 +13,8 @@ import abc
 import equinox as eqx
 import jax
 
+from jbubble.bubble.properties import Property, as_property
+
 from .state import BubbleState
 
 
@@ -57,10 +59,10 @@ class PolytropicGas(GasModel):
         Polytropic exponent  (1.0 = isothermal, 1.4 = adiabatic air).
     """
 
-    gamma: float
+    gamma: Property = eqx.field(converter=as_property)
 
     def __call__(self, state: BubbleState) -> jax.Array:
-        return state.P_gas0 * (state.R0 / state.R) ** (3.0 * self.gamma)
+        return state.P_gas0 * (state.R0 / state.R) ** (3.0 * self.gamma(state))
 
 
 class VanDerWaalsGas(GasModel):
@@ -79,12 +81,12 @@ class VanDerWaalsGas(GasModel):
         A common value for lipid shells is 1/5.61 ≈ 0.178.
     """
 
-    gamma: float
+    gamma: Property = eqx.field(converter=as_property)
     h_frac: float
 
     def __call__(self, state: BubbleState) -> jax.Array:
         h = self.h_frac * state.R0
         return (
             state.P_gas0
-            * ((state.R0**3 - h**3) / (state.R**3 - h**3)) ** self.gamma
+            * ((state.R0**3 - h**3) / (state.R**3 - h**3)) ** self.gamma(state)
         )
