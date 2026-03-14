@@ -1,7 +1,7 @@
 """High-level helpers for running and post-processing bubble dynamics simulations."""
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 import diffrax
 import equinox as eqx
@@ -13,7 +13,6 @@ from .bubble.eom import EquationOfMotion
 from .bubble.state import BubbleState, ConfinedBubbleState
 from .pulse import Pulse
 from .solver import SaveSpec, solve_eom
-from .units import Units
 
 
 class SimulationResult(eqx.Module):
@@ -43,11 +42,9 @@ class SimulationResult(eqx.Module):
     converged : jax.Array
         Boolean scalar; ``True`` if the ODE solver converged successfully.
     eom : EquationOfMotion
-        The equation of motion used (physical-unit copy).
+        The equation of motion used.
     pulse : Pulse
-        The driving pulse used (physical-unit copy).
-    units : Units
-        Non-dimensionalisation factors used during the simulation.
+        The driving pulse used.
     """
 
     ts: jax.Array
@@ -60,7 +57,6 @@ class SimulationResult(eqx.Module):
     converged: jax.Array
     eom: EquationOfMotion
     pulse: Pulse
-    units: Units
 
     @property
     def has_vessel(self) -> bool:
@@ -72,14 +68,13 @@ def run_simulation(
     pulse: Pulse,
     *,
     save_spec: SaveSpec,
-    units: Units | None = None,
     state0: Any = None,
     window_s: float = 20e-6,
-    dt0: float = 1e-3,
+    dt0: float = 1e-9,
     max_steps: int = 10_000,
     progress: bool = False,
 ) -> SimulationResult:
-    """Run a simulation: scale EoM and pulse, solve ODE, rescale results.
+    """Run a simulation and return results in SI units.
 
     Parameters
     ----------
@@ -87,18 +82,14 @@ def run_simulation(
         Assembled equation of motion (e.g. ``KellerMiksis``).
     pulse : Pulse
         Driving pulse.
-    units : Units | None
-        Unit scaling object.
     save_spec : SaveSpec
         Output specification (number of samples).
     state0 : BubbleState, optional
-        Initial state in physical units.  Defaults to
-        ``eom.initial_state()``.  Useful for non-equilibrium starts or
-        continuing from a previous simulation.
+        Initial state.  Defaults to ``eom.initial_state()``.
     window_s : float
-        Simulation time window in seconds.
+        Simulation time window [s].
     dt0 : float
-        Initial (dimensionless) time step.
+        Initial time step [s].
     max_steps : int
         Maximum ODE steps.
     progress : bool
@@ -107,24 +98,16 @@ def run_simulation(
     Returns
     -------
     SimulationResult
-        Scaled results with time, radius, velocity, pressure, convergence info.
+        Results with time, radius, velocity, pressure, convergence info.
     """
     if state0 is None:
         state0 = eom.initial_state()
 
-    if units is None:
-        units = Units()
-
-    scaled_eom = eom.get_scaled(units)
-    scaled_pulse = pulse.get_scaled(units)
-    scaled_t_span = (0.0, window_s / units.T_scale)
-    scaled_state0 = eom.scale_state(state0, units)
-
     sol = solve_eom(
-        scaled_eom,
-        scaled_pulse,
-        y0=scaled_state0,
-        t_span=scaled_t_span,
+        eom,
+        pulse,
+        y0=state0,
+        t_span=(0.0, window_s),
         dt0=dt0,
         save_spec=save_spec,
         progress=progress,
@@ -133,20 +116,19 @@ def run_simulation(
 
     assert sol.ts is not None
     assert sol.ys is not None
-    ts = sol.ts * units.T_scale
-    ys = eom.rescale_state(sol.ys, units)
-    driving_pressure = jax.vmap(scaled_pulse)(sol.ts) * units.P_scale
+    ys = sol.ys
+    driving_pressure = jax.vmap(pulse)(sol.ts)
 
     # Compute acceleration analytically from the ODE RHS.
     def _rddot(t, state):
-        return scaled_eom(t, state, scaled_pulse).R_dot
+        return eom(t, state, pulse).R_dot
 
-    rddot = jax.vmap(_rddot)(sol.ts, sol.ys) * units.acc_scale
+    rddot = jax.vmap(_rddot)(sol.ts, ys)
 
     has_vessel = isinstance(ys, ConfinedBubbleState)
 
     return SimulationResult(
-        ts=ts,
+        ts=sol.ts,
         radius=ys.R,
         radial_velocity=ys.R_dot,
         radial_acceleration=rddot,
@@ -156,7 +138,6 @@ def run_simulation(
         converged=diffrax.is_successful(sol.result),
         eom=eom,
         pulse=pulse,
-        units=units,
     )
 
 
@@ -186,9 +167,8 @@ class PlotArrays:
 
 def arrays_from_result(result: SimulationResult) -> PlotArrays:
     """Convert simulation result to plottable numpy arrays in convenient units."""
-    units = result.units
     return PlotArrays(
-        time_us=np.asarray(result.ts) / units.T_scale,
-        radius_um=np.asarray(result.radius) / units.L_scale,
-        pressure_kpa=np.asarray(result.driving_pressure) / units.P_scale,
+        time_us=np.asarray(result.ts) / 1e-6,
+        radius_um=np.asarray(result.radius) / 1e-6,
+        pressure_kpa=np.asarray(result.driving_pressure) / 1e3,
     )

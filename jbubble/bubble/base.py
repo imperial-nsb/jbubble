@@ -18,10 +18,9 @@ class Model(eqx.Module, abc.ABC):
 
     def __post_init__(self):
         for f in dataclasses.fields(self):
-            scale = f.metadata.get("property_scale")
-            if scale is not None:
+            if f.metadata.get("is_property"):
                 object.__setattr__(
                     self,
                     f.name,
-                    as_property(getattr(self, f.name), scale),
+                    as_property(getattr(self, f.name)),
                 )

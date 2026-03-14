@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 
 from jbubble import (
-    Units,
     SaveSpec,
     arrays_from_result,
     compute_radius_metrics,
@@ -15,7 +14,6 @@ from jax import jit
 
 
 def demo():
-    units = Units()
     bubbles = [
         Marmottant(radius)
         for radius in [
@@ -48,7 +46,6 @@ def demo():
         result = jit_run_simulation(
             bubble=bubble,
             pulse=pulse,
-            units=units,
             save_spec=save_spec,
         )
         end = time.perf_counter()

@@ -11,7 +11,7 @@ jax.config.update("jax_enable_x64", True)
 
 import jbubble.shapes as shapes  # noqa: E402
 import pytest  # noqa: E402
-from jbubble import Pulse, SaveSpec, Units  # noqa: E402
+from jbubble import Pulse, SaveSpec  # noqa: E402
 from jbubble.bubble import (  # noqa: E402
     ConstantProperty,
     GompertzSurfaceTension,
@@ -36,7 +36,7 @@ from jbubble.bubble import (  # noqa: E402
 def make_rp(R0):
     """RayleighPlesset with uncoated bubble (ConstantProperty sigma + NoShell)."""
     from jbubble.presets import WATER_MU, WATER_RHO, AIR_GAMMA, make_polytropic_gas
-    sigma = ConstantProperty(val=72e-3, _scale="sigma_scale")
+    sigma = ConstantProperty(val=72e-3)
     shell = NoShell(sigma=sigma)
     gas = make_polytropic_gas(
         R0=R0,
@@ -58,7 +58,7 @@ def make_gompertz_lipid(eom_cls, R0, **extra):
     )
     shell = LipidShell(
         sigma=sigma,
-        kappa_s=ConstantProperty(val=LIPID_KAPPA_S, _scale="kappa_scale"),
+        kappa_s=ConstantProperty(val=LIPID_KAPPA_S),
     )
     gas = make_polytropic_gas(
         R0=R0,
@@ -80,7 +80,7 @@ def make_neo_hookean(R0):
     )
     shell = LipidShell(
         sigma=sigma,
-        kappa_s=ConstantProperty(val=LIPID_KAPPA_S, _scale="kappa_scale"),
+        kappa_s=ConstantProperty(val=LIPID_KAPPA_S),
     )
     gas = make_polytropic_gas(
         R0=R0,
@@ -127,7 +127,7 @@ def make_confinement(R0):
     )
     shell = LipidShell(
         sigma=sigma,
-        kappa_s=ConstantProperty(val=LIPID_KAPPA_S, _scale="kappa_scale"),
+        kappa_s=ConstantProperty(val=LIPID_KAPPA_S),
     )
     gas = make_polytropic_gas(
         R0=R0,
@@ -175,11 +175,6 @@ ALL_EOM_FACTORIES = [
     ),
     pytest.param(lambda R0: make_confinement(R0), id="SphericalConfinement"),
 ]
-
-
-@pytest.fixture(scope="session")
-def units():
-    return Units()
 
 
 @pytest.fixture(scope="session")

@@ -30,12 +30,12 @@ class ShellModel(Model, abc.ABC):
     in ``__post_init__``.
 
     Subclasses can declare additional ``Property`` fields by annotating
-    them with ``eqx.field(metadata={"property_scale": "<scale_name>"})``
+    them with ``eqx.field(metadata={"is_property": True})``
     — the base ``__post_init__`` will convert them automatically.
     No subclass ``__post_init__`` is needed.
     """
 
-    sigma: Property = eqx.field(metadata={"property_scale": "sigma_scale"})
+    sigma: Property = eqx.field(metadata={"is_property": True})
 
     def p_laplace(self, state: BubbleState) -> jax.Array:
         """Laplace pressure contribution from surface tension."""
@@ -98,7 +98,7 @@ class LipidShell(ShellModel):
         Shell surface-dilatational viscosity  [N s/m].
     """
 
-    kappa_s: Property = eqx.field(metadata={"property_scale": "kappa_scale"})
+    kappa_s: Property = eqx.field(metadata={"is_property": True})
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
         return state.R * 0.0
@@ -134,9 +134,9 @@ class ThickShell(ShellModel):
         thinning).
     """
 
-    d_s: Property = eqx.field(metadata={"property_scale": "length_scale"})
-    G_s: Property = eqx.field(metadata={"property_scale": "P_scale"})
-    mu_s: Property = eqx.field(metadata={"property_scale": "mu_scale"})
+    d_s: Property = eqx.field(metadata={"is_property": True})
+    G_s: Property = eqx.field(metadata={"is_property": True})
+    mu_s: Property = eqx.field(metadata={"is_property": True})
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
         R = state.R

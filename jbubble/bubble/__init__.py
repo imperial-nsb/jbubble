@@ -13,7 +13,7 @@ equations of motion independently::
     sigma = GompertzSurfaceTension.from_R0(R0=R0)
     shell  = LipidShell(
         sigma=sigma,
-        kappa_s=ConstantProperty(val=2.4e-9, _scale="kappa_scale"),
+        kappa_s=ConstantProperty(val=2.4e-9),
     )
     gas    = PolytropicGas.from_equilibrium(
         R0=R0, gamma=1.07, P_amb=101325.0, sigma_R0=sigma.sigma_R0,

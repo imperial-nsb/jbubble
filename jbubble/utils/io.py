@@ -55,7 +55,6 @@ from ..shapes import (
     Triangle,
 )
 from ..simulation import SimulationResult
-from ..units import Units
 
 # Registry of all concrete classes that can be serialised.
 _MODULE_REGISTRY: dict[str, type[eqx.Module]] = {
@@ -230,11 +229,6 @@ def save(
     if shape_fields:
         state["shape"] = shape_fields
 
-    # Units (always three scalars).
-    state["units"] = {
-        f.name: getattr(result.units, f.name) for f in dataclasses.fields(result.units)
-    }
-
     # -- Write orbax checkpoint ------------------------------------------------
     with ocp.StandardCheckpointer() as ckptr:
         ckptr.save(path / "state", state)
@@ -286,9 +280,6 @@ def load(path: str | Path) -> tuple[SimulationResult, dict[str, Any]]:
 
     eom = _deserialise_module(state["eom"], meta["eom_classes"])
 
-    units_dict = {k: _to_python(v) for k, v in state["units"].items()}
-    units = Units(**units_dict)
-
     # -- Assemble SimulationResult ---------------------------------------------
     result = SimulationResult(
         ts=_to_jax(state["ts"]),
@@ -303,7 +294,6 @@ def load(path: str | Path) -> tuple[SimulationResult, dict[str, Any]]:
         ),
         eom=eom,
         pulse=pulse,
-        units=units,
     )
 
     return result, meta["metadata"]

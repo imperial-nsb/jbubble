@@ -69,40 +69,6 @@ def test_call_R_dot_is_velocity(factory, pulse):
     assert float(dsdt.R) == pytest.approx(0.0, abs=1e-10)
 
 
-# ── get_scaled ───────────────────────────────────────────────────────────────
-
-
-@pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
-def test_get_scaled_returns_same_type(factory, units):
-    eom = factory(_R0)
-    eom_scaled = eom.get_scaled(units)
-    assert type(eom_scaled) is type(eom)
-
-
-@pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
-def test_get_scaled_r0_is_dimensionless(factory, units):
-    eom = factory(_R0)
-    eom_scaled = eom.get_scaled(units)
-    assert float(eom_scaled.R0) == pytest.approx(_R0 / units.L_scale)
-
-
-# ── surface_tension ──────────────────────────────────────────────────────────
-
-
-@pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
-def test_surface_tension_finite_at_R0(factory):
-    eom = factory(_R0)
-    sigma = eom.surface_tension(jnp.array(float(eom.R0)))
-    assert bool(jnp.isfinite(sigma))
-
-
-@pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
-def test_surface_tension_non_negative(factory):
-    eom = factory(_R0)
-    sigma = eom.surface_tension(jnp.array(float(eom.R0)))
-    assert float(sigma) >= 0.0
-
-
 # ── rho_L consistency ────────────────────────────────────────────────────────
 
 
@@ -113,30 +79,3 @@ def test_has_rho_L_attribute(factory):
     assert hasattr(eom, "rho_L"), f"{type(eom).__name__} missing rho_L attribute"
 
 
-# ── rescale_state ────────────────────────────────────────────────────────────
-
-
-@pytest.mark.parametrize("factory", ALL_EOM_FACTORIES)
-def test_rescale_state_same_type(factory, units):
-    eom = factory(_R0)
-    s0 = eom.initial_state()
-    rescaled = eom.rescale_state(s0, units)
-    assert type(rescaled) is type(s0)
-
-
-def test_confinement_rescale_state_4dof(units):
-    """SphericalConfinement should rescale all four state components."""
-    eom = make_confinement(_R0)
-    ones = ConfinedBubbleState(
-        R=jnp.array(1.0),
-        R_dot=jnp.array(1.0),
-        a=jnp.array(1.0),
-        a_dot=jnp.array(1.0),
-    )
-    rescaled = eom.rescale_state(ones, units)
-    assert isinstance(rescaled, ConfinedBubbleState)
-    # R and a should get L_scale, Rdot and a_dot should get vel_scale
-    assert float(rescaled.R) == pytest.approx(units.L_scale)
-    assert float(rescaled.R_dot) == pytest.approx(units.vel_scale)
-    assert float(rescaled.a) == pytest.approx(units.L_scale)
-    assert float(rescaled.a_dot) == pytest.approx(units.vel_scale)

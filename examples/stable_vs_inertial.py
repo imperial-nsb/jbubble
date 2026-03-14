@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 from jbubble import (
-    Units,
     SaveSpec,
     Pulse,
     run_simulation,
@@ -11,7 +10,6 @@ import jbubble.shapes as shapes
 
 bubble = Marmottant(R0=3.0e-6)
 save_spec = SaveSpec(num_samples=1000)
-units = Units()
 
 pulse_A = Pulse(
     freq=500e3,
@@ -34,14 +32,12 @@ pulse_B = Pulse(
 result_A = run_simulation(
     bubble=bubble,
     pulse=pulse_A,
-    units=units,
     save_spec=save_spec,
 )
 
 result_B = run_simulation(
     bubble=bubble,
     pulse=pulse_B,
-    units=units,
     save_spec=save_spec,
 )
 

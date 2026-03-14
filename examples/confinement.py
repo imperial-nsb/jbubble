@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 
 from jbubble import shapes
 from jbubble.bubble import SphericalConfinement
-from jbubble.units import Units
 from jbubble.pulse import Pulse
 from jbubble.solver import SaveSpec
 from jbubble.simulation import run_simulation
@@ -26,14 +25,11 @@ pulse = Pulse(
     initial_time=1e-6,
     apply_hann=False,
 )
-
-units = Units()
 save_spec = SaveSpec(num_samples=1000)
 
 result_spherical_confinement = run_simulation(
     bubble=SphericalConfinement(R0=4e-6, vessel_radius=10e-6),  # R0 = 4 µm
     pulse=pulse,
-    units=units,
     save_spec=save_spec,
     window_s=20e-6,
     dt0=1e-3,
@@ -138,7 +134,7 @@ def spherical_confinement(freq, r0):
     pulse = make_pulse(freq)
 
     result = run_simulation(
-        bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+        bubble, pulse, save_spec=save_spec, window_s=20e-6
     )
 
     return result.radius.max() / r0

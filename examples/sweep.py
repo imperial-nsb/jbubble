@@ -3,7 +3,6 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 from jbubble import (
-    Units,
     SaveSpec,
     Bubble,
     Pulse,
@@ -91,7 +90,6 @@ def plot_heatmap(x_grid, y_grid, data, x_label, y_label, title, cbar_label):
 
 
 def main():
-    units = Units()
     save_spec = SaveSpec(num_samples=1000)
 
     # --- Sweep 1: Frequency vs Initial Radius ---
@@ -107,7 +105,7 @@ def main():
             initial_time=1e-6,
         )
         return run_simulation(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     r0_values = jnp.linspace(1.0e-6, 10.0e-6, 100)
@@ -146,7 +144,7 @@ def main():
             initial_time=1e-6,
         )
         return run_simulation(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     r0_values_2 = jnp.linspace(1.0e-6, 10.0e-6, 100)
@@ -181,7 +179,7 @@ def main():
             initial_time=1e-6,
         )
         return run_simulation(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     pressure_values = jnp.linspace(10e3, 500e3, 100)  # 10 kPa to 500 kPa
@@ -213,7 +211,7 @@ def main():
             initial_time=1e-6,
         )
         return run_simulation(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     pressure_values = jnp.linspace(10e3, 500e3, 100)  # 10 kPa to 500 kPa
@@ -245,7 +243,7 @@ def main():
             initial_time=1e-6,
         )
         return run_simulation(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     pressure_values = jnp.linspace(10e3, 500e3, 100)  # 10 kPa to 500 kPa

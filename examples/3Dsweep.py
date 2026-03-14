@@ -14,7 +14,6 @@ from matplotlib import cm
 from matplotlib.colors import Normalize
 
 from jbubble.bubble import MarmottantGompertz
-from jbubble.units import Units
 from jbubble.pulse import Pulse
 from jbubble.solver import SaveSpec
 from jbubble.simulation import run_simulation
@@ -24,8 +23,6 @@ import jbubble.shapes as shapes
 from jax import config
 
 config.update("jax_enable_x64", True)
-
-units = Units()
 save_spec = SaveSpec(num_samples=1000)
 run_simulation_jit = jax.jit(run_simulation)
 
@@ -320,7 +317,7 @@ def freq_r0_chi():
             initial_time=1e-6,
         )
         return run_simulation_jit(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     heats, xg, yg, cavit_heats = run_3d_sweep(
@@ -362,7 +359,7 @@ def freq_r0_kappa():
             initial_time=1e-6,
         )
         return run_simulation_jit(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     heats, xg, yg, cavit_heats = run_3d_sweep(
@@ -405,7 +402,7 @@ def freq_chi_kappa():
             initial_time=1e-6,
         )
         return run_simulation_jit(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     heats, xg, yg, cavit_heats = run_3d_sweep(
@@ -444,7 +441,7 @@ def freq_r0_p():
             freq=freq, pressure=p, shape=shapes.Sine(), cycle_num=5, initial_time=1e-6
         )
         return run_simulation_jit(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     heats, xg, yg, cavit_heats = run_3d_sweep(
@@ -486,7 +483,7 @@ def freq_r0_gamma():
             initial_time=1e-6,
         )
         return run_simulation_jit(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     heats, xg, yg, cavit_heats = run_3d_sweep(
@@ -535,7 +532,7 @@ def freq_r0_shapes():
             initial_time=1e-6,
         )
         return run_simulation_jit(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     heats, xg, yg, cavit_heats = run_3d_sweep(
@@ -583,7 +580,7 @@ def freq_r0_rectangle():
             initial_time=1e-6,
         )
         return run_simulation_jit(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     heats, xg, yg, cavit_heats = run_3d_sweep(
@@ -626,7 +623,7 @@ def freq_r0_square_posneg():
             initial_time=1e-6,
         )
         return run_simulation_jit(
-            bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+            bubble, pulse, save_spec=save_spec, window_s=20e-6
         )
 
     heats, xg, yg, cavit_heats = run_3d_sweep(

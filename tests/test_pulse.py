@@ -33,21 +33,6 @@ def test_pulse_amplitude_bounded_by_pressure(pulse):
     assert bool(jnp.all(vals <= pulse.pressure + 1.0))  # +1 Pa tolerance
 
 
-def test_pulse_get_scaled_frequency(pulse, units):
-    scaled = pulse.get_scaled(units)
-    assert scaled.freq == pytest.approx(pulse.freq / units.freq_scale)
-
-
-def test_pulse_get_scaled_pressure(pulse, units):
-    scaled = pulse.get_scaled(units)
-    assert scaled.pressure == pytest.approx(pulse.pressure / units.P_scale)
-
-
-def test_pulse_get_scaled_initial_time(pulse, units):
-    scaled = pulse.get_scaled(units)
-    assert scaled.initial_time == pytest.approx(pulse.initial_time / units.T_scale)
-
-
 def test_pulse_hann_differs_from_no_hann():
     p_hann = Pulse(
         freq=300e3,

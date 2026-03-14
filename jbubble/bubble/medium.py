@@ -31,7 +31,7 @@ class MediumModel(Model, abc.ABC):
     ``ConstantProperty`` in ``__post_init__``.
 
     Subclasses can declare additional ``Property`` fields by annotating
-    them with ``eqx.field(metadata={"property_scale": "<scale_name>"})``
+    them with ``eqx.field(metadata={"is_property": True})``
     — the base ``__post_init__`` will convert them automatically.
     No subclass ``__post_init__`` is needed.
 
@@ -41,7 +41,7 @@ class MediumModel(Model, abc.ABC):
         Dynamic viscosity  [Pa s].
     """
 
-    mu: Property = eqx.field(metadata={"property_scale": "mu_scale"})
+    mu: Property = eqx.field(metadata={"is_property": True})
 
     @abc.abstractmethod
     def p_viscous(self, state: BubbleState) -> jax.Array:
@@ -102,7 +102,7 @@ class KelvinVoigtMedium(MediumModel):
         Shear modulus  [Pa].  May be state-dependent (e.g. strain-stiffening).
     """
 
-    G: Property = eqx.field(metadata={"property_scale": "P_scale"})
+    G: Property = eqx.field(metadata={"is_property": True})
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.mu(state) * state.R_dot / state.R
@@ -130,7 +130,7 @@ class NeoHookeanMedium(MediumModel):
         state-dependent (e.g. strain-stiffening).
     """
 
-    G: Property = eqx.field(metadata={"property_scale": "P_scale"})
+    G: Property = eqx.field(metadata={"is_property": True})
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.mu(state) * state.R_dot / state.R

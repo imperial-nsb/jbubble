@@ -14,7 +14,6 @@ from jbubble.bubble import (
     SphericalConfinement,
     LeightonGompertz,
 )
-from jbubble.units import Units
 from jbubble.pulse import Pulse
 from jbubble.solver import SaveSpec
 from jbubble.simulation import run_simulation
@@ -31,14 +30,11 @@ pulse = Pulse(
     initial_time=1e-6,
     apply_hann=False,
 )
-
-units = Units()
 save_spec = SaveSpec(num_samples=1000)
 
 result_rayleigh_plesset = run_simulation(
     bubble=RayleighPlesset(R0=2.5e-6),  # R0 = 4 µm
     pulse=pulse,
-    units=units,
     save_spec=save_spec,
     window_s=20e-6,
     dt0=1e-3,
@@ -48,7 +44,6 @@ result_rayleigh_plesset = run_simulation(
 result_marmottant = run_simulation(
     bubble=bubble,
     pulse=pulse,
-    units=units,
     save_spec=save_spec,
     window_s=20e-6,
     dt0=1e-3,
@@ -59,7 +54,6 @@ result_marmottant = run_simulation(
 result_gompertz = run_simulation(
     bubble=bubble_gompertz,
     pulse=pulse,
-    units=units,
     save_spec=save_spec,
     window_s=20e-6,
     dt0=1e-3,
@@ -70,7 +64,6 @@ result_gompertz = run_simulation(
 result_keller_miksis_gompertz = run_simulation(
     bubble=KellerMiksisGompertz(R0=4e-6),  # R0 = 4 µm
     pulse=pulse,
-    units=units,
     save_spec=save_spec,
     window_s=20e-6,
     dt0=1e-3,
@@ -81,7 +74,6 @@ result_keller_miksis_gompertz = run_simulation(
 result_leighton_gompertz = run_simulation(
     bubble=LeightonGompertz(R0=4e-6),  # R0 = 4 µm
     pulse=pulse,
-    units=units,
     save_spec=save_spec,
     window_s=20e-6,
     dt0=1e-3,
@@ -92,7 +84,6 @@ result_leighton_gompertz = run_simulation(
 result_spherical_confinement = run_simulation(
     bubble=SphericalConfinement(R0=4e-6, vessel_radius=10e-6),  # R0 = 4 µm
     pulse=pulse,
-    units=units,
     save_spec=save_spec,
     window_s=20e-6,
     dt0=1e-3,

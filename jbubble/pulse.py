@@ -5,7 +5,6 @@ import jax
 import jax.numpy as jnp
 
 from .shapes import PulseShape
-from .units import Units
 
 
 class Pulse(eqx.Module):
@@ -64,7 +63,7 @@ class Pulse(eqx.Module):
         Returns
         -------
         jax.Array
-            Instantaneous pressure [Pa or dimensionless if scaled].
+            Instantaneous pressure [Pa].
         """
         pulse_span = self.cycle_num / self.freq
         tau = t - self.initial_time
@@ -76,27 +75,3 @@ class Pulse(eqx.Module):
 
         val = self.shape(t, self.freq, self.phase, self.initial_time)
         return val * self.pressure * window
-
-    def get_scaled(self, units: Units) -> "Pulse":
-        """Return a dimensionless copy of this pulse scaled by *units*.
-
-        Parameters
-        ----------
-        units : Units
-            Non-dimensionalisation factors.
-
-        Returns
-        -------
-        Pulse
-            Copy with ``freq``, ``pressure``, and ``initial_time`` divided by
-            their respective scale factors.
-        """
-        return Pulse(
-            freq=self.freq / units.freq_scale,
-            pressure=self.pressure / units.P_scale,
-            shape=self.shape,
-            phase=self.phase,
-            initial_time=self.initial_time / units.T_scale,
-            cycle_num=self.cycle_num,
-            apply_hann=self.apply_hann,
-        )

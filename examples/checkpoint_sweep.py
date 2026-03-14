@@ -21,7 +21,7 @@ from jax import config
 
 config.update("jax_enable_x64", True)
 
-from jbubble import Pulse, SaveSpec, Units, run_simulation
+from jbubble import Pulse, SaveSpec, run_simulation
 from jbubble.bubble import MarmottantGompertz
 from jbubble.shapes import Sine
 from jbubble.utils import GridSweep, load, save
@@ -29,8 +29,6 @@ from jbubble.utils import GridSweep, load, save
 CHECKPOINT = Path("data/sweep_checkpoint.jb")
 
 # ── simulation setup ──────────────────────────────────────────────────────────
-
-units = Units()
 save_spec = SaveSpec(num_samples=512)
 
 freq_values = jnp.linspace(0.2e6, 1.5e6, 40)  # Hz
@@ -47,7 +45,7 @@ def kernel(R0, freq):
         initial_time=1e-6,
     )
     return run_simulation(
-        bubble, pulse, units=units, save_spec=save_spec, window_s=20e-6
+        bubble, pulse, save_spec=save_spec, window_s=20e-6
     )
 
 

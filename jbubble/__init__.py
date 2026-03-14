@@ -52,11 +52,9 @@ from .simulation import (
     run_simulation,
 )
 from .solver import SaveSpec, solve_eom
-from .units import Units
 
 __all__ = [
-    # Units & solver
-    "Units",
+    # Solver
     "SaveSpec",
     "solve_eom",
     # Pulse

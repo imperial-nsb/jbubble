@@ -12,7 +12,6 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from ._scaling import _scale_module
 from .gas import GasModel
 from .medium import MediumModel
 from .shell import ShellModel
@@ -86,32 +85,6 @@ class EquationOfMotion(eqx.Module, abc.ABC):
         s0 = BubbleState(R=R0, R_dot=jnp.zeros(()), R0=R0, P_gas0=jnp.zeros(()))
         P_gas0 = self.P_amb + 2.0 * self.shell.sigma(s0) / R0
         return BubbleState(R=R0, R_dot=jnp.zeros(()), R0=R0, P_gas0=P_gas0)
-
-    def get_scaled(self, units: Any) -> "EquationOfMotion":
-        """Return a dimensionless copy scaled by *units*.
-
-        Recursively scales all sub-modules (gas, shell, medium) and
-        scalar fields using ``_FIELD_SCALES``.
-        """
-        return _scale_module(self, units)
-
-    def rescale_state(self, state: BubbleState, units: Any) -> BubbleState:
-        """Rescale the dimensionless ODE state back to physical units."""
-        return BubbleState(
-            R=state.R * units.L_scale,
-            R_dot=state.R_dot * units.vel_scale,
-            R0=state.R0 * units.L_scale,
-            P_gas0=state.P_gas0 * units.P_scale,
-        )
-
-    def scale_state(self, state: BubbleState, units: Any) -> BubbleState:
-        """Scale a physical-units state to dimensionless (inverse of rescale_state)."""
-        return BubbleState(
-            R=state.R / units.L_scale,
-            R_dot=state.R_dot / units.vel_scale,
-            R0=state.R0 / units.L_scale,
-            P_gas0=state.P_gas0 / units.P_scale,
-        )
 
     @abc.abstractmethod
     def __call__(
@@ -376,32 +349,6 @@ class SphericalConfinement(EquationOfMotion):
         return ConfinedBubbleState(
             R=R0, R_dot=jnp.zeros(()), R0=R0, P_gas0=P_gas0,
             a=jnp.asarray(self.vessel_radius), a_dot=jnp.zeros(()),
-        )
-
-    def rescale_state(
-        self, state: ConfinedBubbleState, units: Any
-    ) -> ConfinedBubbleState:
-        """Rescale 4-DOF state to physical units."""
-        return ConfinedBubbleState(
-            R=state.R * units.L_scale,
-            R_dot=state.R_dot * units.vel_scale,
-            R0=state.R0 * units.L_scale,
-            P_gas0=state.P_gas0 * units.P_scale,
-            a=state.a * units.L_scale,
-            a_dot=state.a_dot * units.vel_scale,
-        )
-
-    def scale_state(
-        self, state: ConfinedBubbleState, units: Any
-    ) -> ConfinedBubbleState:
-        """Scale physical 4-DOF state to dimensionless."""
-        return ConfinedBubbleState(
-            R=state.R / units.L_scale,
-            R_dot=state.R_dot / units.vel_scale,
-            R0=state.R0 / units.L_scale,
-            P_gas0=state.P_gas0 / units.P_scale,
-            a=state.a / units.L_scale,
-            a_dot=state.a_dot / units.vel_scale,
         )
 
     def __call__(

@@ -13,7 +13,7 @@ Run with:
 import jax
 import jax.numpy as jnp
 
-from jbubble import run_simulation, Units, units
+from jbubble import run_simulation
 from jbubble.bubble.eom import KellerMiksis, RayleighPlesset
 from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium, KelvinVoigtMedium

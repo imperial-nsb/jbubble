@@ -10,7 +10,6 @@ here as ``Property`` subclasses.
 """
 
 import abc
-import dataclasses
 
 import equinox as eqx
 import jax
@@ -53,7 +52,6 @@ class ConstantProperty(Property):
     """
 
     val: float
-    _scale: str = eqx.field(static=True, default="unit_scale")
 
     def __call__(self, state: BubbleState) -> jax.Array:
         return self.val + state.R * 0.0
@@ -151,17 +149,13 @@ class MarmottantSurfaceTension(Property):
         )
 
 
-def as_property(val: "float | Property", scale: str) -> "Property":
+def as_property(val: "float | Property") -> "Property":
     """Coerce a plain float to a ``ConstantProperty``, or pass through a ``Property``.
 
     Parameters
     ----------
     val : float or Property
         A plain scalar or an existing ``Property`` instance.
-    scale : str
-        Name of the ``Units`` attribute used to non-dimensionalise the value
-        (e.g. ``"sigma_scale"``, ``"mu_scale"``).  Ignored when *val* is
-        already a ``Property``.
 
     Returns
     -------
@@ -169,4 +163,4 @@ def as_property(val: "float | Property", scale: str) -> "Property":
     """
     if isinstance(val, Property):
         return val
-    return ConstantProperty(val=float(val), _scale=scale)
+    return ConstantProperty(val=float(val))
