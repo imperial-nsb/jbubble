@@ -47,18 +47,9 @@ class ConfinedBubbleState(BubbleState):
     """State for a bubble confined in an elastic spherical vessel.
 
     Extends ``BubbleState`` with the vessel wall radius and velocity.
-    Inherits ``R0`` and ``P_gas0`` from the base class.
 
     Fields
     ------
-    R : jax.Array
-        Bubble wall radius  [m].
-    R_dot : jax.Array
-        Bubble wall velocity  [m/s].
-    R0 : jax.Array
-        Equilibrium bubble radius  [m].
-    P_gas0 : jax.Array
-        Equilibrium gas pressure  [Pa].
     a : jax.Array
         Vessel wall radius  [m].
     a_dot : jax.Array
