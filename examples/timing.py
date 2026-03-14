@@ -17,7 +17,7 @@ import jax.numpy as jnp
 
 from jbubble import run_simulation
 from jbubble.bubble.eom import KellerMiksis
-from jbubble.bubble.gas import PolytropicGas
+from jbubble.bubble.gas import PolytropicGas, VanDerWaalsGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.properties import GompertzSurfaceTension
 from jbubble.bubble.shell import LipidShell
@@ -43,7 +43,7 @@ sigma = GompertzSurfaceTension(
     sigma_break=72e-3,
 )
 shell  = LipidShell(sigma=sigma, kappa_s=2.4e-9)
-gas    = PolytropicGas(gamma=1.07)
+gas = VanDerWaalsGas(gamma=1.07, h_frac=1 / 5.61)
 medium = NewtonianMedium(mu=WATER_MU)
 
 pulse = Pulse(

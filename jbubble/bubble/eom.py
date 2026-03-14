@@ -81,10 +81,8 @@ class EquationOfMotion(eqx.Module, abc.ABC):
         Override for coupled systems with a larger state vector.
         """
         R0 = jnp.asarray(self.R0)
-        # sigma only reads state.R; P_gas0 placeholder is inert here
-        s0 = BubbleState(R=R0, R_dot=jnp.zeros(()), R0=R0, P_gas0=jnp.zeros(()))
-        P_gas0 = self.P_amb + 2.0 * self.shell.sigma(s0) / R0
-        return BubbleState(R=R0, R_dot=jnp.zeros(()), R0=R0, P_gas0=P_gas0)
+        P_gas0 = self.P_amb + 2.0 * self.shell.sigma(BubbleState(R=R0, R0=R0)) / R0
+        return BubbleState(R=R0, R0=R0, P_gas0=P_gas0)
 
     @abc.abstractmethod
     def __call__(
@@ -132,7 +130,7 @@ class RayleighPlesset(EquationOfMotion):
         p_L_val = self.p_L(state)
         p_ac = p_ac_fn(t)
         R_ddot = ((p_L_val - self.P_amb - p_ac) / self.rho_L - 1.5 * R_dot**2) / R
-        return BubbleState(R=R_dot, R_dot=R_ddot, R0=jnp.zeros(()), P_gas0=jnp.zeros(()))
+        return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
 class ModifiedRayleighPlesset(EquationOfMotion):
@@ -172,7 +170,7 @@ class ModifiedRayleighPlesset(EquationOfMotion):
 
         forces = p_L_val + (R / self.c_L) * dp_gas_dt - self.P_amb - p_ac
         R_ddot = (forces / self.rho_L - 1.5 * R_dot**2) / R
-        return BubbleState(R=R_dot, R_dot=R_ddot, R0=jnp.zeros(()), P_gas0=jnp.zeros(()))
+        return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
 class KellerMiksis(EquationOfMotion):
@@ -234,7 +232,7 @@ class KellerMiksis(EquationOfMotion):
         )
 
         R_ddot = numer / denom
-        return BubbleState(R=R_dot, R_dot=R_ddot, R0=jnp.zeros(()), P_gas0=jnp.zeros(()))
+        return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
 class LeightonTube(EquationOfMotion):
@@ -294,7 +292,7 @@ class LeightonTube(EquationOfMotion):
         inertia = 1.5 * R_dot**2 * (1.0 + (4.0 * R) / (3.0 * Gamma) * beta)
 
         R_ddot = (rhs - inertia) / denom
-        return BubbleState(R=R_dot, R_dot=R_ddot, R0=jnp.zeros(()), P_gas0=jnp.zeros(()))
+        return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
 class SphericalConfinement(EquationOfMotion):
@@ -404,8 +402,6 @@ class SphericalConfinement(EquationOfMotion):
         return ConfinedBubbleState(
             R=R_dot,
             R_dot=R_ddot,
-            R0=jnp.zeros(()),
-            P_gas0=jnp.zeros(()),
             a=a_dot,
             a_dot=a_ddot,
         )

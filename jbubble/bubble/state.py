@@ -18,6 +18,7 @@ any changes to the gas models — they simply read ``state.R0`` and
 
 import equinox as eqx
 import jax
+import jax.numpy as jnp
 
 
 class BubbleState(eqx.Module):
@@ -38,9 +39,18 @@ class BubbleState(eqx.Module):
     """
 
     R: jax.Array
-    R_dot: jax.Array
-    R0: jax.Array
-    P_gas0: jax.Array
+    R_dot: jax.Array = eqx.field(
+        default_factory=lambda: jnp.zeros(()),
+        kw_only=True,
+    )
+    R0: jax.Array = eqx.field(
+        default_factory=lambda: jnp.zeros(()),
+        kw_only=True,
+    )
+    P_gas0: jax.Array = eqx.field(
+        default_factory=lambda: jnp.zeros(()),
+        kw_only=True,
+    )
 
 
 class ConfinedBubbleState(BubbleState):
