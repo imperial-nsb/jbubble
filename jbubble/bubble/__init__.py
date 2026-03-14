@@ -20,12 +20,15 @@ from .medium import (
     NeoHookeanMedium,
     NewtonianMedium,
 )
-from .properties import (
+from .properties import Property
+from .shell import (
     GompertzSurfaceTension,
+    LipidShell,
     MarmottantSurfaceTension,
-    Property,
+    NoShell,
+    ShellModel,
+    ThickShell,
 )
-from .shell import LipidShell, NoShell, ShellModel, ThickShell
 from .state import BubbleState, ConfinedBubbleState
 
 __all__ = [
@@ -40,15 +43,15 @@ __all__ = [
     "EquationOfMotion",
     # Property models
     "Property",
-    "GompertzSurfaceTension",
-    "MarmottantSurfaceTension",
     # Gas models
     "PolytropicGas",
     "VanDerWaalsGas",
-    # Shell models
+    # Shell & surface tension models
     "NoShell",
     "LipidShell",
     "ThickShell",
+    "GompertzSurfaceTension",
+    "MarmottantSurfaceTension",
     # Medium models
     "NewtonianMedium",
     "KelvinVoigtMedium",

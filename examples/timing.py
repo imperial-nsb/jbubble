@@ -19,8 +19,7 @@ from jbubble import run_simulation
 from jbubble.bubble.eom import KellerMiksis
 from jbubble.bubble.gas import PolytropicGas, VanDerWaalsGas
 from jbubble.bubble.medium import NewtonianMedium
-from jbubble.bubble.properties import GompertzSurfaceTension
-from jbubble.bubble.shell import LipidShell
+from jbubble.bubble.shell import LipidShell, GompertzSurfaceTension
 from jbubble.presets import WATER_MU
 from jbubble.pulse import Pulse
 from jbubble.shapes import Sine
