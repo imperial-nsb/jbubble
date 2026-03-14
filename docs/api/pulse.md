@@ -1,3 +1,0 @@
-# Pulse
-
-::: jbubble.pulse.Pulse
