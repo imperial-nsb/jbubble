@@ -19,4 +19,4 @@ CHURCH_DS = 4e-9  # m
 CHURCH_GS = 10e6  # Pa
 CHURCH_MUS = 0.5  # Pa s
 
-# TODO: Build SonoVue methods??
+# TODO: Build SonoVue and Definity models?
