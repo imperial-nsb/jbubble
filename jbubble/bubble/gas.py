@@ -82,10 +82,10 @@ class VanDerWaalsGas(GasModel):
     """
 
     gamma: Property = eqx.field(converter=as_property)
-    h_frac: float
+    h_frac: Property = eqx.field(converter=as_property)
 
     def __call__(self, state: BubbleState) -> jax.Array:
-        h = self.h_frac * state.R0
+        h = self.h_frac(state) * state.R0
         return (
             state.P_gas0
             * ((state.R0**3 - h**3) / (state.R**3 - h**3)) ** self.gamma(state)
