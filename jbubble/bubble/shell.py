@@ -77,6 +77,12 @@ class NoShell(ShellModel):
         Surface tension law.
     """
 
+    def p_elastic(self, state: BubbleState) -> jax.Array:
+        return state.R * 0.0
+
+    def p_viscous(self, state: BubbleState) -> jax.Array:
+        return state.R * 0.0
+
 
 class LipidShell(ShellModel):
     """Thin lipid shell with surface viscosity.
