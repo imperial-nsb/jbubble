@@ -21,7 +21,6 @@ from .medium import (
     NewtonianMedium,
 )
 from .properties import (
-    ConstantProperty,
     GompertzSurfaceTension,
     MarmottantSurfaceTension,
     Property,
@@ -40,7 +39,7 @@ __all__ = [
     "MediumModel",
     "EquationOfMotion",
     # Property models
-    "ConstantProperty",
+    "Property",
     "GompertzSurfaceTension",
     "MarmottantSurfaceTension",
     # Gas models

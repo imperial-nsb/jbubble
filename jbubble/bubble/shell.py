@@ -26,7 +26,7 @@ class ShellModel(Model, abc.ABC):
     - Shell elastic restoring forces  (for thick shells)
 
     Every ``ShellModel`` holds a ``Property`` as its ``sigma`` field.
-    A plain float is accepted and auto-converted to a ``ConstantProperty``
+    A plain float is accepted and auto-converted to a ``Property``
     in ``__post_init__``.
 
     """

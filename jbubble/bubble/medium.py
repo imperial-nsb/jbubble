@@ -28,7 +28,7 @@ class MediumModel(Model, abc.ABC):
     the total medium pressure p_medium(state).
 
     A plain float is accepted for ``mu`` and auto-converted to a
-    ``ConstantProperty`` in ``__post_init__``.
+    ``Property`` in ``__post_init__``.
 
     Fields
     ------

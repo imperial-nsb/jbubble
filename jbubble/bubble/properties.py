@@ -18,31 +18,7 @@ import jax.numpy as jnp
 from .state import BubbleState
 
 
-class Property(eqx.Module, abc.ABC):
-    """Base class for state-dependent material properties.
-
-    A ``Property`` maps the current bubble state to a scalar physical
-    quantity (surface tension, shell viscosity, etc.).
-    """
-
-    @abc.abstractmethod
-    def __call__(self, state: BubbleState) -> jax.Array:
-        """Evaluate the property at the given state.
-
-        Parameters
-        ----------
-        state : BubbleState
-            Current bubble state.
-
-        Returns
-        -------
-        scalar
-            Property value.
-        """
-        ...
-
-
-class ConstantProperty(Property):
+class Property(eqx.Module):
     """A property that returns a constant value regardless of state.
 
     Fields
@@ -51,7 +27,7 @@ class ConstantProperty(Property):
         The constant value.
     """
 
-    val: float
+    val: float = eqx.field(default_factory=lambda: jnp.zeros(()), kw_only=True)
 
     def __call__(self, state: BubbleState) -> jax.Array:
         return self.val + state.R * 0.0
@@ -150,7 +126,7 @@ class MarmottantSurfaceTension(Property):
 
 
 def as_property(val: "float | Property") -> "Property":
-    """Coerce a plain float to a ``ConstantProperty``, or pass through a ``Property``.
+    """Coerce a plain float to a ``Property``, or pass through a ``Property``.
 
     Parameters
     ----------
@@ -163,4 +139,4 @@ def as_property(val: "float | Property") -> "Property":
     """
     if isinstance(val, Property):
         return val
-    return ConstantProperty(val=float(val))
+    return Property(val=float(val))

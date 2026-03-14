@@ -10,7 +10,6 @@ import jax.numpy as jnp
 import numpy as np
 
 from ..bubble import (
-    ConstantProperty,
     GompertzSurfaceTension,
     KellerMiksis,
     KelvinVoigtMedium,
@@ -22,6 +21,7 @@ from ..bubble import (
     NewtonianMedium,
     NoShell,
     PolytropicGas,
+    Property,
     RayleighPlesset,
     SphericalConfinement,
     ThickShell,
@@ -70,7 +70,7 @@ _MODULE_REGISTRY: dict[str, type[eqx.Module]] = {
         PolytropicGas,
         VanDerWaalsGas,
         # Properties
-        ConstantProperty,
+        Property,
         GompertzSurfaceTension,
         MarmottantSurfaceTension,
         # Shell

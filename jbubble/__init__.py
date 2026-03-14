@@ -7,7 +7,6 @@ jax.config.update("jax_enable_x64", True)
 from .bubble import (
     BubbleState,
     ConfinedBubbleState,
-    ConstantProperty,
     EquationOfMotion,
     GasModel,
     GompertzSurfaceTension,
@@ -87,7 +86,7 @@ __all__ = [
     "MediumModel",
     "EquationOfMotion",
     # Property models
-    "ConstantProperty",
+    "Property",
     "GompertzSurfaceTension",
     "MarmottantSurfaceTension",
     # Gas models
