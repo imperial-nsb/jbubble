@@ -30,7 +30,7 @@ class Property(eqx.Module):
         return self.val + state.R * 0.0
 
 
-def as_property(val: "float | Property") -> "Property":
+def as_property(val: float | Property) -> "Property":
     """Coerce a plain float to a ``Property``, or pass through a ``Property``.
 
     Parameters
