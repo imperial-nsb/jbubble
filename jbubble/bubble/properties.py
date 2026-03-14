@@ -9,8 +9,6 @@ Surface tension models previously in ``surface.py`` are reimplemented
 here as ``Property`` subclasses.
 """
 
-import abc
-
 import equinox as eqx
 import jax
 import jax.numpy as jnp
@@ -31,6 +29,23 @@ class Property(eqx.Module):
 
     def __call__(self, state: BubbleState) -> jax.Array:
         return self.val + state.R * 0.0
+
+
+def as_property(val: "float | Property") -> "Property":
+    """Coerce a plain float to a ``Property``, or pass through a ``Property``.
+
+    Parameters
+    ----------
+    val : float or Property
+        A plain scalar or an existing ``Property`` instance.
+
+    Returns
+    -------
+    Property
+    """
+    if isinstance(val, Property):
+        return val
+    return Property(val=float(val))
 
 
 class GompertzSurfaceTension(Property):
@@ -123,20 +138,3 @@ class MarmottantSurfaceTension(Property):
                 0.0,
             ),
         )
-
-
-def as_property(val: "float | Property") -> "Property":
-    """Coerce a plain float to a ``Property``, or pass through a ``Property``.
-
-    Parameters
-    ----------
-    val : float or Property
-        A plain scalar or an existing ``Property`` instance.
-
-    Returns
-    -------
-    Property
-    """
-    if isinstance(val, Property):
-        return val
-    return Property(val=float(val))

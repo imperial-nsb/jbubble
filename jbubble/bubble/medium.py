@@ -9,13 +9,11 @@ import abc
 import equinox as eqx
 import jax
 
-from jbubble.bubble.base import Model
-
-from .properties import Property
+from .properties import Property, as_property
 from .state import BubbleState
 
 
-class MediumModel(Model, abc.ABC):
+class MediumModel(eqx.Module, abc.ABC):
     """Surrounding medium (fluid / tissue) model.
 
     Computes the total inward viscous and elastic stresses exerted by the
@@ -36,7 +34,7 @@ class MediumModel(Model, abc.ABC):
         Dynamic viscosity  [Pa s].
     """
 
-    mu: Property
+    mu: Property = eqx.field(converter=as_property)
 
     @abc.abstractmethod
     def p_viscous(self, state: BubbleState) -> jax.Array:
@@ -97,7 +95,7 @@ class KelvinVoigtMedium(MediumModel):
         Shear modulus  [Pa].  May be state-dependent (e.g. strain-stiffening).
     """
 
-    G: Property
+    G: Property = eqx.field(converter=as_property)
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.mu(state) * state.R_dot / state.R
@@ -125,7 +123,7 @@ class NeoHookeanMedium(MediumModel):
         state-dependent (e.g. strain-stiffening).
     """
 
-    G: Property
+    G: Property = eqx.field(converter=as_property)
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.mu(state) * state.R_dot / state.R

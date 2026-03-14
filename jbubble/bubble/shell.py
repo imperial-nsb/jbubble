@@ -10,13 +10,11 @@ import abc
 import equinox as eqx
 import jax
 
-from jbubble.bubble.base import Model
-
-from .properties import Property
+from .properties import Property, as_property
 from .state import BubbleState
 
 
-class ShellModel(Model, abc.ABC):
+class ShellModel(eqx.Module, abc.ABC):
     """Bubble shell / coating model.
 
     Computes the total inward stress from the shell, including:
@@ -31,7 +29,7 @@ class ShellModel(Model, abc.ABC):
 
     """
 
-    sigma: Property
+    sigma: Property = eqx.field(converter=as_property)
 
     def p_laplace(self, state: BubbleState) -> jax.Array:
         """Laplace pressure contribution from surface tension."""
@@ -100,7 +98,7 @@ class LipidShell(ShellModel):
         Shell surface-dilatational viscosity  [N s/m].
     """
 
-    kappa_s: Property
+    kappa_s: Property = eqx.field(converter=as_property)
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
         return state.R * 0.0
@@ -136,9 +134,9 @@ class ThickShell(ShellModel):
         thinning).
     """
 
-    d_s: Property
-    G_s: Property
-    mu_s: Property
+    d_s: Property = eqx.field(converter=as_property)
+    G_s: Property = eqx.field(converter=as_property)
+    mu_s: Property = eqx.field(converter=as_property)
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
         R = state.R
