@@ -7,44 +7,6 @@ import jax
 import jax.numpy as jnp
 
 
-class Pulse(eqx.Module, abc.ABC):
-    """Abstract acoustic driving pulse.
-
-    Every ``Pulse`` is callable: ``pulse(t)`` returns the instantaneous
-    pressure [Pa] at time ``t``.  Implementations must be JAX-differentiable
-    so that equations of motion (e.g. Keller–Miksis) can compute
-    ``jax.grad(pulse)(t)``.
-
-    Subclasses must implement :meth:`__call__` and the :attr:`duration`
-    property.
-    """
-
-    @abc.abstractmethod
-    def __call__(self, t: jax.Array) -> jax.Array:
-        """Evaluate instantaneous pressure at time *t* [Pa]."""
-        ...
-
-    @property
-    @abc.abstractmethod
-    def duration(self) -> float:
-        """Active pulse duration [s] (excluding any leading silence)."""
-        ...
-
-    @property
-    def t_end(self) -> float:
-        """Suggested simulation end time [s].
-
-        Default: ``2 × duration``.  Override in subclasses that have a
-        non-zero ``initial_time`` or other structure.
-        """
-        return self.duration * 2.0
-
-
-# ---------------------------------------------------------------------------
-# Envelopes
-# ---------------------------------------------------------------------------
-
-
 class Envelope(eqx.Module, abc.ABC):
     """Window function mapping relative time *tau* to a scale in [0, 1].
 
@@ -97,3 +59,150 @@ class TukeyEnvelope(Envelope):
         val = jnp.where(frac < self.alpha / 2.0, lower, 1.0)
         val = jnp.where(frac > 1.0 - self.alpha / 2.0, upper, val)
         return jnp.where(in_window, val, 0.0)
+
+
+# ---------------------------------------------------------------------------
+# Pulse base
+# ---------------------------------------------------------------------------
+
+
+class Pulse(eqx.Module, abc.ABC):
+    """Abstract acoustic driving pulse.
+
+    Every ``Pulse`` is callable: ``pulse(t)`` returns the instantaneous
+    pressure [Pa] at time ``t``.  Implementations must be JAX-differentiable
+    so that equations of motion (e.g. Keller–Miksis) can compute
+    ``jax.grad(pulse)(t)``.
+
+    Subclasses implement :meth:`_evaluate` (the raw, un-enveloped signal).
+    The base :meth:`__call__` applies the :attr:`envelope` automatically.
+
+    Operator overloads for composition::
+
+        combined = pulse_a + pulse_b          # → Summed
+        scaled   = 0.5 * pulse_a              # → Scaled
+        windowed = combined.windowed(HannEnvelope())  # swap envelope
+    """
+
+    initial_time: float = eqx.field(default=0.0, kw_only=True)
+    envelope: Envelope = eqx.field(default_factory=RectangularEnvelope, kw_only=True)
+
+    @abc.abstractmethod
+    def _evaluate(self, t: jax.Array) -> jax.Array:
+        """Raw signal value at time *t*, before envelope application."""
+        ...
+
+    @property
+    @abc.abstractmethod
+    def duration(self) -> float:
+        """Active pulse duration [s] (excluding any leading silence)."""
+        ...
+
+    @property
+    def t_end(self) -> float:
+        """Suggested simulation end time [s].
+
+        Default: ``initial_time + 2 × duration``.
+        """
+        return self.initial_time + 2.0 * self.duration
+
+    def __call__(self, t: jax.Array) -> jax.Array:
+        """Evaluate pressure at time *t* [Pa], with envelope applied."""
+        tau = t - self.initial_time
+        return self._evaluate(t) * self.envelope(tau, self.duration)
+
+    # -- Composition operators ------------------------------------------------
+
+    def __add__(self, other: "Pulse") -> "Summed":
+        left = self.pulses if isinstance(self, Summed) else (self,)
+        right = other.pulses if isinstance(other, Summed) else (other,)
+        return Summed(pulses=left + right)
+
+    def __radd__(self, other: "Pulse") -> "Summed":
+        if isinstance(other, Pulse):
+            return other.__add__(self)
+        return NotImplemented
+
+    def __mul__(self, factor: float) -> "Scaled":
+        return Scaled(pulse=self, factor=float(factor))
+
+    def __rmul__(self, factor: float) -> "Scaled":
+        return Scaled(pulse=self, factor=float(factor))
+
+    def windowed(self, envelope: Envelope) -> "Pulse":
+        """Return a copy of this pulse with *envelope* replacing the current one."""
+        return eqx.tree_at(
+            lambda p: p.envelope, self, envelope,
+            is_leaf=lambda x: isinstance(x, Envelope),
+        )
+
+
+# ---------------------------------------------------------------------------
+# Composition
+# ---------------------------------------------------------------------------
+
+
+class Scaled(Pulse):
+    """Amplitude-scaled version of another pulse.
+
+    ``Scaled`` is transparent: it delegates entirely to the child pulse's
+    ``__call__`` (which already applies the child's envelope) and simply
+    multiplies by *factor*.  No additional envelope is applied.
+
+    Parameters
+    ----------
+    pulse : Pulse
+        The pulse to scale.
+    factor : float
+        Multiplicative factor.
+    """
+
+    pulse: Pulse
+    factor: float
+
+    @property
+    def duration(self) -> float:
+        return self.pulse.duration
+
+    @property
+    def t_end(self) -> float:
+        return self.pulse.t_end
+
+    def _evaluate(self, t: jax.Array) -> jax.Array:
+        return self.factor * self.pulse(t)
+
+    def __call__(self, t: jax.Array) -> jax.Array:
+        # Transparent — child's envelope is already applied via self.pulse(t).
+        return self._evaluate(t)
+
+
+class Summed(Pulse):
+    """Additive superposition of multiple pulses.
+
+    Each child pulse is evaluated with its own envelope, then the results
+    are summed.  The ``Summed`` pulse's own :attr:`envelope` (inherited
+    from :class:`Pulse`, default ``RectangularEnvelope``) is applied on
+    top — use ``.windowed(HannEnvelope())`` to window the combined signal.
+
+    Parameters
+    ----------
+    pulses : tuple[Pulse, ...]
+        Pulses to sum.  Must be a tuple (not a list) for Equinox
+        PyTree compatibility.
+    """
+
+    pulses: tuple[Pulse, ...]
+
+    @property
+    def duration(self) -> float:
+        # Span from self.initial_time to the latest child endpoint.
+        ends = [p.initial_time + p.duration for p in self.pulses]
+        return max(ends) - self.initial_time
+
+    @property
+    def t_end(self) -> float:
+        return max(p.t_end for p in self.pulses)
+
+    def _evaluate(self, t: jax.Array) -> jax.Array:
+        # Each p(t) includes the child's own envelope.
+        return jnp.sum(jnp.array([p(t) for p in self.pulses]))

@@ -16,6 +16,9 @@ class NeuralPulse(Pulse):
     (``jit``, ``grad``, ``vmap``) — making it straightforward to optimise
     the driving waveform via gradient descent.
 
+    The ``initial_time`` and ``envelope`` fields are inherited from
+    :class:`Pulse` and can be set as keyword arguments.
+
     Parameters
     ----------
     net : eqx.Module
@@ -48,6 +51,6 @@ class NeuralPulse(Pulse):
     def duration(self) -> float:
         return self.pulse_duration
 
-    def __call__(self, t: jax.Array) -> jax.Array:
+    def _evaluate(self, t: jax.Array) -> jax.Array:
         t_norm = t / self.pulse_duration
         return self.net(jnp.atleast_1d(t_norm)).squeeze() * self.pressure_scale

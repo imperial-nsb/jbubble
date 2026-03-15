@@ -22,7 +22,7 @@ Composition
 -----------
 - :class:`Scaled` — amplitude scaling
 - :class:`Summed` — additive superposition
-- :class:`Windowed` — apply an envelope to any pulse
+- ``pulse.windowed(envelope)`` — apply an envelope to any pulse
 """
 
 from .base import (
@@ -30,10 +30,11 @@ from .base import (
     HannEnvelope,
     Pulse,
     RectangularEnvelope,
+    Scaled,
+    Summed,
     TukeyEnvelope,
 )
 from .chirp import ChirpPulse
-from .compose import Scaled, Summed, Windowed
 from .neural import NeuralPulse
 from .sampled import SampledPulse
 from .shapes import (
@@ -79,7 +80,6 @@ __all__ = [
     # Composition
     "Scaled",
     "Summed",
-    "Windowed",
     # Shapes
     "PulseShape",
     "FourierPulseShape",

@@ -10,7 +10,9 @@ class SampledPulse(Pulse):
     """Acoustic pulse defined by an array of pressure samples.
 
     Evaluates the pressure at arbitrary times via piecewise-linear
-    interpolation (``jnp.interp``).  Returns 0 outside the sample range.
+    interpolation (``jnp.interp``).  The inherited ``envelope`` (default
+    ``RectangularEnvelope``) gates the signal to
+    ``[initial_time, initial_time + duration]``.
 
     Parameters
     ----------
@@ -37,7 +39,7 @@ class SampledPulse(Pulse):
     def duration(self) -> float:
         return float(self.ts[-1] - self.ts[0])
 
-    def __call__(self, t: jax.Array) -> jax.Array:
+    def _evaluate(self, t: jax.Array) -> jax.Array:
         return jnp.interp(t, self.ts, self.pressures)
 
     @staticmethod
@@ -56,4 +58,4 @@ class SampledPulse(Pulse):
             Time of the first sample [s].  Default: 0.
         """
         ts = initial_time + jnp.arange(pressures.shape[0]) * dt
-        return SampledPulse(ts=ts, pressures=pressures)
+        return SampledPulse(ts=ts, pressures=pressures, initial_time=initial_time)

@@ -52,7 +52,6 @@ from .pulse import (
     ToneBurst,
     Triangle,
     TukeyEnvelope,
-    Windowed,
 )
 from .simulation import (
     PlotArrays,
@@ -81,7 +80,6 @@ __all__ = [
     # Pulse composition
     "Scaled",
     "Summed",
-    "Windowed",
     # Pulse shapes
     "PulseShape",
     "Sine",
