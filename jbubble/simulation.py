@@ -72,6 +72,8 @@ def run_simulation(
     window_s: float = 20e-6,
     dt0: float = 1e-9,
     max_steps: int = 10_000,
+    solver: diffrax.AbstractSolver | None = None,
+    adjoint: diffrax.AbstractAdjoint | None = None,
     progress: bool = False,
 ) -> SimulationResult:
     """Run a simulation and return results in SI units.
@@ -110,6 +112,8 @@ def run_simulation(
         t_span=(0.0, window_s),
         dt0=dt0,
         save_spec=save_spec,
+        solver=solver,
+        adjoint=adjoint,
         progress=progress,
         max_steps=max_steps,
     )

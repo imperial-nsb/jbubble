@@ -36,6 +36,7 @@ def solve_eom(
     save_spec: SaveSpec | None = None,
     solver: diffrax.AbstractSolver | None = None,
     stepsize_controller: diffrax.AbstractStepSizeController | None = None,
+    adjoint: diffrax.AbstractAdjoint | None = None,
     progress: bool = False,
     max_steps: int = 10_000,
 ) -> diffrax.Solution:
@@ -63,6 +64,10 @@ def solve_eom(
     stepsize_controller : diffrax.AbstractStepSizeController, optional
         Step-size controller.  Default:
         ``PIDController(rtol=1e-3, atol=1e-6)``.
+    adjoint : diffrax.AbstractAdjoint, optional
+        Adjoint method for gradient computation.  Default: diffrax built-in
+        (``RecursiveCheckpointAdjoint``).  For gradient-based fitting through
+        an explicit solver use ``diffrax.BacksolveAdjoint()``.
     progress : bool
         Show a text progress meter.
     max_steps : int
@@ -100,6 +105,8 @@ def solve_eom(
         diffrax.TextProgressMeter() if progress else diffrax.NoProgressMeter()
     )
 
+    adjoint_kwargs = {} if adjoint is None else {"adjoint": adjoint}
+
     return diffrax.diffeqsolve(
         term,
         solver,
@@ -113,4 +120,5 @@ def solve_eom(
         max_steps=max_steps,
         progress_meter=progress_meter,
         throw=False,
+        **adjoint_kwargs,
     )
