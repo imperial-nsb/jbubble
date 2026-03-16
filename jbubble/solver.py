@@ -28,19 +28,41 @@ class SaveSpec(eqx.Module):
         return diffrax.SaveAt(ts=ts)
 
 
+class SolverConfig(eqx.Module):
+    """Numerical integration settings for :func:`solve_eom`.
+
+    Fields
+    ------
+    solver : diffrax.AbstractSolver
+        ODE solver.  Default: ``Kvaerno5()``.
+    stepsize_controller : diffrax.AbstractStepSizeController
+        Step-size controller.  Default: ``PIDController(rtol=1e-3, atol=1e-6)``.
+    dt0 : float
+        Initial step size [s].  Default: 1e-9.
+    max_steps : int
+        Maximum solver steps per integration.  Default: 50 000.
+    """
+
+    solver: diffrax.AbstractSolver = eqx.field(
+        default_factory=diffrax.Kvaerno5
+    )
+    stepsize_controller: diffrax.AbstractStepSizeController = eqx.field(
+        default_factory=lambda: diffrax.PIDController(rtol=1e-3, atol=1e-6)
+    )
+    dt0: float = 1e-9
+    max_steps: int = eqx.field(default=50_000, static=True)
+
+
 def solve_eom(
     eom: EquationOfMotion,
     pulse: Pulse,
     *,
     y0: Any = None,
     t_span: tuple[float, float] | None = None,
-    dt0: float = 1e-3,
     save_spec: SaveSpec | None = None,
-    solver: diffrax.AbstractSolver | None = None,
-    stepsize_controller: diffrax.AbstractStepSizeController | None = None,
+    config: SolverConfig | None = None,
     adjoint: diffrax.AbstractAdjoint | None = None,
     progress: bool = False,
-    max_steps: int = 10_000,
 ) -> diffrax.Solution:
     """Solve bubble dynamics for an ``EquationOfMotion``.
 
@@ -56,24 +78,18 @@ def solve_eom(
     t_span : tuple[float, float], optional
         Integration interval ``(t0, t1)``.  If *None*, derived from
         the pulse duration.
-    dt0 : float
-        Initial time step.
     save_spec : SaveSpec, optional
         Output sampling specification.  Default: 1024 evenly-spaced
         time points.
-    solver : diffrax.AbstractSolver, optional
-        ODE solver.  Default: ``Kvaerno5()``.
-    stepsize_controller : diffrax.AbstractStepSizeController, optional
-        Step-size controller.  Default:
-        ``PIDController(rtol=1e-3, atol=1e-6)``.
+    config : SolverConfig, optional
+        Numerical integration settings.  Default: Kvaerno5 with
+        PIDController(rtol=1e-3, atol=1e-6).
     adjoint : diffrax.AbstractAdjoint, optional
         Adjoint method for gradient computation.  Default: diffrax built-in
         (``RecursiveCheckpointAdjoint``).  For gradient-based fitting through
         an explicit solver use ``diffrax.BacksolveAdjoint()``.
     progress : bool
         Show a text progress meter.
-    max_steps : int
-        Maximum number of solver steps.
 
     Returns
     -------
@@ -86,11 +102,8 @@ def solve_eom(
     if save_spec is None:
         save_spec = SaveSpec(num_samples=1024)
 
-    if solver is None:
-        solver = diffrax.Kvaerno5()
-
-    if stepsize_controller is None:
-        stepsize_controller = diffrax.PIDController(rtol=1e-3, atol=1e-6)
+    if config is None:
+        config = SolverConfig()
 
     if y0 is None:
         y0 = eom.initial_state()
@@ -111,15 +124,15 @@ def solve_eom(
 
     return diffrax.diffeqsolve(
         term,
-        solver,
+        config.solver,
         t0=t0,
         t1=t1,
-        dt0=dt0,
+        dt0=config.dt0,
         y0=y0,
         args=(eom, pulse),
         saveat=saveat,
-        stepsize_controller=stepsize_controller,
-        max_steps=max_steps,
+        stepsize_controller=config.stepsize_controller,
+        max_steps=config.max_steps,
         progress_meter=progress_meter,
         throw=False,
         **adjoint_kwargs,

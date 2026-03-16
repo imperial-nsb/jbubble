@@ -15,7 +15,7 @@ import optax
 from .bubble.eom import EquationOfMotion
 from .pulse import Pulse
 from .simulation import SimulationResult, run_simulation
-from .solver import SaveSpec, solve_eom
+from .solver import SaveSpec, SolverConfig, solve_eom
 
 
 @dataclasses.dataclass
@@ -43,14 +43,12 @@ def fit_parameters(
     params0: Any,
     *,
     save_spec: SaveSpec,
-    window_s: float,
+    t_span: tuple[float, float] | None = None,
     loss_fn: Callable[..., jax.Array],  # (state,) -> scalar
     optimizer: optax.GradientTransformation,
     n_steps: int = 200,
-    solver: diffrax.AbstractSolver | None = None,
+    config: SolverConfig | None = None,
     adjoint: diffrax.AbstractAdjoint | None = None,
-    dt0: float = 1e-9,
-    max_steps: int = 50_000,
     verbose: bool = True,
 ) -> FitResult:
     """Fit model parameters to a target radius-time curve.
@@ -76,8 +74,9 @@ def fit_parameters(
     save_spec : SaveSpec
         Output sampling specification.  The simulated state is evaluated
         on this grid and passed to ``loss_fn``.
-    window_s : float
-        Simulation time window [s].
+    t_span : tuple[float, float], optional
+        Integration interval ``(t0, t1)`` [s].  ``None`` uses the pulse
+        duration as reported by ``pulse.t_end``.
     loss_fn : callable
         ``(state: BubbleState) → scalar``.  Receives the full simulated
         state; close over any target data and reference constants.
@@ -89,15 +88,12 @@ def fit_parameters(
         Gradient-based optimiser, e.g. ``optax.adam(1e-2)``.
     n_steps : int
         Number of optimisation steps.  Default: 200.
-    solver : diffrax.AbstractSolver, optional
-        ODE solver.  Default: ``Tsit5()`` (explicit; good adjoint conditioning).
+    config : SolverConfig, optional
+        ODE solver settings.  Default: Tsit5 with PID(rtol=1e-4, atol=1e-8),
+        50 000 max steps.
     adjoint : diffrax.AbstractAdjoint, optional
         Adjoint method.  Default: ``BacksolveAdjoint()`` (memory-efficient,
         works with explicit solvers).
-    dt0 : float
-        Initial ODE step size [s].  Default: 1e-9.
-    max_steps : int
-        Maximum ODE steps per integration.  Default: 50 000.
     verbose : bool
         Print loss every 25 steps.  Default: True.
 
@@ -107,11 +103,15 @@ def fit_parameters(
         Fitted parameters, full loss history, and a final
         :class:`~jbubble.simulation.SimulationResult`.
     """
-    if solver is None:
-        solver = diffrax.Tsit5()
+    if config is None:
+        config = SolverConfig(
+            solver=diffrax.Tsit5(),
+            stepsize_controller=diffrax.PIDController(rtol=1e-4, atol=1e-8),
+            dt0=1e-9,
+            max_steps=50_000,
+        )
     if adjoint is None:
         adjoint = diffrax.BacksolveAdjoint()
-    stepsize_controller = diffrax.PIDController(rtol=1e-4, atol=1e-8)
 
     # Partition params into array leaves (to be differentiated and tracked by
     # the optimiser) and static leaves (integer shapes, activation types, etc.)
@@ -125,13 +125,10 @@ def fit_parameters(
         sol = solve_eom(
             eom,
             pulse,
-            t_span=(0.0, window_s),
-            dt0=dt0,
+            t_span=t_span,
             save_spec=save_spec,
-            solver=solver,
-            stepsize_controller=stepsize_controller,
+            config=config,
             adjoint=adjoint,
-            max_steps=max_steps,
         )
         return loss_fn(sol.ys)
 
@@ -155,9 +152,8 @@ def fit_parameters(
         make_eom(params),
         pulse,
         save_spec=save_spec,
-        window_s=window_s,
-        dt0=dt0,
-        solver=solver,
+        t_span=t_span,
+        config=config,
     )
 
     return FitResult(

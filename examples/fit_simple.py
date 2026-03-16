@@ -89,7 +89,7 @@ target_result = jax.jit(run_simulation)(
     make_eom(jnp.log(jnp.array(KAPPA_S_TRUE))),
     pulse,
     save_spec=SAVE_SPEC,
-    window_s=WINDOW_S,
+    t_span=(0.0, WINDOW_S),
 )
 target = target_result.radius
 
@@ -105,7 +105,7 @@ fit = fit_parameters(
     pulse,
     params0=jnp.log(jnp.array(KAPPA_S_INIT)),
     save_spec=SAVE_SPEC,
-    window_s=WINDOW_S,
+    t_span=(0.0, WINDOW_S),
     loss_fn=lambda state: normalised_mse_radius(state.R, target, R0),
     optimizer=optax.adam(1e-2),
     n_steps=450,

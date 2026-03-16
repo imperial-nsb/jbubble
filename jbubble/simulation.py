@@ -11,7 +11,7 @@ import jax
 from .bubble.eom import EquationOfMotion
 from .bubble.state import BubbleState, ConfinedBubbleState
 from .pulse import Pulse
-from .solver import SaveSpec, solve_eom
+from .solver import SaveSpec, SolverConfig, solve_eom
 
 
 class SimulationResult(eqx.Module):
@@ -85,12 +85,8 @@ def run_simulation(
     *,
     save_spec: SaveSpec,
     state0: Any = None,
-    window_s: float = 20e-6,
-    dt0: float = 1e-9,
-    max_steps: int = 10_000,
-    solver: diffrax.AbstractSolver | None = None,
-    stepsize_controller: diffrax.AbstractStepSizeController | None = None,
-    adjoint: diffrax.AbstractAdjoint | None = None,
+    t_span: tuple[float, float] | None = None,
+    config: SolverConfig | None = None,
     progress: bool = False,
 ) -> SimulationResult:
     """Run a simulation and return results in SI units.
@@ -105,18 +101,11 @@ def run_simulation(
         Output specification (number of samples).
     state0 : BubbleState, optional
         Initial state.  Defaults to ``eom.initial_state()``.
-    window_s : float
-        Simulation time window [s].
-    dt0 : float
-        Initial time step [s].
-    max_steps : int
-        Maximum ODE steps.
-    solver : diffrax.AbstractSolver, optional
-        ODE solver.  Default: ``Kvaerno5()``.
-    stepsize_controller : diffrax.AbstractStepSizeController, optional
-        Step-size controller.  Default: ``PIDController(rtol=1e-3, atol=1e-6)``.
-    adjoint : diffrax.AbstractAdjoint, optional
-        Adjoint method.  Default: diffrax built-in.
+    t_span : tuple[float, float], optional
+        Integration interval ``(t0, t1)`` [s].  ``None`` uses the pulse
+        duration as reported by ``pulse.t_end``.
+    config : SolverConfig, optional
+        ODE solver settings.
     progress : bool
         Show progress meter.
 
@@ -124,21 +113,14 @@ def run_simulation(
     -------
     SimulationResult
     """
-    if state0 is None:
-        state0 = eom.initial_state()
-
     sol = solve_eom(
         eom,
         pulse,
-        y0=state0,
-        t_span=(0.0, window_s),
-        dt0=dt0,
+        y0=state0,  # None → solve_eom calls eom.initial_state()
+        t_span=t_span,
         save_spec=save_spec,
-        solver=solver,
-        stepsize_controller=stepsize_controller,
-        adjoint=adjoint,
+        config=config,
         progress=progress,
-        max_steps=max_steps,
     )
 
     assert sol.ts is not None
