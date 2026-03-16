@@ -1,8 +1,18 @@
-"""Common differentiable metrics for bubble dynamics fitting.
+"""Common differentiable metrics for bubble dynamics.
 
 All functions operate on plain :class:`jax.Array` arguments and are
-fully differentiable, so they can be passed directly as ``loss_fn`` to
-:func:`~jbubble.fitting.fit_parameters` or composed into custom losses.
+fully differentiable.  They are building blocks to compose into the
+``loss_fn`` argument of :func:`~jbubble.fitting.fit_parameters`, which
+receives a :class:`~jbubble.bubble.state.BubbleState` and a target array.
+Extract the state field you want to fit before passing to these functions::
+
+    from jbubble.metrics import normalised_mse_radius
+
+    # fit on radius waveform
+    loss_fn=lambda state: normalised_mse_radius(state.R, target, R0)
+
+    # fit on radial velocity
+    loss_fn=lambda state: mse_radius(state.R_dot, target)
 """
 
 from __future__ import annotations

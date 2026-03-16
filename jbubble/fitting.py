@@ -40,13 +40,12 @@ class FitResult:
 def fit_parameters(
     make_eom: Callable[..., EquationOfMotion],
     pulse: Pulse,
-    target: jax.Array,
     params0: Any,
     *,
     save_spec: SaveSpec,
     window_s: float,
-    loss_fn: Callable[[jax.Array, jax.Array], jax.Array] | None = None,
-    optimizer: optax.GradientTransformation | None = None,
+    loss_fn: Callable[..., jax.Array],  # (state,) -> scalar
+    optimizer: optax.GradientTransformation,
     n_steps: int = 200,
     solver: diffrax.AbstractSolver | None = None,
     adjoint: diffrax.AbstractAdjoint | None = None,
@@ -71,21 +70,23 @@ def fit_parameters(
         on the parameters, not bare Python conditionals on JAX values).
     pulse : Pulse
         Driving acoustic pulse.
-    target : jax.Array, shape (N,)
-        Target radius-time curve sampled on the same grid as ``save_spec``.
     params0 : Any
         Initial parameter values — any JAX-compatible pytree (scalar,
         array, tuple, or ``eqx.Module``).
     save_spec : SaveSpec
-        Output sampling specification.  The simulated radius is compared
-        to ``target`` on this grid.
+        Output sampling specification.  The simulated state is evaluated
+        on this grid and passed to ``loss_fn``.
     window_s : float
         Simulation time window [s].
-    loss_fn : callable, optional
-        ``(r_sim, r_target) → scalar``.  Default: mean squared error.
-        See :mod:`jbubble.metrics` for ready-made differentiable losses.
-    optimizer : optax.GradientTransformation, optional
-        Gradient-based optimiser.  Default: ``optax.adam(0.01)``.
+    loss_fn : callable
+        ``(state: BubbleState) → scalar``.  Receives the full simulated
+        state; close over any target data and reference constants.
+        See :mod:`jbubble.metrics` for differentiable array utilities, e.g.::
+
+            from jbubble.metrics import normalised_mse_radius
+            loss_fn=lambda state: normalised_mse_radius(state.R, target, R0)
+    optimizer : optax.GradientTransformation
+        Gradient-based optimiser, e.g. ``optax.adam(1e-2)``.
     n_steps : int
         Number of optimisation steps.  Default: 200.
     solver : diffrax.AbstractSolver, optional
@@ -110,11 +111,6 @@ def fit_parameters(
         solver = diffrax.Tsit5()
     if adjoint is None:
         adjoint = diffrax.BacksolveAdjoint()
-    if optimizer is None:
-        optimizer = optax.adam(0.01)
-    if loss_fn is None:
-        loss_fn = lambda r_sim, r_target: jnp.mean((r_sim - r_target) ** 2)  # noqa: E731
-
     stepsize_controller = diffrax.PIDController(rtol=1e-4, atol=1e-8)
 
     # Partition params into array leaves (to be differentiated and tracked by
@@ -137,7 +133,7 @@ def fit_parameters(
             adjoint=adjoint,
             max_steps=max_steps,
         )
-        return loss_fn(sol.ys.R, target)
+        return loss_fn(sol.ys)
 
     loss_and_grad = eqx.filter_jit(jax.value_and_grad(_loss))
 

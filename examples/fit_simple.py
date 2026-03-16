@@ -14,6 +14,7 @@ Run with:
 from __future__ import annotations
 
 import jax
+import optax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
@@ -102,11 +103,11 @@ print(f"Initial guess κ_s = {KAPPA_S_INIT:.1e} kg/s  ({KAPPA_S_INIT / KAPPA_S_T
 fit = fit_parameters(
     make_eom,
     pulse,
-    target,
     params0=jnp.log(jnp.array(KAPPA_S_INIT)),
     save_spec=SAVE_SPEC,
     window_s=WINDOW_S,
-    loss_fn=lambda r_sim, r_target: normalised_mse_radius(r_sim, r_target, R0),
+    loss_fn=lambda state: normalised_mse_radius(state.R, target, R0),
+    optimizer=optax.adam(1e-2),
     n_steps=450,
 )
 
