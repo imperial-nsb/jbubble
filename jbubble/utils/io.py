@@ -9,7 +9,7 @@ import equinox as eqx
 import jax.numpy as jnp
 import numpy as np
 
-from ..bubble.base import ConstantProperty
+from ..bubble.base import BubbleState, ConfinedBubbleState, ConstantProperty
 from ..bubble.eom import (
     KellerMiksis,
     LeightonTube,
@@ -68,6 +68,9 @@ from ..simulation import SimulationResult
 _MODULE_REGISTRY: dict[str, type[eqx.Module]] = {
     cls.__name__: cls
     for cls in [
+        # States
+        BubbleState,
+        ConfinedBubbleState,
         # EoMs
         RayleighPlesset,
         ModifiedRayleighPlesset,
@@ -125,18 +128,6 @@ _MODULE_REGISTRY: dict[str, type[eqx.Module]] = {
 
 # Backward-compat: files saved before the Property→ConstantProperty rename.
 _MODULE_REGISTRY["Property"] = ConstantProperty
-
-# Fields on SimulationResult that are always present.
-_ARRAY_FIELDS = (
-    "ts",
-    "radius",
-    "radial_velocity",
-    "radial_acceleration",
-    "driving_pressure",
-    "converged",
-)
-# Fields that are only present for vessel models.
-_VESSEL_FIELDS = ("vessel_radius", "vessel_velocity")
 
 
 def _serialise_module(module: eqx.Module) -> dict[str, Any]:
@@ -198,6 +189,9 @@ def _to_python(v: Any) -> Any:
 def save(
     path: str | Path,
     result: SimulationResult,
+    *,
+    eom: eqx.Module | None = None,
+    pulse: eqx.Module | None = None,
     metadata: dict[str, Any] | None = None,
 ) -> None:
     """Save a (batched) :class:`SimulationResult` to *path* using orbax.
@@ -208,6 +202,11 @@ def save(
         Directory to create.  Must not already exist (orbax requirement).
     result : SimulationResult
         A single or batched (vmapped) simulation result.
+    eom : EquationOfMotion, optional
+        Equation of motion to save as provenance.  Not required for
+        array-only workflows (e.g. parameter sweeps with varying EoMs).
+    pulse : Pulse, optional
+        Driving pulse to save as provenance.
     metadata : dict, optional
         Arbitrary JSON-serialisable metadata stored alongside the arrays.
     """
@@ -215,31 +214,34 @@ def save(
 
     path = Path(path).resolve()
 
-    # -- Build orbax state dict ------------------------------------------------
-    state: dict[str, Any] = {}
-    for name in _ARRAY_FIELDS:
-        state[name] = getattr(result, name)
+    state_cls_name = type(result.state).__name__
 
-    has_vessel = result.vessel_radius is not None
-    if has_vessel:
-        for name in _VESSEL_FIELDS:
-            state[name] = getattr(result, name)
-
-    # EoM and pulse — both recursively serialised.
-    state["eom"] = _serialise_module(result.eom)
-    state["pulse"] = _serialise_module(result.pulse)
+    # -- Build orbax checkpoint dict ------------------------------------------
+    ckpt: dict[str, Any] = {
+        "ts": result.ts,
+        "driving_pressure": result.driving_pressure,
+        "converged": result.converged,
+        "state": _serialise_module(result.state),
+        "state_dot": _serialise_module(result.state_dot),
+    }
+    if eom is not None:
+        ckpt["eom"] = _serialise_module(eom)
+    if pulse is not None:
+        ckpt["pulse"] = _serialise_module(pulse)
 
     # -- Write orbax checkpoint ------------------------------------------------
     with ocp.StandardCheckpointer() as ckptr:
-        ckptr.save(path / "state", state)
+        ckptr.save(path / "state", ckpt)
 
     # -- Write sidecar JSON ----------------------------------------------------
-    meta = {
-        "eom_classes": _collect_class_names(result.eom),
-        "pulse_classes": _collect_class_names(result.pulse),
-        "has_vessel": has_vessel,
+    meta: dict[str, Any] = {
+        "state_class": state_cls_name,
         "metadata": metadata or {},
     }
+    if eom is not None:
+        meta["eom_classes"] = _collect_class_names(eom)
+    if pulse is not None:
+        meta["pulse_classes"] = _collect_class_names(pulse)
     (path / "meta.json").write_text(json.dumps(meta, indent=2))
 
 
@@ -255,8 +257,12 @@ def load(path: str | Path) -> tuple[SimulationResult, dict[str, Any]]:
     -------
     result : SimulationResult
         The restored simulation result (arrays are JAX arrays).
-    metadata : dict
-        The user metadata that was saved alongside.
+    info : dict
+        Provenance and user metadata with keys:
+
+        * ``"metadata"`` — the user-supplied dict passed to :func:`save`.
+        * ``"eom"`` — reconstructed EoM, or ``None`` if not saved.
+        * ``"pulse"`` — reconstructed Pulse, or ``None`` if not saved.
     """
     import orbax.checkpoint as ocp
 
@@ -265,28 +271,35 @@ def load(path: str | Path) -> tuple[SimulationResult, dict[str, Any]]:
     # -- Read sidecar ----------------------------------------------------------
     meta = json.loads((path / "meta.json").read_text())
 
-    # -- Restore orbax state ---------------------------------------------------
+    # -- Restore orbax checkpoint ----------------------------------------------
     with ocp.StandardCheckpointer() as ckptr:
-        state = ckptr.restore(path / "state")
+        ckpt = ckptr.restore(path / "state")
 
-    # -- Reconstruct modules ---------------------------------------------------
-    eom = _deserialise_module(state["eom"], meta["eom_classes"])
-    pulse = _deserialise_module(state["pulse"], meta["pulse_classes"])
+    # -- Reconstruct state PyTrees ---------------------------------------------
+    loaded_state = _deserialise_module(ckpt["state"], {"__class__": meta["state_class"]})
+    loaded_state_dot = _deserialise_module(ckpt["state_dot"], {"__class__": meta["state_class"]})
+
+    # -- Reconstruct optional provenance ---------------------------------------
+    loaded_eom = None
+    if "eom_classes" in meta and "eom" in ckpt:
+        loaded_eom = _deserialise_module(ckpt["eom"], meta["eom_classes"])
+
+    loaded_pulse = None
+    if "pulse_classes" in meta and "pulse" in ckpt:
+        loaded_pulse = _deserialise_module(ckpt["pulse"], meta["pulse_classes"])
 
     # -- Assemble SimulationResult ---------------------------------------------
     result = SimulationResult(
-        ts=_to_jax(state["ts"]),
-        radius=_to_jax(state["radius"]),
-        radial_velocity=_to_jax(state["radial_velocity"]),
-        radial_acceleration=_to_jax(state["radial_acceleration"]),
-        driving_pressure=_to_jax(state["driving_pressure"]),
-        converged=_to_jax(state["converged"]),
-        vessel_radius=_to_jax(state["vessel_radius"]) if meta["has_vessel"] else None,
-        vessel_velocity=(
-            _to_jax(state["vessel_velocity"]) if meta["has_vessel"] else None
-        ),
-        eom=eom,
-        pulse=pulse,
+        ts=_to_jax(ckpt["ts"]),
+        state=loaded_state,
+        state_dot=loaded_state_dot,
+        driving_pressure=_to_jax(ckpt["driving_pressure"]),
+        converged=_to_jax(ckpt["converged"]),
     )
 
-    return result, meta["metadata"]
+    info = {
+        "eom": loaded_eom,
+        "pulse": loaded_pulse,
+        "metadata": meta["metadata"],
+    }
+    return result, info
