@@ -75,6 +75,7 @@ def run_simulation(
     dt0: float = 1e-9,
     max_steps: int = 10_000,
     solver: diffrax.AbstractSolver | None = None,
+    stepsize_controller: diffrax.AbstractStepSizeController | None = None,
     adjoint: diffrax.AbstractAdjoint | None = None,
     progress: bool = False,
 ) -> SimulationResult:
@@ -96,6 +97,8 @@ def run_simulation(
         Initial time step [s].
     max_steps : int
         Maximum ODE steps.
+    stepsize_controller : diffrax.AbstractStepSizeController, optional
+        Step-size controller.  Default: ``PIDController(rtol=1e-3, atol=1e-6)``.
     progress : bool
         Show progress meter.
 
@@ -115,6 +118,7 @@ def run_simulation(
         dt0=dt0,
         save_spec=save_spec,
         solver=solver,
+        stepsize_controller=stepsize_controller,
         adjoint=adjoint,
         progress=progress,
         max_steps=max_steps,
