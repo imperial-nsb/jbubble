@@ -9,8 +9,6 @@ import equinox as eqx
 import jax.numpy as jnp
 import numpy as np
 
-from ..bubble.property import ConstantProperty
-from ..bubble.state import BubbleState, ConfinedBubbleState
 from ..bubble.eom import (
     KellerMiksis,
     LeightonTube,
@@ -24,6 +22,7 @@ from ..bubble.medium import (
     NeoHookeanMedium,
     NewtonianMedium,
 )
+from ..bubble.property import ConstantProperty
 from ..bubble.shell import (
     GompertzSurfaceTension,
     LipidShell,
@@ -31,12 +30,13 @@ from ..bubble.shell import (
     NoShell,
     ThickShell,
 )
+from ..bubble.state import BubbleState, ConfinedBubbleState
+from ..pulse.chirp import ChirpPulse
 from ..pulse.envelope import (
     HannEnvelope,
     RectangularEnvelope,
     TukeyEnvelope,
 )
-from ..pulse.chirp import ChirpPulse
 from ..pulse.sampled import SampledPulse
 from ..pulse.shapes import (
     Asymmetrical,
@@ -277,8 +277,12 @@ def load(path: str | Path) -> tuple[SimulationResult, dict[str, Any]]:
         ckpt = ckptr.restore(path / "state")
 
     # -- Reconstruct state PyTrees ---------------------------------------------
-    loaded_state = _deserialise_module(ckpt["state"], {"__class__": meta["state_class"]})
-    loaded_state_dot = _deserialise_module(ckpt["state_dot"], {"__class__": meta["state_class"]})
+    loaded_state = _deserialise_module(
+        ckpt["state"], {"__class__": meta["state_class"]}
+    )
+    loaded_state_dot = _deserialise_module(
+        ckpt["state_dot"], {"__class__": meta["state_class"]}
+    )
 
     # -- Reconstruct optional provenance ---------------------------------------
     loaded_eom = None

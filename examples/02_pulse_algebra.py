@@ -2,7 +2,7 @@
 
 Demonstrates the composable pulse system.
 
-jbubble allows you create complex driving waveforms by adding, 
+jbubble allows you create complex driving waveforms by adding,
 scaling, and windowing simpler pulse primitives.
 """
 
@@ -13,27 +13,16 @@ from jbubble.pulse import ToneBurst, HannEnvelope, Sine
 
 # 1. Create two basic pulses
 # A 1 MHz burst (standard)
-p1 = ToneBurst(
-    freq=1e6, 
-    pressure=50e3, 
-    shape=Sine(), 
-    cycle_num=5
-)
+p1 = ToneBurst(freq=1e6, pressure=50e3, shape=Sine(), cycle_num=5)
 
 # A 2.5 MHz burst, delayed by 6 microseconds
-p2 = ToneBurst(
-    freq=2.5e6, 
-    pressure=30e3, 
-    shape=Sine(), 
-    cycle_num=15, 
-    initial_time=6e-6
-)
+p2 = ToneBurst(freq=2.5e6, pressure=30e3, shape=Sine(), cycle_num=15, initial_time=6e-6)
 
 # 2. Combine them using Pulse Algebra
 # Addition: creates superpositions
 # Multiplication: scales the amplitude
 # .windowed(): applies a new envelope to the whole assembly
-combined = (p1 + p2) * 0.7 
+combined = (p1 + p2) * 0.7
 final_pulse = combined.windowed(HannEnvelope())
 
 # 3. Evaluate the pulse over a time range

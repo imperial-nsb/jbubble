@@ -2,9 +2,9 @@
 
 The absolute minimal microbubble simulation.
 
-We simulate a 2 micron radius air bubble in water, driven by a 
-1 MHz acoustic pulse at 50 kPa. This uses the high-level 
-'run_simulation' API which handles the integration and 
+We simulate a 2 micron radius air bubble in water, driven by a
+1 MHz acoustic pulse at 50 kPa. This uses the high-level
+'run_simulation' API which handles the integration and
 returns a 'SimulationResult' object.
 """
 
@@ -23,7 +23,7 @@ from jbubble.solver import SaveSpec
 # jbubble uses a 'composition' approach: you build an Equation of Motion (EoM)
 # by picking a gas law, a shell model, and a medium model.
 gas = PolytropicGas(gamma=1.4)
-shell = NoShell(sigma=0.072)    # Surface tension of water (0.072 N/m)
+shell = NoShell(sigma=0.072)  # Surface tension of water (0.072 N/m)
 medium = NewtonianMedium(mu=0.001)  # Viscosity of water (0.001 Pa s)
 
 # 2. Build the Equation of Motion (EoM)
@@ -31,9 +31,9 @@ eom = RayleighPlesset(
     gas=gas,
     shell=shell,
     medium=medium,
-    R0=2e-6,        # 2 micron equilibrium radius
-    P_amb=101325.0, # 1 atm ambient pressure
-    rho_L=998.0,    # Density of water (kg/m^3)
+    R0=2e-6,  # 2 micron equilibrium radius
+    P_amb=101325.0,  # 1 atm ambient pressure
+    rho_L=998.0,  # Density of water (kg/m^3)
 )
 
 # 3. Define the acoustic driving pulse

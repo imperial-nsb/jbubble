@@ -43,9 +43,7 @@ class SolverConfig(eqx.Module):
         Maximum solver steps per integration.  Default: 50 000.
     """
 
-    solver: diffrax.AbstractSolver = eqx.field(
-        default_factory=diffrax.Kvaerno5
-    )
+    solver: diffrax.AbstractSolver = eqx.field(default_factory=diffrax.Kvaerno5)
     stepsize_controller: diffrax.AbstractStepSizeController = eqx.field(
         default_factory=lambda: diffrax.PIDController(rtol=1e-3, atol=1e-6)
     )

@@ -2,7 +2,7 @@
 
 Comparing different shell (coating) models.
 
-We contrast a simple uncoated bubble (NoShell) with a lipid-coated 
+We contrast a simple uncoated bubble (NoShell) with a lipid-coated
 microbubble (LipidShell) using the Marmottant surface tension law.
 The Marmottant law captures buckling and rupture behaviors.
 """
@@ -19,7 +19,7 @@ from jbubble.solver import SaveSpec
 
 # Common setup
 R0 = 2e-6
-pressure = 150e3 # 150 kPa
+pressure = 150e3  # 150 kPa
 freq = 1e6
 window = 15e-6
 
@@ -38,11 +38,7 @@ eom_no_shell = ModifiedRayleighPlesset(
 # 2. Lipid-Coated Bubble (Marmottant Model)
 # We define a piecewise surface tension (buckling, elastic, rupture regimes)
 # and a shell viscosity (kappa_s).
-sigma_marm = MarmottantSurfaceTension(
-    R_buckle_ratio=0.98,
-    chi=0.5,
-    sigma_rupture=0.072
-)
+sigma_marm = MarmottantSurfaceTension(R_buckle_ratio=0.98, chi=0.5, sigma_rupture=0.072)
 
 eom_lipid = ModifiedRayleighPlesset(
     gas=PolytropicGas(gamma=1.07),
@@ -56,24 +52,32 @@ eom_lipid = ModifiedRayleighPlesset(
 
 # Define driving pulse
 pulse = ToneBurst(
-    freq=freq, 
-    pressure=pressure, 
-    shape=Sine(), 
-    cycle_num=8, 
-    envelope=HannEnvelope()
+    freq=freq, pressure=pressure, shape=Sine(), cycle_num=8, envelope=HannEnvelope()
 )
 
 # Run simulations
 # JIT-compiling the simulation function
 sim_fn = jax.jit(run_simulation)
 
-res_no_shell = sim_fn(eom_no_shell, pulse, save_spec=SaveSpec(num_samples=1000), t_span=(0, window))
-res_lipid = sim_fn(eom_lipid, pulse, save_spec=SaveSpec(num_samples=1000), t_span=(0, window))
+res_no_shell = sim_fn(
+    eom_no_shell, pulse, save_spec=SaveSpec(num_samples=1000), t_span=(0, window)
+)
+res_lipid = sim_fn(
+    eom_lipid, pulse, save_spec=SaveSpec(num_samples=1000), t_span=(0, window)
+)
 
 # Visualize comparison
 plt.figure(figsize=(10, 5))
-plt.plot(res_no_shell.ts * 1e6, res_no_shell.radius / R0, label="Uncoated", alpha=0.7, ls="--")
-plt.plot(res_lipid.ts * 1e6, res_lipid.radius / R0, label="Lipid Shell (Marmottant)", lw=2)
+plt.plot(
+    res_no_shell.ts * 1e6,
+    res_no_shell.radius / R0,
+    label="Uncoated",
+    alpha=0.7,
+    ls="--",
+)
+plt.plot(
+    res_lipid.ts * 1e6, res_lipid.radius / R0, label="Lipid Shell (Marmottant)", lw=2
+)
 
 plt.xlabel("Time (µs)")
 plt.ylabel("Normalized Radius (R/R0)")

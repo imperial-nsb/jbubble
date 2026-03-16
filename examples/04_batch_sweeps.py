@@ -2,13 +2,12 @@
 
 Harnessing JAX for massive parallel simulations.
 
-Because jbubble is built on JAX, we can use 'jax.vmap' to run 
-thousands of simulations in parallel on a single GPU or CPU. 
-The 'GridSweep' utility makes it easy to sweep over a 
+Because jbubble is built on JAX, we can use 'jax.vmap' to run
+thousands of simulations in parallel on a single GPU or CPU.
+The 'GridSweep' utility makes it easy to sweep over a
 Cartesian product of parameters.
 """
 
-import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 from jbubble import run_simulation
@@ -20,8 +19,9 @@ from jbubble.pulse import ToneBurst, Sine
 from jbubble.utils import GridSweep
 from jbubble.solver import SaveSpec
 
+
 # 1. Define the simulation function for the sweep
-# This function takes scalar parameters and returns a figure of merit 
+# This function takes scalar parameters and returns a figure of merit
 # (e.g., maximum expansion ratio).
 def get_expansion(R0, freq):
     # Setup simple physics for speed
@@ -46,17 +46,18 @@ def get_expansion(R0, freq):
     pulse = ToneBurst(freq=freq, pressure=100e3, shape=Sine(), cycle_num=5)
 
     # Run the simulation
-    # Note: run_simulation is JAX-traceable, so this entire function 
+    # Note: run_simulation is JAX-traceable, so this entire function
     # can be vmapped and JIT-compiled.
     result = run_simulation(
-        eom, 
-        pulse, 
-        save_spec=SaveSpec(num_samples=200), 
+        eom,
+        pulse,
+        save_spec=SaveSpec(num_samples=200),
         t_span=(0, 10e-6),
     )
-    
+
     # Return the metric we want to plot
     return jnp.max(result.radius) / R0
+
 
 # 2. Setup the parameter axes
 # We sweep over equilibrium radius (R0) and driving pressure.
@@ -66,9 +67,7 @@ freqs = jnp.linspace(100e3, 800e3, 100)
 # 3. Use GridSweep to execute the batch
 # This automatically handles vmapping and JIT-compilation of the grid.
 gs = GridSweep(
-    fn=get_expansion, 
-    search_space={"R0": radii, "freq": freqs}, 
-    batch_size=256
+    fn=get_expansion, search_space={"R0": radii, "freq": freqs}, batch_size=256
 )
 
 print(f"Running sweep over {gs.total_points} grid points...")
@@ -79,11 +78,7 @@ grid_results = gs.reshape(flat_results)
 plt.figure(figsize=(8, 6))
 # grid_results is a 2D array of the metrics returned by get_expansion.
 im = plt.pcolormesh(
-    radii * 1e6, 
-    freqs / 1e3, 
-    grid_results.T, 
-    shading="auto", 
-    cmap="viridis"
+    radii * 1e6, freqs / 1e3, grid_results.T, shading="auto", cmap="viridis"
 )
 plt.colorbar(im, label="Max Expansion Factor (R_max / R0)")
 plt.xlabel("Equilibrium Radius R0 (µm)")
