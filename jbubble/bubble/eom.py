@@ -54,11 +54,11 @@ class EquationOfMotion(eqx.Module, abc.ABC):
         Shell / coating model.
     medium : MediumModel
         Surrounding medium model.
-    R0 : float
+    R0 : float or jax.Array
         Equilibrium bubble radius  [m].
-    P_amb : float
+    P_amb : float or jax.Array
         Ambient (far-field) pressure  [Pa].
-    rho_L : float
+    rho_L : float or jax.Array
         Liquid density  [kg/m^3].
     """
 
@@ -66,9 +66,9 @@ class EquationOfMotion(eqx.Module, abc.ABC):
     shell: ShellModel
     medium: MediumModel
 
-    R0: float
-    P_amb: float
-    rho_L: float
+    R0: float | jax.Array
+    P_amb: float | jax.Array
+    rho_L: float | jax.Array
 
     def p_L(self, state: BubbleState) -> jax.Array:
         """Liquid-side boundary pressure.
@@ -149,11 +149,11 @@ class ModifiedRayleighPlesset(EquationOfMotion):
 
     Fields
     ------
-    c_L : float
+    c_L : float or jax.Array
         Speed of sound in the liquid  [m/s].
     """
 
-    c_L: float
+    c_L: float | jax.Array
 
     def __call__(
         self,
@@ -193,11 +193,11 @@ class KellerMiksis(EquationOfMotion):
 
     Fields
     ------
-    c_L : float
+    c_L : float or jax.Array
         Speed of sound in the liquid  [m/s].
     """
 
-    c_L: float
+    c_L: float | jax.Array
 
     def __call__(
         self,
@@ -253,17 +253,17 @@ class LeightonTube(EquationOfMotion):
 
     Fields
     ------
-    c_L : float
+    c_L : float or jax.Array
         Speed of sound in the liquid  [m/s].
-    tube_radius : float
+    tube_radius : float or jax.Array
         Inner radius of the confining tube  [m].
-    tube_length : float
+    tube_length : float or jax.Array
         Length of the confining tube  [m].
     """
 
-    c_L: float
-    tube_radius: float
-    tube_length: float
+    c_L: float | jax.Array
+    tube_radius: float | jax.Array
+    tube_length: float | jax.Array
 
     def __call__(
         self,
@@ -314,30 +314,30 @@ class SphericalConfinement(EquationOfMotion):
 
     Fields
     ------
-    c_L : float
+    c_L : float or jax.Array
         Speed of sound in the liquid  [m/s].
-    vessel_radius : float
+    vessel_radius : float or jax.Array
         Equilibrium vessel wall radius  [m].
-    vessel_rho : float
+    vessel_rho : float or jax.Array
         Vessel wall density  [kg/m^3].
-    vessel_E : float
+    vessel_E : float or jax.Array
         Vessel Young's modulus  [Pa].
-    vessel_d : float
+    vessel_d : float or jax.Array
         Vessel wall thickness  [m].
-    tissue_rho : float
+    tissue_rho : float or jax.Array
         Surrounding tissue density  [kg/m^3].
-    tissue_d : float
+    tissue_d : float or jax.Array
         Surrounding tissue thickness  [m].
     """
 
-    c_L: float
-    vessel_radius: float
-    vessel_rho: float
-    vessel_E: float
-    vessel_nu: float
-    vessel_d: float
-    tissue_rho: float
-    tissue_d: float
+    c_L: float | jax.Array
+    vessel_radius: float | jax.Array
+    vessel_rho: float | jax.Array
+    vessel_E: float | jax.Array
+    vessel_nu: float | jax.Array
+    vessel_d: float | jax.Array
+    tissue_rho: float | jax.Array
+    tissue_d: float | jax.Array
 
     def initial_state(self) -> ConfinedBubbleState:
         """Initial state: equilibrium bubble and vessel radii, zero velocities."""
