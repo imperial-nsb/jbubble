@@ -62,7 +62,7 @@ class ConstantProperty(Property):
         inside ``jax.grad`` / ``jax.jit``) so that gradients flow through.
     """
 
-    val: float | jax.Array = eqx.field(default_factory=lambda: 0.0, kw_only=True)
+    val: float | jax.Array
 
     def __call__(self, state: BubbleState) -> jax.Array:
         return self.val + state.R * 0.0
