@@ -9,7 +9,7 @@ import equinox as eqx
 import jax.numpy as jnp
 import numpy as np
 
-from ..bubble.base import Property
+from ..bubble.base import ConstantProperty
 from ..bubble.eom import (
     EquationOfMotion,
     KellerMiksis,
@@ -81,7 +81,7 @@ _MODULE_REGISTRY: dict[str, type[eqx.Module]] = {
         PolytropicGas,
         VanDerWaalsGas,
         # Properties
-        Property,
+        ConstantProperty,
         GompertzSurfaceTension,
         MarmottantSurfaceTension,
         # Shell
@@ -125,6 +125,9 @@ _MODULE_REGISTRY: dict[str, type[eqx.Module]] = {
         Rect95,
     ]
 }
+
+# Backward-compat: files saved before the Property→ConstantProperty rename.
+_MODULE_REGISTRY["Property"] = ConstantProperty
 
 # Fields on SimulationResult that are always present.
 _ARRAY_FIELDS = (

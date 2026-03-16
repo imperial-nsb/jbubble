@@ -18,6 +18,8 @@ any changes to the gas models — they simply read ``state.R0`` and
 
 from __future__ import annotations
 
+import abc
+
 import equinox as eqx
 import jax
 import jax.numpy as jnp
@@ -72,7 +74,34 @@ class ConfinedBubbleState(BubbleState):
     a_dot: jax.Array
 
 
-class Property(eqx.Module):
+class Property(eqx.Module, abc.ABC):
+    """Abstract base for state-dependent (or constant) bubble properties.
+
+    Any callable ``eqx.Module`` that maps a ``BubbleState`` to a scalar
+    array should inherit from this class.  The concrete subclass
+    ``ConstantProperty`` handles the common case of a fixed value;
+    state-dependent models (e.g. ``MarmottantSurfaceTension``) override
+    ``__call__`` directly.
+    """
+
+    @abc.abstractmethod
+    def __call__(self, state: BubbleState) -> jax.Array:
+        """Evaluate the property at *state*.
+
+        Parameters
+        ----------
+        state : BubbleState
+            Current bubble state.
+
+        Returns
+        -------
+        jax.Array
+            Scalar value of the property.
+        """
+        ...
+
+
+class ConstantProperty(Property):
     """A property that returns a constant value regardless of state.
 
     Fields
@@ -89,7 +118,7 @@ class Property(eqx.Module):
 
 
 def as_property(val: float | jax.Array | Property) -> Property:
-    """Coerce a plain scalar or JAX array to a ``Property``, or pass through.
+    """Coerce a plain scalar or JAX array to a ``ConstantProperty``, or pass through.
 
     Parameters
     ----------
@@ -103,4 +132,4 @@ def as_property(val: float | jax.Array | Property) -> Property:
     """
     if isinstance(val, Property):
         return val
-    return Property(val=val)
+    return ConstantProperty(val=val)

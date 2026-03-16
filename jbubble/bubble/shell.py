@@ -13,7 +13,7 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from .base import BubbleState, Property, as_property
+from .base import BubbleState, ConstantProperty, Property, as_property
 
 
 class ShellModel(eqx.Module, abc.ABC):
