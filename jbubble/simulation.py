@@ -11,7 +11,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from .bubble.base import BubbleState, ConfinedBubbleState
+from .bubble.base import ConfinedBubbleState
 from .bubble.eom import EquationOfMotion
 from .pulse import Pulse
 from .solver import SaveSpec, solve_eom

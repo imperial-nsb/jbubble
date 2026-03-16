@@ -8,7 +8,8 @@ that returns a ``BubbleState`` (time derivative).
 from __future__ import annotations
 
 import abc
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import equinox as eqx
 import jax

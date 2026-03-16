@@ -11,7 +11,6 @@ import numpy as np
 
 from ..bubble.base import ConstantProperty
 from ..bubble.eom import (
-    EquationOfMotion,
     KellerMiksis,
     LeightonTube,
     ModifiedRayleighPlesset,
@@ -33,13 +32,11 @@ from ..bubble.shell import (
 )
 from ..pulse.base import (
     HannEnvelope,
-    Pulse,
     RectangularEnvelope,
     TukeyEnvelope,
 )
 from ..pulse.chirp import ChirpPulse
 from ..pulse.sampled import SampledPulse
-from ..pulse.tone_burst import ToneBurst
 from ..pulse.shapes import (
     Asymmetrical,
     InvertedSawtooth,
@@ -48,7 +45,6 @@ from ..pulse.shapes import (
     NegativeQuadratic,
     Pulse9,
     Pulse10,
-    PulseShape,
     Quadratic,
     Rect25,
     Rect25NegPos,
@@ -65,6 +61,7 @@ from ..pulse.shapes import (
     TimeDomainTriangle,
     Triangle,
 )
+from ..pulse.tone_burst import ToneBurst
 from ..simulation import SimulationResult
 
 # Registry of all concrete classes that can be serialised.
