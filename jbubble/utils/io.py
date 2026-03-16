@@ -9,34 +9,37 @@ import equinox as eqx
 import jax.numpy as jnp
 import numpy as np
 
-from ..bubble import (
-    GompertzSurfaceTension,
+from ..bubble.base import Property
+from ..bubble.eom import (
+    EquationOfMotion,
     KellerMiksis,
-    KelvinVoigtMedium,
     LeightonTube,
-    LipidShell,
-    MarmottantSurfaceTension,
     ModifiedRayleighPlesset,
-    NeoHookeanMedium,
-    NewtonianMedium,
-    NoShell,
-    PolytropicGas,
-    Property,
     RayleighPlesset,
     SphericalConfinement,
-    ThickShell,
-    VanDerWaalsGas,
 )
-from ..bubble.eom import EquationOfMotion
-from ..pulse import (
-    ChirpPulse,
+from ..bubble.gas import PolytropicGas, VanDerWaalsGas
+from ..bubble.medium import (
+    KelvinVoigtMedium,
+    NeoHookeanMedium,
+    NewtonianMedium,
+)
+from ..bubble.shell import (
+    GompertzSurfaceTension,
+    LipidShell,
+    MarmottantSurfaceTension,
+    NoShell,
+    ThickShell,
+)
+from ..pulse.base import (
     HannEnvelope,
     Pulse,
     RectangularEnvelope,
-    SampledPulse,
-    ToneBurst,
     TukeyEnvelope,
 )
+from ..pulse.chirp import ChirpPulse
+from ..pulse.sampled import SampledPulse
+from ..pulse.tone_burst import ToneBurst
 from ..pulse.shapes import (
     Asymmetrical,
     InvertedSawtooth,
