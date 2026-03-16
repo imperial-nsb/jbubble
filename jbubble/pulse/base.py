@@ -66,11 +66,6 @@ class TukeyEnvelope(Envelope):
         return jnp.where(in_window, val, 0.0)
 
 
-# ---------------------------------------------------------------------------
-# Pulse base
-# ---------------------------------------------------------------------------
-
-
 class Pulse(eqx.Module, abc.ABC):
     """Abstract acoustic driving pulse.
 
@@ -116,14 +111,18 @@ class Pulse(eqx.Module, abc.ABC):
         tau = t - self.initial_time
         return self._evaluate(t) * self.envelope(tau, self.duration)
 
-    def __add__(self, other: Pulse) -> Summed:
-        """Add another pulse: pulse_a + pulse_b"""
+    def __add__(self, other: Pulse | float) -> Pulse:
+        """Add another pulse or constant offset: pulse_a + pulse_b or pulse + 1.0"""
+        if isinstance(other, (int, float)):
+            return Offset(pulse=self, offset=float(other))
         left = self.pulses if isinstance(self, Summed) else (self,)
         right = other.pulses if isinstance(other, Summed) else (other,)
         return Summed(pulses=left + right)
 
-    def __radd__(self, other: Pulse) -> Summed:
+    def __radd__(self, other: Pulse | float) -> Pulse:
         """Right addition: other + self.  If *other* is a Pulse, delegate to its __add__."""
+        if isinstance(other, (int, float)):
+            return Offset(pulse=self, offset=float(other))
         if isinstance(other, Pulse):
             return other.__add__(self)
         return NotImplemented
@@ -144,12 +143,17 @@ class Pulse(eqx.Module, abc.ABC):
         """Unary plus (identity): +pulse"""
         return self
 
-    def __sub__(self, other: Pulse) -> Summed:
-        """Subtract another pulse: pulse_a - pulse_b"""
+    def __sub__(self, other: Pulse | float) -> Pulse:
+        """Subtract another pulse or constant offset: pulse_a - pulse_b or pulse - 1.0"""
+        if isinstance(other, (int, float)):
+            return Offset(pulse=self, offset=-float(other))
         return self + (-other)
 
-    def __rsub__(self, other: Pulse) -> Summed:
+    def __rsub__(self, other: Pulse | float) -> Pulse:
         """Right subtraction: other - self"""
+        if isinstance(other, (int, float)):
+            # other - self = (-self) + other
+            return Offset(pulse=(-self), offset=float(other))
         if isinstance(other, Pulse):
             return other + (-self)
         return NotImplemented
@@ -158,9 +162,21 @@ class Pulse(eqx.Module, abc.ABC):
         """Divide pulse by a factor: pulse / 2.0"""
         return Scaled(pulse=self, factor=1.0 / float(factor))
 
-    def __rtruediv__(self, factor: float):
-        """Division by pulse not supported: scalar / pulse"""
-        return NotImplemented
+    def __iadd__(self, other: Pulse | float):
+        """In-place addition: pulse += other or pulse += 1.0"""
+        return self + other
+
+    def __isub__(self, other: Pulse | float):
+        """In-place subtraction: pulse -= other or pulse -= 1.0"""
+        return self - other
+
+    def __imul__(self, factor: float):
+        """In-place multiplication: pulse *= factor"""
+        return Scaled(pulse=self, factor=float(factor))
+
+    def __itruediv__(self, factor: float):
+        """In-place division: pulse /= factor"""
+        return Scaled(pulse=self, factor=1.0 / float(factor))
 
     def windowed(self, envelope: Envelope) -> Pulse:
         """Return a copy of this pulse with *envelope* replacing the current one."""
@@ -170,11 +186,6 @@ class Pulse(eqx.Module, abc.ABC):
             envelope,
             is_leaf=lambda x: isinstance(x, Envelope),
         )
-
-
-# ---------------------------------------------------------------------------
-# Composition
-# ---------------------------------------------------------------------------
 
 
 class Scaled(Pulse):
@@ -205,6 +216,40 @@ class Scaled(Pulse):
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
         return self.factor * self.pulse(t)
+
+    def __call__(self, t: jax.Array) -> jax.Array:
+        # Transparent — child's envelope is already applied via self.pulse(t).
+        return self._evaluate(t)
+
+
+class Offset(Pulse):
+    """Constant-offset version of another pulse.
+
+    ``Offset`` is transparent: it delegates entirely to the child pulse's
+    ``__call__`` (which already applies the child's envelope) and simply
+    adds a constant offset. No additional envelope is applied.
+
+    Parameters
+    ----------
+    pulse : Pulse
+        The pulse to offset.
+    offset : float
+        Additive constant offset.
+    """
+
+    pulse: Pulse
+    offset: float
+
+    @property
+    def duration(self) -> float:
+        return self.pulse.duration
+
+    @property
+    def t_end(self) -> float:
+        return self.pulse.t_end
+
+    def _evaluate(self, t: jax.Array) -> jax.Array:
+        return self.pulse(t) + self.offset
 
     def __call__(self, t: jax.Array) -> jax.Array:
         # Transparent — child's envelope is already applied via self.pulse(t).
