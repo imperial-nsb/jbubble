@@ -9,7 +9,8 @@ import equinox as eqx
 import jax.numpy as jnp
 import numpy as np
 
-from ..bubble.base import BubbleState, ConfinedBubbleState, ConstantProperty
+from ..bubble.property import ConstantProperty
+from ..bubble.state import BubbleState, ConfinedBubbleState
 from ..bubble.eom import (
     KellerMiksis,
     LeightonTube,

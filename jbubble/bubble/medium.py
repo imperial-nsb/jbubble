@@ -11,7 +11,8 @@ import abc
 import equinox as eqx
 import jax
 
-from .base import BubbleState, Property, as_property
+from .property import Property, as_property
+from .state import BubbleState
 
 
 class MediumModel(eqx.Module, abc.ABC):

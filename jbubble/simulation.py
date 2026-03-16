@@ -8,8 +8,8 @@ import diffrax
 import equinox as eqx
 import jax
 
-from .bubble.base import BubbleState, ConfinedBubbleState
 from .bubble.eom import EquationOfMotion
+from .bubble.state import BubbleState, ConfinedBubbleState
 from .pulse import Pulse
 from .solver import SaveSpec, solve_eom
 
