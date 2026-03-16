@@ -26,15 +26,18 @@ Composition
 """
 
 from .base import (
-    Envelope,
-    HannEnvelope,
+    Offset,
     Pulse,
-    RectangularEnvelope,
     Scaled,
     Summed,
-    TukeyEnvelope,
 )
 from .chirp import ChirpPulse
+from .envelope import (
+    Envelope,
+    HannEnvelope,
+    RectangularEnvelope,
+    TukeyEnvelope,
+)
 from .neural import NeuralPulse
 from .sampled import SampledPulse
 from .shapes import (
@@ -68,6 +71,7 @@ from .tone_burst import ToneBurst
 __all__ = [
     # Base
     "Pulse",
+    # Envelopes
     "Envelope",
     "RectangularEnvelope",
     "HannEnvelope",
@@ -80,6 +84,7 @@ __all__ = [
     # Composition
     "Scaled",
     "Summed",
+    "Offset",
     # Shapes
     "PulseShape",
     "FourierPulseShape",
