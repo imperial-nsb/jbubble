@@ -1,5 +1,7 @@
 """Diffrax-based ODE solvers for bubble dynamics."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import diffrax

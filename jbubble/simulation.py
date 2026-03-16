@@ -1,5 +1,7 @@
 """High-level helpers for running and post-processing bubble dynamics simulations."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any
 

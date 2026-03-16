@@ -16,6 +16,8 @@ any changes to the gas models — they simply read ``state.R0`` and
 ``state.P_gas0`` as before.
 """
 
+from __future__ import annotations
+
 import equinox as eqx
 import jax
 import jax.numpy as jnp

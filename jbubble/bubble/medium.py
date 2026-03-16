@@ -4,6 +4,8 @@ Computes the total inward viscous and elastic stresses exerted by the
 surrounding medium on the bubble wall.
 """
 
+from __future__ import annotations
+
 import abc
 
 import equinox as eqx

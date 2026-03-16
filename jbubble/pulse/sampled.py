@@ -1,5 +1,7 @@
 """Sampled pulse — arbitrary waveform from discrete data points."""
 
+from __future__ import annotations
+
 import jax
 import jax.numpy as jnp
 
@@ -45,7 +47,7 @@ class SampledPulse(Pulse):
     @staticmethod
     def from_uniform(
         pressures: jax.Array, dt: float, initial_time: float = 0.0
-    ) -> "SampledPulse":
+    ) -> SampledPulse:
         """Create a ``SampledPulse`` from uniformly-spaced samples.
 
         Parameters

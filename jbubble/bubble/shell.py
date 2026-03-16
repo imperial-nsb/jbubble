@@ -5,6 +5,8 @@ Laplace pressure from surface tension, viscous dissipation, and
 elastic restoring forces.
 """
 
+from __future__ import annotations
+
 import abc
 
 import equinox as eqx

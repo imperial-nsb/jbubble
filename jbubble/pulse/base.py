@@ -1,5 +1,7 @@
 """Core abstractions for acoustic driving pulses."""
 
+from __future__ import annotations
+
 import abc
 
 import equinox as eqx
@@ -15,8 +17,7 @@ class Envelope(eqx.Module, abc.ABC):
     """
 
     @abc.abstractmethod
-    def __call__(self, tau: jax.Array, duration: float) -> jax.Array:
-        ...
+    def __call__(self, tau: jax.Array, duration: float) -> jax.Array: ...
 
 
 class RectangularEnvelope(Envelope):
@@ -52,9 +53,13 @@ class TukeyEnvelope(Envelope):
         frac = tau / duration  # normalised position in [0, 1]
 
         # Lower taper: 0 <= frac < alpha/2
-        lower = 0.5 * (1.0 + jnp.cos(2.0 * jnp.pi / self.alpha * (frac - self.alpha / 2.0)))
+        lower = 0.5 * (
+            1.0 + jnp.cos(2.0 * jnp.pi / self.alpha * (frac - self.alpha / 2.0))
+        )
         # Upper taper: 1 - alpha/2 < frac <= 1
-        upper = 0.5 * (1.0 + jnp.cos(2.0 * jnp.pi / self.alpha * (frac - 1.0 + self.alpha / 2.0)))
+        upper = 0.5 * (
+            1.0 + jnp.cos(2.0 * jnp.pi / self.alpha * (frac - 1.0 + self.alpha / 2.0))
+        )
 
         val = jnp.where(frac < self.alpha / 2.0, lower, 1.0)
         val = jnp.where(frac > 1.0 - self.alpha / 2.0, upper, val)
@@ -111,45 +116,45 @@ class Pulse(eqx.Module, abc.ABC):
         tau = t - self.initial_time
         return self._evaluate(t) * self.envelope(tau, self.duration)
 
-    def __add__(self, other: "Pulse") -> "Summed":
+    def __add__(self, other: Pulse) -> Summed:
         """Add another pulse: pulse_a + pulse_b"""
         left = self.pulses if isinstance(self, Summed) else (self,)
         right = other.pulses if isinstance(other, Summed) else (other,)
         return Summed(pulses=left + right)
 
-    def __radd__(self, other: "Pulse") -> "Summed":
+    def __radd__(self, other: Pulse) -> Summed:
         """Right addition: other + self.  If *other* is a Pulse, delegate to its __add__."""
         if isinstance(other, Pulse):
             return other.__add__(self)
         return NotImplemented
 
-    def __mul__(self, factor: float) -> "Scaled":
+    def __mul__(self, factor: float) -> Scaled:
         """Scale the pulse by a factor: pulse * factor"""
         return Scaled(pulse=self, factor=float(factor))
 
-    def __rmul__(self, factor: float) -> "Scaled":
+    def __rmul__(self, factor: float) -> Scaled:
         """Right multiplication: factor * pulse"""
         return Scaled(pulse=self, factor=float(factor))
 
-    def __neg__(self) -> "Scaled":
+    def __neg__(self) -> Scaled:
         """Negate the pulse (flip polarity): -pulse"""
         return Scaled(pulse=self, factor=-1.0)
 
-    def __pos__(self) -> "Pulse":
+    def __pos__(self) -> Pulse:
         """Unary plus (identity): +pulse"""
         return self
 
-    def __sub__(self, other: "Pulse") -> "Summed":
+    def __sub__(self, other: Pulse) -> Summed:
         """Subtract another pulse: pulse_a - pulse_b"""
         return self + (-other)
 
-    def __rsub__(self, other: "Pulse") -> "Summed":
+    def __rsub__(self, other: Pulse) -> Summed:
         """Right subtraction: other - self"""
         if isinstance(other, Pulse):
             return other + (-self)
         return NotImplemented
 
-    def __truediv__(self, factor: float) -> "Scaled":
+    def __truediv__(self, factor: float) -> Scaled:
         """Divide pulse by a factor: pulse / 2.0"""
         return Scaled(pulse=self, factor=1.0 / float(factor))
 
@@ -157,10 +162,12 @@ class Pulse(eqx.Module, abc.ABC):
         """Division by pulse not supported: scalar / pulse"""
         return NotImplemented
 
-    def windowed(self, envelope: Envelope) -> "Pulse":
+    def windowed(self, envelope: Envelope) -> Pulse:
         """Return a copy of this pulse with *envelope* replacing the current one."""
         return eqx.tree_at(
-            lambda p: p.envelope, self, envelope,
+            lambda p: p.envelope,
+            self,
+            envelope,
             is_leaf=lambda x: isinstance(x, Envelope),
         )
 

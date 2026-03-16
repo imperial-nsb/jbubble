@@ -1,5 +1,7 @@
 """Neural-network-parameterised pulse for trainable waveform design."""
 
+from __future__ import annotations
+
 import equinox as eqx
 import jax
 import jax.numpy as jnp

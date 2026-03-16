@@ -8,6 +8,8 @@ these fields in ``initial_state()`` and the ODE carries them forward
 (frozen at zero derivative in the standard case).
 """
 
+from __future__ import annotations
+
 import abc
 
 import equinox as eqx
@@ -84,7 +86,6 @@ class VanDerWaalsGas(GasModel):
 
     def __call__(self, state: BubbleState) -> jax.Array:
         h = self.h_frac(state) * state.R0
-        return (
-            state.P_gas0
-            * ((state.R0**3 - h**3) / (state.R**3 - h**3)) ** self.gamma(state)
-        )
+        return state.P_gas0 * (
+            (state.R0**3 - h**3) / (state.R**3 - h**3)
+        ) ** self.gamma(state)

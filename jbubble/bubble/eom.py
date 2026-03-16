@@ -5,6 +5,8 @@ Each concrete ``EquationOfMotion`` assembles a ``GasModel``,
 that returns a ``BubbleState`` (time derivative).
 """
 
+from __future__ import annotations
+
 import abc
 from typing import Any, Callable
 
@@ -340,13 +342,21 @@ class SphericalConfinement(EquationOfMotion):
         """Initial state: equilibrium bubble and vessel radii, zero velocities."""
         R0 = jnp.asarray(self.R0)
         s0 = ConfinedBubbleState(
-            R=R0, R_dot=jnp.zeros(()), R0=R0, P_gas0=jnp.zeros(()),
-            a=jnp.asarray(self.vessel_radius), a_dot=jnp.zeros(()),
+            R=R0,
+            R_dot=jnp.zeros(()),
+            R0=R0,
+            P_gas0=jnp.zeros(()),
+            a=jnp.asarray(self.vessel_radius),
+            a_dot=jnp.zeros(()),
         )
         P_gas0 = self.P_amb + 2.0 * self.shell.sigma(s0) / R0
         return ConfinedBubbleState(
-            R=R0, R_dot=jnp.zeros(()), R0=R0, P_gas0=P_gas0,
-            a=jnp.asarray(self.vessel_radius), a_dot=jnp.zeros(()),
+            R=R0,
+            R_dot=jnp.zeros(()),
+            R0=R0,
+            P_gas0=P_gas0,
+            a=jnp.asarray(self.vessel_radius),
+            a_dot=jnp.zeros(()),
         )
 
     def __call__(
