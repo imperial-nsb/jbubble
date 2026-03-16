@@ -31,7 +31,7 @@ from ..bubble.shell import (
     NoShell,
     ThickShell,
 )
-from ..pulse.base import (
+from ..pulse.envelope import (
     HannEnvelope,
     RectangularEnvelope,
     TukeyEnvelope,
