@@ -111,23 +111,51 @@ class Pulse(eqx.Module, abc.ABC):
         tau = t - self.initial_time
         return self._evaluate(t) * self.envelope(tau, self.duration)
 
-    # -- Composition operators ------------------------------------------------
-
     def __add__(self, other: "Pulse") -> "Summed":
+        """Add another pulse: pulse_a + pulse_b"""
         left = self.pulses if isinstance(self, Summed) else (self,)
         right = other.pulses if isinstance(other, Summed) else (other,)
         return Summed(pulses=left + right)
 
     def __radd__(self, other: "Pulse") -> "Summed":
+        """Right addition: other + self.  If *other* is a Pulse, delegate to its __add__."""
         if isinstance(other, Pulse):
             return other.__add__(self)
         return NotImplemented
 
     def __mul__(self, factor: float) -> "Scaled":
+        """Scale the pulse by a factor: pulse * factor"""
         return Scaled(pulse=self, factor=float(factor))
 
     def __rmul__(self, factor: float) -> "Scaled":
+        """Right multiplication: factor * pulse"""
         return Scaled(pulse=self, factor=float(factor))
+
+    def __neg__(self) -> "Scaled":
+        """Negate the pulse (flip polarity): -pulse"""
+        return Scaled(pulse=self, factor=-1.0)
+
+    def __pos__(self) -> "Pulse":
+        """Unary plus (identity): +pulse"""
+        return self
+
+    def __sub__(self, other: "Pulse") -> "Summed":
+        """Subtract another pulse: pulse_a - pulse_b"""
+        return self + (-other)
+
+    def __rsub__(self, other: "Pulse") -> "Summed":
+        """Right subtraction: other - self"""
+        if isinstance(other, Pulse):
+            return other + (-self)
+        return NotImplemented
+
+    def __truediv__(self, factor: float) -> "Scaled":
+        """Divide pulse by a factor: pulse / 2.0"""
+        return Scaled(pulse=self, factor=1.0 / float(factor))
+
+    def __rtruediv__(self, factor: float):
+        """Division by pulse not supported: scalar / pulse"""
+        return NotImplemented
 
     def windowed(self, envelope: Envelope) -> "Pulse":
         """Return a copy of this pulse with *envelope* replacing the current one."""
