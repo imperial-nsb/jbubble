@@ -77,23 +77,25 @@ class Property(eqx.Module):
 
     Fields
     ------
-    val : float
-        The constant value.
+    val : float or jax.Array
+        The constant value.  May be a JAX array (including a traced value
+        inside ``jax.grad`` / ``jax.jit``) so that gradients flow through.
     """
 
-    val: float = eqx.field(default_factory=lambda: 0.0, kw_only=True)
+    val: float | jax.Array = eqx.field(default_factory=lambda: 0.0, kw_only=True)
 
     def __call__(self, state: BubbleState) -> jax.Array:
         return self.val + state.R * 0.0
 
 
-def as_property(val: float | Property) -> Property:
-    """Coerce a plain float to a ``Property``, or pass through a ``Property``.
+def as_property(val: float | jax.Array | Property) -> Property:
+    """Coerce a plain scalar or JAX array to a ``Property``, or pass through.
 
     Parameters
     ----------
-    val : float or Property
-        A plain scalar or an existing ``Property`` instance.
+    val : float, jax.Array, or Property
+        A plain scalar, a JAX array (possibly a tracer), or an existing
+        ``Property`` instance.
 
     Returns
     -------
@@ -101,4 +103,4 @@ def as_property(val: float | Property) -> Property:
     """
     if isinstance(val, Property):
         return val
-    return Property(val=float(val))
+    return Property(val=val)
