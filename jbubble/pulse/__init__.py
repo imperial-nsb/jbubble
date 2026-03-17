@@ -46,7 +46,7 @@ from .shapes import (
     NegativeQuadratic,
     PulseShape,
     Quadratic,
-    RectangularPulse,
+    Rectangular,
     Sawtooth,
     Sine,
     Square,
@@ -87,5 +87,5 @@ __all__ = [
     "TimeDomainSquare",
     "TimeDomainSawtooth",
     "TimeDomainTriangle",
-    "RectangularPulse",
+    "Rectangular",
 ]

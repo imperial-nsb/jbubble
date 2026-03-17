@@ -42,6 +42,7 @@ from ..pulse.shapes import (
     InvertedSawtooth,
     NegativeQuadratic,
     Quadratic,
+    Rectangular,
     Sawtooth,
     Sine,
     Square,
@@ -100,6 +101,7 @@ _MODULE_REGISTRY: dict[str, type[eqx.Module]] = {
         TimeDomainSquare,
         TimeDomainSawtooth,
         TimeDomainTriangle,
+        Rectangular,
     ]
 }
 

@@ -170,7 +170,7 @@ class TimeDomainTriangle(PulseShape):
         return "time_domain_triangle"
 
 
-class RectangularPulse(FourierPulseShape):
+class Rectangular(FourierPulseShape):
     """General duty-cycle rectangular waveform.
 
     Parameterized by duty cycle, amplitude levels, and window placement::
@@ -198,10 +198,10 @@ class RectangularPulse(FourierPulseShape):
     --------
     Common named forms::
 
-        RectangularPulse(duty=0.5)                                          # ±1 square
-        RectangularPulse(duty=0.5, phase_offset=jnp.pi)                     # NegPos square
-        RectangularPulse(duty=0.25)                                         # +1 for 25%, -1 for 75%
-        RectangularPulse(duty=0.01, high_level=0.0, low_level=-1.0,
+        Rectangular(duty=0.5)                                          # ±1 square
+        Rectangular(duty=0.5, phase_offset=jnp.pi)                     # NegPos square
+        Rectangular(duty=0.25)                                         # +1 for 25%, -1 for 75%
+        Rectangular(duty=0.01, high_level=0.0, low_level=-1.0,
                          phase_offset=1.98 * jnp.pi)                       # monopolar 99%
     """
 
