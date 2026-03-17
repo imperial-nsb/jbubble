@@ -238,6 +238,124 @@ class KellerMiksis(EquationOfMotion):
         return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
+class Gilmore(EquationOfMotion):
+    """Gilmore equation of motion (Kirkwood-Bethe hypothesis).
+
+    Improves on Keller-Miksis by treating liquid compressibility through
+    the Tait equation of state rather than a linear approximation.  The
+    enthalpy H and local speed of sound C at the bubble wall are exact
+    functions of the wall pressure, giving accurate results at high Mach
+    numbers::
+
+        (1 - Ṙ/C) R R̈  +  3/2 (1 - Ṙ/(3C)) Ṙ²
+            = (1 + Ṙ/C) H  +  (R/C)(1 - Ṙ/C) Ḣ
+
+    where the enthalpy difference between bubble wall and far field is::
+
+        H = n/(n-1) · K · [(p_L+B)^((n-1)/n) − (p∞+B)^((n-1)/n)]
+        K = (P_amb+B)^(1/n) / ρ_L
+
+    and the local sound speed satisfies::
+
+        C² = n·K·(p∞+B)^((n-1)/n)  +  (n-1)·H
+
+    with p∞ = P_amb + p_ac.
+
+    Ḣ is expanded analytically via the chain rule: ∂H/∂p_L and ∂H/∂p∞
+    come from the Tait formula; dp_L/dt is obtained via
+    ``jax.grad(self.p_L)`` and dp_ac/dt via ``jax.grad(p_ac_fn)``.
+    The resulting coupling of R̈ through dp_L/dṘ is absorbed into the
+    denominator, following the same algebraic pattern as ``KellerMiksis``.
+
+    Default Tait parameters correspond to water (Gilmore 1952):
+    n = 7, B = 304.9 MPa.
+
+    References
+    ----------
+    Gilmore, F. R. (1952). *The growth or collapse of a spherical bubble
+    in a viscous compressible liquid.* Hydrodynamics Laboratory Report
+    26-4, California Institute of Technology.
+
+    Fields
+    ------
+    n_tait : float or jax.Array
+        Tait exponent (dimensionless).  Default 7.0.
+    B_tait : float or jax.Array
+        Tait pressure constant  [Pa].  Default 304.9e6.
+    """
+
+    n_tait: float | jax.Array = 7.0
+    B_tait: float | jax.Array = 304.9e6
+
+    def _tait_K(self) -> jax.Array:
+        """Tait EOS prefactor: (P_amb + B)^(1/n) / rho_L."""
+        return (self.P_amb + self.B_tait) ** (1.0 / self.n_tait) / self.rho_L
+
+    def _H_and_C(
+        self, p_L: jax.Array, p_inf: jax.Array
+    ) -> tuple[jax.Array, jax.Array]:
+        """Enthalpy H [m²/s²] and bubble-wall sound speed C [m/s]."""
+        n, B = self.n_tait, self.B_tait
+        K = self._tait_K()
+        exp = (n - 1.0) / n
+        H = n / (n - 1.0) * K * ((p_L + B) ** exp - (p_inf + B) ** exp)
+        c_inf_sq = n * K * (p_inf + B) ** exp
+        C = jnp.sqrt(jnp.maximum(c_inf_sq + (n - 1.0) * H, 1.0))
+        return H, C
+
+    def __call__(
+        self,
+        t: Any,
+        state: BubbleState,
+        p_ac_fn: Callable,
+    ) -> BubbleState:
+        R, R_dot = state.R, state.R_dot
+
+        p_L_val = self.p_L(state)
+        p_ac = p_ac_fn(t)
+        p_inf = self.P_amb + p_ac
+
+        # Enthalpy and local sound speed at the bubble wall
+        H, C = self._H_and_C(p_L_val, p_inf)
+        M = R_dot / C
+
+        # ∂H/∂p_L and ∂H/∂p∞ — analytical from the Tait formula
+        n, B = self.n_tait, self.B_tait
+        K = self._tait_K()
+        h_pL = K * (p_L_val + B) ** (-1.0 / n)
+        h_pinf = -K * (p_inf + B) ** (-1.0 / n)
+
+        # ∂p_L/∂R and ∂p_L/∂Ṙ via autodiff
+        tangent = jax.grad(self.p_L)(state)
+        dp_L_dR = tangent.R
+        dp_L_dRdot = tangent.R_dot
+
+        # dp_ac/dt via autodiff
+        dp_ac_dt = jax.grad(p_ac_fn)(t)
+
+        # Ḣ = h_pL·(dp_L/dR·Ṙ + dp_L/dṘ·R̈) + h_pinf·dp_ac/dt
+        # Split into the part independent of R̈ and the coefficient of R̈
+        Hdot_numer = h_pL * dp_L_dR * R_dot + h_pinf * dp_ac_dt
+        Hdot_Rddot_coeff = h_pL * dp_L_dRdot
+
+        # Collect R̈ on the left-hand side: denom·R̈ = numer
+        #
+        # LHS: (1-M) R R̈
+        # RHS R̈ term: (R/C)(1-M) · Hdot_Rddot_coeff · R̈
+        # => denom = (1-M) R - (R/C)(1-M) · Hdot_Rddot_coeff
+        factor = (R / C) * (1.0 - M)  # (R/C)(1 - Ṙ/C)
+
+        numer = (
+            (1.0 + M) * H
+            + factor * Hdot_numer
+            - 1.5 * (1.0 - M / 3.0) * R_dot**2
+        )
+        denom = (1.0 - M) * R - factor * Hdot_Rddot_coeff
+
+        R_ddot = numer / denom
+        return BubbleState(R=R_dot, R_dot=R_ddot)
+
+
 class LeightonTube(EquationOfMotion):
     """Leighton model for a bubble confined in a rigid-walled tube.
 
