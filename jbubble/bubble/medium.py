@@ -10,6 +10,7 @@ import abc
 
 import equinox as eqx
 import jax
+import jax.numpy as jnp
 
 from .property import Property, as_property
 from .state import BubbleState
@@ -136,3 +137,52 @@ class NeoHookeanMedium(MediumModel):
             * self.G(state)
             * ((state.R0 / state.R) ** 3 - (state.R / state.R0) ** 3)
         )
+
+
+class PowerLawMedium(MediumModel):
+    """Power-law (generalised Newtonian) surrounding medium.
+
+    The effective viscosity depends on the shear rate at the bubble wall:
+
+        η_eff = mu · |2 Ṙ/R|^(n-1)
+
+    Integrating the resulting stress field over the incompressible flow
+    surrounding the bubble (Ting 1975) gives the viscous pressure:
+
+        p_visc = (4 mu / n) · (2|Ṙ/R|)^(n-1) · Ṙ/R
+
+    The factor 1/n arises from the spatial variation of η with radius.
+    For n = 1 this reduces exactly to the Newtonian result 4 mu Ṙ/R.
+
+    Special cases:
+
+        n < 1   shear-thinning  (biological tissue, blood, polymer gels)
+        n = 1   Newtonian (recovers ``NewtonianMedium`` with viscosity mu)
+        n > 1   shear-thickening
+
+    Note: power-law fluids have unbounded viscosity at zero shear rate
+    when n < 1.  A small floor ``eps`` on |2 Ṙ/R| prevents numerical
+    divergence near turnaround points without affecting dynamics.
+
+    Fields
+    ------
+    mu : float or Property
+        Consistency index K  [Pa·s^n].  Equals the dynamic viscosity for
+        n = 1.
+    n_exp : float or Property
+        Power-law exponent  (dimensionless, positive).
+    eps : float
+        Floor applied to |2 Ṙ/R|  [s⁻¹].  Default 1e-6.
+    """
+
+    n_exp: Property = eqx.field(converter=as_property)
+    eps: float = 1e-6
+
+    def p_viscous(self, state: BubbleState) -> jax.Array:
+        n_val = self.n_exp(state)
+        K_val = self.mu(state)
+        gamma_dot = jnp.maximum(2.0 * jnp.abs(state.R_dot / state.R), self.eps)
+        return 4.0 * K_val / n_val * gamma_dot ** (n_val - 1.0) * state.R_dot / state.R
+
+    def p_elastic(self, state: BubbleState) -> jax.Array:
+        return state.R * 0.0
