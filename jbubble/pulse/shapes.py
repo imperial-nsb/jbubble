@@ -14,7 +14,11 @@ NUM_FOURIER_TERMS = 10
 class PulseShape(eqx.Module):
     @abc.abstractmethod
     def __call__(
-        self, t: jax.Array, freq: float, phase: float, initial_time: float
+        self,
+        t: jax.Array,
+        freq: float | jax.Array,
+        phase: float | jax.Array,
+        initial_time: float | jax.Array,
     ) -> jax.Array:
         pass
 
@@ -25,7 +29,13 @@ class PulseShape(eqx.Module):
 
 class FourierPulseShape(PulseShape):
     @abc.abstractmethod
-    def term(self, m: jax.Array, t: jax.Array, freq: float, phase: float) -> jax.Array:
+    def term(
+        self,
+        m: jax.Array,
+        t: jax.Array,
+        freq: float | jax.Array,
+        phase: float | jax.Array,
+    ) -> jax.Array:
         pass
 
     @property
