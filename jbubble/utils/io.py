@@ -31,7 +31,7 @@ from ..bubble.shell import (
     ThickShell,
 )
 from ..bubble.state import BubbleState, ConfinedBubbleState
-from ..pulse.chirp import ChirpPulse
+from ..pulse.chirp import ChirpPulse, ExponentialSweep, LinearSweep
 from ..pulse.envelope import (
     HannEnvelope,
     RectangularEnvelope,
@@ -90,6 +90,8 @@ _MODULE_REGISTRY: dict[str, type[eqx.Module]] = {
         ToneBurst,
         SampledPulse,
         ChirpPulse,
+        LinearSweep,
+        ExponentialSweep,
         # Shapes
         Sine,
         Sawtooth,
