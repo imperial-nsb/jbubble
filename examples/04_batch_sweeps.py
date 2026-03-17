@@ -15,7 +15,8 @@ from jbubble.bubble.eom import KellerMiksis
 from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import LipidShell, MarmottantSurfaceTension
-from jbubble.pulse import ToneBurst, Sine
+from jbubble.pulse import ToneBurst
+from jbubble.pulse.shapes import Sine
 from jbubble.utils import GridSweep
 from jbubble.solver import SaveSpec
 

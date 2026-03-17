@@ -40,21 +40,6 @@ from .envelope import (
 )
 from .neural import NeuralPulse
 from .sampled import SampledPulse
-from .shapes import (
-    FourierPulseShape,
-    InvertedSawtooth,
-    NegativeQuadratic,
-    PulseShape,
-    Quadratic,
-    Rectangular,
-    Sawtooth,
-    Sine,
-    Square,
-    TimeDomainSawtooth,
-    TimeDomainSquare,
-    TimeDomainTriangle,
-    Triangle,
-)
 from .tone_burst import ToneBurst
 
 __all__ = [
@@ -74,18 +59,4 @@ __all__ = [
     "Scaled",
     "Summed",
     "Offset",
-    # Shapes
-    "PulseShape",
-    "FourierPulseShape",
-    "Sine",
-    "Sawtooth",
-    "InvertedSawtooth",
-    "Triangle",
-    "Quadratic",
-    "NegativeQuadratic",
-    "Square",
-    "TimeDomainSquare",
-    "TimeDomainSawtooth",
-    "TimeDomainTriangle",
-    "Rectangular",
 ]

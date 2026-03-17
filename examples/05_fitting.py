@@ -17,7 +17,8 @@ from jbubble.bubble.eom import ModifiedRayleighPlesset
 from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import LipidShell, MarmottantSurfaceTension
-from jbubble.pulse import ToneBurst, Sine
+from jbubble.pulse import ToneBurst
+from jbubble.pulse.shapes import Sine
 from jbubble.simulation import SimulationResult
 
 
