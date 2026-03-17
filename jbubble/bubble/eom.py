@@ -291,9 +291,7 @@ class Gilmore(EquationOfMotion):
         """Tait EOS prefactor: (P_amb + B)^(1/n) / rho_L."""
         return (self.P_amb + self.B_tait) ** (1.0 / self.n_tait) / self.rho_L
 
-    def _H_and_C(
-        self, p_L: jax.Array, p_inf: jax.Array
-    ) -> tuple[jax.Array, jax.Array]:
+    def _H_and_C(self, p_L: jax.Array, p_inf: jax.Array) -> tuple[jax.Array, jax.Array]:
         """Enthalpy H [m²/s²] and bubble-wall sound speed C [m/s]."""
         n, B = self.n_tait, self.B_tait
         K = self._tait_K()
@@ -345,11 +343,7 @@ class Gilmore(EquationOfMotion):
         # => denom = (1-M) R - (R/C)(1-M) · Hdot_Rddot_coeff
         factor = (R / C) * (1.0 - M)  # (R/C)(1 - Ṙ/C)
 
-        numer = (
-            (1.0 + M) * H
-            + factor * Hdot_numer
-            - 1.5 * (1.0 - M / 3.0) * R_dot**2
-        )
+        numer = (1.0 + M) * H + factor * Hdot_numer - 1.5 * (1.0 - M / 3.0) * R_dot**2
         denom = (1.0 - M) * R - factor * Hdot_Rddot_coeff
 
         R_ddot = numer / denom

@@ -44,7 +44,10 @@ class FourierPulseShape(PulseShape):
         def term_wrapper(m_val):
             return self.term(m_val, t, freq, phase)
 
-        return jnp.sum(jax.vmap(term_wrapper)(m), axis=0) / self.norm_factor + self.dc_offset
+        return (
+            jnp.sum(jax.vmap(term_wrapper)(m), axis=0) / self.norm_factor
+            + self.dc_offset
+        )
 
 
 class Sine(PulseShape):

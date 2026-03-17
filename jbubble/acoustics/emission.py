@@ -137,9 +137,4 @@ class QuasiAcoustic(EmissionModel):
         R_dot_ret = jnp.interp(t_ret, result.ts, result.state.R_dot)
         R_ddot_ret = jnp.interp(t_ret, result.ts, result.state_dot.R_dot)
 
-        return (
-            self.rho_L
-            * R_ret**2
-            / r
-            * (R_ddot_ret + 2.0 * R_dot_ret**2 / R_ret)
-        )
+        return self.rho_L * R_ret**2 / r * (R_ddot_ret + 2.0 * R_dot_ret**2 / R_ret)

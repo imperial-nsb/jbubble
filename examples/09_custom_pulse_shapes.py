@@ -22,6 +22,7 @@ from jbubble.pulse.shapes import FourierPulseShape, Rectangular
 # 1.  Custom Fourier shapes — just define term() and norm_factor
 # ---------------------------------------------------------------------------
 
+
 class SlantedSine(FourierPulseShape):
     """Clausen-function waveform: Σ (-1)^m / m^2 · sin(2π m f t)."""
 
@@ -59,8 +60,8 @@ class Asymmetrical(FourierPulseShape):
 # ---------------------------------------------------------------------------
 
 # Classic duty-cycle waves (high=+1 for `duty` fraction of cycle)
-rect_25 = Rectangular(duty=0.25)          # +1 for 25%, -1 for 75%
-rect_75 = Rectangular(duty=0.75)          # +1 for 75%, -1 for 25%
+rect_25 = Rectangular(duty=0.25)  # +1 for 25%, -1 for 75%
+rect_75 = Rectangular(duty=0.75)  # +1 for 75%, -1 for 25%
 
 # NegPos: -1 first half, +1 second half (phase_offset = π shifts window to back)
 square_negpos = Rectangular(duty=0.5, phase_offset=jnp.pi)
@@ -68,8 +69,12 @@ rect25_negpos = Rectangular(duty=0.25, phase_offset=0.5 * jnp.pi)
 rect75_negpos = Rectangular(duty=0.75, phase_offset=1.5 * jnp.pi)
 
 # Monopolar (0 / −1) waveforms — rest period at end of cycle
-mono95 = Rectangular(duty=0.05, high_level=0.0, low_level=-1.0, phase_offset=1.9 * jnp.pi)
-mono99 = Rectangular(duty=0.01, high_level=0.0, low_level=-1.0, phase_offset=1.98 * jnp.pi)
+mono95 = Rectangular(
+    duty=0.05, high_level=0.0, low_level=-1.0, phase_offset=1.9 * jnp.pi
+)
+mono99 = Rectangular(
+    duty=0.01, high_level=0.0, low_level=-1.0, phase_offset=1.98 * jnp.pi
+)
 
 # Thin positive pulse at end of cycle (±1 levels, 5% high)
 rect95 = Rectangular(duty=0.05, phase_offset=1.9 * jnp.pi)
@@ -80,14 +85,14 @@ rect95 = Rectangular(duty=0.05, phase_offset=1.9 * jnp.pi)
 
 fourier_shapes = [SlantedSine(), Asymmetrical()]
 rect_shapes = [
-    (rect_25,      "Rectangular(duty=0.25)"),
-    (rect_75,      "Rectangular(duty=0.75)"),
-    (square_negpos,"Rectangular(duty=0.5, phase_offset=π)   [NegPos]"),
-    (rect25_negpos,"Rectangular(duty=0.25, phase_offset=π/2) [NegPos]"),
-    (rect75_negpos,"Rectangular(duty=0.75, phase_offset=3π/2)[NegPos]"),
-    (mono95,       "Rectangular(duty=0.05, 0/−1, phase=1.9π) [Mono95]"),
-    (mono99,       "Rectangular(duty=0.01, 0/−1, phase=1.98π)[Mono99]"),
-    (rect95,       "Rectangular(duty=0.05, phase=1.9π)        [Rect95]"),
+    (rect_25, "Rectangular(duty=0.25)"),
+    (rect_75, "Rectangular(duty=0.75)"),
+    (square_negpos, "Rectangular(duty=0.5, phase_offset=π)   [NegPos]"),
+    (rect25_negpos, "Rectangular(duty=0.25, phase_offset=π/2) [NegPos]"),
+    (rect75_negpos, "Rectangular(duty=0.75, phase_offset=3π/2)[NegPos]"),
+    (mono95, "Rectangular(duty=0.05, 0/−1, phase=1.9π) [Mono95]"),
+    (mono99, "Rectangular(duty=0.01, 0/−1, phase=1.98π)[Mono99]"),
+    (rect95, "Rectangular(duty=0.05, phase=1.9π)        [Rect95]"),
 ]
 
 freq = 1.0
