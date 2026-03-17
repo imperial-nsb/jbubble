@@ -3,16 +3,18 @@
 All functions operate on plain :class:`jax.Array` arguments and are
 fully differentiable.  They are building blocks to compose into the
 ``loss_fn`` argument of :func:`~jbubble.fitting.fit_parameters`, which
-receives a :class:`~jbubble.bubble.state.BubbleState` and a target array.
-Extract the state field you want to fit before passing to these functions::
+receives a :class:`~jbubble.simulation.SimulationResult`.  Extract the
+field you want to fit before passing to these functions::
 
     from jbubble.metrics import normalised_mse_radius
 
     # fit on radius waveform
-    loss_fn=lambda state: normalised_mse_radius(state.R, target, R0)
+    loss_fn=lambda result: normalised_mse_radius(result.state.R, target, R0)
 
-    # fit on radial velocity
-    loss_fn=lambda state: mse_radius(state.R_dot, target)
+    # fit on acoustic emission
+    loss_fn=lambda result: mse_emission(
+        emission_model(result, r_hydrophone), target_pressure,
+    )
 """
 
 from __future__ import annotations
@@ -90,3 +92,38 @@ def peak_expansion_error(
         Target R_max / R0 value.
     """
     return (peak_expansion(r_sim, R0) - target_expansion) ** 2
+
+
+def mse_emission(
+    p_sim: jax.Array,
+    p_target: jax.Array,
+) -> jax.Array:
+    """Mean squared error between simulated and target emission pressure [Pa²].
+
+    Parameters
+    ----------
+    p_sim : jax.Array, shape (N,)
+        Simulated radiated pressure [Pa].
+    p_target : jax.Array, shape (N,)
+        Target radiated pressure [Pa].
+    """
+    return jnp.mean((p_sim - p_target) ** 2)
+
+
+def normalised_mse_emission(
+    p_sim: jax.Array,
+    p_target: jax.Array,
+    p_ref: float | jax.Array,
+) -> jax.Array:
+    """Normalised MSE for emission pressure (dimensionless).
+
+    Parameters
+    ----------
+    p_sim : jax.Array, shape (N,)
+        Simulated radiated pressure [Pa].
+    p_target : jax.Array, shape (N,)
+        Target radiated pressure [Pa].
+    p_ref : float or jax.Array
+        Reference pressure for normalisation [Pa].
+    """
+    return jnp.mean(((p_sim - p_target) / p_ref) ** 2)
