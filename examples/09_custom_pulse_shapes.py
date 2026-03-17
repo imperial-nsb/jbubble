@@ -129,6 +129,4 @@ for ax in axes[idx:]:
 
 fig.suptitle("Custom pulse shapes  (examples/09_custom_pulse_shapes.py)", fontsize=11)
 plt.tight_layout()
-plt.savefig("custom_pulse_shapes.png", dpi=150, bbox_inches="tight")
-print(f"Saved custom_pulse_shapes.png  ({n_total} shapes)")
 plt.show()
