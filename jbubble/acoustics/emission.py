@@ -9,9 +9,7 @@ Usage::
     from jbubble.acoustics import IncompressibleMonopole
 
     emission = IncompressibleMonopole(rho_L=998.0)
-    p_rad = emission(result, r=0.01)            # at 1 cm
-    # or equivalently:
-    p_rad = result.emission(emission, r=0.01)   # convenience method
+    p_rad = emission(result, r=0.01)  # at 1 cm
 """
 
 from __future__ import annotations

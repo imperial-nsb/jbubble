@@ -44,7 +44,7 @@ def fit_parameters(
     *,
     save_spec: SaveSpec,
     t_span: tuple[float, float] | None = None,
-    loss_fn: Callable[..., jax.Array],  # (state,) -> scalar
+    loss_fn: Callable[[SimulationResult], jax.Array],
     optimizer: optax.GradientTransformation,
     n_steps: int = 200,
     config: SolverConfig | None = None,
@@ -78,12 +78,14 @@ def fit_parameters(
         Integration interval ``(t0, t1)`` [s].  ``None`` uses the pulse
         duration as reported by ``pulse.t_end``.
     loss_fn : callable
-        ``(state: BubbleState) → scalar``.  Receives the full simulated
-        state; close over any target data and reference constants.
-        See :mod:`jbubble.metrics` for differentiable array utilities, e.g.::
+        ``(result: SimulationResult) → scalar``.  Receives the full
+        :class:`~jbubble.simulation.SimulationResult` (state, state_dot,
+        ts, driving_pressure); close over any target data and reference
+        constants.  See :mod:`jbubble.metrics` for differentiable array
+        utilities, e.g.::
 
             from jbubble.metrics import normalised_mse_radius
-            loss_fn=lambda state: normalised_mse_radius(state.R, target, R0)
+            loss_fn=lambda result: normalised_mse_radius(result.state.R, target, R0)
     optimizer : optax.GradientTransformation
         Gradient-based optimiser, e.g. ``optax.adam(1e-2)``.
     n_steps : int
@@ -130,7 +132,16 @@ def fit_parameters(
             config=config,
             adjoint=adjoint,
         )
-        return loss_fn(sol.ys)
+        ys = sol.ys
+        ys_dot = jax.vmap(lambda t, s: eom(t, s, pulse))(sol.ts, ys)
+        result = SimulationResult(
+            ts=sol.ts,
+            state=ys,
+            state_dot=ys_dot,
+            driving_pressure=jax.vmap(pulse)(sol.ts),
+            converged=diffrax.is_successful(sol.result),
+        )
+        return loss_fn(result)
 
     loss_and_grad = eqx.filter_jit(jax.value_and_grad(_loss))
 

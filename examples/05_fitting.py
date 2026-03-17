@@ -8,6 +8,7 @@ with respect to any physical parameter (radii, shell viscosity,
 elasticity, etc.) and use it to fit models to experimental data.
 """
 
+import jax
 import jax.numpy as jnp
 import optax
 import matplotlib.pyplot as plt
@@ -17,6 +18,7 @@ from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import LipidShell, MarmottantSurfaceTension
 from jbubble.pulse import ToneBurst, Sine
+from jbubble.simulation import SimulationResult
 
 
 # 1. Define the forward model factory
@@ -49,11 +51,11 @@ target_radius = ground_truth_res.radius
 
 
 # 3. Define the Loss Function
-# The solver will pass the simulated 'BubbleState' to this function.
-def loss_fn(state):
+# The solver will pass a SimulationResult to this function.
+def loss_fn(result: SimulationResult) -> jax.Array:
     # Mean Squared Error between simulated radius and ground truth.
     # Normalizing by the equilibrium radius improves optimization stability.
-    return jnp.mean((state.R - target_radius) ** 2) / 2e-6**2
+    return jnp.mean((result.state.R - target_radius) ** 2) / 2e-6**2
 
 
 # 4. Run Gradient-Based Optimization
