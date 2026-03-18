@@ -93,7 +93,10 @@ class EquationOfMotion(eqx.Module, abc.ABC, Generic[StateType]):
         Override for coupled systems with a larger state vector.
         """
         R0 = jnp.asarray(self.R0)
-        P_gas0 = jnp.asarray(self.P_amb) + 2.0 * self.shell.sigma(BubbleState(R=R0, R0=R0)) / R0
+        P_gas0 = (
+            jnp.asarray(self.P_amb)
+            + 2.0 * self.shell.sigma(BubbleState(R=R0, R0=R0)) / R0
+        )
         return BubbleState(R=R0, R0=R0, P_gas0=P_gas0)
 
     @abc.abstractmethod

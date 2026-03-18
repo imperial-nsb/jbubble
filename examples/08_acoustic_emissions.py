@@ -25,7 +25,6 @@ from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import NoShell
 from jbubble.pulse import ToneBurst
 from jbubble.pulse.shapes import Sine
-from jbubble.solver import SaveSpec
 
 # 1. Simulate a bubble
 eom = KellerMiksis(

@@ -94,7 +94,11 @@ class IncompressibleMonopole(EmissionModel):
         R = result.state.R
         R_dot = result.state.R_dot
         R_ddot = result.state_dot.R_dot
-        return jnp.asarray(self.rho_L) / jnp.asarray(r) * (2.0 * R * R_dot**2 + R**2 * R_ddot)
+        return (
+            jnp.asarray(self.rho_L)
+            / jnp.asarray(r)
+            * (2.0 * R * R_dot**2 + R**2 * R_ddot)
+        )
 
 
 class QuasiAcoustic(EmissionModel):
@@ -138,4 +142,9 @@ class QuasiAcoustic(EmissionModel):
         R_dot_ret = jnp.interp(t_ret, result.ts, result.state.R_dot)
         R_ddot_ret = jnp.interp(t_ret, result.ts, result.state_dot.R_dot)
 
-        return jnp.asarray(self.rho_L) * R_ret**2 / jnp.asarray(r) * (R_ddot_ret + 2.0 * R_dot_ret**2 / R_ret)
+        return (
+            jnp.asarray(self.rho_L)
+            * R_ret**2
+            / jnp.asarray(r)
+            * (R_ddot_ret + 2.0 * R_dot_ret**2 / R_ret)
+        )

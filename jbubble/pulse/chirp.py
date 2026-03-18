@@ -48,7 +48,11 @@ class LinearSweep(ChirpSweep):
         freq_end: ArrayLike,
         duration: ArrayLike,
     ) -> jax.Array:
-        f0, f1, T = jnp.asarray(freq_start), jnp.asarray(freq_end), jnp.asarray(duration)
+        f0, f1, T = (
+            jnp.asarray(freq_start),
+            jnp.asarray(freq_end),
+            jnp.asarray(duration),
+        )
         return 2.0 * jnp.pi * (f0 * tau + (f1 - f0) * tau**2 / (2.0 * T))
 
 
@@ -67,7 +71,11 @@ class ExponentialSweep(ChirpSweep):
         freq_end: ArrayLike,
         duration: ArrayLike,
     ) -> jax.Array:
-        f0, f1, T = jnp.asarray(freq_start), jnp.asarray(freq_end), jnp.asarray(duration)
+        f0, f1, T = (
+            jnp.asarray(freq_start),
+            jnp.asarray(freq_end),
+            jnp.asarray(duration),
+        )
         ratio = f1 / f0
         return (
             2.0 * jnp.pi * f0 * T * (jnp.power(ratio, tau / T) - 1.0) / jnp.log(ratio)

@@ -54,7 +54,6 @@ pulse = ToneBurst(
     pressure=50e3,
     shape=Sine(),
     cycle_num=5,
-
 )
 save_spec = SaveSpec(num_samples=256)
 
