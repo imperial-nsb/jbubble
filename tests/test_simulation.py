@@ -1,121 +1,135 @@
-"""Tests for jbubble.simulation — high-level simulation runner and results."""
+"""Tests for jbubble.simulation."""
 
+import jax
 import jax.numpy as jnp
-import numpy as np
-from jbubble.bubble import SphericalConfinement
-from jbubble.simulation import (
-    SimulationResult,
-    arrays_from_result,
-    compute_radius_metrics,
-    run_simulation,
-)
-
-# ── run_simulation ────────────────────────────────────────────────────────────
-
-
-def test_run_simulation_returns_result(rp_bubble, pulse, units, save_spec):
-    result = run_simulation(rp_bubble, pulse, units=units, save_spec=save_spec)
-    assert isinstance(result, SimulationResult)
+import pytest
+from jbubble import SaveSpec, run_simulation
+from jbubble.bubble.eom import SphericalConfinement
+from jbubble.bubble.gas import PolytropicGas
+from jbubble.bubble.medium import NewtonianMedium
+from jbubble.bubble.shell import NoShell
+from jbubble.bubble.state import ConfinedBubbleState
+from jbubble.pulse import ToneBurst
+from jbubble.pulse.shapes import Sine
+from jbubble.simulation import SimulationResult
 
 
-def test_run_simulation_ts_shape(rp_bubble, pulse, units, save_spec):
-    result = run_simulation(rp_bubble, pulse, units=units, save_spec=save_spec)
-    assert result.ts.shape == (save_spec.num_samples,)
+class TestRunSimulation:
+    def test_returns_simulation_result(self, simple_eom, sine_pulse):
+        result = jax.jit(run_simulation)(
+            simple_eom,
+            sine_pulse,
+            save_spec=SaveSpec(num_samples=200),
+            t_max=5e-6,
+        )
+        assert isinstance(result, SimulationResult)
+
+    def test_output_shapes(self, simple_eom, sine_pulse):
+        N = 300
+        result = jax.jit(run_simulation)(
+            simple_eom,
+            sine_pulse,
+            save_spec=SaveSpec(num_samples=N),
+            t_max=5e-6,
+        )
+        assert result.ts.shape == (N,)
+        assert result.state.R.shape == (N,)
+        assert result.state.R_dot.shape == (N,)
+        assert result.state_dot.R_dot.shape == (N,)
+        assert result.driving_pressure.shape == (N,)
+
+    def test_converges(self, simple_eom, sine_pulse):
+        result = jax.jit(run_simulation)(
+            simple_eom,
+            sine_pulse,
+            save_spec=SaveSpec(num_samples=200),
+            t_max=5e-6,
+        )
+        assert bool(result.converged)
+
+    def test_initial_radius_is_R0(self, simple_eom, sine_pulse):
+        result = jax.jit(run_simulation)(
+            simple_eom,
+            sine_pulse,
+            save_spec=SaveSpec(num_samples=200),
+            t_max=5e-6,
+        )
+        assert float(result.radius[0]) == pytest.approx(simple_eom.R0, rel=1e-4)
+
+    def test_bubble_oscillates(self, simple_eom, sine_pulse):
+        result = jax.jit(run_simulation)(
+            simple_eom,
+            sine_pulse,
+            save_spec=SaveSpec(num_samples=500),
+            t_max=10e-6,
+        )
+        R_max = float(result.radius.max())
+        R_min = float(result.radius.min())
+        assert R_max > simple_eom.R0  # expansion
+        assert R_min < simple_eom.R0  # compression
 
 
-def test_run_simulation_array_shapes_consistent(
-    marmottant_bubble, pulse, units, save_spec
-):
-    result = run_simulation(marmottant_bubble, pulse, units=units, save_spec=save_spec)
-    n = save_spec.num_samples
-    assert result.radius.shape == (n,)
-    assert result.radial_velocity.shape == (n,)
-    assert result.radial_acceleration.shape == (n,)
-    assert result.driving_pressure.shape == (n,)
+class TestSimulationResultAccessors:
+    @pytest.fixture
+    def result(self, simple_eom, sine_pulse):
+        return jax.jit(run_simulation)(
+            simple_eom,
+            sine_pulse,
+            save_spec=SaveSpec(num_samples=200),
+            t_max=5e-6,
+        )
+
+    def test_radius(self, result):
+        assert jnp.allclose(result.radius, result.state.R)
+
+    def test_radial_velocity(self, result):
+        assert jnp.allclose(result.radial_velocity, result.state.R_dot)
+
+    def test_radial_acceleration(self, result):
+        assert jnp.allclose(result.radial_acceleration, result.state_dot.R_dot)
+
+    def test_has_vessel_false(self, result):
+        assert not result.has_vessel
+
+    def test_vessel_radius_none(self, result):
+        assert result.vessel_radius is None
+
+    def test_vessel_velocity_none(self, result):
+        assert result.vessel_velocity is None
 
 
-def test_run_simulation_ts_in_physical_units(rp_bubble, pulse, units, save_spec):
-    result = run_simulation(rp_bubble, pulse, units=units, save_spec=save_spec)
-    # Times should be in seconds (order 1e-6 to 1e-4)
-    assert bool(jnp.all(result.ts >= 0.0))
-    assert float(jnp.max(result.ts)) < 1e-2  # < 10 ms
+class TestConfinedSimulation:
+    @pytest.fixture
+    def confined_result(self):
+        eom = SphericalConfinement(
+            gas=PolytropicGas(gamma=1.4),
+            shell=NoShell(sigma=0.072),
+            medium=NewtonianMedium(mu=1e-3),
+            R0=2e-6,
+            P_amb=101325.0,
+            rho_L=998.0,
+            c_L=1500.0,
+            vessel_radius=50e-6,
+            vessel_rho=1050.0,
+            vessel_E=1e6,
+            vessel_nu=0.49,
+            vessel_d=1e-6,
+            tissue_rho=1050.0,
+            tissue_d=1e-3,
+        )
+        pulse = ToneBurst(freq=1e6, pressure=50e3, shape=Sine(), cycle_num=3)
+        return jax.jit(run_simulation)(
+            eom, pulse, save_spec=SaveSpec(num_samples=200), t_max=5e-6
+        )
 
+    def test_has_vessel_true(self, confined_result):
+        assert confined_result.has_vessel
 
-def test_run_simulation_radius_in_physical_units(rp_bubble, pulse, units, save_spec):
-    result = run_simulation(rp_bubble, pulse, units=units, save_spec=save_spec)
-    # Radius should be around 1–10 µm in metres
-    assert float(jnp.min(result.radius)) > 0.0
-    assert float(jnp.max(result.radius)) < 100e-6  # < 100 µm
+    def test_vessel_radius_shape(self, confined_result):
+        assert confined_result.vessel_radius.shape == (200,)
 
+    def test_vessel_velocity_shape(self, confined_result):
+        assert confined_result.vessel_velocity.shape == (200,)
 
-def test_run_simulation_no_vessel_for_simple_models(rp_bubble, pulse, units, save_spec):
-    result = run_simulation(rp_bubble, pulse, units=units, save_spec=save_spec)
-    assert result.vessel_radius is None
-    assert result.vessel_velocity is None
-    assert not result.has_vessel
-
-
-def test_run_simulation_has_vessel_for_confinement(pulse, units, save_spec):
-    b = SphericalConfinement(R0=3e-6)
-    result = run_simulation(b, pulse, units=units, save_spec=save_spec)
-    assert result.vessel_radius is not None
-    assert result.vessel_velocity is not None
-    assert result.has_vessel
-
-
-# ── radiated_pressure ─────────────────────────────────────────────────────────
-
-
-def test_radiated_pressure_shape(marmottant_bubble, pulse, units, save_spec):
-    result = run_simulation(marmottant_bubble, pulse, units=units, save_spec=save_spec)
-    p_rad = result.radiated_pressure(d=1e-3)
-    assert p_rad.shape == result.ts.shape
-
-
-def test_radiated_pressure_is_finite(marmottant_bubble, pulse, units, save_spec):
-    result = run_simulation(marmottant_bubble, pulse, units=units, save_spec=save_spec)
-    p_rad = result.radiated_pressure(d=1e-3)
-    assert bool(jnp.all(jnp.isfinite(p_rad)))
-
-
-# ── compute_radius_metrics ────────────────────────────────────────────────────
-
-
-def test_compute_radius_metrics_has_expected_keys(rp_bubble, pulse, units, save_spec):
-    result = run_simulation(rp_bubble, pulse, units=units, save_spec=save_spec)
-    metrics = compute_radius_metrics(result)
-    for key in ("max_radius", "min_radius", "max_ratio", "min_ratio", "swing_ratio"):
-        assert key in metrics
-
-
-def test_compute_radius_metrics_positive_values(rp_bubble, pulse, units, save_spec):
-    result = run_simulation(rp_bubble, pulse, units=units, save_spec=save_spec)
-    metrics = compute_radius_metrics(result)
-    for key, val in metrics.items():
-        assert val > 0.0, f"{key} should be positive"
-
-
-def test_compute_radius_metrics_max_gte_min(rp_bubble, pulse, units, save_spec):
-    result = run_simulation(rp_bubble, pulse, units=units, save_spec=save_spec)
-    metrics = compute_radius_metrics(result)
-    assert metrics["max_radius"] >= metrics["min_radius"]
-
-
-# ── arrays_from_result ────────────────────────────────────────────────────────
-
-
-def test_arrays_from_result_returns_numpy(rp_bubble, pulse, units, save_spec):
-    result = run_simulation(rp_bubble, pulse, units=units, save_spec=save_spec)
-    arrays = arrays_from_result(result)
-    assert isinstance(arrays.time_us, np.ndarray)
-    assert isinstance(arrays.radius_um, np.ndarray)
-    assert isinstance(arrays.pressure_kpa, np.ndarray)
-
-
-def test_arrays_from_result_shapes(rp_bubble, pulse, units, save_spec):
-    result = run_simulation(rp_bubble, pulse, units=units, save_spec=save_spec)
-    arrays = arrays_from_result(result)
-    n = save_spec.num_samples
-    assert arrays.time_us.shape == (n,)
-    assert arrays.radius_um.shape == (n,)
-    assert arrays.pressure_kpa.shape == (n,)
+    def test_state_is_confined(self, confined_result):
+        assert isinstance(confined_result.state, ConfinedBubbleState)

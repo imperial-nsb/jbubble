@@ -2,12 +2,12 @@
 gridsweep — memory-efficient batched generator over a Cartesian product of
 named parameter axes.
 
-The single primitive is ``batches()``, which lazily yields
-``(params, outputs)`` one vmapped batch at a time so memory stays O(batch_size)
-regardless of grid size.  Two collecting helpers sit on top:
+Two public entry points:
 
-    collect()  – concatenate every batch into one flat PyTree  (N leading dim)
-    reshape()  – fold that flat PyTree back into the grid shape
+    run()     – run the full sweep; returns a grid-shaped PyTree
+                  shape (*grid_shape, *leaf_shape)
+    batches() – lazy iterator yielding ``(params, outputs)`` one vmapped batch
+                  at a time so memory stays O(batch_size)
 
 What you do with each batch is entirely up to the caller — stream to disk,
 accumulate statistics, track a running argmin, build a dataset, …
@@ -21,9 +21,8 @@ Usage
 
     gs = GridSweep(run_simulation, {"R0": radii, "p0": pressures})
 
-    # collect everything into one PyTree
-    flat   = gs.collect()
-    grid   = gs.reshape(flat)      # shape (*grid_shape, ...)
+    # full sweep → grid-shaped PyTree
+    grid = gs.run()   # shape (*grid_shape, ...)
 
     # or stream batch-by-batch
     for params, outputs in gs.batches():
@@ -47,9 +46,6 @@ import jax.numpy as jnp
 from tqdm import tqdm
 
 PyTree = Any
-
-
-# ── main class ────────────────────────────────────────────────────────────────
 
 
 class GridSweep:
@@ -90,8 +86,6 @@ class GridSweep:
 
         self._eval_batch = jax.jit(jax.vmap(lambda p: self.fn(**p)))
 
-    # ── properties ──────────────────────────────────────────────
-
     @property
     def grid_shape(self) -> tuple[int, ...]:
         """Shape of the full parameter grid (one int per axis)."""
@@ -106,8 +100,6 @@ class GridSweep:
     def axes(self) -> dict[str, jnp.ndarray]:
         """Parameter axes in sweep order."""
         return dict(zip(self._keys, self._axes, strict=True))
-
-    # ── core primitive ───────────────────────────────────────────
 
     def batches(self):
         """Lazy iterator over the grid.
@@ -134,37 +126,17 @@ class GridSweep:
             outputs = self._eval_batch(params)
             yield params, outputs
 
-    # ── data-generation convenience ──────────────────────────────
-
-    def collect(self) -> PyTree:
-        """Run the full sweep and concatenate all outputs into one PyTree.
-
-        The leading dimension of every leaf equals ``total_points``.
-        Use ``reshape(outputs)`` to obtain a grid-shaped PyTree.
+    def run(self) -> PyTree:
+        """Run the full sweep and return a grid-shaped PyTree.
 
         Returns
         -------
         PyTree
-            All outputs stacked along a new leading axis of size ``N``.
+            Each leaf has shape ``(*grid_shape, *leaf_shape)``, where
+            ``grid_shape`` corresponds to the axes in ``search_space``
+            (sorted alphabetically, row-major — last axis varies fastest).
         """
         chunks = [outputs for _, outputs in self.batches()]
-        return jax.tree.map(lambda *xs: jnp.concatenate(xs, axis=0), *chunks)
-
-    def reshape(self, outputs: PyTree) -> PyTree:
-        """Reshape a flat collected PyTree back to the parameter grid.
-
-        Parameters
-        ----------
-        outputs :
-            PyTree returned by ``collect()``, with leading dim ``N``.
-
-        Returns
-        -------
-        PyTree
-            Each leaf reshaped to ``(*grid_shape, *leaf_shape[1:])``.
-        """
+        flat = jax.tree.map(lambda *xs: jnp.concatenate(xs, axis=0), *chunks)
         shape = self.grid_shape
-        return jax.tree.map(
-            lambda x: x.reshape(*shape, *x.shape[1:]),
-            outputs,
-        )
+        return jax.tree.map(lambda x: x.reshape(*shape, *x.shape[1:]), flat)

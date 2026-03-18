@@ -1,57 +1,60 @@
-# Pulse shapes
+# shapes
 
-::: jbubble.pulse.PulseShape
+Carrier waveform shapes for use with `ToneBurst`. All shapes are `PulseShape` subclasses — Equinox modules with a normalised periodic output (peak amplitude 1).
 
-## Fourier base class
+Shapes are passed as the `shape` argument to `ToneBurst`:
 
-::: jbubble.shapes.FourierPulseShape
+```python
+from jbubble.pulse import ToneBurst
+from jbubble.pulse.shapes import Sine, Square, Rectangular
 
-## Analytic shapes
+pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine())
+```
 
-::: jbubble.shapes.Sine
+---
 
-::: jbubble.shapes.TimeDomainSquare
+## Base classes
 
-::: jbubble.shapes.TimeDomainSawtooth
+::: jbubble.pulse.shapes.PulseShape
 
-::: jbubble.shapes.TimeDomainTriangle
+::: jbubble.pulse.shapes.FourierPulseShape
 
-## Fourier-series shapes
+---
 
-::: jbubble.shapes.Square
+## Concrete shapes
 
-::: jbubble.shapes.SquareNegPos
+::: jbubble.pulse.shapes.Sine
 
-::: jbubble.shapes.Sawtooth
+::: jbubble.pulse.shapes.Square
 
-::: jbubble.shapes.InvertedSawtooth
+::: jbubble.pulse.shapes.Sawtooth
 
-::: jbubble.shapes.Triangle
+::: jbubble.pulse.shapes.InvertedSawtooth
 
-::: jbubble.shapes.Quadratic
+::: jbubble.pulse.shapes.Triangle
 
-::: jbubble.shapes.NegativeQuadratic
+::: jbubble.pulse.shapes.Quadratic
 
-::: jbubble.shapes.Asymmetrical
+::: jbubble.pulse.shapes.NegativeQuadratic
 
-::: jbubble.shapes.SlantedSine
+::: jbubble.pulse.shapes.Rectangular
 
-::: jbubble.shapes.Pulse9
+::: jbubble.pulse.shapes.TimeDomainSquare
 
-::: jbubble.shapes.Pulse10
+::: jbubble.pulse.shapes.TimeDomainSawtooth
 
-## Rectangular duty-cycle shapes
+::: jbubble.pulse.shapes.TimeDomainTriangle
 
-::: jbubble.shapes.Rect25
+---
 
-::: jbubble.shapes.Rect75
+## Choosing a shape
 
-::: jbubble.shapes.Rect25NegPos
+| Shape | Spectral content | Notes |
+|---|---|---|
+| `Sine` | Single harmonic | Default; smoothest, no harmonic artefacts |
+| `Square` / `TimeDomainSquare` | Odd harmonics | Gibbs ringing in Fourier version; `TimeDomainSquare` avoids it |
+| `Sawtooth` / `TimeDomainSawtooth` | All harmonics | Rising ramp; useful for asymmetric forcing |
+| `Triangle` / `TimeDomainTriangle` | Odd harmonics, faster roll-off | Smoother than square |
+| `Rectangular(duty)` | General | Full control over duty cycle, levels, and phase offset |
 
-::: jbubble.shapes.Rect75NegPos
-
-::: jbubble.shapes.Rect95
-
-::: jbubble.shapes.Mono95
-
-::: jbubble.shapes.Mono99
+For gradient-based optimisation of the carrier shape, prefer `TimeDomain*` variants or `Sine` — Fourier-series shapes truncate at 10 terms and are `C^0` at sharp transitions.

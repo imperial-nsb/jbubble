@@ -1,53 +1,19 @@
 """jbubble: differentiable microbubble dynamics primitives."""
 
-from .bubble import Marmottant as Bubble
-from .pulse import Pulse
-from .shapes import (
-    Asymmetrical,
-    NegativeQuadratic,
-    PulseShape,
-    Quadratic,
-    Sawtooth,
-    Sine,
-    SlantedSine,
-    Square,
-    TimeDomainSawtooth,
-    TimeDomainSquare,
-    TimeDomainTriangle,
-    Triangle,
-)
-from .simulation import (
-    PlotArrays,
-    SimulationResult,
-    arrays_from_result,
-    compute_radius_metrics,
-    run_simulation,
-)
-from .solver import SaveSpec, solve_bubble
-from .units import Units
+import jax
+
+jax.config.update("jax_enable_x64", True)
+
+# For convenience, expose key simulation entry points
+from .fitting import FitResult, fit_parameters
+from .simulation import run_simulation
+from .solver import SaveSpec, SolverConfig, solve_eom
 
 __all__ = [
-    "Units",
-    "Bubble",
-    "Pulse",
-    "PulseShape",
-    "Sine",
-    "Sawtooth",
-    "Triangle",
-    "Quadratic",
-    "NegativeQuadratic",
-    "Asymmetrical",
-    "SlantedSine",
-    "Square",
-    "TimeDomainSquare",
-    "TimeDomainSawtooth",
-    "TimeDomainTriangle",
-    "bubble_equation",
-    "solve_bubble",
-    "SaveSpec",
-    "SimulationResult",
     "run_simulation",
-    "compute_radius_metrics",
-    "PlotArrays",
-    "arrays_from_result",
+    "SaveSpec",
+    "SolverConfig",
+    "solve_eom",
+    "fit_parameters",
+    "FitResult",
 ]

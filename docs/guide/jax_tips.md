@@ -1,132 +1,253 @@
-# JAX tips
+# JAX tips: JIT, vmap, grad, and fitting
 
-jbubble is built on JAX, which means every simulation is compatible with JAX
-transformations: `jit`, `vmap`, and `grad`. This page explains how to use them
-effectively.
+jbubble is built on JAX, which means every simulation is JIT-compilable, batchable over parameters, and differentiable. This page covers the key workflows.
 
-## x64 mode
+---
 
-JAX defaults to 32-bit floating-point. jbubble **enables 64-bit mode
-automatically** when the package is imported:
+## JIT compilation
 
-```python
-import jbubble  # sets jax.config.update("jax_enable_x64", True) automatically
-```
-
-You do not need to set this manually.
-
-## 1. JIT compilation
-
-Wrapping `run_simulation` (or any jbubble function) with `jax.jit` compiles the
-simulation to optimised machine code on the first call. Subsequent calls with
-the same argument shapes skip compilation and run significantly faster:
+Wrap `run_simulation` (or `solve_eom`) with `jax.jit` to compile the entire solver graph once and execute it efficiently:
 
 ```python
 import jax
-from jbubble import MarmottantGompertz, Units, run_simulation
-from jbubble.pulse import Pulse
-from jbubble import shapes
-from jbubble.solver import SaveSpec
+from jbubble import run_simulation, SaveSpec
 
-bubble = MarmottantGompertz(R0=3e-6)
-pulse  = Pulse(freq=2e6, pressure=200e3, cycle_num=3, shape=shapes.Sine())
-units  = Units()
-spec   = SaveSpec(64)
+simulate = jax.jit(run_simulation)
 
-sim = jax.jit(run_simulation)
+# First call: compilation (slow)
+result = simulate(eom, pulse, save_spec=SaveSpec(1000), t_max=10e-6)
 
-# First call: compilation + execution (~seconds)
-result = sim(bubble, pulse, units=units, save_spec=spec, window_s=20e-6)
-
-# Subsequent calls: execution only (~milliseconds)
-result = sim(bubble, pulse, units=units, save_spec=spec, window_s=20e-6)
+# Subsequent calls with the same argument shapes: fast
+result2 = simulate(eom2, pulse, save_spec=SaveSpec(1000), t_max=10e-6)
 ```
 
-!!! tip
-    JIT compilation traces the function with abstract values. Avoid Python
-    control flow that depends on JAX array *values* (use `jax.lax.cond` instead
-    of `if`). All jbubble internals already follow this rule.
+!!! warning "Static vs dynamic"
+    JAX traces through `eqx.Module` fields that are `jax.Array`. Fields that are plain Python scalars (`int`, `float`, `bool`) or non-array objects are treated as static and trigger recompilation if changed. Keep parameters as `jnp.array` or leave them as Equinox fields.
 
-## 2. Batching over parameters with vmap
+---
 
-`jax.vmap` vectorises a function over a batch dimension. This is the preferred
-way to run many simulations in parallel — for example, sweeping over bubble
-radii:
+## Batched parameter sweeps with vmap
+
+Use `jax.vmap` to run thousands of simulations simultaneously with different parameters. `GridSweep` automates the Cartesian-product case:
 
 ```python
-import jax
 import jax.numpy as jnp
-from jbubble import MarmottantGompertz, Units, run_simulation
-from jbubble.pulse import Pulse
-from jbubble import shapes
-from jbubble.solver import SaveSpec
+from jbubble.utils.gridsweep import GridSweep
+from jbubble import run_simulation, SaveSpec
+from jbubble.bubble.eom import KellerMiksis
+from jbubble.bubble.gas import PolytropicGas
+from jbubble.bubble.shell import NoShell
+from jbubble.bubble.medium import NewtonianMedium
+from jbubble.pulse import ToneBurst
+from jbubble.pulse.shapes import Sine
 
-def sim_for_r0(r0):
-    bubble = MarmottantGompertz(R0=r0)
-    pulse  = Pulse(freq=2e6, pressure=200e3, cycle_num=3, shape=shapes.Sine())
-    return run_simulation(
-        bubble, pulse,
-        units=Units(),
-        save_spec=SaveSpec(64),
-        window_s=20e-6,
+def simulate_bubble(R0, pressure):
+    eom = KellerMiksis(
+        gas=PolytropicGas(gamma=1.4),
+        shell=NoShell(sigma=0.072),
+        medium=NewtonianMedium(mu=1e-3),
+        R0=R0, P_amb=101325, rho_L=998, c_L=1500,
     )
+    pulse = ToneBurst(freq=1e6, pressure=pressure, shape=Sine(), cycle_num=5)
+    result = run_simulation(eom, pulse, save_spec=SaveSpec(500), t_max=10e-6)
+    return result.radius.max() / R0  # peak expansion ratio
 
-r0s     = jnp.linspace(1e-6, 5e-6, 8)   # 8 different radii
-results = jax.vmap(sim_for_r0)(r0s)       # batched SimulationResult
+sweep = GridSweep(
+    fn=simulate_bubble,
+    search_space={
+        "R0": jnp.linspace(1e-6, 5e-6, 10),
+        "pressure": jnp.array([50e3, 100e3, 200e3, 400e3]),
+    },
+    batch_size=256,
+)
 
-print(results.radius.shape)   # (8, 64)
+# Full sweep: shape (10, 4) — one scalar output per parameter combination
+peak_expansion = sweep.run()
 ```
 
-You can combine `vmap` with `jit` for maximum performance:
+`GridSweep` internally applies `jax.vmap` over batches of parameter combinations and handles reshaping back to the grid shape.
+
+For a fully manual sweep over a single parameter axis:
 
 ```python
-batched_sim = jax.jit(jax.vmap(sim_for_r0))
-results = batched_sim(r0s)
+import equinox as eqx
+
+R0_values = jnp.linspace(1e-6, 5e-6, 20)
+
+def make_eom(R0):
+    return KellerMiksis(
+        gas=PolytropicGas(gamma=1.4),
+        shell=NoShell(sigma=0.072),
+        medium=NewtonianMedium(mu=1e-3),
+        R0=R0, P_amb=101325, rho_L=998, c_L=1500,
+    )
+
+# Build a batched EoM by stacking along a leading axis
+batched_eom = jax.vmap(make_eom)(R0_values)
+
+# vmap run_simulation over the batched EoM
+batched_simulate = jax.vmap(
+    lambda eom: run_simulation(eom, pulse, save_spec=SaveSpec(500), t_max=10e-6)
+)
+results = jax.jit(batched_simulate)(batched_eom)
+# results.radius has shape (20, 500)
 ```
 
-## 3. Gradient through shell parameters
+---
 
-`jax.grad` can differentiate through the entire simulation with respect to any
-leaf parameter. This is useful for fitting shell parameters to measured
-radius–time curves:
+## Gradient-based parameter fitting
+
+`fit_parameters` runs gradient descent to minimise a differentiable loss function over the simulation result. It uses `jax.grad` through the entire ODE solve (via diffrax's backpropagation-through-time adjoint).
+
+### Minimal example
 
 ```python
-import jax
-from jbubble import MarmottantGompertz, Units, run_simulation
-from jbubble.pulse import Pulse
-from jbubble import shapes
-from jbubble.solver import SaveSpec
+import optax
+from jbubble import run_simulation, fit_parameters, SaveSpec
+from jbubble.bubble.eom import KellerMiksis
+from jbubble.bubble.gas import PolytropicGas
+from jbubble.bubble.shell import LipidShell, GompertzSurfaceTension
+from jbubble.bubble.medium import NewtonianMedium
+from jbubble.pulse import ToneBurst
+from jbubble.pulse.shapes import Sine
+from jbubble.metrics import normalised_mse_radius
 
-def loss(chi):
-    bubble = MarmottantGompertz(R0=3e-6, chi=chi)
-    pulse  = Pulse(freq=2e6, pressure=200e3, cycle_num=3, shape=shapes.Sine())
-    result = run_simulation(
-        bubble, pulse,
-        units=Units(),
-        save_spec=SaveSpec(64),
-        window_s=20e-6,
+# Measured radius trace (from experiment or higher-fidelity simulation)
+measured_radius = ...  # shape (N,) [m]
+R0_true = 2e-6
+
+pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
+
+def make_model(kappa_s):
+    sigma = GompertzSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
+    eom = KellerMiksis(
+        gas=PolytropicGas(gamma=1.4),
+        shell=LipidShell(sigma=sigma, kappa_s=kappa_s),
+        medium=NewtonianMedium(mu=1e-3),
+        R0=R0_true, P_amb=101325, rho_L=998, c_L=1500,
     )
-    return ((result.radius - target_radius) ** 2).mean()
+    return eom, pulse
 
-grad_loss = jax.grad(loss)
-dL_dchi   = grad_loss(chi_init)
+fit_result = fit_parameters(
+    make_model=make_model,
+    params0=1e-9,          # initial guess for kappa_s [N·s/m]
+    save_spec=SaveSpec(500),
+    t_max=10e-6,
+    loss_fn=lambda result: normalised_mse_radius(result.radius, measured_radius, R0_true),
+    optimizer=optax.adam(1e-10),
+    n_steps=200,
+    log_every=25,
+)
+
+print("Fitted kappa_s:", fit_result.params)
+print("Final loss:", fit_result.loss_history[-1])
 ```
 
-Gradient computation requires the Gompertz-family models (`MarmottantGompertz`,
-`KellerMiksisGompertz`, etc.) rather than `Marmottant`, because the piecewise
-σ(R) of `Marmottant` is not differentiable at the transition radii.
+### Fitting multiple parameters jointly
 
-## 4. GridSweep for structured parameter sweeps
+`params0` can be any JAX-compatible PyTree. The `make_model` factory receives the same structure:
 
-For structured sweeps over a Cartesian grid of parameters, use `GridSweep` from
-`jbubble.utils.gridsweep`. It wraps the vmap pattern and handles result
-aggregation automatically. See the [API reference](../api/utils.md) for details.
+```python
+import jax.numpy as jnp
 
-## 5. Common pitfalls
+params0 = {"kappa_s": 1e-9, "chi": 0.5}
 
-| Issue | Cause | Fix |
-|---|---|---|
-| `ConcretizationTypeError` | Python `if` on a JAX array | Replace with `jax.lax.cond` |
-| Slow repeated calls | Missing `jax.jit` | Wrap the simulation function with `jit` |
-| NaN gradients | Piecewise σ(R) in `Marmottant` | Switch to `MarmottantGompertz` |
-| Out-of-memory on vmap | Too large a batch | Reduce batch size or use `jax.lax.map` |
+def make_model(params):
+    sigma = GompertzSurfaceTension(
+        R_buckle_ratio=0.98,
+        chi=params["chi"],
+        sigma_rupture=0.072,
+    )
+    eom = KellerMiksis(
+        gas=PolytropicGas(gamma=1.4),
+        shell=LipidShell(sigma=sigma, kappa_s=params["kappa_s"]),
+        medium=NewtonianMedium(mu=1e-3),
+        R0=2e-6, P_amb=101325, rho_L=998, c_L=1500,
+    )
+    return eom, pulse
+
+fit_result = fit_parameters(
+    make_model=make_model,
+    params0=params0,
+    ...
+)
+```
+
+### Fitting to emission data
+
+The `loss_fn` receives a full `SimulationResult`, so you can compute any differentiable quantity — including the radiated pressure:
+
+```python
+from jbubble.acoustics import IncompressibleMonopole
+from jbubble.metrics import normalised_mse_emission
+
+emission = IncompressibleMonopole(rho_L=998.0)
+measured_p = ...    # measured hydrophone waveform [Pa]
+r = 10e-3           # hydrophone distance [m]
+
+fit_result = fit_parameters(
+    make_model=make_model,
+    params0=params0,
+    save_spec=SaveSpec(500),
+    t_max=10e-6,
+    loss_fn=lambda result: normalised_mse_emission(
+        emission(result, r), measured_p, p_ref=1e3
+    ),
+    optimizer=optax.adam(1e-10),
+    n_steps=300,
+)
+```
+
+### Monitoring convergence
+
+Pass a `step_callback` to inspect parameters and loss outside JIT at each step:
+
+```python
+history = []
+
+def callback(step, params, loss):
+    history.append({"step": step, "kappa_s": float(params), "loss": float(loss)})
+
+fit_result = fit_parameters(..., step_callback=callback)
+```
+
+---
+
+## Computing gradients manually
+
+For custom gradient computations (e.g. sensitivity analysis), use `jax.grad` directly:
+
+```python
+def peak_expansion(kappa_s):
+    _, pulse = make_model(kappa_s)
+    eom, _ = make_model(kappa_s)
+    result = run_simulation(eom, pulse, save_spec=SaveSpec(500), t_max=10e-6)
+    return result.radius.max() / eom.R0
+
+grad_fn = jax.grad(peak_expansion)
+sensitivity = grad_fn(2.4e-9)   # d(peak expansion) / d(kappa_s) at kappa_s = 2.4 nN·s/m
+print("Sensitivity:", sensitivity)
+```
+
+---
+
+## HDF5 export for large sweeps
+
+Save sweep outputs to HDF5 for post-processing:
+
+```python
+from jbubble.utils.io import export_hdf5, load_hdf5
+import jax.numpy as jnp
+
+export_hdf5(
+    "sweep_results.h5",
+    metadata={"description": "R0-pressure sweep", "freq": 1e6},
+    R0_values=jnp.linspace(1e-6, 5e-6, 10),
+    pressure_values=jnp.array([50e3, 100e3, 200e3, 400e3]),
+    peak_expansion=peak_expansion,
+)
+
+arrays, meta = load_hdf5("sweep_results.h5")
+print(meta["description"])
+print(arrays["peak_expansion"].shape)  # (10, 4)
+```

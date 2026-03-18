@@ -1,27 +1,21 @@
 # Installation
 
-## Requirements
+## Prerequisites
 
-- Python 3.9 or later
-- A working JAX installation (CPU or GPU)
+jbubble requires Python 3.10+ and a working JAX installation. GPU support is optional but recommended for large parameter sweeps.
 
-## Install from PyPI
+## Conda environment (recommended)
 
-Once jbubble is published on PyPI, install it with:
-
-```bash
-pip install jbubble
-```
-
-## Development install
-
-To install jbubble together with the optional development dependencies (testing, linting, documentation):
+The project ships a conda environment spec:
 
 ```bash
-pip install "jbubble[dev]"
+conda env create -f environment.yml
+conda activate bubbles
 ```
 
-Alternatively, clone the repository and install in editable mode:
+All development and examples assume the `bubbles` environment is active.
+
+## Installing from source
 
 ```bash
 git clone https://github.com/imperial-nsb/jbubble.git
@@ -29,13 +23,52 @@ cd jbubble
 pip install -e ".[dev]"
 ```
 
-## JAX x64 mode
+The `[dev]` extra installs testing and documentation dependencies.
 
-JAX defaults to 32-bit floating-point arithmetic. Bubble ODE solvers require double precision for numerical stability. **jbubble enables x64 mode automatically when the package is imported** — you do not need to set `jax.config.update("jax_enable_x64", True)` yourself.
+## Dependencies
 
-!!! note
-    If you enable or disable x64 mode manually *before* importing jbubble, your setting will be overridden. Import jbubble first if you need predictable behaviour.
+| Package | Role |
+|---|---|
+| `jax` | Numerical backend, autodiff, JIT, vmap |
+| `equinox` | PyTree-based neural networks and modules |
+| `diffrax` | Adaptive ODE solvers (Kvaerno5) |
+| `optax` | Optimisers for parameter fitting |
+| `h5py` | HDF5 export/import |
 
-## GPU support
+## Verifying the installation
 
-JAX GPU support is not bundled with the base jbubble install. Follow the [JAX installation guide](https://jax.readthedocs.io/en/latest/installation.html) to install the correct `jaxlib` wheel for your CUDA version before installing jbubble.
+```python
+import jbubble
+from jbubble.utils.presets import free_bubble
+import jax
+
+preset = free_bubble()
+from jbubble import run_simulation, SaveSpec
+result = jax.jit(run_simulation)(
+    preset.eom, preset.pulse,
+    save_spec=SaveSpec(num_samples=500),
+    t_max=10e-6,
+)
+print("converged:", bool(result.converged))
+print("peak R/R0:", float(result.radius.max() / preset.eom.R0))
+```
+
+Expected output (values are approximate):
+
+```
+converged: True
+peak R/R0: 2.3
+```
+
+## GPU / accelerator support
+
+JAX automatically uses a GPU if one is available. No code changes are needed. For multi-GPU setups, use `jax.devices()` to select a device and `jax.device_put` to place arrays explicitly.
+
+## Building the documentation
+
+```bash
+conda activate bubbles
+pip install mkdocs mkdocs-material mkdocstrings[python]
+mkdocs serve   # live-preview at http://127.0.0.1:8000
+mkdocs build   # static site in site/
+```

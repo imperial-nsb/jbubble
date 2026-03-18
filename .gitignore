@@ -9,6 +9,7 @@
 .venv
 site/*
 build/*
+.ruff_cache
 
 # poetry
 poetry.lock
@@ -29,3 +30,6 @@ coverage.xml
 
 # Saved data files
 data/*
+
+# LLM tools
+.claude

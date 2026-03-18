@@ -1,71 +1,91 @@
-"""Shared fixtures and configuration for the jbubble test suite.
+"""Shared fixtures for jbubble tests."""
 
-IMPORTANT: jax_enable_x64 must be set before any JAX tracing occurs.
-conftest.py is loaded by pytest before any test modules are imported,
-so this is the correct place to configure JAX.
-"""
+import jax.numpy as jnp
+import pytest
+from jbubble.bubble.eom import KellerMiksis, RayleighPlesset
+from jbubble.bubble.gas import PolytropicGas
+from jbubble.bubble.medium import NewtonianMedium
+from jbubble.bubble.shell import NoShell
+from jbubble.bubble.state import BubbleState
+from jbubble.pulse import ToneBurst
+from jbubble.pulse.shapes import Sine
 
-import jax
+# ── Physical constants ──────────────────────────────────────────────────────
 
-jax.config.update("jax_enable_x64", True)
+R0 = 2e-6
+P_AMB = 101325.0
+RHO_L = 998.0
+C_L = 1500.0
+SIGMA = 0.072
+MU = 1e-3
+GAMMA = 1.4
 
-import jbubble.shapes as shapes  # noqa: E402
-import pytest  # noqa: E402
-from jbubble import Pulse, SaveSpec, Units  # noqa: E402
-from jbubble.bubble import (  # noqa: E402
-    ChurchGompertz,
-    KellerMiksisGompertz,
-    KelvinVoigtGompertz,
-    LeightonGompertz,
-    Marmottant,
-    MarmottantGompertz,
-    NeoHookeanGompertz,
-    RayleighPlesset,
-    SphericalConfinement,
-)
-
-# All 9 concrete bubble model classes, used for parametrised tests
-ALL_BUBBLE_CLASSES = [
-    RayleighPlesset,
-    Marmottant,
-    MarmottantGompertz,
-    KellerMiksisGompertz,
-    KelvinVoigtGompertz,
-    NeoHookeanGompertz,
-    ChurchGompertz,
-    LeightonGompertz,
-    SphericalConfinement,
-]
+FREQ = 1e6
+PRESSURE = 100e3
 
 
-@pytest.fixture(scope="session")
-def units():
-    return Units()
+@pytest.fixture
+def equilibrium_state():
+    """BubbleState at equilibrium: R = R0, R_dot = 0."""
+    R0_arr = jnp.asarray(R0)
+    P_gas0 = P_AMB + 2.0 * SIGMA / R0
+    return BubbleState(R=R0_arr, R0=R0_arr, P_gas0=jnp.asarray(P_gas0))
 
 
-@pytest.fixture(scope="session")
-def pulse():
-    return Pulse(
-        freq=300e3,
-        pressure=50e3,
-        shape=shapes.Sine(),
-        cycle_num=4,
-        initial_time=1e-6,
-        apply_hann=False,
+@pytest.fixture
+def expanded_state():
+    """BubbleState at R = 1.5 R0 with positive velocity."""
+    R0_arr = jnp.asarray(R0)
+    P_gas0 = P_AMB + 2.0 * SIGMA / R0
+    return BubbleState(
+        R=jnp.asarray(1.5 * R0),
+        R_dot=jnp.asarray(0.5),
+        R0=R0_arr,
+        P_gas0=jnp.asarray(P_gas0),
     )
 
 
-@pytest.fixture(scope="session")
-def save_spec():
-    # Small sample count so JIT compiles quickly in CI
-    return SaveSpec(num_samples=64)
+@pytest.fixture
+def compressed_state():
+    """BubbleState at R = 0.8 R0 with negative velocity."""
+    R0_arr = jnp.asarray(R0)
+    P_gas0 = P_AMB + 2.0 * SIGMA / R0
+    return BubbleState(
+        R=jnp.asarray(0.8 * R0),
+        R_dot=jnp.asarray(-0.3),
+        R0=R0_arr,
+        P_gas0=jnp.asarray(P_gas0),
+    )
 
 
-@pytest.fixture(scope="session")
-def rp_bubble():
-    return RayleighPlesset(R0=3e-6)
+@pytest.fixture
+def simple_eom():
+    """KellerMiksis with polytropic gas, no shell, Newtonian medium."""
+    return KellerMiksis(
+        gas=PolytropicGas(gamma=GAMMA),
+        shell=NoShell(sigma=SIGMA),
+        medium=NewtonianMedium(mu=MU),
+        R0=R0,
+        P_amb=P_AMB,
+        rho_L=RHO_L,
+        c_L=C_L,
+    )
 
 
-@pytest.fixture(scope="session")
-def marmottant_bubble():
-    return Marmottant(R0=4e-6)
+@pytest.fixture
+def rp_eom():
+    """RayleighPlesset with polytropic gas, no shell, Newtonian medium."""
+    return RayleighPlesset(
+        gas=PolytropicGas(gamma=GAMMA),
+        shell=NoShell(sigma=SIGMA),
+        medium=NewtonianMedium(mu=MU),
+        R0=R0,
+        P_amb=P_AMB,
+        rho_L=RHO_L,
+    )
+
+
+@pytest.fixture
+def sine_pulse():
+    """5-cycle sine tone burst at 1 MHz, 100 kPa."""
+    return ToneBurst(freq=FREQ, pressure=PRESSURE, shape=Sine(), cycle_num=5)

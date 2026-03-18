@@ -21,7 +21,7 @@ dependencies = [
     "chex>=0.1.91",
     "optax>=0.2.3",
     "tqdm>=4.65",
-    "orbax-checkpoint>=0.11",
+    "h5py>=3.10",
 ]
 
 [project.optional-dependencies]
@@ -80,6 +80,14 @@ indent-style = "space"
 
 [tool.ty.environment]
 python-version = "3.11"
+
+[tool.ty.rules]
+# ty does not yet understand equinox's eqx.field(converter=...) pattern: fields
+# declared as `Property` with `converter=as_property` correctly accept plain
+# floats at construction time, but ty treats the constructor as requiring a
+# `Property` instance.  Pyright handles this correctly.  Suppress until ty
+# gains converter-aware constructor inference.
+invalid-argument-type = "ignore"
 
 # ── Pytest ────────────────────────────────────────────────────────────────────
 
