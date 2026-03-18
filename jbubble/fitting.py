@@ -18,6 +18,13 @@ from .simulation import SimulationResult, run_simulation
 from .solver import SaveSpec, SolverConfig, solve_eom
 
 
+def _format_params(params: Any) -> str:
+    """Format a params pytree for logging — scalars shown as values, arrays as shapes."""
+    leaves = jax.tree_util.tree_leaves(params)
+    parts = [f"{float(x):.4g}" if x.ndim == 0 else f"array{x.shape}" for x in leaves]
+    return parts[0] if len(parts) == 1 else "[" + ", ".join(parts) + "]"
+
+
 @dataclasses.dataclass
 class FitResult:
     """Output of :func:`fit_parameters`.
@@ -49,7 +56,7 @@ def fit_parameters(
     config: SolverConfig | None = None,
     adjoint: diffrax.AbstractAdjoint | None = None,
     step_callback: Callable[[int, Any, float], None] | None = None,
-    verbose: bool = True,
+    log_every: int = 25,
 ) -> FitResult:
     """Fit model parameters by differentiating through the ODE integration.
 
@@ -112,8 +119,9 @@ def fit_parameters(
         each optimisation step in the Python loop (outside JIT), so Python
         side-effects like appending to a list work correctly.  Useful for
         recording parameter trajectories.
-    verbose : bool
-        Print loss every 25 steps.  Default: True.
+    log_every : int
+        Print loss and current parameters every this many steps.
+        Set to 0 to disable logging.  Default: 25.
 
     Returns
     -------
@@ -125,8 +133,6 @@ def fit_parameters(
         config = SolverConfig(
             solver=diffrax.Dopri5(),
             stepsize_controller=diffrax.PIDController(rtol=1e-4, atol=1e-8),
-            dt0=1e-9,
-            max_steps=50_000,
         )
     if adjoint is None:
         adjoint = diffrax.RecursiveCheckpointAdjoint()
@@ -173,8 +179,11 @@ def fit_parameters(
         if step_callback is not None:
             step_callback(step, eqx.combine(array_params, static), float(loss_val))
 
-        if verbose and (step % 25 == 0 or step == n_steps - 1):
-            print(f"  step {step:>4} / {n_steps}  loss = {float(loss_val):.4e}")
+        if log_every > 0 and (step % log_every == 0 or step == n_steps - 1):
+            print(
+                f"  step {step:>4} / {n_steps}  loss = {float(loss_val):.4e}"
+                f"  params = {_format_params(array_params)}"
+            )
 
     params = eqx.combine(array_params, static)
     eom, pulse = make_model(params)
