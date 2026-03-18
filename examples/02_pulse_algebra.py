@@ -9,7 +9,8 @@ scaling, and windowing simpler pulse primitives.
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from jbubble.pulse import ToneBurst, HannEnvelope, Sine
+from jbubble.pulse import ToneBurst, HannEnvelope
+from jbubble.pulse.shapes import Sine
 
 # 1. Create two basic pulses
 # A 1 MHz burst (standard)

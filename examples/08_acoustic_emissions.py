@@ -17,7 +17,7 @@ This example demonstrates:
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from jbubble import run_simulation
+from jbubble import SaveSpec, run_simulation
 from jbubble.acoustics import IncompressibleMonopole, QuasiAcoustic
 from jbubble.bubble.eom import KellerMiksis
 from jbubble.bubble.gas import PolytropicGas
@@ -41,6 +41,7 @@ pulse = ToneBurst(freq=1e6, pressure=200e3, shape=Sine(), cycle_num=5)
 result = jax.jit(run_simulation)(
     eom,
     pulse,
+    save_spec=SaveSpec(num_samples=2048),
 )
 
 # 2. Compute emission at a single distance
