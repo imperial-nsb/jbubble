@@ -1,4 +1,4 @@
-"""10 Gradient Descent to Resonance
+"""11 Gradient Descent to Resonance
 
 Combining differentiability and batch sweeps.
 

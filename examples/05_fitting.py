@@ -22,7 +22,6 @@ from jbubble.bubble.shell import (
     LipidShell,
 )
 from jbubble.pulse import ToneBurst
-from jbubble.pulse.envelope import HannEnvelope
 from jbubble.pulse.shapes import Sine
 from jbubble.simulation import SimulationResult
 
@@ -55,7 +54,7 @@ pulse = ToneBurst(
     pressure=50e3,
     shape=Sine(),
     cycle_num=5,
-    envelope=HannEnvelope(),
+
 )
 save_spec = SaveSpec(num_samples=256)
 

@@ -36,6 +36,36 @@ class HannEnvelope(Envelope):
         return jnp.where(in_window, hann, 0.0)
 
 
+class SoftRectangularEnvelope(Envelope):
+    """Smooth approximation to a rectangular window using sigmoid transitions.
+
+    Replaces the hard on/off step of :class:`RectangularEnvelope` with
+    smooth sigmoid ramps, keeping ``dp_ac/dt`` continuous everywhere.
+    This is the preferred envelope when a near-rectangular window is needed
+    for gradient-based parameter fitting via the adjoint method.
+
+    The window value is::
+
+        w(τ) = σ(τ / k) · σ((T − τ) / k),   k = T / steepness
+
+    where ``σ`` is the logistic sigmoid and ``T`` is the pulse duration.
+    The plateau is flat to within ``2·exp(−steepness/2)`` of 1.0.
+
+    Parameters
+    ----------
+    steepness : float
+        Controls transition sharpness.  Transitions span roughly
+        ``4·T / steepness`` in time (±2σ).  Default 100 gives transitions
+        of ≈ 4% of the pulse duration — imperceptible for bursts of 5+ cycles.
+    """
+
+    steepness: float = 100.0
+
+    def __call__(self, tau: jax.Array, duration: float) -> jax.Array:
+        k = duration / self.steepness
+        return jax.nn.sigmoid(tau / k) * jax.nn.sigmoid((duration - tau) / k)
+
+
 class TukeyEnvelope(Envelope):
     """Tukey (tapered cosine) window — flat in the middle, cosine tapers.
 

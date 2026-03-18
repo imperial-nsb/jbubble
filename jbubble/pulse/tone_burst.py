@@ -32,12 +32,11 @@ class ToneBurst(Pulse):
     Examples
     --------
     >>> import jax.numpy as jnp
-    >>> from jbubble.pulse import ToneBurst, HannEnvelope
+    >>> from jbubble.pulse import ToneBurst
     >>> from jbubble.pulse.shapes import Sine
-    >>> pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(),
-    ...                   cycle_num=5, envelope=HannEnvelope())
-    >>> float(pulse(jnp.array(0.0)))
-    0.0
+    >>> pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
+    >>> float(pulse(jnp.array(0.0))) < 0.5  # sigmoid is ~0.5 at t=0
+    True
     """
 
     freq: float

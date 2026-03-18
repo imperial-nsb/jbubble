@@ -6,10 +6,9 @@ Equinox module and is fully JAX-differentiable.
 
 Quick start
 -----------
->>> from jbubble.pulse import ToneBurst, HannEnvelope
+>>> from jbubble.pulse import ToneBurst
 >>> from jbubble.pulse.shapes import Sine
->>> pulse = ToneBurst(freq=1e6, pressure=200e3, shape=Sine(),
-...                   envelope=HannEnvelope())
+>>> pulse = ToneBurst(freq=1e6, pressure=200e3, shape=Sine())
 
 Pulse types
 -----------
@@ -36,6 +35,7 @@ from .envelope import (
     Envelope,
     HannEnvelope,
     RectangularEnvelope,
+    SoftRectangularEnvelope,
     TukeyEnvelope,
 )
 from .neural import NeuralPulse
@@ -48,6 +48,7 @@ __all__ = [
     # Envelopes
     "Envelope",
     "RectangularEnvelope",
+    "SoftRectangularEnvelope",
     "HannEnvelope",
     "TukeyEnvelope",
     # Pulse types

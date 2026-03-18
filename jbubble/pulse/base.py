@@ -8,7 +8,7 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from .envelope import Envelope, RectangularEnvelope
+from .envelope import Envelope, SoftRectangularEnvelope
 
 
 class Pulse(eqx.Module, abc.ABC):
@@ -30,7 +30,7 @@ class Pulse(eqx.Module, abc.ABC):
     """
 
     initial_time: float = eqx.field(default=0.0, kw_only=True)
-    envelope: Envelope = eqx.field(default_factory=RectangularEnvelope, kw_only=True)
+    envelope: Envelope = eqx.field(default_factory=SoftRectangularEnvelope, kw_only=True)
 
     @abc.abstractmethod
     def _evaluate(self, t: jax.Array) -> jax.Array:
