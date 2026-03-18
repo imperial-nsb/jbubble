@@ -48,28 +48,25 @@ FREQ_MIN, FREQ_MAX = 0.1e6, 1.5e6   # Hz
 R0_MIN, R0_MAX = 2.0e-6, 10.0e-6    # m
 
 
-def _sigmoid_freq(x):
-    return FREQ_MIN + (FREQ_MAX - FREQ_MIN) * jax.nn.sigmoid(x)
-
-
-def _sigmoid_r0(x):
-    return R0_MIN + (R0_MAX - R0_MIN) * jax.nn.sigmoid(x)
-
-
-def _logit(frac):
-    frac = jnp.clip(frac, 1e-6, 1 - 1e-6)
-    return jnp.log(frac / (1 - frac))
+def _scaled_sigmoid(x, lo, hi):
+    return lo + (hi - lo) * jax.nn.sigmoid(x)
 
 
 def physical_to_params(freq, r0):
+    def _logit(v, lo, hi):
+        return jax.scipy.special.logit(jnp.clip((v - lo) / (hi - lo), 1e-6, 1 - 1e-6))
+
     return {
-        "freq": _logit((freq - FREQ_MIN) / (FREQ_MAX - FREQ_MIN)),
-        "R0": _logit((r0 - R0_MIN) / (R0_MAX - R0_MIN)),
+        "freq": _logit(freq, FREQ_MIN, FREQ_MAX),
+        "R0": _logit(r0, R0_MIN, R0_MAX),
     }
 
 
 def params_to_physical(params):
-    return _sigmoid_freq(params["freq"]), _sigmoid_r0(params["R0"])
+    return (
+        _scaled_sigmoid(params["freq"], FREQ_MIN, FREQ_MAX),
+        _scaled_sigmoid(params["R0"], R0_MIN, R0_MAX),
+    )
 
 
 def soft_max(x, beta=1e6):
@@ -80,8 +77,7 @@ def soft_max(x, beta=1e6):
     ``beta`` controls sharpness; at 1e6 / (typical radius ~µm) the error
     relative to the true max is negligible.
     """
-    x_max = jnp.max(x)   # used only for numerical stability, not differentiated
-    return x_max + jnp.log(jnp.mean(jnp.exp(beta * (x - x_max)))) / beta
+    return (jax.nn.logsumexp(beta * x) - jnp.log(x.shape[0])) / beta
 
 
 def make_model(params):
