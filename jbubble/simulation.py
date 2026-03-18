@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any
+from typing import Any, cast
 
 import diffrax
 import equinox as eqx
@@ -123,25 +123,27 @@ def run_simulation(
         progress=progress,
     )
 
-    assert sol.ts is not None
-    assert sol.ys is not None
-
-    ys: BubbleState = sol.ys
-    ys_dot: BubbleState = jax.vmap(lambda t, s: eom(t, s, pulse))(sol.ts, ys)
+    ts = cast(jax.Array, sol.ts)
+    ys = cast(BubbleState, sol.ys)
+    ys_dot: BubbleState = jax.vmap(lambda t, x: eom(t, x, pulse))(ts, ys)
 
     converged = diffrax.is_successful(sol.result)
-    if not converged:
-        warnings.warn(
-            "ODE solver did not converge. "
-            "Returned trajectory may be incomplete. Check `result.converged` before use.",
-            UserWarning,
-            stacklevel=2,
-        )
+
+    def _warn_not_converged(c: bool) -> None:
+        if not c:
+            warnings.warn(
+                "ODE solver did not converge. "
+                "Returned trajectory may be incomplete. Check `result.converged` before use.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+    jax.debug.callback(_warn_not_converged, converged)
 
     return SimulationResult(
-        ts=sol.ts,
+        ts=ts,
         state=ys,
         state_dot=ys_dot,
-        driving_pressure=jax.vmap(pulse)(sol.ts),
+        driving_pressure=jax.vmap(pulse)(ts),
         converged=converged,
     )

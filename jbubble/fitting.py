@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import diffrax
 import equinox as eqx
@@ -13,6 +13,7 @@ import jax.numpy as jnp
 import optax
 
 from .bubble.eom import EquationOfMotion
+from .bubble.state import BubbleState
 from .pulse import Pulse
 from .simulation import SimulationResult, run_simulation
 from .solver import SaveSpec, SolverConfig, solve_eom
@@ -171,18 +172,15 @@ def fit_parameters(
 
         jax.debug.callback(_check_converged, converged)
 
-        # Solution converged -- assert for type safety
-        assert sol.ts is not None
-        assert sol.ys is not None
-
-        ys = sol.ys
-        ys_dot = jax.vmap(lambda t, x: eom(t, x, pulse))(sol.ts, ys)
+        ts = cast(jax.Array, sol.ts)
+        ys = cast(BubbleState, sol.ys)
+        ys_dot: BubbleState = jax.vmap(lambda t, x: eom(t, x, pulse))(ts, ys)
 
         result = SimulationResult(
-            ts=sol.ts,
+            ts=ts,
             state=ys,
             state_dot=ys_dot,
-            driving_pressure=jax.vmap(pulse)(sol.ts),
+            driving_pressure=jax.vmap(pulse)(ts),
             converged=converged,
         )
         return loss_fn(result)
