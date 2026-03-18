@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import Any
 
 import diffrax
@@ -128,10 +129,19 @@ def run_simulation(
     ys: BubbleState = sol.ys
     ys_dot: BubbleState = jax.vmap(lambda t, s: eom(t, s, pulse))(sol.ts, ys)
 
+    converged = diffrax.is_successful(sol.result)
+    if not converged:
+        warnings.warn(
+            "ODE solver did not converge. "
+            "Returned trajectory may be incomplete. Check `result.converged` before use.",
+            UserWarning,
+            stacklevel=2,
+        )
+
     return SimulationResult(
         ts=sol.ts,
         state=ys,
         state_dot=ys_dot,
         driving_pressure=jax.vmap(pulse)(sol.ts),
-        converged=diffrax.is_successful(sol.result),
+        converged=converged,
     )

@@ -158,16 +158,32 @@ def fit_parameters(
             config=config,
             adjoint=adjoint,
         )
+
+        converged = diffrax.is_successful(sol.result)
+
+        def _check_converged(c: bool) -> None:
+            if not c:
+                raise RuntimeError(
+                    "ODE solver did not converge during fitting — the bubble may "
+                    "have entered inertial cavitation (extreme collapse). "
+                    "Consider reducing driving pressure."
+                )
+
+        jax.debug.callback(_check_converged, converged)
+
+        # Solution converged -- assert for type safety
         assert sol.ts is not None
         assert sol.ys is not None
+
         ys = sol.ys
-        ys_dot = jax.vmap(lambda t, s: eom(t, s, pulse))(sol.ts, ys)
+        ys_dot = jax.vmap(lambda t, x: eom(t, x, pulse))(sol.ts, ys)
+
         result = SimulationResult(
             ts=sol.ts,
             state=ys,
             state_dot=ys_dot,
             driving_pressure=jax.vmap(pulse)(sol.ts),
-            converged=diffrax.is_successful(sol.result),
+            converged=converged,
         )
         return loss_fn(result)
 
@@ -178,16 +194,18 @@ def fit_parameters(
 
     for step in range(n_steps):
         loss_val, grads = loss_and_grad(array_params)
+        loss_float = float(loss_val)
+
         updates, opt_state = optimizer.update(grads, opt_state)
         array_params = optax.apply_updates(array_params, updates)
-        loss_history.append(float(loss_val))
+        loss_history.append(loss_float)
 
         if step_callback is not None:
-            step_callback(step, eqx.combine(array_params, static), float(loss_val))
+            step_callback(step, eqx.combine(array_params, static), loss_float)
 
         if log_every > 0 and (step % log_every == 0 or step == n_steps - 1):
             print(
-                f"  step {step:>4} / {n_steps}  loss = {float(loss_val):.4e}"
+                f"  step {step:>4} / {n_steps}  loss = {loss_float:.4e}"
                 f"  params = {_format_params(array_params)}"
             )
 
