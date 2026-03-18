@@ -220,6 +220,17 @@ class GompertzSurfaceTension(Property):
     as R -> infinity.  R0 is read from the state so this model stays
     consistent when R0 evolves (e.g. rectified diffusion).
 
+    Well-posedness constraint
+    -------------------------
+    The Gompertz fit requires that the initial surface tension at R0 lies
+    strictly below the rupture threshold::
+
+        chi * ((1 / R_buckle_ratio)^2 - 1) < sigma_rupture
+
+    Construction raises ``ValueError`` if this is violated.  A common
+    mistake is setting R_buckle_ratio too small (e.g. 0.9), which inflates
+    sigma(R0) above sigma_rupture.  Values around 0.95–0.99 are typical.
+
     Fields
     ------
     R_buckle_ratio : float
@@ -233,6 +244,17 @@ class GompertzSurfaceTension(Property):
     R_buckle_ratio: float
     chi: float
     sigma_rupture: float
+
+    def __post_init__(self) -> None:
+        sigma_at_R0 = self.chi * ((1.0 / self.R_buckle_ratio) ** 2 - 1.0)
+        if sigma_at_R0 >= self.sigma_rupture:
+            raise ValueError(
+                f"GompertzSurfaceTension: sigma(R0) = {sigma_at_R0:.4g} N/m "
+                f">= sigma_rupture = {self.sigma_rupture:.4g} N/m.  "
+                f"The bubble starts in the ruptured regime and the Gompertz "
+                f"fit is ill-posed.  Increase R_buckle_ratio (try 0.98) or "
+                f"decrease chi."
+            )
 
     def __call__(self, state: BubbleState) -> jax.Array:
         R, R0 = state.R, state.R0
