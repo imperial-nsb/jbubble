@@ -14,14 +14,14 @@
         <link rel="prev" href="../bubble_models/">
       
       
-        <link rel="next" href="../units/">
+        <link rel="next" href="../jax_tips/">
       
       
         
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -532,33 +532,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#constructing-a-pulse" class="md-nav__link">
+  <a href="#toneburst" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Constructing a Pulse
+        ToneBurst
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#available-shapes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Available shapes
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Available shapes">
+    <nav class="md-nav" aria-label="ToneBurst">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#analytic-shapes" class="md-nav__link">
+  <a href="#carrier-shapes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Analytic shapes
+        Carrier shapes
       
     </span>
   </a>
@@ -566,21 +555,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fourier-series-shapes" class="md-nav__link">
+  <a href="#envelopes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fourier-series shapes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rectangular-duty-cycle-shapes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rectangular duty-cycle shapes
+        Envelopes
       
     </span>
   </a>
@@ -593,10 +571,104 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#creating-a-custom-shape" class="md-nav__link">
+  <a href="#chirppulse" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Creating a custom shape
+        ChirpPulse
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sampledpulse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SampledPulse
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#neuralpulse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NeuralPulse
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#composing-pulses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Composing pulses
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Composing pulses">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#superposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Superposition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amplitude-scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amplitude scaling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-offset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time offset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#applying-an-envelope-to-any-pulse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Applying an envelope to any pulse
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluating-a-pulse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluating a pulse
       
     </span>
   </a>
@@ -607,34 +679,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Units & scaling
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -790,34 +834,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    units
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../api/pulse/" class="md-nav__link">
         
   
@@ -854,6 +870,34 @@
     
   
     shapes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    acoustics
   
 
     
@@ -930,6 +974,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../api/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fitting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../api/utils/" class="md-nav__link">
         
   
@@ -979,160 +1079,203 @@
 
 
 <h1 id="pulse-shapes">Pulse shapes<a class="headerlink" href="#pulse-shapes" title="Permanent link">&para;</a></h1>
-<p>A <code>Pulse</code> object wraps a <code>PulseShape</code> to define the temporal waveform of the
-driving ultrasound pressure. jbubble ships with a large library of shapes
-implemented as JAX-compatible modules.</p>
-<h2 id="constructing-a-pulse">Constructing a Pulse<a class="headerlink" href="#constructing-a-pulse" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pulse</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">shapes</span>
+<p>An acoustic pulse in jbubble is a callable <code>p_ac(t)</code> returning the driving pressure in Pascals at time <code>t</code>. Every pulse is an Equinox module (a JAX PyTree), so pulses are JIT-compilable and differentiable.</p>
+<hr />
+<h2 id="toneburst">ToneBurst<a class="headerlink" href="#toneburst" title="Permanent link">&para;</a></h2>
+<p>The standard ultrasound pulse: a carrier waveform gated by a finite-duration envelope.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">freq</span><span class="o">=</span><span class="mf">2e6</span><span class="p">,</span>            <span class="c1"># carrier frequency in Hz</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">pressure</span><span class="o">=</span><span class="mf">200e3</span><span class="p">,</span>         <span class="c1"># peak negative pressure amplitude in Pa</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">cycle_num</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>         <span class="c1"># number of oscillation cycles</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">shape</span><span class="o">=</span><span class="n">shapes</span><span class="o">.</span><span class="n">Sine</span><span class="p">(),</span> <span class="c1"># waveform shape</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span>        <span class="c1"># centre frequency [Hz]</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span>  <span class="c1"># peak pressure amplitude [Pa]</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span>    <span class="c1"># carrier waveform</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>     <span class="c1"># number of complete cycles</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="c1"># Optional:</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="c1"># phase=0.0      # initial carrier phase [rad]</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="c1"># envelope=SoftRectangularEnvelope()</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span>
 </code></pre></div>
-<p>The <code>Pulse</code> multiplies <code>pressure</code> by the normalised output of <code>shape</code> evaluated at
-each time-step. All shapes are normalised so that their peak absolute value is 1.</p>
-<h2 id="available-shapes">Available shapes<a class="headerlink" href="#available-shapes" title="Permanent link">&para;</a></h2>
-<h3 id="analytic-shapes">Analytic shapes<a class="headerlink" href="#analytic-shapes" title="Permanent link">&para;</a></h3>
+<h3 id="carrier-shapes">Carrier shapes<a class="headerlink" href="#carrier-shapes" title="Permanent link">&para;</a></h3>
+<p>The <code>shape</code> argument selects the carrier waveform within each cycle. All shapes are normalised to peak amplitude 1.</p>
 <table>
 <thead>
 <tr>
-<th>Class</th>
+<th>Shape class</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>Sine</code></td>
-<td>Standard sinusoidal waveform — the most common choice</td>
+<td>Standard sine wave (default)</td>
 </tr>
 <tr>
-<td><code>TimeDomainSquare</code></td>
-<td>Smooth square wave via <code>tanh(k·sin(ωt))</code>; sharpness is configurable</td>
+<td><code>Square</code></td>
+<td>Fourier-series square wave (10 terms)</td>
+</tr>
+<tr>
+<td><code>Sawtooth</code></td>
+<td>Rising sawtooth</td>
+</tr>
+<tr>
+<td><code>InvertedSawtooth</code></td>
+<td>Falling sawtooth</td>
+</tr>
+<tr>
+<td><code>Triangle</code></td>
+<td>Triangular wave</td>
+</tr>
+<tr>
+<td><code>Quadratic</code></td>
+<td>Parabolic carrier</td>
+</tr>
+<tr>
+<td><code>NegativeQuadratic</code></td>
+<td>Inverted parabolic carrier</td>
+</tr>
+<tr>
+<td><code>Rectangular(duty)</code></td>
+<td>General duty-cycle rectangular waveform</td>
+</tr>
+<tr>
+<td><code>TimeDomainSquare(sharpness)</code></td>
+<td><code>tanh</code>-smoothed square, avoids Gibbs ringing</td>
 </tr>
 <tr>
 <td><code>TimeDomainSawtooth</code></td>
-<td>Smooth forward sawtooth via <code>arctan(tan(ωt))</code></td>
+<td><code>arctan</code>-based smooth sawtooth</td>
 </tr>
 <tr>
 <td><code>TimeDomainTriangle</code></td>
-<td>Smooth triangle wave via <code>arcsin(sin(ωt))</code></td>
+<td><code>arcsin</code>-based smooth triangle</td>
 </tr>
 </tbody>
 </table>
-<h3 id="fourier-series-shapes">Fourier-series shapes<a class="headerlink" href="#fourier-series-shapes" title="Permanent link">&para;</a></h3>
-<p>These shapes are constructed from a truncated Fourier series (<code>NUM_FOURIER_TERMS = 10</code>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Square</span><span class="p">,</span> <span class="n">Rectangular</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">200e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Square</span><span class="p">())</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Monopolar rectangular pulse (99% duty)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">200e3</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">shape</span><span class="o">=</span><span class="n">Rectangular</span><span class="p">(</span><span class="n">duty</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">high_level</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">low_level</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>                      <span class="n">phase_offset</span><span class="o">=</span><span class="mf">1.98</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">)</span>
+</code></pre></div>
+<h3 id="envelopes">Envelopes<a class="headerlink" href="#envelopes" title="Permanent link">&para;</a></h3>
+<p>The envelope gates the carrier over the active window. The default for <code>ToneBurst</code> is <code>SoftRectangularEnvelope</code>.</p>
 <table>
 <thead>
 <tr>
-<th>Class</th>
+<th>Envelope class</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>Square</code></td>
-<td>Odd-harmonic Fourier square wave</td>
+<td><code>RectangularEnvelope</code></td>
+<td>Hard on/off step. <strong>Avoid for fitting</strong> — non-differentiable edges.</td>
 </tr>
 <tr>
-<td><code>SquareNegPos</code></td>
-<td>Square wave: −1 for first half-cycle, +1 for second</td>
+<td><code>SoftRectangularEnvelope</code></td>
+<td>Sigmoid on and off transitions. <span class="arithmatex">\(C^\infty\)</span>, near-rectangular. <strong>Preferred.</strong></td>
 </tr>
 <tr>
-<td><code>Sawtooth</code></td>
-<td>Forward sawtooth</td>
+<td><code>HannEnvelope</code></td>
+<td>Cosine-squared window. Smooth, tapered edges.</td>
 </tr>
 <tr>
-<td><code>InvertedSawtooth</code></td>
-<td>Reverse sawtooth</td>
-</tr>
-<tr>
-<td><code>Triangle</code></td>
-<td>Symmetric triangle</td>
-</tr>
-<tr>
-<td><code>Quadratic</code></td>
-<td>Quadratic waveform</td>
-</tr>
-<tr>
-<td><code>NegativeQuadratic</code></td>
-<td>Inverted quadratic</td>
-</tr>
-<tr>
-<td><code>Asymmetrical</code></td>
-<td>Mixed cosine+sine asymmetric waveform</td>
-</tr>
-<tr>
-<td><code>SlantedSine</code></td>
-<td>Sine with harmonic slope (Clausen-function envelope)</td>
-</tr>
-<tr>
-<td><code>Pulse9</code></td>
-<td>Phase-shifted cosine harmonic series</td>
-</tr>
-<tr>
-<td><code>Pulse10</code></td>
-<td>Mixed-harmonic series on odd multiples</td>
+<td><code>TukeyEnvelope(alpha)</code></td>
+<td>Hann-tapered at both ends, flat in the middle. <code>alpha</code> controls taper fraction.</td>
 </tr>
 </tbody>
 </table>
-<h3 id="rectangular-duty-cycle-shapes">Rectangular duty-cycle shapes<a class="headerlink" href="#rectangular-duty-cycle-shapes" title="Permanent link">&para;</a></h3>
-<p>These shapes produce rectangular waves with specified duty cycles.</p>
-<table>
-<thead>
-<tr>
-<th>Class</th>
-<th>Waveform description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>Rect25</code></td>
-<td>+1 for 75% of cycle, −1 for 25%</td>
-</tr>
-<tr>
-<td><code>Rect75</code></td>
-<td>+1 for 25% of cycle, −1 for 75%</td>
-</tr>
-<tr>
-<td><code>Rect25NegPos</code></td>
-<td>−1 for first 25%, +1 for last 75%</td>
-</tr>
-<tr>
-<td><code>Rect75NegPos</code></td>
-<td>−1 for first 75%, +1 for last 25%</td>
-</tr>
-<tr>
-<td><code>Rect95</code></td>
-<td>−1 for 95% of cycle, +1 for last 5%</td>
-</tr>
-<tr>
-<td><code>Mono95</code></td>
-<td>−1 for 95% of cycle, 0 for last 5% (monopole-like)</td>
-</tr>
-<tr>
-<td><code>Mono99</code></td>
-<td>−1 for 99% of cycle, 0 for last 1% (narrow monopole)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="creating-a-custom-shape">Creating a custom shape<a class="headerlink" href="#creating-a-custom-shape" title="Permanent link">&para;</a></h2>
-<p>Subclass <code>PulseShape</code> and implement <code>__call__</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">PulseShape</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyShape</span><span class="p">(</span><span class="n">PulseShape</span><span class="p">):</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">initial_time</span><span class="p">):</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span> <span class="o">-</span> <span class="n">initial_time</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">freq</span> <span class="o">*</span> <span class="n">t</span> <span class="o">-</span> <span class="n">phase</span><span class="p">)</span> <span class="o">**</span> <span class="mi">3</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">MyShape</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span><span class="p">,</span> <span class="n">HannEnvelope</span><span class="p">,</span> <span class="n">TukeyEnvelope</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Hann-windowed tone burst</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>                  <span class="n">envelope</span><span class="o">=</span><span class="n">HannEnvelope</span><span class="p">())</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1"># 10% taper on each side, flat in the middle</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>                  <span class="n">envelope</span><span class="o">=</span><span class="n">TukeyEnvelope</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">))</span>
 </code></pre></div>
-<p>Custom shapes must be pure JAX functions (no Python control flow on traced values)
-to be compatible with <code>jax.jit</code> and <code>jax.vmap</code>.</p>
+<hr />
+<h2 id="chirppulse">ChirpPulse<a class="headerlink" href="#chirppulse" title="Permanent link">&para;</a></h2>
+<p>A frequency-swept pulse. Useful for broadband excitation and some therapeutic protocols.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChirpPulse</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">ChirpPulse</span><span class="p">(</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">freq_start</span><span class="o">=</span><span class="mf">0.5e6</span><span class="p">,</span>   <span class="c1"># start frequency [Hz]</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">freq_end</span><span class="o">=</span><span class="mf">2.0e6</span><span class="p">,</span>     <span class="c1"># end frequency [Hz]</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span>     <span class="c1"># peak amplitude [Pa]</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">duration</span><span class="o">=</span><span class="mf">20e-6</span><span class="p">,</span>     <span class="c1"># pulse duration [s]</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="c1"># mode=&quot;linear&quot; or &quot;exponential&quot;</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="sampledpulse">SampledPulse<a class="headerlink" href="#sampledpulse" title="Permanent link">&para;</a></h2>
+<p>Wraps a discrete pressure waveform, interpolating at query times. Useful when the driving waveform is measured experimentally.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">SampledPulse</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">ts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">10e-6</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>   <span class="c1"># time axis [s]</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">ps</span> <span class="o">=</span> <span class="n">measured_waveform</span>               <span class="c1"># pressure values [Pa], shape (1000,)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">SampledPulse</span><span class="p">(</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span> <span class="n">ps</span><span class="o">=</span><span class="n">ps</span><span class="p">)</span>
+</code></pre></div>
+<p>The interpolation is performed with <code>jnp.interp</code> (linear, clamped to boundary values outside the range), so it is differentiable through the sampled pressures.</p>
+<hr />
+<h2 id="neuralpulse">NeuralPulse<a class="headerlink" href="#neuralpulse" title="Permanent link">&para;</a></h2>
+<p>A pulse parameterised by a small neural network. Useful for learned or optimised driving waveforms.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">NeuralPulse</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">net</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MLP</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">width_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">NeuralPulse</span><span class="p">(</span><span class="n">net</span><span class="o">=</span><span class="n">net</span><span class="p">)</span>
+</code></pre></div>
+<p>The network receives the scalar time <code>t</code> and returns the driving pressure. Because it is an Equinox module, the network weights are differentiable and can be optimised via <code>fit_parameters</code>.</p>
+<hr />
+<h2 id="composing-pulses">Composing pulses<a class="headerlink" href="#composing-pulses" title="Permanent link">&para;</a></h2>
+<h3 id="superposition">Superposition<a class="headerlink" href="#superposition" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span><span class="p">,</span> <span class="n">Summed</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Dual-frequency driving</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">p1</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">80e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">p2</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">2e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">40e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">Summed</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="amplitude-scaling">Amplitude scaling<a class="headerlink" href="#amplitude-scaling" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scaled</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">Scaled</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">p1</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>  <span class="c1"># doubles the amplitude</span>
+</code></pre></div>
+<h3 id="time-offset">Time offset<a class="headerlink" href="#time-offset" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Offset</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">delayed_pulse</span> <span class="o">=</span> <span class="n">Offset</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">p1</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mf">5e-6</span><span class="p">)</span>  <span class="c1"># 5 µs delay</span>
+</code></pre></div>
+<h3 id="applying-an-envelope-to-any-pulse">Applying an envelope to any pulse<a class="headerlink" href="#applying-an-envelope-to-any-pulse" title="Permanent link">&para;</a></h3>
+<p>Every <code>Pulse</code> has a <code>.windowed(envelope)</code> method:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">SoftRectangularEnvelope</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">windowed</span> <span class="o">=</span> <span class="n">sampled_pulse</span><span class="o">.</span><span class="n">windowed</span><span class="p">(</span><span class="n">SoftRectangularEnvelope</span><span class="p">())</span>
+</code></pre></div>
+<hr />
+<h2 id="evaluating-a-pulse">Evaluating a pulse<a class="headerlink" href="#evaluating-a-pulse" title="Permanent link">&para;</a></h2>
+<p>All pulses share the same interface:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">t</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">10e-6</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">p</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">pulse</span><span class="p">)(</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># shape (1000,) [Pa]</span>
+</code></pre></div>
+<p>Or simply call at a scalar time:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">p_at_3us</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">(</span><span class="mf">3e-6</span><span class="p">)</span>
+</code></pre></div>
 
 
 

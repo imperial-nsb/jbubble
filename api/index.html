@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -495,34 +495,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../guide/units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Units & scaling
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../guide/jax_tips/" class="md-nav__link">
         
   
@@ -675,10 +647,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#modules" class="md-nav__link">
+  <a href="#module-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Modules
+        Module layout
       
     </span>
   </a>
@@ -686,10 +658,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#top-level-imports" class="md-nav__link">
+  <a href="#import-conventions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Top-level imports
+        Import conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pages
       
     </span>
   </a>
@@ -720,34 +703,6 @@
     
   
     bubble
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    units
   
 
     
@@ -824,6 +779,34 @@
   
   
     <li class="md-nav__item">
+      <a href="acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    acoustics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="solver/" class="md-nav__link">
         
   
@@ -860,6 +843,62 @@
     
   
     simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fitting
   
 
     
@@ -929,66 +968,99 @@
 
 
 <h1 id="api-reference">API reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
-<p>This section provides the full autodoc reference for every public class and
-function in jbubble. Each page corresponds to one submodule.</p>
-<h2 id="modules">Modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h2>
+<p>All public APIs are documented here with full signatures, parameters, and governing equations.</p>
+<h2 id="module-layout">Module layout<a class="headerlink" href="#module-layout" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>jbubble/
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── __init__.py           # run_simulation, fit_parameters, SaveSpec, SolverConfig, solve_eom, FitResult
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── simulation.py         # SimulationResult
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── solver.py             # SaveSpec, SolverConfig, solve_eom
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>├── metrics.py            # mse_radius, mse_emission, …
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>├── fitting.py            # fit_parameters, FitResult
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>├── bubble/
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── state.py          # BubbleState, ConfinedBubbleState
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── property.py       # Property, ConstantProperty, NeuralProperty, as_property
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   ├── gas.py            # GasModel, PolytropicGas, VanDerWaalsGas
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   ├── shell.py          # ShellModel, NoShell, LipidShell, ThickShell, surface tension Properties
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   ├── medium.py         # MediumModel, NewtonianMedium, KelvinVoigtMedium, NeoHookeanMedium, PowerLawMedium
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   └── eom.py            # EquationOfMotion, RayleighPlesset, KellerMiksis, Gilmore, …
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>├── acoustics/
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│   └── emission.py       # EmissionModel, IncompressibleMonopole, QuasiAcoustic
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>├── pulse/
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   ├── __init__.py       # ToneBurst, SampledPulse, ChirpPulse, NeuralPulse, Scaled, Summed, Offset, envelopes
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   └── shapes.py         # PulseShape, Sine, Square, Sawtooth, Rectangular, …
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>└── utils/
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    ├── presets.py        # BubblePreset, free_bubble, lipid_bubble, thick_shell_bubble
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    ├── gridsweep.py      # GridSweep
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    └── io.py             # export_hdf5, load_hdf5
+</code></pre></div>
+<h2 id="import-conventions">Import conventions<a class="headerlink" href="#import-conventions" title="Permanent link">&para;</a></h2>
+<p>Only top-level orchestration functions are re-exported from the package root:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Top-level imports</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_simulation</span><span class="p">,</span> <span class="n">fit_parameters</span><span class="p">,</span> <span class="n">SaveSpec</span><span class="p">,</span> <span class="n">SolverConfig</span><span class="p">,</span> <span class="n">solve_eom</span><span class="p">,</span> <span class="n">FitResult</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Subpackage imports (required for all model classes)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">KellerMiksis</span><span class="p">,</span> <span class="n">RayleighPlesset</span><span class="p">,</span> <span class="n">Gilmore</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolytropicGas</span><span class="p">,</span> <span class="n">VanDerWaalsGas</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoShell</span><span class="p">,</span> <span class="n">LipidShell</span><span class="p">,</span> <span class="n">ThickShell</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">GompertzSurfaceTension</span><span class="p">,</span> <span class="n">MarmottantSurfaceTension</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">NewtonianMedium</span><span class="p">,</span> <span class="n">KelvinVoigtMedium</span><span class="p">,</span> <span class="n">NeoHookeanMedium</span><span class="p">,</span> <span class="n">PowerLawMedium</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.property</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConstantProperty</span><span class="p">,</span> <span class="n">NeuralProperty</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">BubbleState</span><span class="p">,</span> <span class="n">ConfinedBubbleState</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.acoustics</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncompressibleMonopole</span><span class="p">,</span> <span class="n">QuasiAcoustic</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span><span class="p">,</span> <span class="n">ChirpPulse</span><span class="p">,</span> <span class="n">SampledPulse</span><span class="p">,</span> <span class="n">NeuralPulse</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">SoftRectangularEnvelope</span><span class="p">,</span> <span class="n">HannEnvelope</span><span class="p">,</span> <span class="n">TukeyEnvelope</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span><span class="p">,</span> <span class="n">Square</span><span class="p">,</span> <span class="n">Sawtooth</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.presets</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_bubble</span><span class="p">,</span> <span class="n">lipid_bubble</span><span class="p">,</span> <span class="n">thick_shell_bubble</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.gridsweep</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridSweep</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">export_hdf5</span><span class="p">,</span> <span class="n">load_hdf5</span>
+</code></pre></div>
+<h2 id="pages">Pages<a class="headerlink" href="#pages" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Module</th>
+<th>Page</th>
 <th>Contents</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><a href="bubble/"><code>jbubble.bubble</code></a></td>
-<td>Bubble model classes: <code>RayleighPlesset</code>, <code>Marmottant</code>, <code>MarmottantGompertz</code>, <code>KellerMiksisGompertz</code>, <code>KelvinVoigtGompertz</code>, <code>LeightonGompertz</code>, <code>SphericalConfinement</code></td>
+<td><a href="bubble/">bubble</a></td>
+<td>State, Property, gas, shell, medium, EoM classes</td>
 </tr>
 <tr>
-<td><a href="units/"><code>jbubble.units</code></a></td>
-<td><code>Units</code> — non-dimensionalisation scales</td>
+<td><a href="pulse/">pulse</a></td>
+<td>ToneBurst, ChirpPulse, SampledPulse, NeuralPulse, envelopes, composition</td>
 </tr>
 <tr>
-<td><a href="pulse/"><code>jbubble.pulse</code></a></td>
-<td><code>Pulse</code> — ultrasound pulse descriptor</td>
+<td><a href="shapes/">shapes</a></td>
+<td>PulseShape subclasses (Sine, Square, Rectangular, …)</td>
 </tr>
 <tr>
-<td><a href="shapes/"><code>jbubble.shapes</code></a></td>
-<td><code>PulseShape</code> base class and all concrete waveform shapes</td>
+<td><a href="acoustics/">acoustics</a></td>
+<td>EmissionModel, IncompressibleMonopole, QuasiAcoustic</td>
 </tr>
 <tr>
-<td><a href="solver/"><code>jbubble.solver</code></a></td>
-<td><code>SaveSpec</code>, <code>solve_bubble</code> — low-level ODE solver interface</td>
+<td><a href="solver/">solver</a></td>
+<td>SaveSpec, SolverConfig, solve_eom</td>
 </tr>
 <tr>
-<td><a href="simulation/"><code>jbubble.simulation</code></a></td>
-<td><code>run_simulation</code>, <code>SimulationResult</code>, <code>compute_radius_metrics</code>, <code>arrays_from_result</code></td>
+<td><a href="simulation/">simulation</a></td>
+<td>SimulationResult, run_simulation</td>
 </tr>
 <tr>
-<td><a href="utils/"><code>jbubble.utils</code></a></td>
-<td><code>GridSweep</code> — Cartesian parameter sweep utility</td>
+<td><a href="metrics/">metrics</a></td>
+<td>Differentiable loss functions</td>
+</tr>
+<tr>
+<td><a href="fitting/">fitting</a></td>
+<td>fit_parameters, FitResult</td>
+</tr>
+<tr>
+<td><a href="utils/">utils</a></td>
+<td>Presets, GridSweep, HDF5 I/O</td>
 </tr>
 </tbody>
 </table>
-<h2 id="top-level-imports">Top-level imports<a class="headerlink" href="#top-level-imports" title="Permanent link">&para;</a></h2>
-<p>The following symbols are re-exported from the package root for convenience:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="c1"># Bubble models</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">RayleighPlesset</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">Marmottant</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">MarmottantGompertz</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">KellerMiksisGompertz</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">KelvinVoigtGompertz</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">LeightonGompertz</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">SphericalConfinement</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="c1"># Simulation</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">Units</span><span class="p">,</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">run_simulation</span><span class="p">,</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">SimulationResult</span><span class="p">,</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">compute_radius_metrics</span><span class="p">,</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">arrays_from_result</span><span class="p">,</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">)</span>
-</code></pre></div>
 
 
 

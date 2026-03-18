@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -476,10 +476,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#imports" class="md-nav__link">
+  <a href="#1-choose-an-equation-of-motion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Imports
+        1. Choose an equation of motion
       
     </span>
   </a>
@@ -487,21 +487,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-create-a-bubble" class="md-nav__link">
+  <a href="#2-construct-a-driving-pulse" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Create a bubble
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-define-a-pulse" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Define a pulse
+        2. Construct a driving pulse
       
     </span>
   </a>
@@ -531,10 +520,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-compute-radiated-pressure" class="md-nav__link">
+  <a href="#5-using-presets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Compute radiated pressure
+        5. Using presets
       
     </span>
   </a>
@@ -542,10 +531,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#complete-example" class="md-nav__link">
+  <a href="#6-acoustic-emission" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Complete example
+        6. Acoustic emission
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next steps
       
     </span>
   </a>
@@ -604,34 +604,6 @@
     
   
     Pulse shapes
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Units & scaling
   
 
     
@@ -795,34 +767,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    units
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../api/pulse/" class="md-nav__link">
         
   
@@ -859,6 +803,34 @@
     
   
     shapes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    acoustics
   
 
     
@@ -935,6 +907,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../api/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fitting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../api/utils/" class="md-nav__link">
         
   
@@ -984,79 +1012,117 @@
 
 
 <h1 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h1>
-<p>This page walks through a complete simulation from scratch.</p>
-<h2 id="imports">Imports<a class="headerlink" href="#imports" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarmottantGompertz</span><span class="p">,</span> <span class="n">Units</span><span class="p">,</span> <span class="n">run_simulation</span><span class="p">,</span> <span class="n">SimulationResult</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pulse</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">shapes</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SaveSpec</span>
+<p>This page walks through a complete simulation from scratch: choosing an equation of motion, constructing a driving pulse, running the solver, and inspecting the output.</p>
+<h2 id="1-choose-an-equation-of-motion">1. Choose an equation of motion<a class="headerlink" href="#1-choose-an-equation-of-motion" title="Permanent link">&para;</a></h2>
+<p>An <code>EquationOfMotion</code> (EoM) is the ODE right-hand side. It bundles three physics sub-models:</p>
+<ul>
+<li><strong>Gas model</strong> — pressure inside the bubble.</li>
+<li><strong>Shell model</strong> — surface tension and shell stresses.</li>
+<li><strong>Medium model</strong> — viscous and elastic stresses from the surrounding liquid.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">KellerMiksis</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolytropicGas</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoShell</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">NewtonianMedium</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">eom</span> <span class="o">=</span> <span class="n">KellerMiksis</span><span class="p">(</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">gas</span><span class="o">=</span><span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">),</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">shell</span><span class="o">=</span><span class="n">NoShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">0.072</span><span class="p">),</span>       <span class="c1"># water surface tension [N/m]</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">medium</span><span class="o">=</span><span class="n">NewtonianMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">),</span>  <span class="c1"># water viscosity [Pa·s]</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">,</span>       <span class="c1"># equilibrium radius [m]</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">P_amb</span><span class="o">=</span><span class="mi">101325</span><span class="p">,</span>  <span class="c1"># ambient pressure [Pa]</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">rho_L</span><span class="o">=</span><span class="mf">998.0</span><span class="p">,</span>   <span class="c1"># liquid density [kg/m³]</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">c_L</span><span class="o">=</span><span class="mf">1500.0</span><span class="p">,</span>    <span class="c1"># speed of sound [m/s]</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="p">)</span>
 </code></pre></div>
-<h2 id="1-create-a-bubble">1. Create a bubble<a class="headerlink" href="#1-create-a-bubble" title="Permanent link">&para;</a></h2>
-<p>All bubble model constructors accept physical SI parameters. Here we create a
-<code>MarmottantGompertz</code> bubble with a 3 µm equilibrium radius:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">bubble</span> <span class="o">=</span> <span class="n">MarmottantGompertz</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">3e-6</span><span class="p">)</span>   <span class="c1"># R0 in metres</span>
+<p><code>KellerMiksis</code> is the standard choice: it accounts for first-order liquid compressibility and is well-tested across a wide range of driving pressures.</p>
+<h2 id="2-construct-a-driving-pulse">2. Construct a driving pulse<a class="headerlink" href="#2-construct-a-driving-pulse" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span>       <span class="c1"># centre frequency [Hz]</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="c1"># peak pressure [Pa]</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span>   <span class="c1"># sinusoidal carrier</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>    <span class="c1"># number of cycles</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="p">)</span>
 </code></pre></div>
-<p>See <a href="../bubble_models/">Bubble models</a> for a description of every available model
-and its parameters.</p>
-<h2 id="2-define-a-pulse">2. Define a pulse<a class="headerlink" href="#2-define-a-pulse" title="Permanent link">&para;</a></h2>
-<p>A <code>Pulse</code> combines an ultrasound frequency, peak negative pressure amplitude,
-number of cycles, and a <code>PulseShape</code> waveform object:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">freq</span><span class="o">=</span><span class="mf">2e6</span><span class="p">,</span>        <span class="c1"># 2 MHz carrier frequency</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">pressure</span><span class="o">=</span><span class="mf">200e3</span><span class="p">,</span>     <span class="c1"># 200 kPa peak negative pressure</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">cycle_num</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>     <span class="c1"># 3 cycles</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">shape</span><span class="o">=</span><span class="n">shapes</span><span class="o">.</span><span class="n">Sine</span><span class="p">(),</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">)</span>
-</code></pre></div>
-<p>See <a href="../pulse_shapes/">Pulse shapes</a> for the full list of available shapes.</p>
+<p>The pulse is a callable <code>p_ac(t)</code> returning pressure at time <code>t</code>.</p>
 <h2 id="3-run-the-simulation">3. Run the simulation<a class="headerlink" href="#3-run-the-simulation" title="Permanent link">&para;</a></h2>
-<p><code>run_simulation</code> integrates the bubble ODE over a time window and returns a
-<code>SimulationResult</code>. The <code>SaveSpec</code> controls how many time-points are stored:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">units</span>  <span class="o">=</span> <span class="n">Units</span><span class="p">()</span>           <span class="c1"># default non-dimensionalisation (L=1µm, T=1µs)</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">bubble</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">pulse</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">units</span><span class="o">=</span><span class="n">units</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span>  <span class="c1"># save 64 evenly-spaced snapshots</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">window_s</span><span class="o">=</span><span class="mf">20e-6</span><span class="p">,</span>          <span class="c1"># simulation window: 20 µs</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_simulation</span><span class="p">,</span> <span class="n">SaveSpec</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">run_simulation</span><span class="p">)(</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">t_max</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">,</span>  <span class="c1"># simulate 10 µs</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">)</span>
 </code></pre></div>
+<p>Wrapping with <code>jax.jit</code> compiles the entire solver graph. The first call pays a one-time compilation cost; subsequent calls with the same argument shapes are fast.</p>
 <h2 id="4-inspect-the-result">4. Inspect the result<a class="headerlink" href="#4-inspect-the-result" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span>     <span class="c1"># JAX array, shape (64,) — R/R0 at each saved time</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">ts</span><span class="p">)</span>         <span class="c1"># JAX array, shape (64,) — times in seconds</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">)</span>  <span class="c1"># bool — whether the ODE solver converged</span>
+<p><code>SimulationResult</code> provides convenient properties:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Check the solver converged</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span> <span class="s2">&quot;ODE did not converge — increase max_steps or loosen tolerances&quot;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Time axis</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">ts</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ts</span> <span class="o">*</span> <span class="mf">1e6</span>          <span class="c1"># convert to µs</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># Radius normalised by R0</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">R_norm</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">eom</span><span class="o">.</span><span class="n">R0</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">R_norm</span><span class="p">)</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time [µs]&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;R / R₀&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Keller–Miksis: free bubble at 100 kPa, 1 MHz&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Peak expansion ratio:&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">R_norm</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Minimum radius ratio:&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">R_norm</span><span class="o">.</span><span class="n">min</span><span class="p">()))</span>
 </code></pre></div>
-<p><code>SimulationResult</code> also stores the raw state if needed:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>   <span class="c1"># full ODE state array at saved time-points</span>
+<p>The result also carries <code>state_dot</code> (time derivatives of all state variables) and <code>driving_pressure</code>.</p>
+<h2 id="5-using-presets">5. Using presets<a class="headerlink" href="#5-using-presets" title="Permanent link">&para;</a></h2>
+<p>If you just want a physically representative bubble without choosing every parameter, use one of the built-in presets:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.presets</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_bubble</span><span class="p">,</span> <span class="n">lipid_bubble</span><span class="p">,</span> <span class="n">thick_shell_bubble</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Uncoated bubble in water</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">preset</span> <span class="o">=</span> <span class="n">free_bubble</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># Clinical lipid-shelled UCA (SonoVue-like)</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">preset</span> <span class="o">=</span> <span class="n">lipid_bubble</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">1.5e-6</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="mf">2.5e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">50e3</span><span class="p">)</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1"># Polymer thick-shelled UCA (Optison-like)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">preset</span> <span class="o">=</span> <span class="n">thick_shell_bubble</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">150e3</span><span class="p">)</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="n">result</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">run_simulation</span><span class="p">)(</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="n">preset</span><span class="o">.</span><span class="n">eom</span><span class="p">,</span> <span class="n">preset</span><span class="o">.</span><span class="n">pulse</span><span class="p">,</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="n">t_max</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">,</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="p">)</span>
 </code></pre></div>
-<h2 id="5-compute-radiated-pressure">5. Compute radiated pressure<a class="headerlink" href="#5-compute-radiated-pressure" title="Permanent link">&para;</a></h2>
-<p>The far-field radiated pressure at a distance <code>d</code> from the bubble can be
-computed from the simulation result:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">p_rad</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">radiated_pressure</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>  <span class="c1"># pressure waveform at 1 mm</span>
+<h2 id="6-acoustic-emission">6. Acoustic emission<a class="headerlink" href="#6-acoustic-emission" title="Permanent link">&para;</a></h2>
+<p>To compute the radiated pressure at a field point:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.acoustics</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncompressibleMonopole</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">emission</span> <span class="o">=</span> <span class="n">IncompressibleMonopole</span><span class="p">(</span><span class="n">rho_L</span><span class="o">=</span><span class="mf">998.0</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">r</span> <span class="o">=</span> <span class="mf">1e-2</span>  <span class="c1"># 1 cm from the bubble centre</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">p_rad</span> <span class="o">=</span> <span class="n">emission</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>  <span class="c1"># shape (num_samples,) [Pa]</span>
 </code></pre></div>
-<p>The returned array has the same length as <code>result.ts</code>.</p>
-<h2 id="complete-example">Complete example<a class="headerlink" href="#complete-example" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarmottantGompertz</span><span class="p">,</span> <span class="n">Units</span><span class="p">,</span> <span class="n">run_simulation</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pulse</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">shapes</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SaveSpec</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">bubble</span> <span class="o">=</span> <span class="n">MarmottantGompertz</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">3e-6</span><span class="p">)</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">pulse</span>  <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">2e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">200e3</span><span class="p">,</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shapes</span><span class="o">.</span><span class="n">Sine</span><span class="p">())</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">units</span>  <span class="o">=</span> <span class="n">Units</span><span class="p">()</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">bubble</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="n">units</span><span class="o">=</span><span class="n">units</span><span class="p">,</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    <span class="n">window_s</span><span class="o">=</span><span class="mf">20e-6</span><span class="p">,</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="p">)</span>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Converged:&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">)</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Max R/R0:&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="n">p_rad</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">radiated_pressure</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<p>For retarded-time corrections:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.acoustics</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuasiAcoustic</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">emission</span> <span class="o">=</span> <span class="n">QuasiAcoustic</span><span class="p">(</span><span class="n">rho_L</span><span class="o">=</span><span class="mf">998.0</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mf">1500.0</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">p_rad</span> <span class="o">=</span> <span class="n">emission</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
 </code></pre></div>
+<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../bubble_models/">Bubble models</a> — detailed guide to gas, shell, and medium options.</li>
+<li><a href="../pulse_shapes/">Pulse shapes</a> — constructing complex waveforms.</li>
+<li><a href="../jax_tips/">JAX tips</a> — batched sweeps, gradient-based fitting.</li>
+<li><a href="../../api/">API reference</a> — complete class documentation.</li>
+</ul>
 
 
 

@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../units/">
+        <link rel="prev" href="../pulse_shapes/">
       
       
         <link rel="next" href="../../api/">
@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#jax-tips" class="md-skip">
+        <a href="#jax-tips-jit-vmap-grad-and-fitting" class="md-skip">
           Skip to content
         </a>
       
@@ -497,34 +497,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Units & scaling
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -588,10 +560,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#x64-mode" class="md-nav__link">
+  <a href="#jit-compilation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        x64 mode
+        JIT compilation
       
     </span>
   </a>
@@ -599,10 +571,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-jit-compilation" class="md-nav__link">
+  <a href="#batched-parameter-sweeps-with-vmap" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. JIT compilation
+        Batched parameter sweeps with vmap
       
     </span>
   </a>
@@ -610,10 +582,71 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-batching-over-parameters-with-vmap" class="md-nav__link">
+  <a href="#gradient-based-parameter-fitting" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Batching over parameters with vmap
+        Gradient-based parameter fitting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gradient-based parameter fitting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimal-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fitting-multiple-parameters-jointly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fitting multiple parameters jointly
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fitting-to-emission-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fitting to emission data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoring-convergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring convergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#computing-gradients-manually" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Computing gradients manually
       
     </span>
   </a>
@@ -621,32 +654,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-gradient-through-shell-parameters" class="md-nav__link">
+  <a href="#hdf5-export-for-large-sweeps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Gradient through shell parameters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-gridsweep-for-structured-parameter-sweeps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. GridSweep for structured parameter sweeps
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-common-pitfalls" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Common pitfalls
+        HDF5 export for large sweeps
       
     </span>
   </a>
@@ -784,34 +795,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    units
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../api/pulse/" class="md-nav__link">
         
   
@@ -848,6 +831,34 @@
     
   
     shapes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    acoustics
   
 
     
@@ -924,6 +935,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../api/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fitting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../api/utils/" class="md-nav__link">
         
   
@@ -972,138 +1039,217 @@
   
 
 
-<h1 id="jax-tips">JAX tips<a class="headerlink" href="#jax-tips" title="Permanent link">&para;</a></h1>
-<p>jbubble is built on JAX, which means every simulation is compatible with JAX
-transformations: <code>jit</code>, <code>vmap</code>, and <code>grad</code>. This page explains how to use them
-effectively.</p>
-<h2 id="x64-mode">x64 mode<a class="headerlink" href="#x64-mode" title="Permanent link">&para;</a></h2>
-<p>JAX defaults to 32-bit floating-point. jbubble <strong>enables 64-bit mode
-automatically</strong> when the package is imported:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jbubble</span>  <span class="c1"># sets jax.config.update(&quot;jax_enable_x64&quot;, True) automatically</span>
+<h1 id="jax-tips-jit-vmap-grad-and-fitting">JAX tips: JIT, vmap, grad, and fitting<a class="headerlink" href="#jax-tips-jit-vmap-grad-and-fitting" title="Permanent link">&para;</a></h1>
+<p>jbubble is built on JAX, which means every simulation is JIT-compilable, batchable over parameters, and differentiable. This page covers the key workflows.</p>
+<hr />
+<h2 id="jit-compilation">JIT compilation<a class="headerlink" href="#jit-compilation" title="Permanent link">&para;</a></h2>
+<p>Wrap <code>run_simulation</code> (or <code>solve_eom</code>) with <code>jax.jit</code> to compile the entire solver graph once and execute it efficiently:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_simulation</span><span class="p">,</span> <span class="n">SaveSpec</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">simulate</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">run_simulation</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># First call: compilation (slow)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">result</span> <span class="o">=</span> <span class="n">simulate</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span> <span class="n">t_max</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Subsequent calls with the same argument shapes: fast</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">result2</span> <span class="o">=</span> <span class="n">simulate</span><span class="p">(</span><span class="n">eom2</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span> <span class="n">t_max</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">)</span>
 </code></pre></div>
-<p>You do not need to set this manually.</p>
-<h2 id="1-jit-compilation">1. JIT compilation<a class="headerlink" href="#1-jit-compilation" title="Permanent link">&para;</a></h2>
-<p>Wrapping <code>run_simulation</code> (or any jbubble function) with <code>jax.jit</code> compiles the
-simulation to optimised machine code on the first call. Subsequent calls with
-the same argument shapes skip compilation and run significantly faster:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarmottantGompertz</span><span class="p">,</span> <span class="n">Units</span><span class="p">,</span> <span class="n">run_simulation</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pulse</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">shapes</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SaveSpec</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">bubble</span> <span class="o">=</span> <span class="n">MarmottantGompertz</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">3e-6</span><span class="p">)</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">pulse</span>  <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">2e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">200e3</span><span class="p">,</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shapes</span><span class="o">.</span><span class="n">Sine</span><span class="p">())</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">units</span>  <span class="o">=</span> <span class="n">Units</span><span class="p">()</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">spec</span>   <span class="o">=</span> <span class="n">SaveSpec</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="n">sim</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">run_simulation</span><span class="p">)</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1"># First call: compilation + execution (~seconds)</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="n">result</span> <span class="o">=</span> <span class="n">sim</span><span class="p">(</span><span class="n">bubble</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">units</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">window_s</span><span class="o">=</span><span class="mf">20e-6</span><span class="p">)</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="c1"># Subsequent calls: execution only (~milliseconds)</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="n">result</span> <span class="o">=</span> <span class="n">sim</span><span class="p">(</span><span class="n">bubble</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">units</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">window_s</span><span class="o">=</span><span class="mf">20e-6</span><span class="p">)</span>
-</code></pre></div>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p>JIT compilation traces the function with abstract values. Avoid Python
-control flow that depends on JAX array <em>values</em> (use <code>jax.lax.cond</code> instead
-of <code>if</code>). All jbubble internals already follow this rule.</p>
+<div class="admonition warning">
+<p class="admonition-title">Static vs dynamic</p>
+<p>JAX traces through <code>eqx.Module</code> fields that are <code>jax.Array</code>. Fields that are plain Python scalars (<code>int</code>, <code>float</code>, <code>bool</code>) or non-array objects are treated as static and trigger recompilation if changed. Keep parameters as <code>jnp.array</code> or leave them as Equinox fields.</p>
 </div>
-<h2 id="2-batching-over-parameters-with-vmap">2. Batching over parameters with vmap<a class="headerlink" href="#2-batching-over-parameters-with-vmap" title="Permanent link">&para;</a></h2>
-<p><code>jax.vmap</code> vectorises a function over a batch dimension. This is the preferred
-way to run many simulations in parallel — for example, sweeping over bubble
-radii:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarmottantGompertz</span><span class="p">,</span> <span class="n">Units</span><span class="p">,</span> <span class="n">run_simulation</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pulse</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">shapes</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SaveSpec</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">def</span><span class="w"> </span><span class="nf">sim_for_r0</span><span class="p">(</span><span class="n">r0</span><span class="p">):</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="n">bubble</span> <span class="o">=</span> <span class="n">MarmottantGompertz</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="n">r0</span><span class="p">)</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="n">pulse</span>  <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">2e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">200e3</span><span class="p">,</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shapes</span><span class="o">.</span><span class="n">Sine</span><span class="p">())</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="k">return</span> <span class="n">run_simulation</span><span class="p">(</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="n">bubble</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        <span class="n">units</span><span class="o">=</span><span class="n">Units</span><span class="p">(),</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        <span class="n">window_s</span><span class="o">=</span><span class="mf">20e-6</span><span class="p">,</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="p">)</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="n">r0s</span>     <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mf">5e-6</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>   <span class="c1"># 8 different radii</span>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="n">results</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">sim_for_r0</span><span class="p">)(</span><span class="n">r0s</span><span class="p">)</span>       <span class="c1"># batched SimulationResult</span>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>   <span class="c1"># (8, 64)</span>
+<hr />
+<h2 id="batched-parameter-sweeps-with-vmap">Batched parameter sweeps with vmap<a class="headerlink" href="#batched-parameter-sweeps-with-vmap" title="Permanent link">&para;</a></h2>
+<p>Use <code>jax.vmap</code> to run thousands of simulations simultaneously with different parameters. <code>GridSweep</code> automates the Cartesian-product case:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.gridsweep</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridSweep</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_simulation</span><span class="p">,</span> <span class="n">SaveSpec</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">KellerMiksis</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolytropicGas</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoShell</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">NewtonianMedium</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">def</span><span class="w"> </span><span class="nf">simulate_bubble</span><span class="p">(</span><span class="n">R0</span><span class="p">,</span> <span class="n">pressure</span><span class="p">):</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">eom</span> <span class="o">=</span> <span class="n">KellerMiksis</span><span class="p">(</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>        <span class="n">gas</span><span class="o">=</span><span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">),</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        <span class="n">shell</span><span class="o">=</span><span class="n">NoShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">0.072</span><span class="p">),</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>        <span class="n">medium</span><span class="o">=</span><span class="n">NewtonianMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">),</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        <span class="n">R0</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span> <span class="n">P_amb</span><span class="o">=</span><span class="mi">101325</span><span class="p">,</span> <span class="n">rho_L</span><span class="o">=</span><span class="mi">998</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="p">)</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="n">pressure</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">500</span><span class="p">),</span> <span class="n">t_max</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">)</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">R0</span>  <span class="c1"># peak expansion ratio</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="n">sweep</span> <span class="o">=</span> <span class="n">GridSweep</span><span class="p">(</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>    <span class="n">fn</span><span class="o">=</span><span class="n">simulate_bubble</span><span class="p">,</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>    <span class="n">search_space</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>        <span class="s2">&quot;R0&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mf">5e-6</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>        <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">50e3</span><span class="p">,</span> <span class="mf">100e3</span><span class="p">,</span> <span class="mf">200e3</span><span class="p">,</span> <span class="mf">400e3</span><span class="p">]),</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>    <span class="p">},</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>    <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="p">)</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="c1"># Full sweep: shape (10, 4) — one scalar output per parameter combination</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="n">peak_expansion</span> <span class="o">=</span> <span class="n">sweep</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </code></pre></div>
-<p>You can combine <code>vmap</code> with <code>jit</code> for maximum performance:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">batched_sim</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">sim_for_r0</span><span class="p">))</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">batched_sim</span><span class="p">(</span><span class="n">r0s</span><span class="p">)</span>
+<p><code>GridSweep</code> internally applies <code>jax.vmap</code> over batches of parameter combinations and handles reshaping back to the grid shape.</p>
+<p>For a fully manual sweep over a single parameter axis:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">R0_values</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mf">5e-6</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">make_eom</span><span class="p">(</span><span class="n">R0</span><span class="p">):</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="k">return</span> <span class="n">KellerMiksis</span><span class="p">(</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        <span class="n">gas</span><span class="o">=</span><span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">),</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="n">shell</span><span class="o">=</span><span class="n">NoShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">0.072</span><span class="p">),</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="n">medium</span><span class="o">=</span><span class="n">NewtonianMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">),</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="n">R0</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span> <span class="n">P_amb</span><span class="o">=</span><span class="mi">101325</span><span class="p">,</span> <span class="n">rho_L</span><span class="o">=</span><span class="mi">998</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="p">)</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># Build a batched EoM by stacking along a leading axis</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="n">batched_eom</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">make_eom</span><span class="p">)(</span><span class="n">R0_values</span><span class="p">)</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="c1"># vmap run_simulation over the batched EoM</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="n">batched_simulate</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    <span class="k">lambda</span> <span class="n">eom</span><span class="p">:</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">500</span><span class="p">),</span> <span class="n">t_max</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">)</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="p">)</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="n">results</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">batched_simulate</span><span class="p">)(</span><span class="n">batched_eom</span><span class="p">)</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="c1"># results.radius has shape (20, 500)</span>
 </code></pre></div>
-<h2 id="3-gradient-through-shell-parameters">3. Gradient through shell parameters<a class="headerlink" href="#3-gradient-through-shell-parameters" title="Permanent link">&para;</a></h2>
-<p><code>jax.grad</code> can differentiate through the entire simulation with respect to any
-leaf parameter. This is useful for fitting shell parameters to measured
-radius–time curves:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarmottantGompertz</span><span class="p">,</span> <span class="n">Units</span><span class="p">,</span> <span class="n">run_simulation</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pulse</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">shapes</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SaveSpec</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">loss</span><span class="p">(</span><span class="n">chi</span><span class="p">):</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">bubble</span> <span class="o">=</span> <span class="n">MarmottantGompertz</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">3e-6</span><span class="p">,</span> <span class="n">chi</span><span class="o">=</span><span class="n">chi</span><span class="p">)</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">pulse</span>  <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">2e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">200e3</span><span class="p">,</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shapes</span><span class="o">.</span><span class="n">Sine</span><span class="p">())</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="n">bubble</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="n">units</span><span class="o">=</span><span class="n">Units</span><span class="p">(),</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span class="n">window_s</span><span class="o">=</span><span class="mf">20e-6</span><span class="p">,</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="p">)</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>    <span class="k">return</span> <span class="p">((</span><span class="n">result</span><span class="o">.</span><span class="n">radius</span> <span class="o">-</span> <span class="n">target_radius</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="n">grad_loss</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="n">dL_dchi</span>   <span class="o">=</span> <span class="n">grad_loss</span><span class="p">(</span><span class="n">chi_init</span><span class="p">)</span>
+<hr />
+<h2 id="gradient-based-parameter-fitting">Gradient-based parameter fitting<a class="headerlink" href="#gradient-based-parameter-fitting" title="Permanent link">&para;</a></h2>
+<p><code>fit_parameters</code> runs gradient descent to minimise a differentiable loss function over the simulation result. It uses <code>jax.grad</code> through the entire ODE solve (via diffrax's backpropagation-through-time adjoint).</p>
+<h3 id="minimal-example">Minimal example<a class="headerlink" href="#minimal-example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">optax</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_simulation</span><span class="p">,</span> <span class="n">fit_parameters</span><span class="p">,</span> <span class="n">SaveSpec</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">KellerMiksis</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolytropicGas</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">LipidShell</span><span class="p">,</span> <span class="n">GompertzSurfaceTension</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">NewtonianMedium</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalised_mse_radius</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1"># Measured radius trace (from experiment or higher-fidelity simulation)</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="n">measured_radius</span> <span class="o">=</span> <span class="o">...</span>  <span class="c1"># shape (N,) [m]</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="n">R0_true</span> <span class="o">=</span> <span class="mf">2e-6</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="k">def</span><span class="w"> </span><span class="nf">make_model</span><span class="p">(</span><span class="n">kappa_s</span><span class="p">):</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="n">sigma</span> <span class="o">=</span> <span class="n">GompertzSurfaceTension</span><span class="p">(</span><span class="n">R_buckle_ratio</span><span class="o">=</span><span class="mf">0.98</span><span class="p">,</span> <span class="n">chi</span><span class="o">=</span><span class="mf">0.55</span><span class="p">,</span> <span class="n">sigma_rupture</span><span class="o">=</span><span class="mf">0.072</span><span class="p">)</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>    <span class="n">eom</span> <span class="o">=</span> <span class="n">KellerMiksis</span><span class="p">(</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>        <span class="n">gas</span><span class="o">=</span><span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">),</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>        <span class="n">shell</span><span class="o">=</span><span class="n">LipidShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">kappa_s</span><span class="o">=</span><span class="n">kappa_s</span><span class="p">),</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>        <span class="n">medium</span><span class="o">=</span><span class="n">NewtonianMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">),</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>        <span class="n">R0</span><span class="o">=</span><span class="n">R0_true</span><span class="p">,</span> <span class="n">P_amb</span><span class="o">=</span><span class="mi">101325</span><span class="p">,</span> <span class="n">rho_L</span><span class="o">=</span><span class="mi">998</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>    <span class="p">)</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>    <span class="k">return</span> <span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="n">fit_result</span> <span class="o">=</span> <span class="n">fit_parameters</span><span class="p">(</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>    <span class="n">make_model</span><span class="o">=</span><span class="n">make_model</span><span class="p">,</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>    <span class="n">params0</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span>          <span class="c1"># initial guess for kappa_s [N·s/m]</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>    <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">500</span><span class="p">),</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>    <span class="n">t_max</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">,</span>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>    <span class="n">loss_fn</span><span class="o">=</span><span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="n">normalised_mse_radius</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="p">,</span> <span class="n">measured_radius</span><span class="p">,</span> <span class="n">R0_true</span><span class="p">),</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>    <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-10</span><span class="p">),</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>    <span class="n">n_steps</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>    <span class="n">log_every</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="p">)</span>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Fitted kappa_s:&quot;</span><span class="p">,</span> <span class="n">fit_result</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Final loss:&quot;</span><span class="p">,</span> <span class="n">fit_result</span><span class="o">.</span><span class="n">loss_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 </code></pre></div>
-<p>Gradient computation requires the Gompertz-family models (<code>MarmottantGompertz</code>,
-<code>KellerMiksisGompertz</code>, etc.) rather than <code>Marmottant</code>, because the piecewise
-σ(R) of <code>Marmottant</code> is not differentiable at the transition radii.</p>
-<h2 id="4-gridsweep-for-structured-parameter-sweeps">4. GridSweep for structured parameter sweeps<a class="headerlink" href="#4-gridsweep-for-structured-parameter-sweeps" title="Permanent link">&para;</a></h2>
-<p>For structured sweeps over a Cartesian grid of parameters, use <code>GridSweep</code> from
-<code>jbubble.utils.gridsweep</code>. It wraps the vmap pattern and handles result
-aggregation automatically. See the <a href="../../api/utils/">API reference</a> for details.</p>
-<h2 id="5-common-pitfalls">5. Common pitfalls<a class="headerlink" href="#5-common-pitfalls" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Issue</th>
-<th>Cause</th>
-<th>Fix</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ConcretizationTypeError</code></td>
-<td>Python <code>if</code> on a JAX array</td>
-<td>Replace with <code>jax.lax.cond</code></td>
-</tr>
-<tr>
-<td>Slow repeated calls</td>
-<td>Missing <code>jax.jit</code></td>
-<td>Wrap the simulation function with <code>jit</code></td>
-</tr>
-<tr>
-<td>NaN gradients</td>
-<td>Piecewise σ(R) in <code>Marmottant</code></td>
-<td>Switch to <code>MarmottantGompertz</code></td>
-</tr>
-<tr>
-<td>Out-of-memory on vmap</td>
-<td>Too large a batch</td>
-<td>Reduce batch size or use <code>jax.lax.map</code></td>
-</tr>
-</tbody>
-</table>
+<h3 id="fitting-multiple-parameters-jointly">Fitting multiple parameters jointly<a class="headerlink" href="#fitting-multiple-parameters-jointly" title="Permanent link">&para;</a></h3>
+<p><code>params0</code> can be any JAX-compatible PyTree. The <code>make_model</code> factory receives the same structure:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">params0</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;kappa_s&quot;</span><span class="p">:</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="s2">&quot;chi&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">}</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">make_model</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">sigma</span> <span class="o">=</span> <span class="n">GompertzSurfaceTension</span><span class="p">(</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="n">R_buckle_ratio</span><span class="o">=</span><span class="mf">0.98</span><span class="p">,</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="n">chi</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;chi&quot;</span><span class="p">],</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="n">sigma_rupture</span><span class="o">=</span><span class="mf">0.072</span><span class="p">,</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="p">)</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">eom</span> <span class="o">=</span> <span class="n">KellerMiksis</span><span class="p">(</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="n">gas</span><span class="o">=</span><span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">),</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        <span class="n">shell</span><span class="o">=</span><span class="n">LipidShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">kappa_s</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;kappa_s&quot;</span><span class="p">]),</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span class="n">medium</span><span class="o">=</span><span class="n">NewtonianMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">),</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        <span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">,</span> <span class="n">P_amb</span><span class="o">=</span><span class="mi">101325</span><span class="p">,</span> <span class="n">rho_L</span><span class="o">=</span><span class="mi">998</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>    <span class="p">)</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="k">return</span> <span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="n">fit_result</span> <span class="o">=</span> <span class="n">fit_parameters</span><span class="p">(</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>    <span class="n">make_model</span><span class="o">=</span><span class="n">make_model</span><span class="p">,</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>    <span class="n">params0</span><span class="o">=</span><span class="n">params0</span><span class="p">,</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>    <span class="o">...</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="p">)</span>
+</code></pre></div>
+<h3 id="fitting-to-emission-data">Fitting to emission data<a class="headerlink" href="#fitting-to-emission-data" title="Permanent link">&para;</a></h3>
+<p>The <code>loss_fn</code> receives a full <code>SimulationResult</code>, so you can compute any differentiable quantity — including the radiated pressure:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.acoustics</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncompressibleMonopole</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalised_mse_emission</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">emission</span> <span class="o">=</span> <span class="n">IncompressibleMonopole</span><span class="p">(</span><span class="n">rho_L</span><span class="o">=</span><span class="mf">998.0</span><span class="p">)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">measured_p</span> <span class="o">=</span> <span class="o">...</span>    <span class="c1"># measured hydrophone waveform [Pa]</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">r</span> <span class="o">=</span> <span class="mf">10e-3</span>           <span class="c1"># hydrophone distance [m]</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">fit_result</span> <span class="o">=</span> <span class="n">fit_parameters</span><span class="p">(</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">make_model</span><span class="o">=</span><span class="n">make_model</span><span class="p">,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="n">params0</span><span class="o">=</span><span class="n">params0</span><span class="p">,</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">500</span><span class="p">),</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="n">t_max</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">,</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="n">loss_fn</span><span class="o">=</span><span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="n">normalised_mse_emission</span><span class="p">(</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>        <span class="n">emission</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="n">measured_p</span><span class="p">,</span> <span class="n">p_ref</span><span class="o">=</span><span class="mf">1e3</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>    <span class="p">),</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>    <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-10</span><span class="p">),</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>    <span class="n">n_steps</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="p">)</span>
+</code></pre></div>
+<h3 id="monitoring-convergence">Monitoring convergence<a class="headerlink" href="#monitoring-convergence" title="Permanent link">&para;</a></h3>
+<p>Pass a <code>step_callback</code> to inspect parameters and loss outside JIT at each step:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">history</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">callback</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">loss</span><span class="p">):</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;step&quot;</span><span class="p">:</span> <span class="n">step</span><span class="p">,</span> <span class="s2">&quot;kappa_s&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">params</span><span class="p">),</span> <span class="s2">&quot;loss&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">loss</span><span class="p">)})</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">fit_result</span> <span class="o">=</span> <span class="n">fit_parameters</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">step_callback</span><span class="o">=</span><span class="n">callback</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="computing-gradients-manually">Computing gradients manually<a class="headerlink" href="#computing-gradients-manually" title="Permanent link">&para;</a></h2>
+<p>For custom gradient computations (e.g. sensitivity analysis), use <code>jax.grad</code> directly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">peak_expansion</span><span class="p">(</span><span class="n">kappa_s</span><span class="p">):</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">_</span><span class="p">,</span> <span class="n">pulse</span> <span class="o">=</span> <span class="n">make_model</span><span class="p">(</span><span class="n">kappa_s</span><span class="p">)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">eom</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">make_model</span><span class="p">(</span><span class="n">kappa_s</span><span class="p">)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">500</span><span class="p">),</span> <span class="n">t_max</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">)</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">eom</span><span class="o">.</span><span class="n">R0</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">peak_expansion</span><span class="p">)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">sensitivity</span> <span class="o">=</span> <span class="n">grad_fn</span><span class="p">(</span><span class="mf">2.4e-9</span><span class="p">)</span>   <span class="c1"># d(peak expansion) / d(kappa_s) at kappa_s = 2.4 nN·s/m</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sensitivity:&quot;</span><span class="p">,</span> <span class="n">sensitivity</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="hdf5-export-for-large-sweeps">HDF5 export for large sweeps<a class="headerlink" href="#hdf5-export-for-large-sweeps" title="Permanent link">&para;</a></h2>
+<p>Save sweep outputs to HDF5 for post-processing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">export_hdf5</span><span class="p">,</span> <span class="n">load_hdf5</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">export_hdf5</span><span class="p">(</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="s2">&quot;sweep_results.h5&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;R0-pressure sweep&quot;</span><span class="p">,</span> <span class="s2">&quot;freq&quot;</span><span class="p">:</span> <span class="mf">1e6</span><span class="p">},</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">R0_values</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mf">5e-6</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">pressure_values</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">50e3</span><span class="p">,</span> <span class="mf">100e3</span><span class="p">,</span> <span class="mf">200e3</span><span class="p">,</span> <span class="mf">400e3</span><span class="p">]),</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">peak_expansion</span><span class="o">=</span><span class="n">peak_expansion</span><span class="p">,</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="p">)</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="n">arrays</span><span class="p">,</span> <span class="n">meta</span> <span class="o">=</span> <span class="n">load_hdf5</span><span class="p">(</span><span class="s2">&quot;sweep_results.h5&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">])</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="nb">print</span><span class="p">(</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;peak_expansion&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (10, 4)</span>
+</code></pre></div>
 
 
 

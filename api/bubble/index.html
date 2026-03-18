@@ -14,14 +14,14 @@
         <link rel="prev" href="../">
       
       
-        <link rel="next" href="../units/">
+        <link rel="next" href="../pulse/">
       
       
         
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#bubble-models" class="md-skip">
+        <a href="#bubble" class="md-skip">
           Skip to content
         </a>
       
@@ -495,34 +495,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guide/units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Units & scaling
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../guide/jax_tips/" class="md-nav__link">
         
   
@@ -703,22 +675,199 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#jbubble.bubble.Bubble" class="md-nav__link">
+  <a href="#state" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Bubble
+        State
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Bubble">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.state.BubbleState" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BubbleState
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.state.ConfinedBubbleState" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ConfinedBubbleState
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.property.Property" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Property
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Property">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#jbubble.bubble.Bubble.P_gas0" class="md-nav__link">
+  <a href="#jbubble.bubble.property.Property.__call__" class="md-nav__link">
     <span class="md-ellipsis">
       
-        P_gas0
+        __call__
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.property.ConstantProperty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ConstantProperty
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.property.NeuralProperty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NeuralProperty
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.property.as_property" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        as_property
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gas-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gas models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.gas.GasModel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GasModel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GasModel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.bubble.gas.GasModel.__call__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __call__
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.gas.PolytropicGas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PolytropicGas
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.gas.VanDerWaalsGas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VanDerWaalsGas
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shell-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shell models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.shell.ShellModel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ShellModel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ShellModel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.bubble.shell.ShellModel.p_laplace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        p_laplace
       
     </span>
   </a>
@@ -726,10 +875,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#jbubble.bubble.Bubble.bubble_equation" class="md-nav__link">
+  <a href="#jbubble.bubble.shell.ShellModel.p_elastic" class="md-nav__link">
     <span class="md-ellipsis">
       
-        bubble_equation
+        p_elastic
       
     </span>
   </a>
@@ -737,10 +886,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#jbubble.bubble.Bubble.chi_R" class="md-nav__link">
+  <a href="#jbubble.bubble.shell.ShellModel.p_viscous" class="md-nav__link">
     <span class="md-ellipsis">
       
-        chi_R
+        p_viscous
       
     </span>
   </a>
@@ -748,10 +897,121 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#jbubble.bubble.Bubble.get_scaled" class="md-nav__link">
+  <a href="#jbubble.bubble.shell.ShellModel.__call__" class="md-nav__link">
     <span class="md-ellipsis">
       
-        get_scaled
+        __call__
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.shell.NoShell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NoShell
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.shell.LipidShell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LipidShell
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.shell.ThickShell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThickShell
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThickShell">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#surface-tension-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Surface tension Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.shell.MarmottantSurfaceTension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MarmottantSurfaceTension
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.shell.GompertzSurfaceTension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GompertzSurfaceTension
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#medium-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Medium models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.medium.MediumModel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MediumModel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MediumModel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.bubble.medium.MediumModel.p_viscous" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        p_viscous
       
     </span>
   </a>
@@ -759,7 +1019,112 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#jbubble.bubble.Bubble.initial_state" class="md-nav__link">
+  <a href="#jbubble.bubble.medium.MediumModel.p_elastic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        p_elastic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.bubble.medium.MediumModel.__call__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __call__
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.medium.NewtonianMedium" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NewtonianMedium
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.medium.KelvinVoigtMedium" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KelvinVoigtMedium
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.medium.NeoHookeanMedium" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NeoHookeanMedium
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.medium.PowerLawMedium" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PowerLawMedium
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#equations-of-motion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Equations of motion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.eom.EquationOfMotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EquationOfMotion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="EquationOfMotion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.bubble.eom.EquationOfMotion.p_L" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        p_L
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.bubble.eom.EquationOfMotion.initial_state" class="md-nav__link">
     <span class="md-ellipsis">
       
         initial_state
@@ -770,21 +1135,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#jbubble.bubble.Bubble.rescale_state" class="md-nav__link">
+  <a href="#jbubble.bubble.eom.EquationOfMotion.__call__" class="md-nav__link">
     <span class="md-ellipsis">
       
-        rescale_state
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#jbubble.bubble.Bubble.surface_tension" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        surface_tension
+        __call__
       
     </span>
   </a>
@@ -797,7 +1151,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.bubble.RayleighPlesset" class="md-nav__link">
+  <a href="#jbubble.bubble.eom.RayleighPlesset" class="md-nav__link">
     <span class="md-ellipsis">
       
         RayleighPlesset
@@ -808,10 +1162,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.bubble.Marmottant" class="md-nav__link">
+  <a href="#jbubble.bubble.eom.ModifiedRayleighPlesset" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Marmottant
+        ModifiedRayleighPlesset
       
     </span>
   </a>
@@ -819,10 +1173,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.bubble.MarmottantGompertz" class="md-nav__link">
+  <a href="#jbubble.bubble.eom.KellerMiksis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MarmottantGompertz
+        KellerMiksis
       
     </span>
   </a>
@@ -830,10 +1184,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.bubble.KellerMiksisGompertz" class="md-nav__link">
+  <a href="#jbubble.bubble.eom.Gilmore" class="md-nav__link">
     <span class="md-ellipsis">
       
-        KellerMiksisGompertz
+        Gilmore
       
     </span>
   </a>
@@ -841,22 +1195,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.bubble.KelvinVoigtGompertz" class="md-nav__link">
+  <a href="#jbubble.bubble.eom.LeightonTube" class="md-nav__link">
     <span class="md-ellipsis">
       
-        KelvinVoigtGompertz
+        LeightonTube
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="KelvinVoigtGompertz">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.bubble.eom.SphericalConfinement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SphericalConfinement
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SphericalConfinement">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#jbubble.bubble.KelvinVoigtGompertz.elastic_pressure" class="md-nav__link">
+  <a href="#jbubble.bubble.eom.SphericalConfinement.initial_state" class="md-nav__link">
     <span class="md-ellipsis">
       
-        elastic_pressure
+        initial_state
       
     </span>
   </a>
@@ -868,60 +1233,10 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#jbubble.bubble.LeightonGompertz" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LeightonGompertz
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.bubble.SphericalConfinement" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        SphericalConfinement
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    units
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -970,6 +1285,34 @@
     
   
     shapes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    acoustics
   
 
     
@@ -1046,6 +1389,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fitting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../utils/" class="md-nav__link">
         
   
@@ -1094,18 +1493,143 @@
   
 
 
-<h1 id="bubble-models">Bubble models<a class="headerlink" href="#bubble-models" title="Permanent link">&para;</a></h1>
+<h1 id="bubble">bubble<a class="headerlink" href="#bubble" title="Permanent link">&para;</a></h1>
+<p>The <code>jbubble.bubble</code> subpackage contains all bubble physics components: state representation, the Property abstraction, and gas/shell/medium/EoM models.</p>
+<hr />
+<h2 id="state">State<a class="headerlink" href="#state" title="Permanent link">&para;</a></h2>
 
 
 <div class="doc doc-object doc-class">
 
 
 
-<h2 id="jbubble.bubble.Bubble" class="doc doc-heading">
-            <code>jbubble.bubble.Bubble</code>
+<h2 id="jbubble.bubble.state.BubbleState" class="doc doc-heading">
+            <code>jbubble.bubble.state.BubbleState</code>
 
 
-<a href="#jbubble.bubble.Bubble" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.bubble.state.BubbleState" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="equinox.Module">Module</span></code></p>
+
+
+
+        <p>Standard bubble state.</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>R : jax.Array
+    Bubble wall radius  [m].
+R_dot : jax.Array
+    Bubble wall velocity  [m/s].
+R0 : jax.Array
+    Equilibrium bubble radius  [m].  Frozen (dR0/dt = 0) in the
+    standard case; becomes a slow state variable for rectified
+    diffusion etc.
+P_gas0 : jax.Array
+    Equilibrium gas pressure  [Pa].  Frozen in the standard case.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.state.ConfinedBubbleState" class="doc doc-heading">
+            <code>jbubble.bubble.state.ConfinedBubbleState</code>
+
+
+<a href="#jbubble.bubble.state.ConfinedBubbleState" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.state.BubbleState" href="#jbubble.bubble.state.BubbleState">BubbleState</a></code></p>
+
+
+
+        <p>State for a bubble confined in an elastic spherical vessel.</p>
+<p>Extends <code>BubbleState</code> with the vessel wall radius and velocity.</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>a : jax.Array
+    Vessel wall radius  [m].
+a_dot : jax.Array
+    Vessel wall velocity  [m/s].</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><hr />
+<h2 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h2>
+<p>The <code>Property</code> abstraction is the key extensibility mechanism in jbubble. Any physical parameter that <em>could</em> depend on the bubble state is represented as a <code>Property</code> — a callable <code>state → scalar</code>. Plain floats are automatically promoted via <code>as_property</code>.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.property.Property" class="doc doc-heading">
+            <code>jbubble.bubble.property.Property</code>
+
+
+<a href="#jbubble.bubble.property.Property" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
@@ -1114,16 +1638,12 @@
 
 
 
-        <p>Abstract base class for bubble material models.</p>
-<p>Concrete subclasses must implement:
-    - surface_tension(R)   — interface pressure law
-    - bubble_equation(t, state, pulse) — ODE right-hand side</p>
-<p>Optional overrides:
-    - get_scaled(units)    — default scales all dataclass fields
-    - chi_R(R)             — defaults to (R/2) dσ/dR via autodiff
-    - initial_state()      — defaults to [R0, 0]
-    - rescale_state(state, units) — defaults to [L_scale, vel_scale] scaling</p>
-<p><code>Bubble</code> itself cannot be instantiated; import it for type annotations.</p>
+        <p>Abstract base for state-dependent (or constant) bubble properties.</p>
+<p>Any callable <code>eqx.Module</code> that maps a <code>BubbleState</code> to a scalar
+array should inherit from this class.  The concrete subclass
+<code>ConstantProperty</code> handles the common case of a fixed value;
+state-dependent models (e.g. <code>MarmottantSurfaceTension</code>) override
+<code>__call__</code> directly.</p>
 
 
 
@@ -1143,58 +1663,745 @@
 
 
 
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="jbubble.bubble.Bubble.P_gas0" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">P_gas0</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-property"><code>property</code></small>
-  </span>
-
-<a href="#jbubble.bubble.Bubble.P_gas0" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Equilibrium gas pressure, using the surface tension evaluated at R0.</p>
-
-    </div>
-
-</div>
-
 
 
 
 <div class="doc doc-object doc-function">
 
 
-<h3 id="jbubble.bubble.Bubble.bubble_equation" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">bubble_equation</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">pulse</span><span class="p">)</span></code>
+<h3 id="jbubble.bubble.property.Property.__call__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
-<a href="#jbubble.bubble.Bubble.bubble_equation" class="headerlink" title="Permanent link">&para;</a></h3>
+<a href="#jbubble.bubble.property.Property.__call__" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>ODE right-hand side: return d(state)/dt.</p>
+        <p>Evaluate the property at <em>state</em>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>state</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.bubble.state.BubbleState" href="#jbubble.bubble.state.BubbleState">BubbleState</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Current bubble state.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="jax.Array">Array</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Scalar value of the property.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>jbubble/bubble/base.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-120">120</a></span>
+              <summary>Source code in <code>jbubble/bubble/property.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-41">41</a></span>
+<span class="normal"><a href="#__codelineno-0-42">42</a></span>
+<span class="normal"><a href="#__codelineno-0-43">43</a></span>
+<span class="normal"><a href="#__codelineno-0-44">44</a></span>
+<span class="normal"><a href="#__codelineno-0-45">45</a></span>
+<span class="normal"><a href="#__codelineno-0-46">46</a></span>
+<span class="normal"><a href="#__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#__codelineno-0-51">51</a></span>
+<span class="normal"><a href="#__codelineno-0-52">52</a></span>
+<span class="normal"><a href="#__codelineno-0-53">53</a></span>
+<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+<span class="normal"><a href="#__codelineno-0-55">55</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">BubbleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate the property at *state*.</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    state : BubbleState</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">        Current bubble state.</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">    jax.Array</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">        Scalar value of the property.</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="o">...</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.property.ConstantProperty" class="doc doc-heading">
+            <code>jbubble.bubble.property.ConstantProperty</code>
+
+
+<a href="#jbubble.bubble.property.ConstantProperty" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.property.Property" href="#jbubble.bubble.property.Property">Property</a></code></p>
+
+
+
+        <p>A property that returns a constant value regardless of state.</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>val : float or jax.Array
+    The constant value.  May be a JAX array (including a traced value
+    inside <code>jax.grad</code> / <code>jax.jit</code>) so that gradients flow through.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.property.NeuralProperty" class="doc doc-heading">
+            <code>jbubble.bubble.property.NeuralProperty</code>
+
+
+<a href="#jbubble.bubble.property.NeuralProperty" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.property.Property" href="#jbubble.bubble.property.Property">Property</a></code></p>
+
+
+
+        <p>A <code>Property</code> backed by an Equinox neural network.</p>
+<p>The network receives a normalised 1-D input <code>[R / R0]</code> and must
+return a 1-D output of shape <code>(1,)</code>.  The caller is responsible for
+any output transform needed to satisfy physical constraints — for
+example, wrapping the final layer output with <code>jax.nn.softplus</code> or
+<code>jnp.exp</code> to enforce positivity for surface tension.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>net</code>
+            </td>
+            <td>
+                  <code><span title="equinox.Module">Module</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Any callable Equinox module with signature <code>(x: Array[1]) -&gt; Array[1]</code>.
+<code>eqx.nn.MLP</code> is the natural choice.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <blockquote>
+<blockquote>
+<blockquote>
+<p>import equinox as eqx
+import jax
+import jax.numpy as jnp
+key = jax.random.PRNGKey(0)
+mlp = eqx.nn.MLP(in_size=1, out_size=1, width_size=32, depth=3,
+...                  final_activation=jax.nn.softplus, key=key)
+sigma = NeuralProperty(net=mlp)</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="jbubble.bubble.property.as_property" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">jbubble</span><span class="o">.</span><span class="n">bubble</span><span class="o">.</span><span class="n">property</span><span class="o">.</span><span class="n">as_property</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></code>
+
+<a href="#jbubble.bubble.property.as_property" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Coerce a plain scalar or JAX array to a <code>ConstantProperty</code>, or pass through.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>val</code>
+            </td>
+            <td>
+                  <code>float, jax.Array, or Property</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A plain scalar, a JAX array (possibly a tracer), or an existing
+<code>Property</code> instance.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.bubble.property.Property" href="#jbubble.bubble.property.Property">Property</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/bubble/property.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-108">108</a></span>
+<span class="normal"><a href="#__codelineno-0-109">109</a></span>
+<span class="normal"><a href="#__codelineno-0-110">110</a></span>
+<span class="normal"><a href="#__codelineno-0-111">111</a></span>
+<span class="normal"><a href="#__codelineno-0-112">112</a></span>
+<span class="normal"><a href="#__codelineno-0-113">113</a></span>
+<span class="normal"><a href="#__codelineno-0-114">114</a></span>
+<span class="normal"><a href="#__codelineno-0-115">115</a></span>
+<span class="normal"><a href="#__codelineno-0-116">116</a></span>
+<span class="normal"><a href="#__codelineno-0-117">117</a></span>
+<span class="normal"><a href="#__codelineno-0-118">118</a></span>
+<span class="normal"><a href="#__codelineno-0-119">119</a></span>
+<span class="normal"><a href="#__codelineno-0-120">120</a></span>
 <span class="normal"><a href="#__codelineno-0-121">121</a></span>
 <span class="normal"><a href="#__codelineno-0-122">122</a></span>
-<span class="normal"><a href="#__codelineno-0-123">123</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-120" name="__codelineno-0-120"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-<a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="k">def</span><span class="w"> </span><span class="nf">bubble_equation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">pulse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<a id="__codelineno-0-122" name="__codelineno-0-122"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;ODE right-hand side: return d(state)/dt.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-123" name="__codelineno-0-123"></a>    <span class="o">...</span>
+<span class="normal"><a href="#__codelineno-0-123">123</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="k">def</span><span class="w"> </span><span class="nf">as_property</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="n">Property</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Property</span><span class="p">:</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerce a plain scalar or JAX array to a ``ConstantProperty``, or pass through.</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">    val : float, jax.Array, or Property</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a><span class="sd">        A plain scalar, a JAX array (possibly a tracer), or an existing</span>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">        ``Property`` instance.</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a><span class="sd">    Property</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">Property</span><span class="p">):</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>        <span class="k">return</span> <span class="n">val</span>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a>    <span class="k">return</span> <span class="n">ConstantProperty</span><span class="p">(</span><span class="n">val</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div><hr />
+<h2 id="gas-models">Gas models<a class="headerlink" href="#gas-models" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.gas.GasModel" class="doc doc-heading">
+            <code>jbubble.bubble.gas.GasModel</code>
+
+
+<a href="#jbubble.bubble.gas.GasModel" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="equinox.Module">Module</span></code>, <code><span title="abc.ABC">ABC</span></code></p>
+
+
+
+        <p>Internal gas pressure model.</p>
+<p>Computes the outward gas pressure p_gas as a function of the
+instantaneous state.  The equilibrium configuration (<code>R0</code>,
+<code>P_gas0</code>) is read directly from <code>state</code>, so gas models only
+store their intrinsic physical parameters (e.g. the polytropic
+exponent).</p>
+<p>Examples: polytropic law, van der Waals corrected gas.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.bubble.gas.GasModel.__call__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#jbubble.bubble.gas.GasModel.__call__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute gas pressure p_gas(state).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>state</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.bubble.state.BubbleState" href="#jbubble.bubble.state.BubbleState">BubbleState</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Current bubble state.  Uses <code>state.R</code>, <code>state.R0</code>,
+and <code>state.P_gas0</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="scalar">scalar</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Gas pressure.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/bubble/gas.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-34">34</a></span>
+<span class="normal"><a href="#__codelineno-0-35">35</a></span>
+<span class="normal"><a href="#__codelineno-0-36">36</a></span>
+<span class="normal"><a href="#__codelineno-0-37">37</a></span>
+<span class="normal"><a href="#__codelineno-0-38">38</a></span>
+<span class="normal"><a href="#__codelineno-0-39">39</a></span>
+<span class="normal"><a href="#__codelineno-0-40">40</a></span>
+<span class="normal"><a href="#__codelineno-0-41">41</a></span>
+<span class="normal"><a href="#__codelineno-0-42">42</a></span>
+<span class="normal"><a href="#__codelineno-0-43">43</a></span>
+<span class="normal"><a href="#__codelineno-0-44">44</a></span>
+<span class="normal"><a href="#__codelineno-0-45">45</a></span>
+<span class="normal"><a href="#__codelineno-0-46">46</a></span>
+<span class="normal"><a href="#__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#__codelineno-0-49">49</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">BubbleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute gas pressure p_gas(state).</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">    state : BubbleState</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">        Current bubble state.  Uses ``state.R``, ``state.R0``,</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">        and ``state.P_gas0``.</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">    scalar</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">        Gas pressure.</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="o">...</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.gas.PolytropicGas" class="doc doc-heading">
+            <code>jbubble.bubble.gas.PolytropicGas</code>
+
+
+<a href="#jbubble.bubble.gas.PolytropicGas" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.gas.GasModel" href="#jbubble.bubble.gas.GasModel">GasModel</a></code></p>
+
+
+
+        <p>Polytropic gas law.</p>
+<p>p_gas(R) = P_gas0 (R0 / R)^(3 gamma)</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>gamma : float
+    Polytropic exponent  (1.0 = isothermal, 1.4 = adiabatic air).</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.gas.VanDerWaalsGas" class="doc doc-heading">
+            <code>jbubble.bubble.gas.VanDerWaalsGas</code>
+
+
+<a href="#jbubble.bubble.gas.VanDerWaalsGas" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.gas.GasModel" href="#jbubble.bubble.gas.GasModel">GasModel</a></code></p>
+
+
+
+        <p>Hard-core corrected polytropic gas (van der Waals).</p>
+<p>p_gas(R) = P_gas0 ((R0^3 - h^3) / (R^3 - h^3))^gamma</p>
+<p>where <em>h = h_frac * R0</em> is the van der Waals hard-core radius.</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>gamma : float
+    Polytropic exponent.
+h_frac : float
+    Hard-core radius as a fraction of R0  (dimensionless).
+    A common value for lipid shells is 1/5.61 ≈ 0.178.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><hr />
+<h2 id="shell-models">Shell models<a class="headerlink" href="#shell-models" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.shell.ShellModel" class="doc doc-heading">
+            <code>jbubble.bubble.shell.ShellModel</code>
+
+
+<a href="#jbubble.bubble.shell.ShellModel" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="equinox.Module">Module</span></code>, <code><span title="abc.ABC">ABC</span></code></p>
+
+
+
+        <p>Bubble shell / coating model.</p>
+<p>Computes the total inward stress from the shell, including:</p>
+<ul>
+<li>Laplace pressure from surface tension:  2 sigma(R) / R</li>
+<li>Shell viscous dissipation  (e.g. 4 kappa_s Rdot / R^2)</li>
+<li>Shell elastic restoring forces  (for thick shells)</li>
+</ul>
+<p>Every <code>ShellModel</code> holds a <code>Property</code> as its <code>sigma</code> field.
+A plain float is accepted and auto-converted to a <code>Property</code>
+in <code>__post_init__</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.bubble.shell.ShellModel.p_laplace" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">p_laplace</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></code>
+
+<a href="#jbubble.bubble.shell.ShellModel.p_laplace" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Laplace pressure contribution from surface tension.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/bubble/shell.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-37">37</a></span>
+<span class="normal"><a href="#__codelineno-0-38">38</a></span>
+<span class="normal"><a href="#__codelineno-0-39">39</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="k">def</span><span class="w"> </span><span class="nf">p_laplace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">BubbleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Laplace pressure contribution from surface tension.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a>    <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">/</span> <span class="n">state</span><span class="o">.</span><span class="n">R</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1204,41 +2411,1187 @@
 <div class="doc doc-object doc-function">
 
 
-<h3 id="jbubble.bubble.Bubble.chi_R" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">chi_R</span><span class="p">(</span><span class="n">R</span><span class="p">)</span></code>
+<h3 id="jbubble.bubble.shell.ShellModel.p_elastic" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">p_elastic</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></code>
 
-<a href="#jbubble.bubble.Bubble.chi_R" class="headerlink" title="Permanent link">&para;</a></h3>
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#jbubble.bubble.shell.ShellModel.p_elastic" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Shell elasticity parameter χ(R) = (R/2) dσ/dR.</p>
-<p>Default implementation uses automatic differentiation of
-<code>surface_tension</code>.  Override for closed-form expressions or
-to return zero (e.g. <code>RayleighPlesset</code>).</p>
+        <p>Elastic contribution from the shell.</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>jbubble/bubble/base.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
+              <summary>Source code in <code>jbubble/bubble/shell.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-41">41</a></span>
+<span class="normal"><a href="#__codelineno-0-42">42</a></span>
+<span class="normal"><a href="#__codelineno-0-43">43</a></span>
+<span class="normal"><a href="#__codelineno-0-44">44</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="k">def</span><span class="w"> </span><span class="nf">p_elastic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">BubbleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Elastic contribution from the shell.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="o">...</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.bubble.shell.ShellModel.p_viscous" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">p_viscous</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#jbubble.bubble.shell.ShellModel.p_viscous" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Viscous contribution from the shell.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/bubble/shell.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-46">46</a></span>
+<span class="normal"><a href="#__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#__codelineno-0-49">49</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="k">def</span><span class="w"> </span><span class="nf">p_viscous</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">BubbleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Viscous contribution from the shell.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="o">...</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.bubble.shell.ShellModel.__call__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></code>
+
+<a href="#jbubble.bubble.shell.ShellModel.__call__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute total shell pressure p_shell(state).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>state</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.bubble.state.BubbleState" href="#jbubble.bubble.state.BubbleState">BubbleState</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Current bubble state.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="scalar">scalar</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Total inward shell pressure.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/bubble/shell.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-51">51</a></span>
+<span class="normal"><a href="#__codelineno-0-52">52</a></span>
+<span class="normal"><a href="#__codelineno-0-53">53</a></span>
+<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+<span class="normal"><a href="#__codelineno-0-55">55</a></span>
+<span class="normal"><a href="#__codelineno-0-56">56</a></span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span>
+<span class="normal"><a href="#__codelineno-0-58">58</a></span>
+<span class="normal"><a href="#__codelineno-0-59">59</a></span>
+<span class="normal"><a href="#__codelineno-0-60">60</a></span>
+<span class="normal"><a href="#__codelineno-0-61">61</a></span>
+<span class="normal"><a href="#__codelineno-0-62">62</a></span>
+<span class="normal"><a href="#__codelineno-0-63">63</a></span>
+<span class="normal"><a href="#__codelineno-0-64">64</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">BubbleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute total shell pressure p_shell(state).</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">    state : BubbleState</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        Current bubble state.</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">    scalar</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">        Total inward shell pressure.</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_laplace</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_elastic</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_viscous</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.shell.NoShell" class="doc doc-heading">
+            <code>jbubble.bubble.shell.NoShell</code>
+
+
+<a href="#jbubble.bubble.shell.NoShell" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.shell.ShellModel" href="#jbubble.bubble.shell.ShellModel">ShellModel</a></code></p>
+
+
+
+        <p>No shell coating — only Laplace pressure.</p>
+<p>p_shell = 2 sigma(R) / R</p>
+<p>Suitable for uncoated gas bubbles.  Accepts a plain float for
+<code>sigma</code> (e.g. 72e-3 for water).</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>sigma : float or Property
+    Surface tension law.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.shell.LipidShell" class="doc doc-heading">
+            <code>jbubble.bubble.shell.LipidShell</code>
+
+
+<a href="#jbubble.bubble.shell.LipidShell" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.shell.ShellModel" href="#jbubble.bubble.shell.ShellModel">ShellModel</a></code></p>
+
+
+
+        <p>Thin lipid shell with surface viscosity.</p>
+<p>p_shell = 2 sigma(R) / R  +  4 kappa_s Rdot / R^2</p>
+<p>This is the shell model used by Marmottant (2005) and most
+Gompertz-smoothed variants.</p>
+
+
+<details class="note-on-elastic-contributions" open>
+  <summary>Note on elastic contributions</summary>
+  <p><code>p_elastic</code> returns zero for this model.  The shell elasticity is
+not absent — it is encoded entirely in the surface tension Property
+<code>sigma</code>.  When <code>sigma</code> is state-dependent (e.g.
+<code>MarmottantSurfaceTension</code>, <code>GompertzSurfaceTension</code>), the
+area-elasticity term χ((R/Rb)² − 1) enters through <code>p_laplace =
+2 σ(R) / R</code>, not through a separate <code>p_elastic</code> term.  This is
+consistent with how the Marmottant model is written in the
+literature: the elastic and ruptured regimes modify σ(R) rather than
+adding an independent stress contribution.</p>
+</details>
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>sigma : float or Property
+    Surface tension law.
+kappa_s : float or Property
+    Shell surface-dilatational viscosity  [N s/m].</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.shell.ThickShell" class="doc doc-heading">
+            <code>jbubble.bubble.shell.ThickShell</code>
+
+
+<a href="#jbubble.bubble.shell.ThickShell" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.shell.ShellModel" href="#jbubble.bubble.shell.ShellModel">ShellModel</a></code></p>
+
+
+
+        <p>Church (1995) thick viscoelastic shell.</p>
+<p>In addition to Laplace pressure, this model includes thick-shell
+elastic and viscous contributions::</p>
+<div class="highlight"><pre><span></span><code>p_elastic    = (4/3) G_s (d_s / R0) (1 - (R0/R)^3)
+p_shell_visc = 4 mu_s d_s Rdot / R^2
+</code></pre></div>
+<p>Total shell pressure::</p>
+<div class="highlight"><pre><span></span><code>p_shell = 2 sigma(R) / R  +  p_elastic  +  p_shell_visc
+</code></pre></div>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>sigma : float or Property
+    Surface tension law.
+d_s : float or Property
+    Shell thickness  [m].
+G_s : float or Property
+    Shell shear modulus  [Pa].  May be state-dependent (e.g. strain-
+    stiffening / strain-softening).
+mu_s : float or Property
+    Shell viscosity  [Pa s].  May be state-dependent (e.g. shear-
+    thinning).</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h3 id="surface-tension-properties">Surface tension Properties<a class="headerlink" href="#surface-tension-properties" title="Permanent link">&para;</a></h3>
+<p>These are <code>Property</code> subclasses that encode a state-dependent surface tension law. They are passed as the <code>sigma</code> argument to shell models.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.shell.MarmottantSurfaceTension" class="doc doc-heading">
+            <code>jbubble.bubble.shell.MarmottantSurfaceTension</code>
+
+
+<a href="#jbubble.bubble.shell.MarmottantSurfaceTension" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.property.Property" href="#jbubble.bubble.property.Property">Property</a></code></p>
+
+
+
+        <p>Piecewise Marmottant surface tension law.</p>
+<p>Three regimes based on the ratio R / R_buckle::</p>
+<div class="highlight"><pre><span></span><code>R &lt;= R_buckle                :  sigma = 0               (buckled)
+R_buckle &lt; R &lt; R_rupture     :  sigma = chi ((R/R_b)^2 - 1)  (elastic)
+R &gt;= R_rupture               :  sigma = sigma_rupture   (ruptured)
+</code></pre></div>
+<p>where R_buckle = R_buckle_ratio * state.R0 and R_rupture is derived
+from continuity of sigma at the elastic-to-ruptured transition.</p>
+<p>Note: sigma(R) has discontinuous first derivatives at the regime
+boundaries.  For applications requiring smooth gradients (e.g.
+gradient-based optimisation), use <code>GompertzSurfaceTension</code> instead.</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>R_buckle_ratio : float
+    Buckling radius as a fraction of R0  (dimensionless).
+chi : float or Property
+    Shell elasticity  [N/m].
+sigma_rupture : float or Property
+    Surface tension (post-rupture value)  [N/m].</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.shell.GompertzSurfaceTension" class="doc doc-heading">
+            <code>jbubble.bubble.shell.GompertzSurfaceTension</code>
+
+
+<a href="#jbubble.bubble.shell.GompertzSurfaceTension" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.property.Property" href="#jbubble.bubble.property.Property">Property</a></code></p>
+
+
+
+        <p>Smooth Gompertz surface tension law.</p>
+<p>A differentiable Gompertz function approximates the piecewise
+Marmottant surface tension, enabling robust automatic
+differentiation::</p>
+<div class="highlight"><pre><span></span><code>sigma(R) = a exp(-b exp(c (1 - R / R_buckle)))
+</code></pre></div>
+<p>where R_buckle = R_buckle_ratio * state.R0.</p>
+<p>The Gompertz parameters b and c are derived from chi and sigma_rupture
+such that sigma(R0) matches the elastic regime and sigma -&gt; sigma_rupture
+as R -&gt; infinity.  R0 is read from the state so this model stays
+consistent when R0 evolves (e.g. rectified diffusion).</p>
+
+
+<details class="well-posedness-constraint" open>
+  <summary>Well-posedness constraint</summary>
+  <p>The Gompertz fit requires that the initial surface tension at R0 lies
+strictly below the rupture threshold::</p>
+<div class="highlight"><pre><span></span><code>chi * ((1 / R_buckle_ratio)^2 - 1) &lt; sigma_rupture
+</code></pre></div>
+<p>Construction raises <code>ValueError</code> if this is violated.  A common
+mistake is setting R_buckle_ratio too small (e.g. 0.9), which inflates
+sigma(R0) above sigma_rupture.  Values around 0.95–0.99 are typical.</p>
+</details>
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>R_buckle_ratio : float
+    Buckling radius as a fraction of R0  (dimensionless).
+chi : float or Property
+    Shell elasticity  [N/m].
+sigma_rupture : float or Property
+    Asymptotic (ruptured) surface tension  [N/m].</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><hr />
+<h2 id="medium-models">Medium models<a class="headerlink" href="#medium-models" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.medium.MediumModel" class="doc doc-heading">
+            <code>jbubble.bubble.medium.MediumModel</code>
+
+
+<a href="#jbubble.bubble.medium.MediumModel" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="equinox.Module">Module</span></code>, <code><span title="abc.ABC">ABC</span></code></p>
+
+
+
+        <p>Surrounding medium (fluid / tissue) model.</p>
+<p>Computes the total inward viscous and elastic stresses exerted by the
+surrounding medium on the bubble wall.  For a Newtonian liquid this is
+just 4 mu Rdot / R.  Viscoelastic media (Kelvin-Voigt, Neo-Hookean, etc.)
+add elastic restoring forces.</p>
+<p>Subclasses must implement separate methods for the viscous and elastic
+contributions, which are then summed in the default <code>__call__</code> to get
+the total medium pressure p_medium(state).</p>
+<p>A plain float is accepted for <code>mu</code> and auto-converted to a
+<code>Property</code> in <code>__post_init__</code>.</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>mu : float or Property
+    Viscous scaling parameter.  For Newtonian, Kelvin-Voigt, and
+    Neo-Hookean media this is the dynamic viscosity [Pa s].  For
+    <code>PowerLawMedium</code> it is the consistency index K [Pa·s^n],
+    which reduces to dynamic viscosity when n = 1.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.bubble.medium.MediumModel.p_viscous" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">p_viscous</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#jbubble.bubble.medium.MediumModel.p_viscous" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Viscous contribution to the medium pressure.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/bubble/medium.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-45">45</a></span>
+<span class="normal"><a href="#__codelineno-0-46">46</a></span>
+<span class="normal"><a href="#__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="k">def</span><span class="w"> </span><span class="nf">p_viscous</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">BubbleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Viscous contribution to the medium pressure.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="o">...</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.bubble.medium.MediumModel.p_elastic" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">p_elastic</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#jbubble.bubble.medium.MediumModel.p_elastic" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Elastic contribution to the medium pressure.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/bubble/medium.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#__codelineno-0-51">51</a></span>
+<span class="normal"><a href="#__codelineno-0-52">52</a></span>
+<span class="normal"><a href="#__codelineno-0-53">53</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="k">def</span><span class="w"> </span><span class="nf">p_elastic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">BubbleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Elastic contribution to the medium pressure.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="o">...</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.bubble.medium.MediumModel.__call__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></code>
+
+<a href="#jbubble.bubble.medium.MediumModel.__call__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute total medium pressure p_medium(state).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>state</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.bubble.state.BubbleState" href="#jbubble.bubble.state.BubbleState">BubbleState</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Current bubble state.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="scalar">scalar</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Total inward medium pressure (viscous + elastic).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/bubble/medium.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-55">55</a></span>
+<span class="normal"><a href="#__codelineno-0-56">56</a></span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span>
+<span class="normal"><a href="#__codelineno-0-58">58</a></span>
+<span class="normal"><a href="#__codelineno-0-59">59</a></span>
+<span class="normal"><a href="#__codelineno-0-60">60</a></span>
+<span class="normal"><a href="#__codelineno-0-61">61</a></span>
+<span class="normal"><a href="#__codelineno-0-62">62</a></span>
+<span class="normal"><a href="#__codelineno-0-63">63</a></span>
+<span class="normal"><a href="#__codelineno-0-64">64</a></span>
+<span class="normal"><a href="#__codelineno-0-65">65</a></span>
+<span class="normal"><a href="#__codelineno-0-66">66</a></span>
+<span class="normal"><a href="#__codelineno-0-67">67</a></span>
+<span class="normal"><a href="#__codelineno-0-68">68</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">BubbleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute total medium pressure p_medium(state).</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">    state : BubbleState</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">        Current bubble state.</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">    scalar</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">        Total inward medium pressure (viscous + elastic).</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_viscous</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_elastic</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.medium.NewtonianMedium" class="doc doc-heading">
+            <code>jbubble.bubble.medium.NewtonianMedium</code>
+
+
+<a href="#jbubble.bubble.medium.NewtonianMedium" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.medium.MediumModel" href="#jbubble.bubble.medium.MediumModel">MediumModel</a></code></p>
+
+
+
+        <p>Newtonian liquid medium.</p>
+<p>p_medium = 4 mu Rdot / R</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>mu : float or Property
+    Dynamic viscosity  [Pa s].</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.medium.KelvinVoigtMedium" class="doc doc-heading">
+            <code>jbubble.bubble.medium.KelvinVoigtMedium</code>
+
+
+<a href="#jbubble.bubble.medium.KelvinVoigtMedium" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.medium.MediumModel" href="#jbubble.bubble.medium.MediumModel">MediumModel</a></code></p>
+
+
+
+        <p>Kelvin-Voigt viscoelastic medium.</p>
+<p>p_medium = 4 mu Rdot / R  +  (4 G / 3) ((R / R0)^3 - 1)</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>mu : float or Property
+    Dynamic viscosity  [Pa s].
+R0 : float
+    Equilibrium bubble radius  [m].
+G : float or Property
+    Shear modulus  [Pa].  May be state-dependent (e.g. strain-stiffening).</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.medium.NeoHookeanMedium" class="doc doc-heading">
+            <code>jbubble.bubble.medium.NeoHookeanMedium</code>
+
+
+<a href="#jbubble.bubble.medium.NeoHookeanMedium" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.medium.MediumModel" href="#jbubble.bubble.medium.MediumModel">MediumModel</a></code></p>
+
+
+
+        <p>Neo-Hookean finite-strain viscoelastic medium.</p>
+<p>Correctly captures finite-strain behaviour at large oscillation
+amplitudes where the Kelvin-Voigt linear approximation breaks down.</p>
+<p>The elastic pressure is derived by integrating the deviatoric stress
+difference (σ_θθ − σ_rr) through the surrounding incompressible
+neo-Hookean solid.  With the substitution v = r₀/r the integral
+collapses exactly to 2G ∫(1 + v³) dv, giving::</p>
+<div class="highlight"><pre><span></span><code>p_elastic = G (5/2 − 2 (R0/R) − (1/2) (R0/R)^4)
+</code></pre></div>
+<p>Key behaviour:</p>
+<ul>
+<li>Zero at R = R0  (no elastic stress at equilibrium).</li>
+<li>Reduces to 4G(R − R0)/R0 for small strains  (identical to KV).</li>
+<li>Saturates to 5G/2 as R → ∞  (physical: material density near
+  bubble thins to zero so elastic pressure plateaus).</li>
+<li>Diverges to −∞ for R → 0  (strong restoring when compressed).</li>
+</ul>
+<p>Total medium pressure::</p>
+<div class="highlight"><pre><span></span><code>p_medium = 4 mu Rdot / R  +  G (5/2 − 2 (R0/R) − (1/2) (R0/R)^4)
+</code></pre></div>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>mu : float or Property
+    Dynamic viscosity  [Pa s].  A plain float is auto-converted.
+G : float or Property
+    Shear modulus  [Pa].  A plain float is auto-converted.  May be
+    state-dependent (e.g. strain-stiffening).</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.medium.PowerLawMedium" class="doc doc-heading">
+            <code>jbubble.bubble.medium.PowerLawMedium</code>
+
+
+<a href="#jbubble.bubble.medium.PowerLawMedium" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.medium.MediumModel" href="#jbubble.bubble.medium.MediumModel">MediumModel</a></code></p>
+
+
+
+        <p>Power-law (generalised Newtonian) surrounding medium.</p>
+<p>The effective viscosity depends on the shear rate at the bubble wall:</p>
+<div class="highlight"><pre><span></span><code>η_eff = mu · |2 Ṙ/R|^(n-1)
+</code></pre></div>
+<p>Integrating the resulting stress field over the incompressible flow
+surrounding the bubble (Ting 1975) gives the viscous pressure:</p>
+<div class="highlight"><pre><span></span><code>p_visc = (4 mu / n) · (2|Ṙ/R|)^(n-1) · Ṙ/R
+</code></pre></div>
+<p>The factor 1/n arises from the spatial variation of η with radius.
+For n = 1 this reduces exactly to the Newtonian result 4 mu Ṙ/R.</p>
+<p>Special cases:</p>
+<div class="highlight"><pre><span></span><code>n &lt; 1   shear-thinning  (biological tissue, blood, polymer gels)
+n = 1   Newtonian (recovers ``NewtonianMedium`` with viscosity mu)
+n &gt; 1   shear-thickening
+</code></pre></div>
+<p>Note: power-law fluids have unbounded viscosity at zero shear rate
+when n &lt; 1.  A small floor <code>eps</code> on |2 Ṙ/R| prevents numerical
+divergence near turnaround points without affecting dynamics.</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>mu : float or Property
+    Consistency index K  [Pa·s^n].  Stored as <code>mu</code> (inherited field
+    name) but has dimensions [Pa·s^n], not [Pa·s].  Equals the
+    dynamic viscosity when n = 1.
+n_exp : float or Property
+    Power-law exponent  (dimensionless, positive).
+eps : float
+    Floor applied to |2 Ṙ/R|  [s⁻¹].  Default 1e-6.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><hr />
+<h2 id="equations-of-motion">Equations of motion<a class="headerlink" href="#equations-of-motion" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.eom.EquationOfMotion" class="doc doc-heading">
+            <code>jbubble.bubble.eom.EquationOfMotion</code>
+
+
+<a href="#jbubble.bubble.eom.EquationOfMotion" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="equinox.Module">Module</span></code>, <code><span title="abc.ABC">ABC</span></code>, <code><span title="typing.Generic">Generic</span>[<span title="jbubble.bubble.eom.StateType">StateType</span>]</code></p>
+
+
+
+        <p>Macroscopic equation of motion for bubble dynamics.</p>
+<p>Assembles a <code>GasModel</code>, <code>ShellModel</code>, and <code>MediumModel</code> into a
+complete ODE right-hand side.  Concrete subclasses encode different
+EoM formulations (Rayleigh-Plesset, Keller-Miksis, ...) which differ
+in how they relate p_L to the radial acceleration Rddot.</p>
+<p>The type parameter <code>StateType</code> binds each EoM to the state it operates
+on — standard EoMs use <code>BubbleState</code>, confined models use
+<code>ConfinedBubbleState</code>.  Passing the wrong state type is caught by
+the type checker rather than failing at runtime deep inside a JAX
+trace.</p>
+<p>The liquid-side boundary pressure is computed by the concrete helper
+<code>p_L</code> as::</p>
+<div class="highlight"><pre><span></span><code>p_L = gas(state) - shell(state) - medium(state)
+</code></pre></div>
+<p>Because <code>p_L</code> is a regular method on an Equinox module, JAX can
+differentiate through it automatically.  EoMs that require dp_L/dt
+(e.g. Keller-Miksis) can use <code>jax.grad(self.p_L)</code> instead of
+hand-coding analytical derivatives for every component combination.</p>
+<p>The driving acoustic pressure is received as a callable <code>p_ac_fn</code>
+so that EoMs needing dp_ac/dt can compute it via <code>jax.grad</code>.</p>
+<p><code>R0</code> and <code>P_gas0</code> (equilibrium configuration) are seeded into the
+state by <code>initial_state()</code> and carried as frozen constants by the
+ODE (zero time derivatives in the standard case).</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>gas : GasModel
+    Internal gas pressure model.
+shell : ShellModel
+    Shell / coating model.
+medium : MediumModel
+    Surrounding medium model.
+R0 : float or jax.Array
+    Equilibrium bubble radius  [m].
+P_amb : float or jax.Array
+    Ambient (far-field) pressure  [Pa].
+rho_L : float or jax.Array
+    Liquid density  [kg/m^3].</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.bubble.eom.EquationOfMotion.p_L" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">p_L</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></code>
+
+<a href="#jbubble.bubble.eom.EquationOfMotion.p_L" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Liquid-side boundary pressure.</p>
+<p>p_L = p_gas(state) - p_shell(state) - p_medium(state)</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/bubble/eom.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-82">82</a></span>
+<span class="normal"><a href="#__codelineno-0-83">83</a></span>
+<span class="normal"><a href="#__codelineno-0-84">84</a></span>
+<span class="normal"><a href="#__codelineno-0-85">85</a></span>
+<span class="normal"><a href="#__codelineno-0-86">86</a></span>
+<span class="normal"><a href="#__codelineno-0-87">87</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="k">def</span><span class="w"> </span><span class="nf">p_L</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">BubbleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Liquid-side boundary pressure.</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">    p_L = p_gas(state) - p_shell(state) - p_medium(state)</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gas</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">medium</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.bubble.eom.EquationOfMotion.initial_state" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">initial_state</span><span class="p">()</span></code>
+
+<a href="#jbubble.bubble.eom.EquationOfMotion.initial_state" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Default initial state: equilibrium radius, zero velocity.</p>
+<p>Seeds <code>R0</code> and <code>P_gas0</code> (Laplace equilibrium) into the state.
+Override for coupled systems with a larger state vector.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/bubble/eom.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-89"> 89</a></span>
+<span class="normal"><a href="#__codelineno-0-90"> 90</a></span>
+<span class="normal"><a href="#__codelineno-0-91"> 91</a></span>
+<span class="normal"><a href="#__codelineno-0-92"> 92</a></span>
+<span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
+<span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
+<span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
 <span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
 <span class="normal"><a href="#__codelineno-0-97"> 97</a></span>
 <span class="normal"><a href="#__codelineno-0-98"> 98</a></span>
 <span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
-<span class="normal"><a href="#__codelineno-0-100">100</a></span>
-<span class="normal"><a href="#__codelineno-0-101">101</a></span>
-<span class="normal"><a href="#__codelineno-0-102">102</a></span>
-<span class="normal"><a href="#__codelineno-0-103">103</a></span>
-<span class="normal"><a href="#__codelineno-0-104">104</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="k">def</span><span class="w"> </span><span class="nf">chi_R</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">R</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    Shell elasticity parameter χ(R) = (R/2) dσ/dR.</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">    Default implementation uses automatic differentiation of</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">    ``surface_tension``.  Override for closed-form expressions or</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">    to return zero (e.g. ``RayleighPlesset``).</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>    <span class="n">d_sigma_dR</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">surface_tension</span><span class="p">(</span><span class="n">r</span><span class="p">)))(</span><span class="n">R</span><span class="p">)</span>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a>    <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">R</span> <span class="o">*</span> <span class="n">d_sigma_dR</span>
+<span class="normal"><a href="#__codelineno-0-100">100</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="k">def</span><span class="w"> </span><span class="nf">initial_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BubbleState</span><span class="p">:</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Default initial state: equilibrium radius, zero velocity.</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">    Seeds ``R0`` and ``P_gas0`` (Laplace equilibrium) into the state.</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">    Override for coupled systems with a larger state vector.</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="n">R0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R0</span><span class="p">)</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="n">P_gas0</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_amb</span><span class="p">)</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>        <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="o">.</span><span class="n">sigma</span><span class="p">(</span><span class="n">BubbleState</span><span class="p">(</span><span class="n">R</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span> <span class="n">R0</span><span class="o">=</span><span class="n">R0</span><span class="p">))</span> <span class="o">/</span> <span class="n">R0</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>    <span class="p">)</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a>    <span class="k">return</span> <span class="n">BubbleState</span><span class="p">(</span><span class="n">R</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span> <span class="n">R0</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span> <span class="n">P_gas0</span><span class="o">=</span><span class="n">P_gas0</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1248,24 +3601,115 @@ to return zero (e.g. <code>RayleighPlesset</code>).</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="jbubble.bubble.Bubble.get_scaled" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_scaled</span><span class="p">(</span><span class="n">units</span><span class="p">)</span></code>
+<h3 id="jbubble.bubble.eom.EquationOfMotion.__call__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">p_ac_fn</span><span class="p">)</span></code>
 
-<a href="#jbubble.bubble.Bubble.get_scaled" class="headerlink" title="Permanent link">&para;</a></h3>
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#jbubble.bubble.eom.EquationOfMotion.__call__" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Return a dimensionless copy of this model scaled by <em>units</em>.</p>
-<p>Iterates over <code>dataclasses.fields</code> (i.e. the constructor
-parameters) and divides each by the appropriate unit scale.
-Properties and derived quantities are recomputed automatically
-by the constructor.</p>
+        <p>Compute the ODE right-hand side  d(state)/dt.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>t</code>
+            </td>
+            <td>
+                  <code><span title="scalar">scalar</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Current time.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>state</code>
+            </td>
+            <td>
+                  <code><span title="jbubble.bubble.eom.StateType">StateType</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Current bubble state (type matches the EoM's state parameter).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>p_ac_fn</code>
+            </td>
+            <td>
+                  <code>callable  (t -&gt; scalar)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Driving acoustic pressure as a function of time.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="jbubble.bubble.eom.StateType">StateType</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Time derivative of the state.  <code>R0</code> and <code>P_gas0</code>
+derivatives are zero in the standard case.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>jbubble/bubble/base.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-106">106</a></span>
+              <summary>Source code in <code>jbubble/bubble/eom.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-102">102</a></span>
+<span class="normal"><a href="#__codelineno-0-103">103</a></span>
+<span class="normal"><a href="#__codelineno-0-104">104</a></span>
+<span class="normal"><a href="#__codelineno-0-105">105</a></span>
+<span class="normal"><a href="#__codelineno-0-106">106</a></span>
 <span class="normal"><a href="#__codelineno-0-107">107</a></span>
 <span class="normal"><a href="#__codelineno-0-108">108</a></span>
 <span class="normal"><a href="#__codelineno-0-109">109</a></span>
@@ -1277,539 +3721,506 @@ by the constructor.</p>
 <span class="normal"><a href="#__codelineno-0-115">115</a></span>
 <span class="normal"><a href="#__codelineno-0-116">116</a></span>
 <span class="normal"><a href="#__codelineno-0-117">117</a></span>
-<span class="normal"><a href="#__codelineno-0-118">118</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_scaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="n">Units</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Bubble&quot;</span><span class="p">:</span>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a dimensionless copy of this model scaled by *units*.</span>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">    Iterates over ``dataclasses.fields`` (i.e. the constructor</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">    parameters) and divides each by the appropriate unit scale.</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="sd">    Properties and derived quantities are recomputed automatically</span>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">    by the constructor.</span>
-<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-114" name="__codelineno-0-114"></a>    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-115" name="__codelineno-0-115"></a>    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<a id="__codelineno-0-116" name="__codelineno-0-116"></a>        <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-<a id="__codelineno-0-117" name="__codelineno-0-117"></a>        <span class="n">kwargs</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span> <span class="o">/</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">units</span><span class="p">,</span> <span class="n">_FIELD_SCALES</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
-<a id="__codelineno-0-118" name="__codelineno-0-118"></a>    <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-118">118</a></span>
+<span class="normal"><a href="#__codelineno-0-119">119</a></span>
+<span class="normal"><a href="#__codelineno-0-120">120</a></span>
+<span class="normal"><a href="#__codelineno-0-121">121</a></span>
+<span class="normal"><a href="#__codelineno-0-122">122</a></span>
+<span class="normal"><a href="#__codelineno-0-123">123</a></span>
+<span class="normal"><a href="#__codelineno-0-124">124</a></span>
+<span class="normal"><a href="#__codelineno-0-125">125</a></span>
+<span class="normal"><a href="#__codelineno-0-126">126</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a>    <span class="n">t</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a>    <span class="n">state</span><span class="p">:</span> <span class="n">StateType</span><span class="p">,</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a>    <span class="n">p_ac_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StateType</span><span class="p">:</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the ODE right-hand side  d(state)/dt.</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">    t : scalar</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a><span class="sd">        Current time.</span>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">    state : StateType</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">        Current bubble state (type matches the EoM&#39;s state parameter).</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="sd">    p_ac_fn : callable  (t -&gt; scalar)</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a><span class="sd">        Driving acoustic pressure as a function of time.</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a><span class="sd">    StateType</span>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a><span class="sd">        Time derivative of the state.  ``R0`` and ``P_gas0``</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">        derivatives are zero in the standard case.</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a>    <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
 
 </div>
 
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.eom.RayleighPlesset" class="doc doc-heading">
+            <code>jbubble.bubble.eom.RayleighPlesset</code>
+
+
+<a href="#jbubble.bubble.eom.RayleighPlesset" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.eom.EquationOfMotion" href="#jbubble.bubble.eom.EquationOfMotion">EquationOfMotion</a>[<a class="autorefs autorefs-internal" title="jbubble.bubble.state.BubbleState" href="#jbubble.bubble.state.BubbleState">BubbleState</a>]</code></p>
+
+
+
+        <p>Rayleigh-Plesset equation of motion (incompressible liquid).</p>
+<p>R Rddot + 3/2 Rdot^2 = (1/rho) (p_L - P_amb - p_ac)</p>
+<p>The simplest bubble dynamics EoM, assuming an incompressible
+surrounding liquid.  No additional fields beyond the base class.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.eom.ModifiedRayleighPlesset" class="doc doc-heading">
+            <code>jbubble.bubble.eom.ModifiedRayleighPlesset</code>
+
+
+<a href="#jbubble.bubble.eom.ModifiedRayleighPlesset" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.eom.EquationOfMotion" href="#jbubble.bubble.eom.EquationOfMotion">EquationOfMotion</a>[<a class="autorefs autorefs-internal" title="jbubble.bubble.state.BubbleState" href="#jbubble.bubble.state.BubbleState">BubbleState</a>]</code></p>
+
+
+
+        <p>Modified Rayleigh-Plesset with gas radiation damping.</p>
+<p>Adds a first-order compressibility correction to the gas pressure
+term only, as used by Marmottant et al. (2005)::</p>
+<div class="highlight"><pre><span></span><code>R Rddot + 3/2 Rdot^2
+    = (1/rho) (p_L + (R/c) dp_gas/dt - P_amb - p_ac)
+</code></pre></div>
+<p>where dp_gas/dt = (dp_gas/dR) Rdot is computed via autodiff.</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>c_L : float or jax.Array
+    Speed of sound in the liquid  [m/s].</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.eom.KellerMiksis" class="doc doc-heading">
+            <code>jbubble.bubble.eom.KellerMiksis</code>
+
+
+<a href="#jbubble.bubble.eom.KellerMiksis" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.eom.EquationOfMotion" href="#jbubble.bubble.eom.EquationOfMotion">EquationOfMotion</a>[<a class="autorefs autorefs-internal" title="jbubble.bubble.state.BubbleState" href="#jbubble.bubble.state.BubbleState">BubbleState</a>]</code></p>
+
+
+
+        <p>Keller-Miksis equation of motion (first-order compressibility).</p>
+<p>Accounts for liquid compressibility up to first order in the Mach
+number M = Rdot / c_L::</p>
+<div class="highlight"><pre><span></span><code>(1-M) R Rddot + 3/2 (1 - M/3) Rdot^2
+    = (1/rho) (1+M) (p_L - P_amb - p_ac)
+      + R / (rho c) (dp_L/dt - dp_ac/dt)
+</code></pre></div>
+<p>The time derivative dp_L/dt is computed <strong>automatically</strong> via JAX
+autodiff (chain rule through <code>p_L</code>), so this EoM works with any
+combination of gas, shell, and medium models without hand-coded
+derivatives.</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>c_L : float or jax.Array
+    Speed of sound in the liquid  [m/s].</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.eom.Gilmore" class="doc doc-heading">
+            <code>jbubble.bubble.eom.Gilmore</code>
+
+
+<a href="#jbubble.bubble.eom.Gilmore" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.eom.EquationOfMotion" href="#jbubble.bubble.eom.EquationOfMotion">EquationOfMotion</a>[<a class="autorefs autorefs-internal" title="jbubble.bubble.state.BubbleState" href="#jbubble.bubble.state.BubbleState">BubbleState</a>]</code></p>
+
+
+
+        <p>Gilmore equation of motion (Kirkwood-Bethe hypothesis).</p>
+<p>Improves on Keller-Miksis by treating liquid compressibility through
+the Tait equation of state rather than a linear approximation.  The
+enthalpy H and local speed of sound C at the bubble wall are exact
+functions of the wall pressure, giving accurate results at high Mach
+numbers::</p>
+<div class="highlight"><pre><span></span><code>(1 - Ṙ/C) R R̈  +  3/2 (1 - Ṙ/(3C)) Ṙ²
+    = (1 + Ṙ/C) H  +  (R/C)(1 - Ṙ/C) Ḣ
+</code></pre></div>
+<p>where the enthalpy difference between bubble wall and far field is::</p>
+<div class="highlight"><pre><span></span><code>H = n/(n-1) · K · [(p_L+B)^((n-1)/n) − (p∞+B)^((n-1)/n)]
+K = (P_amb+B)^(1/n) / ρ_L
+</code></pre></div>
+<p>and the local sound speed satisfies::</p>
+<div class="highlight"><pre><span></span><code>C² = n·K·(p∞+B)^((n-1)/n)  +  (n-1)·H
+</code></pre></div>
+<p>with p∞ = P_amb + p_ac.</p>
+<p>Ḣ is expanded analytically via the chain rule: ∂H/∂p_L and ∂H/∂p∞
+come from the Tait formula; dp_L/dt is obtained via
+<code>jax.grad(self.p_L)</code> and dp_ac/dt via <code>jax.grad(p_ac_fn)</code>.
+The resulting coupling of R̈ through dp_L/dṘ is absorbed into the
+denominator, following the same algebraic pattern as <code>KellerMiksis</code>.</p>
+<p>Default Tait parameters correspond to water (Gilmore 1952):
+n = 7, B = 304.9 MPa.</p>
+
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>Gilmore, F. R. (1952). <em>The growth or collapse of a spherical bubble
+in a viscous compressible liquid.</em> Hydrodynamics Laboratory Report
+26-4, California Institute of Technology.</p>
+</details>
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>n_tait : float or jax.Array
+    Tait exponent (dimensionless).  Default 7.0.
+B_tait : float or jax.Array
+    Tait pressure constant  [Pa].  Default 304.9e6.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.eom.LeightonTube" class="doc doc-heading">
+            <code>jbubble.bubble.eom.LeightonTube</code>
+
+
+<a href="#jbubble.bubble.eom.LeightonTube" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.eom.EquationOfMotion" href="#jbubble.bubble.eom.EquationOfMotion">EquationOfMotion</a>[<a class="autorefs autorefs-internal" title="jbubble.bubble.state.BubbleState" href="#jbubble.bubble.state.BubbleState">BubbleState</a>]</code></p>
+
+
+
+        <p>Leighton model for a bubble confined in a rigid-walled tube.</p>
+<p>Modifies the inertia terms of the standard Rayleigh-Plesset equation
+to account for the added mass effect of a rigid cylindrical tube::</p>
+<div class="highlight"><pre><span></span><code>R Rddot [1 + (R/Gamma) beta]  +  3/2 Rdot^2 [1 + 4R/(3 Gamma) beta]
+    = (1/rho) (p_L_damped - P_amb - p_ac)
+</code></pre></div>
+<p>where <code>beta = 2 alpha</code> with
+<code>alpha = (zeta/Gamma)(1 + 8 Gamma / (3 pi zeta)) - 1</code> encodes
+the tube geometry (Gamma = tube radius, zeta = half-length).</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>c_L : float or jax.Array
+    Speed of sound in the liquid  [m/s].
+tube_radius : float or jax.Array
+    Inner radius of the confining tube  [m].
+tube_length : float or jax.Array
+    Length of the confining tube  [m].</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.bubble.eom.SphericalConfinement" class="doc doc-heading">
+            <code>jbubble.bubble.eom.SphericalConfinement</code>
+
+
+<a href="#jbubble.bubble.eom.SphericalConfinement" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.eom.EquationOfMotion" href="#jbubble.bubble.eom.EquationOfMotion">EquationOfMotion</a>[<a class="autorefs autorefs-internal" title="jbubble.bubble.state.ConfinedBubbleState" href="#jbubble.bubble.state.ConfinedBubbleState">ConfinedBubbleState</a>]</code></p>
+
+
+
+        <p>Bubble confined inside a thin elastic spherical vessel.</p>
+<p>Couples the bubble wall dynamics to the vessel wall motion, producing
+a 4-DOF state (<code>ConfinedBubbleState</code>) where <em>a</em> is the vessel wall
+radius.</p>
+<p>The coupled system is::</p>
+<div class="highlight"><pre><span></span><code>A Rddot + B a_ddot = F   (force balance)
+C Rddot + D a_ddot = E   (vessel inertia)
+</code></pre></div>
+<p>solved via Cramer's rule at each time step.</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>c_L : float or jax.Array
+    Speed of sound in the liquid  [m/s].
+vessel_radius : float or jax.Array
+    Equilibrium vessel wall radius  [m].
+vessel_rho : float or jax.Array
+    Vessel wall density  [kg/m^3].
+vessel_E : float or jax.Array
+    Vessel Young's modulus  [Pa].
+vessel_d : float or jax.Array
+    Vessel wall thickness  [m].
+tissue_rho : float or jax.Array
+    Surrounding tissue density  [kg/m^3].
+tissue_d : float or jax.Array
+    Surrounding tissue thickness  [m].</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
 <div class="doc doc-object doc-function">
 
 
-<h3 id="jbubble.bubble.Bubble.initial_state" class="doc doc-heading">
+<h3 id="jbubble.bubble.eom.SphericalConfinement.initial_state" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">initial_state</span><span class="p">()</span></code>
 
-<a href="#jbubble.bubble.Bubble.initial_state" class="headerlink" title="Permanent link">&para;</a></h3>
+<a href="#jbubble.bubble.eom.SphericalConfinement.initial_state" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Default initial state [R0, 0].</p>
+        <p>Initial state: equilibrium bubble and vessel radii, zero velocities.</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>jbubble/bubble/base.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-125">125</a></span>
-<span class="normal"><a href="#__codelineno-0-126">126</a></span>
-<span class="normal"><a href="#__codelineno-0-127">127</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-125" name="__codelineno-0-125"></a><span class="k">def</span><span class="w"> </span><span class="nf">initial_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<a id="__codelineno-0-126" name="__codelineno-0-126"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Default initial state [R0, 0].&quot;&quot;&quot;</span>
-<a id="__codelineno-0-127" name="__codelineno-0-127"></a>    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">R0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+              <summary>Source code in <code>jbubble/bubble/eom.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-468">468</a></span>
+<span class="normal"><a href="#__codelineno-0-469">469</a></span>
+<span class="normal"><a href="#__codelineno-0-470">470</a></span>
+<span class="normal"><a href="#__codelineno-0-471">471</a></span>
+<span class="normal"><a href="#__codelineno-0-472">472</a></span>
+<span class="normal"><a href="#__codelineno-0-473">473</a></span>
+<span class="normal"><a href="#__codelineno-0-474">474</a></span>
+<span class="normal"><a href="#__codelineno-0-475">475</a></span>
+<span class="normal"><a href="#__codelineno-0-476">476</a></span>
+<span class="normal"><a href="#__codelineno-0-477">477</a></span>
+<span class="normal"><a href="#__codelineno-0-478">478</a></span>
+<span class="normal"><a href="#__codelineno-0-479">479</a></span>
+<span class="normal"><a href="#__codelineno-0-480">480</a></span>
+<span class="normal"><a href="#__codelineno-0-481">481</a></span>
+<span class="normal"><a href="#__codelineno-0-482">482</a></span>
+<span class="normal"><a href="#__codelineno-0-483">483</a></span>
+<span class="normal"><a href="#__codelineno-0-484">484</a></span>
+<span class="normal"><a href="#__codelineno-0-485">485</a></span>
+<span class="normal"><a href="#__codelineno-0-486">486</a></span>
+<span class="normal"><a href="#__codelineno-0-487">487</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-468" name="__codelineno-0-468"></a><span class="k">def</span><span class="w"> </span><span class="nf">initial_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConfinedBubbleState</span><span class="p">:</span>
+<a id="__codelineno-0-469" name="__codelineno-0-469"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Initial state: equilibrium bubble and vessel radii, zero velocities.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-470" name="__codelineno-0-470"></a>    <span class="n">R0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R0</span><span class="p">)</span>
+<a id="__codelineno-0-471" name="__codelineno-0-471"></a>    <span class="n">s0</span> <span class="o">=</span> <span class="n">ConfinedBubbleState</span><span class="p">(</span>
+<a id="__codelineno-0-472" name="__codelineno-0-472"></a>        <span class="n">R</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span>
+<a id="__codelineno-0-473" name="__codelineno-0-473"></a>        <span class="n">R_dot</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span>
+<a id="__codelineno-0-474" name="__codelineno-0-474"></a>        <span class="n">R0</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span>
+<a id="__codelineno-0-475" name="__codelineno-0-475"></a>        <span class="n">P_gas0</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span>
+<a id="__codelineno-0-476" name="__codelineno-0-476"></a>        <span class="n">a</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vessel_radius</span><span class="p">),</span>
+<a id="__codelineno-0-477" name="__codelineno-0-477"></a>        <span class="n">a_dot</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span>
+<a id="__codelineno-0-478" name="__codelineno-0-478"></a>    <span class="p">)</span>
+<a id="__codelineno-0-479" name="__codelineno-0-479"></a>    <span class="n">P_gas0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_amb</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="o">.</span><span class="n">sigma</span><span class="p">(</span><span class="n">s0</span><span class="p">)</span> <span class="o">/</span> <span class="n">R0</span>
+<a id="__codelineno-0-480" name="__codelineno-0-480"></a>    <span class="k">return</span> <span class="n">ConfinedBubbleState</span><span class="p">(</span>
+<a id="__codelineno-0-481" name="__codelineno-0-481"></a>        <span class="n">R</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span>
+<a id="__codelineno-0-482" name="__codelineno-0-482"></a>        <span class="n">R_dot</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span>
+<a id="__codelineno-0-483" name="__codelineno-0-483"></a>        <span class="n">R0</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span>
+<a id="__codelineno-0-484" name="__codelineno-0-484"></a>        <span class="n">P_gas0</span><span class="o">=</span><span class="n">P_gas0</span><span class="p">,</span>
+<a id="__codelineno-0-485" name="__codelineno-0-485"></a>        <span class="n">a</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vessel_radius</span><span class="p">),</span>
+<a id="__codelineno-0-486" name="__codelineno-0-486"></a>        <span class="n">a_dot</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span>
+<a id="__codelineno-0-487" name="__codelineno-0-487"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
 
 </div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="jbubble.bubble.Bubble.rescale_state" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">rescale_state</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">units</span><span class="p">)</span></code>
-
-<a href="#jbubble.bubble.Bubble.rescale_state" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Rescale the state variables back to physical units.
-Override this for models with different state definitions.</p>
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>jbubble/bubble/base.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-129">129</a></span>
-<span class="normal"><a href="#__codelineno-0-130">130</a></span>
-<span class="normal"><a href="#__codelineno-0-131">131</a></span>
-<span class="normal"><a href="#__codelineno-0-132">132</a></span>
-<span class="normal"><a href="#__codelineno-0-133">133</a></span>
-<span class="normal"><a href="#__codelineno-0-134">134</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-129" name="__codelineno-0-129"></a><span class="k">def</span><span class="w"> </span><span class="nf">rescale_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="n">Units</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<a id="__codelineno-0-130" name="__codelineno-0-130"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Rescale the state variables back to physical units.</span>
-<a id="__codelineno-0-131" name="__codelineno-0-131"></a><span class="sd">    Override this for models with different state definitions.</span>
-<a id="__codelineno-0-132" name="__codelineno-0-132"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-133" name="__codelineno-0-133"></a>    <span class="n">scale_factors</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">units</span><span class="o">.</span><span class="n">L_scale</span><span class="p">,</span> <span class="n">units</span><span class="o">.</span><span class="n">vel_scale</span><span class="p">])</span>
-<a id="__codelineno-0-134" name="__codelineno-0-134"></a>    <span class="k">return</span> <span class="n">state</span> <span class="o">*</span> <span class="n">scale_factors</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="jbubble.bubble.Bubble.surface_tension" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">surface_tension</span><span class="p">(</span><span class="n">R</span><span class="p">)</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
-  </span>
-
-<a href="#jbubble.bubble.Bubble.surface_tension" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Return the interface surface tension at radius R.</p>
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>jbubble/bubble/base.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-81">81</a></span>
-<span class="normal"><a href="#__codelineno-0-82">82</a></span>
-<span class="normal"><a href="#__codelineno-0-83">83</a></span>
-<span class="normal"><a href="#__codelineno-0-84">84</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="k">def</span><span class="w"> </span><span class="nf">surface_tension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">R</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the interface surface tension at radius R.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="o">...</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.bubble.RayleighPlesset" class="doc doc-heading">
-            <code>jbubble.bubble.RayleighPlesset</code>
-
-
-<a href="#jbubble.bubble.RayleighPlesset" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.Bubble (jbubble.bubble.base.Bubble)" href="#jbubble.bubble.Bubble">Bubble</a></code></p>
-
-
-
-        <p>Rayleigh-Plesset model for an uncoated gas bubble.</p>
-<p>Classic model for a spherical gas bubble in an incompressible Newtonian
-liquid. Surface tension is constant (no shell effects). This is the
-simplest available model and is useful as a baseline or for uncoated
-bubbles (e.g. air cavitation).</p>
-<p>The governing equation (incompressible, no shell) is::</p>
-<div class="highlight"><pre><span></span><code>R R̈ + (3/2) Ṙ² = [P_gas(R) − 2σ/R − 4μṘ/R − P_amb − P_drive(t)] / ρ
-</code></pre></div>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.bubble.Marmottant" class="doc doc-heading">
-            <code>jbubble.bubble.Marmottant</code>
-
-
-<a href="#jbubble.bubble.Marmottant" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.bubble.Bubble (jbubble.bubble.base.Bubble)" href="#jbubble.bubble.Bubble">Bubble</a></code></p>
-
-
-
-        <p>Marmottant shell model for encapsulated microbubbles.</p>
-<p>A lipid-coated microbubble in a Newtonian fluid following a
-discontinuous piecewise surface tension law.</p>
-<p>Surface tension follows three regimes:
-    1) Buckled:     σ = 0
-    2) Elastic:     σ = χ (R²/R_buckle² − 1)
-    3) Ruptured:    σ = σ_L</p>
-<p>Includes:
-    - Shell elasticity and shell viscosity
-    - Van der Waals gas correction
-    - Liquid compressibility correction</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.bubble.MarmottantGompertz" class="doc doc-heading">
-            <code>jbubble.bubble.MarmottantGompertz</code>
-
-
-<a href="#jbubble.bubble.MarmottantGompertz" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="jbubble.bubble.base.GompertzBubble">GompertzBubble</span></code></p>
-
-
-
-        <p>Smooth Gompertz-based variant of the Marmottant shell model.</p>
-<p>The discontinuous piecewise surface tension law is replaced with
-a differentiable Gompertz function, making the model suitable for
-automatic differentiation, gradient-based optimisation, and inverse
-problems.</p>
-<p>Includes:
-    - Shell elasticity and shell viscosity
-    - Van der Waals gas correction
-    - Liquid compressibility correction</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.bubble.KellerMiksisGompertz" class="doc doc-heading">
-            <code>jbubble.bubble.KellerMiksisGompertz</code>
-
-
-<a href="#jbubble.bubble.KellerMiksisGompertz" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="jbubble.bubble.base.GompertzBubble">GompertzBubble</span></code></p>
-
-
-
-        <p>Keller-Miksis model with Gompertz surface tension.</p>
-<p>A lipid-coated microbubble in a compressible liquid following a
-differentiable surface tension law (Gompertz).</p>
-<p>Includes:
-    - Shell elasticity and viscosity (chi and kappa_s)
-    - Smooth Gompertz surface tension
-    - Polytropic gas law
-    - Liquid compressibility correction (Keller-Miksis formulation)</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.bubble.KelvinVoigtGompertz" class="doc doc-heading">
-            <code>jbubble.bubble.KelvinVoigtGompertz</code>
-
-
-<a href="#jbubble.bubble.KelvinVoigtGompertz" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="jbubble.bubble.base.GompertzBubble">GompertzBubble</span></code></p>
-
-
-
-        <p>Lipid-coated microbubble in a Kelvin-Voigt viscoelastic medium with
-Gompertz shell surface tension.</p>
-<p>The surrounding material is modeled as a Kelvin-Voigt solid::</p>
-<div class="highlight"><pre><span></span><code>σ_medium = G · strain + μ_m · strain_rate
-</code></pre></div>
-<p>Includes:
-    - Medium viscosity (μ_m) and linear elastic modulus (G)
-    - Shell elasticity and viscosity (chi and kappa_s)
-    - Smooth Gompertz surface tension
-    - Polytropic gas law</p>
-<p>No liquid compressibility correction is included.</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="jbubble.bubble.KelvinVoigtGompertz.elastic_pressure" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">elastic_pressure</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">R_dot</span><span class="p">)</span></code>
-
-<a href="#jbubble.bubble.KelvinVoigtGompertz.elastic_pressure" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Linear Kelvin-Voigt elastic medium pressure.</p>
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>jbubble/bubble/kelvin_voigt_gompertz.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-41">41</a></span>
-<span class="normal"><a href="#__codelineno-0-42">42</a></span>
-<span class="normal"><a href="#__codelineno-0-43">43</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="k">def</span><span class="w"> </span><span class="nf">elastic_pressure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">R</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">R_dot</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Linear Kelvin-Voigt elastic medium pressure.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="k">return</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span> <span class="o">*</span> <span class="p">((</span><span class="n">R</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">R0</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">R0</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.bubble.LeightonGompertz" class="doc doc-heading">
-            <code>jbubble.bubble.LeightonGompertz</code>
-
-
-<a href="#jbubble.bubble.LeightonGompertz" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="jbubble.bubble.base.GompertzBubble">GompertzBubble</span></code></p>
-
-
-
-        <p>Leighton model for a bubble confined in a rigid-walled tube with
-Gompertz surface tension.</p>
-<p>Models a bubble confined within a rigid-walled tube, incorporating:
-    - Shell elasticity and viscosity (chi and kappa_s)
-    - Smooth Gompertz surface tension
-    - Polytropic gas law
-    - Tube wall inertia and geometry effects
-    - Liquid compressibility correction</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.bubble.SphericalConfinement" class="doc doc-heading">
-            <code>jbubble.bubble.SphericalConfinement</code>
-
-
-<a href="#jbubble.bubble.SphericalConfinement" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="jbubble.bubble.base.GompertzBubble">GompertzBubble</span></code></p>
-
-
-
-        <p>Spherical confinement model with Gompertz surface tension law.</p>
-<p>Models a lipid-coated bubble confined within a thin, elastic
-spherical shell. Captures key qualitative effects of confinement
-on bubble dynamics, such as the presence of two normal modes.</p>
-<p>Includes:
-    - Shell elasticity and viscosity (chi and kappa_s)
-    - Smooth Gompertz surface tension
-    - Polytropic gas law
-    - Confinement force based on linear elasticity of the vessel
-    - Liquid compressibility correction</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
 
 
 

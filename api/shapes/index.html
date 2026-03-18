@@ -14,14 +14,14 @@
         <link rel="prev" href="../pulse/">
       
       
-        <link rel="next" href="../solver/">
+        <link rel="next" href="../acoustics/">
       
       
         
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#pulse-shapes" class="md-skip">
+        <a href="#shapes" class="md-skip">
           Skip to content
         </a>
       
@@ -495,34 +495,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guide/units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Units & scaling
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../guide/jax_tips/" class="md-nav__link">
         
   
@@ -671,34 +643,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    units
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../pulse/" class="md-nav__link">
         
   
@@ -787,7 +731,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#jbubble.pulse.PulseShape" class="md-nav__link">
+  <a href="#base-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base classes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.shapes.PulseShape" class="md-nav__link">
     <span class="md-ellipsis">
       
         PulseShape
@@ -798,18 +753,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fourier-base-class" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fourier base class
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.FourierPulseShape" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.FourierPulseShape" class="md-nav__link">
     <span class="md-ellipsis">
       
         FourierPulseShape
@@ -820,10 +764,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#analytic-shapes" class="md-nav__link">
+  <a href="#concrete-shapes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Analytic shapes
+        Concrete shapes
       
     </span>
   </a>
@@ -831,7 +775,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.shapes.Sine" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.Sine" class="md-nav__link">
     <span class="md-ellipsis">
       
         Sine
@@ -842,51 +786,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.shapes.TimeDomainSquare" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TimeDomainSquare
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.TimeDomainSawtooth" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TimeDomainSawtooth
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.TimeDomainTriangle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TimeDomainTriangle
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#fourier-series-shapes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fourier-series shapes
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.Square" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.Square" class="md-nav__link">
     <span class="md-ellipsis">
       
         Square
@@ -897,18 +797,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.shapes.SquareNegPos" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        SquareNegPos
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.Sawtooth" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.Sawtooth" class="md-nav__link">
     <span class="md-ellipsis">
       
         Sawtooth
@@ -919,7 +808,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.shapes.InvertedSawtooth" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.InvertedSawtooth" class="md-nav__link">
     <span class="md-ellipsis">
       
         InvertedSawtooth
@@ -930,7 +819,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.shapes.Triangle" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.Triangle" class="md-nav__link">
     <span class="md-ellipsis">
       
         Triangle
@@ -941,7 +830,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.shapes.Quadratic" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.Quadratic" class="md-nav__link">
     <span class="md-ellipsis">
       
         Quadratic
@@ -952,7 +841,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.shapes.NegativeQuadratic" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.NegativeQuadratic" class="md-nav__link">
     <span class="md-ellipsis">
       
         NegativeQuadratic
@@ -963,10 +852,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.shapes.Asymmetrical" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.Rectangular" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Asymmetrical
+        Rectangular
       
     </span>
   </a>
@@ -974,10 +863,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.shapes.SlantedSine" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.TimeDomainSquare" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SlantedSine
+        TimeDomainSquare
       
     </span>
   </a>
@@ -985,10 +874,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.shapes.Pulse9" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.TimeDomainSawtooth" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pulse9
+        TimeDomainSawtooth
       
     </span>
   </a>
@@ -996,10 +885,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.shapes.Pulse10" class="md-nav__link">
+  <a href="#jbubble.pulse.shapes.TimeDomainTriangle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pulse10
+        TimeDomainTriangle
       
     </span>
   </a>
@@ -1007,87 +896,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#rectangular-duty-cycle-shapes" class="md-nav__link">
+  <a href="#choosing-a-shape" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rectangular duty-cycle shapes
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.Rect25" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rect25
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.Rect75" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rect75
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.Rect25NegPos" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rect25NegPos
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.Rect75NegPos" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rect75NegPos
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.Rect95" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rect95
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.Mono95" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mono95
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jbubble.shapes.Mono99" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mono99
+        Choosing a shape
       
     </span>
   </a>
@@ -1098,6 +910,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    acoustics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1166,6 +1006,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fitting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../utils/" class="md-nav__link">
         
   
@@ -1214,18 +1110,27 @@
   
 
 
-<h1 id="pulse-shapes">Pulse shapes<a class="headerlink" href="#pulse-shapes" title="Permanent link">&para;</a></h1>
+<h1 id="shapes">shapes<a class="headerlink" href="#shapes" title="Permanent link">&para;</a></h1>
+<p>Carrier waveform shapes for use with <code>ToneBurst</code>. All shapes are <code>PulseShape</code> subclasses — Equinox modules with a normalised periodic output (peak amplitude 1).</p>
+<p>Shapes are passed as the <code>shape</code> argument to <code>ToneBurst</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span><span class="p">,</span> <span class="n">Square</span><span class="p">,</span> <span class="n">Rectangular</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">())</span>
+</code></pre></div>
+<hr />
+<h2 id="base-classes">Base classes<a class="headerlink" href="#base-classes" title="Permanent link">&para;</a></h2>
 
 
 <div class="doc doc-object doc-class">
 
 
 
-<h2 id="jbubble.pulse.PulseShape" class="doc doc-heading">
-            <code>jbubble.pulse.PulseShape</code>
+<h2 id="jbubble.pulse.shapes.PulseShape" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.PulseShape</code>
 
 
-<a href="#jbubble.pulse.PulseShape" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.PulseShape" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
@@ -1261,23 +1166,22 @@
 
     </div>
 
-</div><h2 id="fourier-base-class">Fourier base class<a class="headerlink" href="#fourier-base-class" title="Permanent link">&para;</a></h2>
-
+</div>
 
 <div class="doc doc-object doc-class">
 
 
 
-<h2 id="jbubble.shapes.FourierPulseShape" class="doc doc-heading">
-            <code>jbubble.shapes.FourierPulseShape</code>
+<h2 id="jbubble.pulse.shapes.FourierPulseShape" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.FourierPulseShape</code>
 
 
-<a href="#jbubble.shapes.FourierPulseShape" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.FourierPulseShape" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.PulseShape (jbubble.shapes.PulseShape)" href="#jbubble.pulse.PulseShape">PulseShape</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.PulseShape" href="#jbubble.pulse.shapes.PulseShape">PulseShape</a></code></p>
 
 
 
@@ -1308,23 +1212,24 @@
 
     </div>
 
-</div><h2 id="analytic-shapes">Analytic shapes<a class="headerlink" href="#analytic-shapes" title="Permanent link">&para;</a></h2>
+</div><hr />
+<h2 id="concrete-shapes">Concrete shapes<a class="headerlink" href="#concrete-shapes" title="Permanent link">&para;</a></h2>
 
 
 <div class="doc doc-object doc-class">
 
 
 
-<h2 id="jbubble.shapes.Sine" class="doc doc-heading">
-            <code>jbubble.shapes.Sine</code>
+<h2 id="jbubble.pulse.shapes.Sine" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.Sine</code>
 
 
-<a href="#jbubble.shapes.Sine" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.Sine" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.PulseShape (jbubble.shapes.PulseShape)" href="#jbubble.pulse.PulseShape">PulseShape</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.PulseShape" href="#jbubble.pulse.shapes.PulseShape">PulseShape</a></code></p>
 
 
 
@@ -1361,16 +1266,16 @@
 
 
 
-<h2 id="jbubble.shapes.TimeDomainSquare" class="doc doc-heading">
-            <code>jbubble.shapes.TimeDomainSquare</code>
+<h2 id="jbubble.pulse.shapes.Square" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.Square</code>
 
 
-<a href="#jbubble.shapes.TimeDomainSquare" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.Square" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.PulseShape (jbubble.shapes.PulseShape)" href="#jbubble.pulse.PulseShape">PulseShape</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.FourierPulseShape" href="#jbubble.pulse.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
 
 
 
@@ -1407,16 +1312,16 @@
 
 
 
-<h2 id="jbubble.shapes.TimeDomainSawtooth" class="doc doc-heading">
-            <code>jbubble.shapes.TimeDomainSawtooth</code>
+<h2 id="jbubble.pulse.shapes.Sawtooth" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.Sawtooth</code>
 
 
-<a href="#jbubble.shapes.TimeDomainSawtooth" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.Sawtooth" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.PulseShape (jbubble.shapes.PulseShape)" href="#jbubble.pulse.PulseShape">PulseShape</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.FourierPulseShape" href="#jbubble.pulse.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
 
 
 
@@ -1453,63 +1358,16 @@
 
 
 
-<h2 id="jbubble.shapes.TimeDomainTriangle" class="doc doc-heading">
-            <code>jbubble.shapes.TimeDomainTriangle</code>
+<h2 id="jbubble.pulse.shapes.InvertedSawtooth" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.InvertedSawtooth</code>
 
 
-<a href="#jbubble.shapes.TimeDomainTriangle" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.PulseShape (jbubble.shapes.PulseShape)" href="#jbubble.pulse.PulseShape">PulseShape</a></code></p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div><h2 id="fourier-series-shapes">Fourier-series shapes<a class="headerlink" href="#fourier-series-shapes" title="Permanent link">&para;</a></h2>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.Square" class="doc doc-heading">
-            <code>jbubble.shapes.Square</code>
-
-
-<a href="#jbubble.shapes.Square" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.InvertedSawtooth" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.FourierPulseShape" href="#jbubble.pulse.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
 
 
 
@@ -1546,68 +1404,16 @@
 
 
 
-<h2 id="jbubble.shapes.SquareNegPos" class="doc doc-heading">
-            <code>jbubble.shapes.SquareNegPos</code>
+<h2 id="jbubble.pulse.shapes.Triangle" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.Triangle</code>
 
 
-<a href="#jbubble.shapes.SquareNegPos" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
-
-
-
-        <p>Rectangular waveform:
-  - First 50% of cycle:  -1
-  - Second 50% of cycle: +1</p>
-<p>Implemented as a +1 window of duty D = 0.5, phase-shifted by π so that
-the +1 segment occupies the second half of each period.</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.Sawtooth" class="doc doc-heading">
-            <code>jbubble.shapes.Sawtooth</code>
-
-
-<a href="#jbubble.shapes.Sawtooth" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.Triangle" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.FourierPulseShape" href="#jbubble.pulse.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
 
 
 
@@ -1644,16 +1450,16 @@ the +1 segment occupies the second half of each period.</p>
 
 
 
-<h2 id="jbubble.shapes.InvertedSawtooth" class="doc doc-heading">
-            <code>jbubble.shapes.InvertedSawtooth</code>
+<h2 id="jbubble.pulse.shapes.Quadratic" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.Quadratic</code>
 
 
-<a href="#jbubble.shapes.InvertedSawtooth" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.Quadratic" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.FourierPulseShape" href="#jbubble.pulse.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
 
 
 
@@ -1690,16 +1496,16 @@ the +1 segment occupies the second half of each period.</p>
 
 
 
-<h2 id="jbubble.shapes.Triangle" class="doc doc-heading">
-            <code>jbubble.shapes.Triangle</code>
+<h2 id="jbubble.pulse.shapes.NegativeQuadratic" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.NegativeQuadratic</code>
 
 
-<a href="#jbubble.shapes.Triangle" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.NegativeQuadratic" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.Quadratic" href="#jbubble.pulse.shapes.Quadratic">Quadratic</a></code></p>
 
 
 
@@ -1736,16 +1542,156 @@ the +1 segment occupies the second half of each period.</p>
 
 
 
-<h2 id="jbubble.shapes.Quadratic" class="doc doc-heading">
-            <code>jbubble.shapes.Quadratic</code>
+<h2 id="jbubble.pulse.shapes.Rectangular" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.Rectangular</code>
 
 
-<a href="#jbubble.shapes.Quadratic" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.Rectangular" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.FourierPulseShape" href="#jbubble.pulse.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
+
+
+
+        <p>General duty-cycle rectangular waveform.</p>
+<p>Parameterized by duty cycle, amplitude levels, and window placement::</p>
+<div class="highlight"><pre><span></span><code>f(t) = high_level  for (phase_offset / 2π) * T ≤ t&#39; &lt; (phase_offset / 2π + duty) * T
+f(t) = low_level   otherwise
+</code></pre></div>
+<p>where t' = t mod T.</p>
+<p>DC component: <code>high_level * duty + low_level * (1 - duty)</code></p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>duty</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Fraction of the period spent at <code>high_level</code> (0 &lt; duty &lt; 1).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>high_level</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Amplitude during the active window (default +1).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>low_level</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Amplitude outside the active window (default -1).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>phase_offset</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Cycle offset in radians, equal to <code>2π * (start fraction of high window)</code>.
+<code>0</code> places the window at the cycle start; <code>π</code> at the midpoint.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>Common named forms::</p>
+<div class="highlight"><pre><span></span><code>Rectangular(duty=0.5)                                          # ±1 square
+Rectangular(duty=0.5, phase_offset=jnp.pi)                     # NegPos square
+Rectangular(duty=0.25)                                         # +1 for 25%, -1 for 75%
+Rectangular(duty=0.01, high_level=0.0, low_level=-1.0,
+                 phase_offset=1.98 * jnp.pi)                       # monopolar 99%
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.shapes.TimeDomainSquare" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.TimeDomainSquare</code>
+
+
+<a href="#jbubble.pulse.shapes.TimeDomainSquare" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.PulseShape" href="#jbubble.pulse.shapes.PulseShape">PulseShape</a></code></p>
 
 
 
@@ -1782,16 +1728,16 @@ the +1 segment occupies the second half of each period.</p>
 
 
 
-<h2 id="jbubble.shapes.NegativeQuadratic" class="doc doc-heading">
-            <code>jbubble.shapes.NegativeQuadratic</code>
+<h2 id="jbubble.pulse.shapes.TimeDomainSawtooth" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.TimeDomainSawtooth</code>
 
 
-<a href="#jbubble.shapes.NegativeQuadratic" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.TimeDomainSawtooth" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.Quadratic" href="#jbubble.shapes.Quadratic">Quadratic</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.PulseShape" href="#jbubble.pulse.shapes.PulseShape">PulseShape</a></code></p>
 
 
 
@@ -1828,16 +1774,16 @@ the +1 segment occupies the second half of each period.</p>
 
 
 
-<h2 id="jbubble.shapes.Asymmetrical" class="doc doc-heading">
-            <code>jbubble.shapes.Asymmetrical</code>
+<h2 id="jbubble.pulse.shapes.TimeDomainTriangle" class="doc doc-heading">
+            <code>jbubble.pulse.shapes.TimeDomainTriangle</code>
 
 
-<a href="#jbubble.shapes.Asymmetrical" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.shapes.TimeDomainTriangle" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.PulseShape" href="#jbubble.pulse.shapes.PulseShape">PulseShape</a></code></p>
 
 
 
@@ -1868,503 +1814,45 @@ the +1 segment occupies the second half of each period.</p>
 
     </div>
 
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.SlantedSine" class="doc doc-heading">
-            <code>jbubble.shapes.SlantedSine</code>
-
-
-<a href="#jbubble.shapes.SlantedSine" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.Pulse9" class="doc doc-heading">
-            <code>jbubble.shapes.Pulse9</code>
-
-
-<a href="#jbubble.shapes.Pulse9" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.Pulse10" class="doc doc-heading">
-            <code>jbubble.shapes.Pulse10</code>
-
-
-<a href="#jbubble.shapes.Pulse10" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div><h2 id="rectangular-duty-cycle-shapes">Rectangular duty-cycle shapes<a class="headerlink" href="#rectangular-duty-cycle-shapes" title="Permanent link">&para;</a></h2>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.Rect25" class="doc doc-heading">
-            <code>jbubble.shapes.Rect25</code>
-
-
-<a href="#jbubble.shapes.Rect25" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
-
-
-
-        <p>25% duty rectangular waveform (+1 for 75%, -1 for 25%).</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.Rect75" class="doc doc-heading">
-            <code>jbubble.shapes.Rect75</code>
-
-
-<a href="#jbubble.shapes.Rect75" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
-
-
-
-        <p>75% duty rectangular waveform (+1 for 25%, -1 for 75%).</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.Rect25NegPos" class="doc doc-heading">
-            <code>jbubble.shapes.Rect25NegPos</code>
-
-
-<a href="#jbubble.shapes.Rect25NegPos" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
-
-
-
-        <p>Rectangular waveform:
-  - First 25% of cycle:  -1
-  - Last  75% of cycle:  +1</p>
-<p>Implemented as a +1 window of duty D = 0.25, phase-shifted so it begins
-at 25% into the cycle (i.e., occupies the last 75%).</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.Rect75NegPos" class="doc doc-heading">
-            <code>jbubble.shapes.Rect75NegPos</code>
-
-
-<a href="#jbubble.shapes.Rect75NegPos" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
-
-
-
-        <p>Rectangular waveform:
-  - First 75% of cycle:  -1
-  - Last  25% of cycle:  +1</p>
-<p>Implemented as a +1 window of duty D = 0.75, phase-shifted
-to occur at the end (last quarter) of each period.</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.Rect95" class="doc doc-heading">
-            <code>jbubble.shapes.Rect95</code>
-
-
-<a href="#jbubble.shapes.Rect95" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
-
-
-
-        <p>Rectangular waveform:
-  - For 0 &lt; t &lt;= 0.95T:   -1
-  - For 0.95T &lt; t &lt; T:    +1
-With f(0) defined as 0 (which the Fourier series attains as the midpoint at the jump).</p>
-<p>Implemented as a +1 window of duty D = 0.05, phase-shifted to occur
-at the end of each period.</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.Mono95" class="doc doc-heading">
-            <code>jbubble.shapes.Mono95</code>
-
-
-<a href="#jbubble.shapes.Mono95" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
-
-
-
-        <p>Rectangular waveform:
-  - First 95% of cycle:  -1
-  - Last  5% of cycle:   0</p>
-<p>Implemented as a 0-level window of duty D = 0.05, phase-shifted
-to occur at the end of each period.</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="jbubble.shapes.Mono99" class="doc doc-heading">
-            <code>jbubble.shapes.Mono99</code>
-
-
-<a href="#jbubble.shapes.Mono99" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.shapes.FourierPulseShape" href="#jbubble.shapes.FourierPulseShape">FourierPulseShape</a></code></p>
-
-
-
-        <p>Rectangular waveform:
-  - First 99% of cycle:  -1
-  - Last  1% of cycle:    0</p>
-<p>Implemented as a 0-level window of duty D=0.01, phase-shifted
-to occur at the end of each period.</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
+</div><hr />
+<h2 id="choosing-a-shape">Choosing a shape<a class="headerlink" href="#choosing-a-shape" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Shape</th>
+<th>Spectral content</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Sine</code></td>
+<td>Single harmonic</td>
+<td>Default; smoothest, no harmonic artefacts</td>
+</tr>
+<tr>
+<td><code>Square</code> / <code>TimeDomainSquare</code></td>
+<td>Odd harmonics</td>
+<td>Gibbs ringing in Fourier version; <code>TimeDomainSquare</code> avoids it</td>
+</tr>
+<tr>
+<td><code>Sawtooth</code> / <code>TimeDomainSawtooth</code></td>
+<td>All harmonics</td>
+<td>Rising ramp; useful for asymmetric forcing</td>
+</tr>
+<tr>
+<td><code>Triangle</code> / <code>TimeDomainTriangle</code></td>
+<td>Odd harmonics, faster roll-off</td>
+<td>Smoother than square</td>
+</tr>
+<tr>
+<td><code>Rectangular(duty)</code></td>
+<td>General</td>
+<td>Full control over duty cycle, levels, and phase offset</td>
+</tr>
+</tbody>
+</table>
+<p>For gradient-based optimisation of the carrier shape, prefer <code>TimeDomain*</code> variants or <code>Sine</code> — Fourier-series shapes truncate at 10 terms and are <code>C^0</code> at sharp transitions.</p>
 
 
 

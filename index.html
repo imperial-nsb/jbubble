@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -362,10 +362,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#why-jbubble" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
+        Why jbubble?
       
     </span>
   </a>
@@ -373,10 +373,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#quick-example" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start
+        Quick example
       
     </span>
   </a>
@@ -384,10 +384,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
+  <a href="#architecture-at-a-glance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next steps
+        Architecture at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation
       
     </span>
   </a>
@@ -573,34 +584,6 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Units & scaling
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="guide/jax_tips/" class="md-nav__link">
         
   
@@ -744,34 +727,6 @@
   
   
     <li class="md-nav__item">
-      <a href="api/units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    units
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="api/pulse/" class="md-nav__link">
         
   
@@ -808,6 +763,34 @@
     
   
     shapes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    acoustics
   
 
     
@@ -884,6 +867,62 @@
   
   
     <li class="md-nav__item">
+      <a href="api/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fitting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="api/utils/" class="md-nav__link">
         
   
@@ -933,35 +972,97 @@
 
 
 <h1 id="jbubble">jbubble<a class="headerlink" href="#jbubble" title="Permanent link">&para;</a></h1>
-<p><strong>jbubble</strong> is a JAX-based microbubble dynamics library for transcranial focused ultrasound (tFUS) simulation. It provides differentiable ODE models for encapsulated microbubble oscillation, a library of ultrasound pulse shapes, and high-level simulation utilities — all built on JAX for GPU acceleration and automatic differentiation.</p>
-<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>7 bubble models</strong> spanning bare gas bubbles through shell-encapsulated agents in viscoelastic or confined media</li>
-<li><strong>25+ pulse shapes</strong> implemented as differentiable JAX modules</li>
-<li><strong>Non-dimensionalisation</strong> via a <code>Units</code> class tuned for microbubble length and time scales</li>
-<li><strong>JIT, vmap, and grad</strong> compatible throughout — enabling fast parameter sweeps and gradient-based optimisation</li>
-<li><strong>Fixed-step ODE solver</strong> returning compact <code>SimulationResult</code> arrays suitable for downstream ML pipelines</li>
-</ul>
-<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarmottantGompertz</span><span class="p">,</span> <span class="n">Units</span><span class="p">,</span> <span class="n">run_simulation</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pulse</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">shapes</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SaveSpec</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">bubble</span> <span class="o">=</span> <span class="n">MarmottantGompertz</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">3e-6</span><span class="p">)</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">pulse</span>  <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">2e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">200e3</span><span class="p">,</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shapes</span><span class="o">.</span><span class="n">Sine</span><span class="p">())</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">bubble</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="n">Units</span><span class="p">(),</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span> <span class="n">window_s</span><span class="o">=</span><span class="mf">20e-6</span><span class="p">)</span>
+<p><strong>Differentiable microbubble dynamics in JAX.</strong></p>
+<p>jbubble is a research library for simulating and fitting acoustic microbubble dynamics. It is built on <a href="https://github.com/google/jax">JAX</a>, <a href="https://github.com/patrick-kidger/equinox">Equinox</a>, and <a href="https://github.com/patrick-kidger/diffrax">diffrax</a>, making every simulation fully differentiable and JIT-compilable.</p>
+<h2 id="why-jbubble">Why jbubble?<a class="headerlink" href="#why-jbubble" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>jbubble</th>
+<th>APECSS / MATLAB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JIT compilation</td>
+<td>Yes (<code>jax.jit</code>)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Vectorised sweeps</td>
+<td>Yes (<code>jax.vmap</code>)</td>
+<td>Script loops</td>
+</tr>
+<tr>
+<td>Gradient-based fitting</td>
+<td>Yes (<code>jax.grad</code>)</td>
+<td>Finite differences</td>
+</tr>
+<tr>
+<td>Composable physics</td>
+<td>Yes (mix any gas+shell+medium)</td>
+<td>Fixed combinations</td>
+</tr>
+<tr>
+<td>Neural components</td>
+<td>Yes (<code>NeuralProperty</code>, <code>NeuralPulse</code>)</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<h2 id="quick-example">Quick example<a class="headerlink" href="#quick-example" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_simulation</span><span class="p">,</span> <span class="n">SaveSpec</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">KellerMiksis</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolytropicGas</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoShell</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">NewtonianMedium</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span>   <span class="c1"># shape (64,) — normalised radii at saved time-steps</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">ts</span><span class="p">)</span>       <span class="c1"># shape (64,) — saved times in seconds</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">)</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">eom</span> <span class="o">=</span> <span class="n">KellerMiksis</span><span class="p">(</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">gas</span><span class="o">=</span><span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">),</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">shell</span><span class="o">=</span><span class="n">NoShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">0.072</span><span class="p">),</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">medium</span><span class="o">=</span><span class="n">NewtonianMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">),</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">,</span> <span class="n">P_amb</span><span class="o">=</span><span class="mf">101325.0</span><span class="p">,</span> <span class="n">rho_L</span><span class="o">=</span><span class="mf">998.0</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mf">1500.0</span><span class="p">,</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">)</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">result</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">run_simulation</span><span class="p">)(</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">t_max</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">,</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="p">)</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">eom</span><span class="o">.</span><span class="n">R0</span><span class="p">)</span>   <span class="c1"># peak expansion ratio</span>
 </code></pre></div>
-<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p>Or use a preset:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.presets</span><span class="w"> </span><span class="kn">import</span> <span class="n">lipid_bubble</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">preset</span> <span class="o">=</span> <span class="n">lipid_bubble</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">run_simulation</span><span class="p">)(</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">preset</span><span class="o">.</span><span class="n">eom</span><span class="p">,</span> <span class="n">preset</span><span class="o">.</span><span class="n">pulse</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">t_max</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">)</span>
+</code></pre></div>
+<h2 id="architecture-at-a-glance">Architecture at a glance<a class="headerlink" href="#architecture-at-a-glance" title="Permanent link">&para;</a></h2>
+<p>jbubble is structured around a <strong>three-way ontological distinction</strong>:</p>
 <ul>
-<li><a href="guide/installation/">Installation</a> — how to install jbubble and its dependencies</li>
-<li><a href="guide/quickstart/">Quickstart</a> — a more detailed walk-through of the simulation workflow</li>
-<li><a href="guide/bubble_models/">Bubble models</a> — choose the right model for your application</li>
-<li><a href="api/">API reference</a> — full autodoc reference for every public class and function</li>
+<li><strong><a href="api/bubble/#properties">Property</a></strong> — a function <code>state → scalar</code>. Any physical parameter that might depend on the bubble state (surface tension, viscosity, …). A plain <code>float</code> is automatically promoted.</li>
+<li><strong><a href="api/bubble/#state">BubbleState</a></strong> — the ODE integration variables: radius <span class="arithmatex">\(R\)</span>, wall velocity <span class="arithmatex">\(\dot{R}\)</span>, and frozen equilibrium fields <span class="arithmatex">\(R_0\)</span>, <span class="arithmatex">\(P_{\text{gas},0}\)</span>.</li>
+<li><strong>Static params</strong> — quantities fixed for the lifetime of a simulation (ambient pressure, density, …), stored as plain fields on the equation of motion.</li>
+</ul>
+<p>This separation keeps the API composable: <strong>any</strong> gas model works with <strong>any</strong> shell model and <strong>any</strong> medium model, and all combinations work with all equations of motion automatically via autodiff.</p>
+<h2 id="navigation">Navigation<a class="headerlink" href="#navigation" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="guide/installation/">Installation</a></strong> — environment setup.</li>
+<li><strong><a href="guide/quickstart/">Quickstart</a></strong> — first simulation in five minutes.</li>
+<li><strong><a href="guide/bubble_models/">Bubble models</a></strong> — guide to gas, shell, and medium models.</li>
+<li><strong><a href="guide/pulse_shapes/">Pulse shapes</a></strong> — constructing acoustic driving waveforms.</li>
+<li><strong><a href="guide/jax_tips/">JAX tips</a></strong> — JIT, vmap, grad, fitting workflows.</li>
+<li><strong><a href="api/">API reference</a></strong> — full class and function documentation.</li>
 </ul>
 
 

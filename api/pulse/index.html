@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../units/">
+        <link rel="prev" href="../bubble/">
       
       
         <link rel="next" href="../shapes/">
@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -495,34 +495,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guide/units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Units & scaling
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../guide/jax_tips/" class="md-nav__link">
         
   
@@ -668,34 +640,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    units
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -759,7 +703,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#jbubble.pulse.Pulse" class="md-nav__link">
+  <a href="#base-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base classes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse" class="md-nav__link">
     <span class="md-ellipsis">
       
         Pulse
@@ -771,7 +726,29 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#jbubble.pulse.Pulse.__call__" class="md-nav__link">
+  <a href="#jbubble.pulse.base.Pulse.duration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        duration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.t_end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        t_end
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__call__" class="md-nav__link">
     <span class="md-ellipsis">
       
         __call__
@@ -782,10 +759,153 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#jbubble.pulse.Pulse.get_scaled" class="md-nav__link">
+  <a href="#jbubble.pulse.base.Pulse.__add__" class="md-nav__link">
     <span class="md-ellipsis">
       
-        get_scaled
+        __add__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__radd__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __radd__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__mul__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __mul__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__rmul__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __rmul__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__neg__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __neg__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__pos__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __pos__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__sub__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __sub__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__rsub__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __rsub__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__truediv__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __truediv__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__iadd__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __iadd__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__isub__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __isub__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__imul__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __imul__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.__itruediv__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __itruediv__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Pulse.windowed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        windowed
       
     </span>
   </a>
@@ -794,6 +914,177 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Scaled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scaled
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Summed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.base.Offset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offset
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pulse-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pulse types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.tone_burst.ToneBurst" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ToneBurst
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.chirp.ChirpPulse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ChirpPulse
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.sampled.SampledPulse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SampledPulse
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SampledPulse">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.pulse.sampled.SampledPulse.from_uniform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        from_uniform
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.neural.NeuralPulse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NeuralPulse
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#envelopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Envelopes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.envelope.Envelope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Envelope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.envelope.RectangularEnvelope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RectangularEnvelope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.envelope.SoftRectangularEnvelope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SoftRectangularEnvelope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.envelope.HannEnvelope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HannEnvelope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.pulse.envelope.TukeyEnvelope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TukeyEnvelope
+      
+    </span>
+  </a>
   
 </li>
       
@@ -821,6 +1112,34 @@
     
   
     shapes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    acoustics
   
 
     
@@ -897,6 +1216,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fitting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../utils/" class="md-nav__link">
         
   
@@ -945,29 +1320,872 @@
   
 
 
-<h1 id="pulse">Pulse<a class="headerlink" href="#pulse" title="Permanent link">&para;</a></h1>
+<h1 id="pulse">pulse<a class="headerlink" href="#pulse" title="Permanent link">&para;</a></h1>
+<p>The <code>jbubble.pulse</code> module provides composable, differentiable acoustic driving waveforms.</p>
+<p>All pulses are Equinox modules and implement the interface:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">pressure</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>   <span class="c1"># scalar time → scalar pressure [Pa]</span>
+</code></pre></div>
+<hr />
+<h2 id="base-classes">Base classes<a class="headerlink" href="#base-classes" title="Permanent link">&para;</a></h2>
 
 
 <div class="doc doc-object doc-class">
 
 
 
-<h2 id="jbubble.pulse.Pulse" class="doc doc-heading">
-            <code>jbubble.pulse.Pulse</code>
+<h2 id="jbubble.pulse.base.Pulse" class="doc doc-heading">
+            <code>jbubble.pulse.base.Pulse</code>
 
 
-<a href="#jbubble.pulse.Pulse" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.pulse.base.Pulse" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="equinox.Module">Module</span></code></p>
+              Bases: <code><span title="equinox.Module">Module</span></code>, <code><span title="abc.ABC">ABC</span></code></p>
 
 
 
-        <p>Driving acoustic pulse — envelope × waveform shape × pressure amplitude.</p>
-<p>A <code>Pulse</code> is callable: <code>pulse(t)</code> returns the instantaneous pressure
-[same units as <code>pressure</code>] at time <code>t</code>.</p>
+        <p>Abstract acoustic driving pulse.</p>
+<p>Every <code>Pulse</code> is callable: <code>pulse(t)</code> returns the instantaneous
+pressure [Pa] at time <code>t</code>.  Implementations must be JAX-differentiable
+so that equations of motion (e.g. Keller–Miksis) can compute
+<code>jax.grad(pulse)(t)</code>.</p>
+<p>Subclasses implement :meth:<code>_evaluate</code> (the raw, un-enveloped signal).
+The base :meth:<code>__call__</code> applies the :attr:<code>envelope</code> automatically.</p>
+<p>Operator overloads for composition::</p>
+<div class="highlight"><pre><span></span><code>combined = pulse_a + pulse_b          # → Summed
+scaled   = 0.5 * pulse_a              # → Scaled
+windowed = combined.windowed(HannEnvelope())  # swap envelope
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="jbubble.pulse.base.Pulse.duration" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">duration</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#jbubble.pulse.base.Pulse.duration" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Active pulse duration [s] (excluding any leading silence).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="jbubble.pulse.base.Pulse.t_end" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">t_end</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#jbubble.pulse.base.Pulse.t_end" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Suggested simulation end time [s].</p>
+<p>Default: <code>initial_time + 2 × duration</code>.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__call__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="n">t</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__call__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Evaluate pressure at time <em>t</em> [Pa], with envelope applied.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-56">56</a></span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span>
+<span class="normal"><a href="#__codelineno-0-58">58</a></span>
+<span class="normal"><a href="#__codelineno-0-59">59</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate pressure at time *t* [Pa], with envelope applied.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="n">tau</span> <span class="o">=</span> <span class="n">t</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_time</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">envelope</span><span class="p">(</span><span class="n">tau</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__add__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__add__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__add__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Add another pulse or constant offset: pulse_a + pulse_b or pulse + 1.0</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-61">61</a></span>
+<span class="normal"><a href="#__codelineno-0-62">62</a></span>
+<span class="normal"><a href="#__codelineno-0-63">63</a></span>
+<span class="normal"><a href="#__codelineno-0-64">64</a></span>
+<span class="normal"><a href="#__codelineno-0-65">65</a></span>
+<span class="normal"><a href="#__codelineno-0-66">66</a></span>
+<span class="normal"><a href="#__codelineno-0-67">67</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Pulse</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pulse</span><span class="p">:</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Add another pulse or constant offset: pulse_a + pulse_b or pulse + 1.0&quot;&quot;&quot;</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="k">return</span> <span class="n">Offset</span><span class="p">(</span><span class="n">pulse</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">other</span><span class="p">))</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="n">left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Summed</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="bp">self</span><span class="p">,)</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="n">right</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">pulses</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Summed</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">other</span><span class="p">,)</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>    <span class="k">return</span> <span class="n">Summed</span><span class="p">(</span><span class="n">pulses</span><span class="o">=</span><span class="n">left</span> <span class="o">+</span> <span class="n">right</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__radd__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__radd__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__radd__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Right addition: other + self.  If <em>other</em> is a Pulse, delegate to its <strong>add</strong>.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-69">69</a></span>
+<span class="normal"><a href="#__codelineno-0-70">70</a></span>
+<span class="normal"><a href="#__codelineno-0-71">71</a></span>
+<span class="normal"><a href="#__codelineno-0-72">72</a></span>
+<span class="normal"><a href="#__codelineno-0-73">73</a></span>
+<span class="normal"><a href="#__codelineno-0-74">74</a></span>
+<span class="normal"><a href="#__codelineno-0-75">75</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="k">def</span><span class="w"> </span><span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Pulse</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pulse</span><span class="p">:</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Right addition: other + self.  If *other* is a Pulse, delegate to its __add__.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>        <span class="k">return</span> <span class="n">Offset</span><span class="p">(</span><span class="n">pulse</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">other</span><span class="p">))</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Pulse</span><span class="p">):</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>        <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a>    <span class="k">return</span> <span class="bp">NotImplemented</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__mul__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__mul__</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__mul__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Scale the pulse by a factor: pulse * factor</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-77">77</a></span>
+<span class="normal"><a href="#__codelineno-0-78">78</a></span>
+<span class="normal"><a href="#__codelineno-0-79">79</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="k">def</span><span class="w"> </span><span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scaled</span><span class="p">:</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Scale the pulse by a factor: pulse * factor&quot;&quot;&quot;</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a>    <span class="k">return</span> <span class="n">Scaled</span><span class="p">(</span><span class="n">pulse</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">factor</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__rmul__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__rmul__</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__rmul__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Right multiplication: factor * pulse</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-81">81</a></span>
+<span class="normal"><a href="#__codelineno-0-82">82</a></span>
+<span class="normal"><a href="#__codelineno-0-83">83</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="k">def</span><span class="w"> </span><span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scaled</span><span class="p">:</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Right multiplication: factor * pulse&quot;&quot;&quot;</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="k">return</span> <span class="n">Scaled</span><span class="p">(</span><span class="n">pulse</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">factor</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__neg__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__neg__</span><span class="p">()</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__neg__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Negate the pulse (flip polarity): -pulse</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-85">85</a></span>
+<span class="normal"><a href="#__codelineno-0-86">86</a></span>
+<span class="normal"><a href="#__codelineno-0-87">87</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="k">def</span><span class="w"> </span><span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scaled</span><span class="p">:</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Negate the pulse (flip polarity): -pulse&quot;&quot;&quot;</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a>    <span class="k">return</span> <span class="n">Scaled</span><span class="p">(</span><span class="n">pulse</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__pos__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__pos__</span><span class="p">()</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__pos__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Unary plus (identity): +pulse</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-89">89</a></span>
+<span class="normal"><a href="#__codelineno-0-90">90</a></span>
+<span class="normal"><a href="#__codelineno-0-91">91</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="k">def</span><span class="w"> </span><span class="fm">__pos__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pulse</span><span class="p">:</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Unary plus (identity): +pulse&quot;&quot;&quot;</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a>    <span class="k">return</span> <span class="bp">self</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__sub__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__sub__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__sub__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Subtract another pulse or constant offset: pulse_a - pulse_b or pulse - 1.0</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-93">93</a></span>
+<span class="normal"><a href="#__codelineno-0-94">94</a></span>
+<span class="normal"><a href="#__codelineno-0-95">95</a></span>
+<span class="normal"><a href="#__codelineno-0-96">96</a></span>
+<span class="normal"><a href="#__codelineno-0-97">97</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="k">def</span><span class="w"> </span><span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Pulse</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pulse</span><span class="p">:</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Subtract another pulse or constant offset: pulse_a - pulse_b or pulse - 1.0&quot;&quot;&quot;</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="k">return</span> <span class="n">Offset</span><span class="p">(</span><span class="n">pulse</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">offset</span><span class="o">=-</span><span class="nb">float</span><span class="p">(</span><span class="n">other</span><span class="p">))</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a>    <span class="k">return</span> <span class="bp">self</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="n">other</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__rsub__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__rsub__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__rsub__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Right subtraction: other - self</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
+<span class="normal"><a href="#__codelineno-0-100">100</a></span>
+<span class="normal"><a href="#__codelineno-0-101">101</a></span>
+<span class="normal"><a href="#__codelineno-0-102">102</a></span>
+<span class="normal"><a href="#__codelineno-0-103">103</a></span>
+<span class="normal"><a href="#__codelineno-0-104">104</a></span>
+<span class="normal"><a href="#__codelineno-0-105">105</a></span>
+<span class="normal"><a href="#__codelineno-0-106">106</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="k">def</span><span class="w"> </span><span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Pulse</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pulse</span><span class="p">:</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Right subtraction: other - self&quot;&quot;&quot;</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a>        <span class="c1"># other - self = (-self) + other</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a>        <span class="k">return</span> <span class="n">Offset</span><span class="p">(</span><span class="n">pulse</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="p">),</span> <span class="n">offset</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">other</span><span class="p">))</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Pulse</span><span class="p">):</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="k">return</span> <span class="n">other</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="p">)</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a>    <span class="k">return</span> <span class="bp">NotImplemented</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__truediv__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__truediv__</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__truediv__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Divide pulse by a factor: pulse / 2.0</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-108">108</a></span>
+<span class="normal"><a href="#__codelineno-0-109">109</a></span>
+<span class="normal"><a href="#__codelineno-0-110">110</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="k">def</span><span class="w"> </span><span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scaled</span><span class="p">:</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Divide pulse by a factor: pulse / 2.0&quot;&quot;&quot;</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>    <span class="k">return</span> <span class="n">Scaled</span><span class="p">(</span><span class="n">pulse</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">factor</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__iadd__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__iadd__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__iadd__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>In-place addition: pulse += other or pulse += 1.0</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-112">112</a></span>
+<span class="normal"><a href="#__codelineno-0-113">113</a></span>
+<span class="normal"><a href="#__codelineno-0-114">114</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="k">def</span><span class="w"> </span><span class="fm">__iadd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Pulse</span> <span class="o">|</span> <span class="nb">float</span><span class="p">):</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;In-place addition: pulse += other or pulse += 1.0&quot;&quot;&quot;</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a>    <span class="k">return</span> <span class="bp">self</span> <span class="o">+</span> <span class="n">other</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__isub__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__isub__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__isub__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>In-place subtraction: pulse -= other or pulse -= 1.0</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-116">116</a></span>
+<span class="normal"><a href="#__codelineno-0-117">117</a></span>
+<span class="normal"><a href="#__codelineno-0-118">118</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="k">def</span><span class="w"> </span><span class="fm">__isub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Pulse</span> <span class="o">|</span> <span class="nb">float</span><span class="p">):</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;In-place subtraction: pulse -= other or pulse -= 1.0&quot;&quot;&quot;</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a>    <span class="k">return</span> <span class="bp">self</span> <span class="o">-</span> <span class="n">other</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__imul__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__imul__</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__imul__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>In-place multiplication: pulse *= factor</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-120">120</a></span>
+<span class="normal"><a href="#__codelineno-0-121">121</a></span>
+<span class="normal"><a href="#__codelineno-0-122">122</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-120" name="__codelineno-0-120"></a><span class="k">def</span><span class="w"> </span><span class="fm">__imul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;In-place multiplication: pulse *= factor&quot;&quot;&quot;</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>    <span class="k">return</span> <span class="n">Scaled</span><span class="p">(</span><span class="n">pulse</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">factor</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.__itruediv__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__itruediv__</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.__itruediv__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>In-place division: pulse /= factor</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-124">124</a></span>
+<span class="normal"><a href="#__codelineno-0-125">125</a></span>
+<span class="normal"><a href="#__codelineno-0-126">126</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="k">def</span><span class="w"> </span><span class="fm">__itruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;In-place division: pulse /= factor&quot;&quot;&quot;</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a>    <span class="k">return</span> <span class="n">Scaled</span><span class="p">(</span><span class="n">pulse</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">factor</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.pulse.base.Pulse.windowed" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">windowed</span><span class="p">(</span><span class="n">envelope</span><span class="p">)</span></code>
+
+<a href="#jbubble.pulse.base.Pulse.windowed" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return a copy of this pulse with <em>envelope</em> replacing the current one.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/pulse/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-128">128</a></span>
+<span class="normal"><a href="#__codelineno-0-129">129</a></span>
+<span class="normal"><a href="#__codelineno-0-130">130</a></span>
+<span class="normal"><a href="#__codelineno-0-131">131</a></span>
+<span class="normal"><a href="#__codelineno-0-132">132</a></span>
+<span class="normal"><a href="#__codelineno-0-133">133</a></span>
+<span class="normal"><a href="#__codelineno-0-134">134</a></span>
+<span class="normal"><a href="#__codelineno-0-135">135</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-128" name="__codelineno-0-128"></a><span class="k">def</span><span class="w"> </span><span class="nf">windowed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">envelope</span><span class="p">:</span> <span class="n">Envelope</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pulse</span><span class="p">:</span>
+<a id="__codelineno-0-129" name="__codelineno-0-129"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a copy of this pulse with *envelope* replacing the current one.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-130" name="__codelineno-0-130"></a>    <span class="k">return</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span>
+<a id="__codelineno-0-131" name="__codelineno-0-131"></a>        <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">envelope</span><span class="p">,</span>
+<a id="__codelineno-0-132" name="__codelineno-0-132"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-133" name="__codelineno-0-133"></a>        <span class="n">envelope</span><span class="p">,</span>
+<a id="__codelineno-0-134" name="__codelineno-0-134"></a>        <span class="n">is_leaf</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Envelope</span><span class="p">),</span>
+<a id="__codelineno-0-135" name="__codelineno-0-135"></a>    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.base.Scaled" class="doc doc-heading">
+            <code>jbubble.pulse.base.Scaled</code>
+
+
+<a href="#jbubble.pulse.base.Scaled" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.base.Pulse" href="#jbubble.pulse.base.Pulse">Pulse</a></code></p>
+
+
+
+        <p>Amplitude-scaled version of another pulse.</p>
+<p><code>Scaled</code> is transparent: it delegates entirely to the child pulse's
+<code>__call__</code> (which already applies the child's envelope) and simply
+multiplies by <em>factor</em>.  No additional envelope is applied.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>pulse</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.pulse.base.Pulse" href="#jbubble.pulse.base.Pulse">Pulse</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The pulse to scale.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>factor</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Multiplicative factor.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.base.Summed" class="doc doc-heading">
+            <code>jbubble.pulse.base.Summed</code>
+
+
+<a href="#jbubble.pulse.base.Summed" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.base.Pulse" href="#jbubble.pulse.base.Pulse">Pulse</a></code></p>
+
+
+
+        <p>Additive superposition of multiple pulses.</p>
+<p>Each child pulse is evaluated with its own envelope, then the results
+are summed.  The <code>Summed</code> pulse's own :attr:<code>envelope</code> (inherited
+from :class:<code>Pulse</code>, default <code>RectangularEnvelope</code>) is applied on
+top — use <code>.windowed(HannEnvelope())</code> to window the combined signal.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>pulses</code>
+            </td>
+            <td>
+                  <code><span title="tuple">tuple</span>[<a class="autorefs autorefs-internal" title="jbubble.pulse.base.Pulse" href="#jbubble.pulse.base.Pulse">Pulse</a>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Pulses to sum.  Must be a tuple (not a list) for Equinox
+PyTree compatibility.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.base.Offset" class="doc doc-heading">
+            <code>jbubble.pulse.base.Offset</code>
+
+
+<a href="#jbubble.pulse.base.Offset" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.base.Pulse" href="#jbubble.pulse.base.Pulse">Pulse</a></code></p>
+
+
+
+        <p>Constant-offset version of another pulse.</p>
+<p><code>Offset</code> is transparent: it delegates entirely to the child pulse's
+<code>__call__</code> (which already applies the child's envelope) and simply
+adds a constant offset. No additional envelope is applied.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>pulse</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.pulse.base.Pulse" href="#jbubble.pulse.base.Pulse">Pulse</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The pulse to offset.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>offset</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additive constant offset.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><hr />
+<h2 id="pulse-types">Pulse types<a class="headerlink" href="#pulse-types" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.tone_burst.ToneBurst" class="doc doc-heading">
+            <code>jbubble.pulse.tone_burst.ToneBurst</code>
+
+
+<a href="#jbubble.pulse.tone_burst.ToneBurst" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.base.Pulse" href="#jbubble.pulse.base.Pulse">Pulse</a></code></p>
+
+
+
+        <p>Tone burst: carrier waveform × envelope × pressure amplitude.</p>
+<p>A <code>ToneBurst</code> is the standard parametric pulse used in most ultrasound
+simulations.  It combines a periodic :class:<code>PulseShape</code> (e.g. <code>Sine</code>)
+with an :class:<code>Envelope</code> (e.g. <code>HannEnvelope</code>) and a peak pressure.</p>
+<p>The <code>initial_time</code> and <code>envelope</code> fields are inherited from
+:class:<code>Pulse</code> and can be set as keyword arguments.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1018,12 +2236,11 @@
                 <code>shape</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="jbubble.pulse.PulseShape (jbubble.shapes.PulseShape)" href="../shapes/#jbubble.pulse.PulseShape">PulseShape</a></code>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.PulseShape" href="../shapes/#jbubble.pulse.shapes.PulseShape">PulseShape</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Waveform shape (<code>Sine</code>, <code>Sawtooth</code>, …).  The shape is normalised
-so that its peak absolute value is 1.</p>
+                <p>Waveform shape (<code>Sine</code>, <code>Sawtooth</code>, …).</p>
               </div>
             </td>
             <td>
@@ -1039,24 +2256,7 @@ so that its peak absolute value is 1.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Carrier phase offset [rad]. Default: 0.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>initial_time</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Time at which the pulse starts [s]. The pulse is zero for
-<code>t &lt; initial_time</code>. Default: 0.</p>
+                <p>Carrier phase offset [rad].  Default: 0.</p>
               </div>
             </td>
             <td>
@@ -1072,25 +2272,7 @@ so that its peak absolute value is 1.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Number of carrier cycles in the burst. Default: 4.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>apply_hann</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If <code>True</code>, multiply the burst by a Hann (raised-cosine) window to
-give a smooth on/off transition and suppress spectral leakage.
-Default: <code>False</code>.</p>
+                <p>Number of carrier cycles in the burst.  Default: 4.</p>
               </div>
             </td>
             <td>
@@ -1103,11 +2285,299 @@ Default: <code>False</code>.</p>
 
 <p><span class="doc-section-title">Examples:</span></p>
     <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pulse</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pulse</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="nb">float</span><span class="p">(</span><span class="n">pulse</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)))</span>  <span class="c1"># before initial_time</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">0.0</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="nb">float</span><span class="p">(</span><span class="n">pulse</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)))</span> <span class="o">&lt;</span> <span class="mf">0.5</span>  <span class="c1"># sigmoid is ~0.5 at t=0</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">True</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.chirp.ChirpPulse" class="doc doc-heading">
+            <code>jbubble.pulse.chirp.ChirpPulse</code>
+
+
+<a href="#jbubble.pulse.chirp.ChirpPulse" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.base.Pulse" href="#jbubble.pulse.base.Pulse">Pulse</a></code></p>
+
+
+
+        <p>Frequency-sweep pulse with a composable carrier shape and sweep law.</p>
+<p>The :attr:<code>shape</code> determines the carrier waveform (default: sine); the
+:attr:<code>sweep</code> determines how instantaneous frequency varies with time
+(default: linear).  Both are :class:<code>~equinox.Module</code> leaves — swapping
+either keeps the same computational graph and does not force a re-trace.</p>
+<p>The shape is evaluated at the instantaneous accumulated phase Φ(τ),
+so any :class:<code>~jbubble.pulse.shapes.PulseShape</code> works as a carrier.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>freq_start</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Instantaneous frequency at the start [Hz].</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>freq_end</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Instantaneous frequency at the end [Hz].</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pressure</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Peak pressure amplitude [Pa].</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>sweep_duration</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Duration of the frequency sweep [s].</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>shape</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.pulse.shapes.PulseShape" href="../shapes/#jbubble.pulse.shapes.PulseShape">PulseShape</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Carrier waveform shape (default: :class:<code>~jbubble.pulse.shapes.Sine</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>sweep</code>
+            </td>
+            <td>
+                  <code><span title="jbubble.pulse.chirp.ChirpSweep">ChirpSweep</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Phase law (default: :class:<code>LinearSweep</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChirpPulse</span><span class="p">,</span> <span class="n">HannEnvelope</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.chirp</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialSweep</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Square</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">chirp</span> <span class="o">=</span> <span class="n">ChirpPulse</span><span class="p">(</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span>    <span class="n">freq_start</span><span class="o">=</span><span class="mf">0.5e6</span><span class="p">,</span> <span class="n">freq_end</span><span class="o">=</span><span class="mf">2e6</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>    <span class="n">pressure</span><span class="o">=</span><span class="mf">200e3</span><span class="p">,</span> <span class="n">sweep_duration</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>    <span class="n">shape</span><span class="o">=</span><span class="n">Square</span><span class="p">(),</span> <span class="n">sweep</span><span class="o">=</span><span class="n">ExponentialSweep</span><span class="p">(),</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span>    <span class="n">envelope</span><span class="o">=</span><span class="n">HannEnvelope</span><span class="p">(),</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">... </span><span class="p">)</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.sampled.SampledPulse" class="doc doc-heading">
+            <code>jbubble.pulse.sampled.SampledPulse</code>
+
+
+<a href="#jbubble.pulse.sampled.SampledPulse" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.base.Pulse" href="#jbubble.pulse.base.Pulse">Pulse</a></code></p>
+
+
+
+        <p>Acoustic pulse defined by an array of pressure samples.</p>
+<p>Evaluates the pressure at arbitrary times via piecewise-linear
+interpolation (<code>jnp.interp</code>).  The inherited <code>envelope</code> (default
+<code>RectangularEnvelope</code>) gates the signal to
+<code>[initial_time, initial_time + duration]</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>ts</code>
+            </td>
+            <td>
+                  <code>(<span title="jax.Array">Array</span>, <span title="shape">shape</span>(<span title="N">N</span>))</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sample time points [s].  Must be monotonically increasing.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pressures</code>
+            </td>
+            <td>
+                  <code>(<span title="jax.Array">Array</span>, <span title="shape">shape</span>(<span title="N">N</span>))</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Pressure values [Pa] at each sample time.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">SampledPulse</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">ts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">10e-6</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pressures</span> <span class="o">=</span> <span class="mf">200e3</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">1e6</span> <span class="o">*</span> <span class="n">ts</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pulse</span> <span class="o">=</span> <span class="n">SampledPulse</span><span class="p">(</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span> <span class="n">pressures</span><span class="o">=</span><span class="n">pressures</span><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pulse</span><span class="o">.</span><span class="n">duration</span>  <span class="c1"># 10 µs</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">1e-05</span>
 </code></pre></div>
 
 
@@ -1134,15 +2604,19 @@ Default: <code>False</code>.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="jbubble.pulse.Pulse.__call__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="n">t</span><span class="p">)</span></code>
+<h3 id="jbubble.pulse.sampled.SampledPulse.from_uniform" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">from_uniform</span><span class="p">(</span><span class="n">pressures</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">initial_time</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span></code>
 
-<a href="#jbubble.pulse.Pulse.__call__" class="headerlink" title="Permanent link">&para;</a></h3>
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+<a href="#jbubble.pulse.sampled.SampledPulse.from_uniform" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Evaluate the pulse pressure at time <em>t</em>.</p>
+        <p>Create a <code>SampledPulse</code> from uniformly-spaced samples.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1158,41 +2632,50 @@ Default: <code>False</code>.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>t</code>
+                <code>pressures</code>
             </td>
             <td>
-                  <code><span title="jax.Array">Array</span></code>
+                  <code>(<span title="jax.Array">Array</span>, <span title="shape">shape</span>(<span title="N">N</span>))</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Time [same units as <code>initial_time</code>].</p>
+                <p>Pressure values [Pa].</p>
               </div>
             </td>
             <td>
                 <em>required</em>
             </td>
           </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="jax.Array">Array</span></code>
+                <code>dt</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Instantaneous pressure [Pa or dimensionless if scaled].</p>
+                <p>Time step between samples [s].</p>
               </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>initial_time</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Time of the first sample [s].  Default: 0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0</code>
             </td>
           </tr>
       </tbody>
@@ -1200,70 +2683,79 @@ Default: <code>False</code>.</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>jbubble/pulse.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-56">56</a></span>
+              <summary>Source code in <code>jbubble/pulse/sampled.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#__codelineno-0-51">51</a></span>
+<span class="normal"><a href="#__codelineno-0-52">52</a></span>
+<span class="normal"><a href="#__codelineno-0-53">53</a></span>
+<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+<span class="normal"><a href="#__codelineno-0-55">55</a></span>
+<span class="normal"><a href="#__codelineno-0-56">56</a></span>
 <span class="normal"><a href="#__codelineno-0-57">57</a></span>
 <span class="normal"><a href="#__codelineno-0-58">58</a></span>
 <span class="normal"><a href="#__codelineno-0-59">59</a></span>
 <span class="normal"><a href="#__codelineno-0-60">60</a></span>
 <span class="normal"><a href="#__codelineno-0-61">61</a></span>
 <span class="normal"><a href="#__codelineno-0-62">62</a></span>
-<span class="normal"><a href="#__codelineno-0-63">63</a></span>
-<span class="normal"><a href="#__codelineno-0-64">64</a></span>
-<span class="normal"><a href="#__codelineno-0-65">65</a></span>
-<span class="normal"><a href="#__codelineno-0-66">66</a></span>
-<span class="normal"><a href="#__codelineno-0-67">67</a></span>
-<span class="normal"><a href="#__codelineno-0-68">68</a></span>
-<span class="normal"><a href="#__codelineno-0-69">69</a></span>
-<span class="normal"><a href="#__codelineno-0-70">70</a></span>
-<span class="normal"><a href="#__codelineno-0-71">71</a></span>
-<span class="normal"><a href="#__codelineno-0-72">72</a></span>
-<span class="normal"><a href="#__codelineno-0-73">73</a></span>
-<span class="normal"><a href="#__codelineno-0-74">74</a></span>
-<span class="normal"><a href="#__codelineno-0-75">75</a></span>
-<span class="normal"><a href="#__codelineno-0-76">76</a></span>
-<span class="normal"><a href="#__codelineno-0-77">77</a></span>
-<span class="normal"><a href="#__codelineno-0-78">78</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate the pulse pressure at time *t*.</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">    Parameters</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">    t : jax.Array</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">        Time [same units as ``initial_time``].</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">    jax.Array</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">        Instantaneous pressure [Pa or dimensionless if scaled].</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a>    <span class="n">pulse_span</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_num</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a>    <span class="n">tau</span> <span class="o">=</span> <span class="n">t</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_time</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="n">in_pulse</span> <span class="o">=</span> <span class="p">(</span><span class="n">tau</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">tau</span> <span class="o">&lt;=</span> <span class="n">pulse_span</span><span class="p">)</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a>    <span class="n">hann</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">tau</span> <span class="o">/</span> <span class="n">pulse_span</span><span class="p">))</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="n">window_val</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">apply_hann</span><span class="p">,</span> <span class="n">hann</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>    <span class="n">window</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">in_pulse</span><span class="p">,</span> <span class="n">window_val</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_time</span><span class="p">)</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a>    <span class="k">return</span> <span class="n">val</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pressure</span> <span class="o">*</span> <span class="n">window</span>
+<span class="normal"><a href="#__codelineno-0-63">63</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="nd">@staticmethod</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="k">def</span><span class="w"> </span><span class="nf">from_uniform</span><span class="p">(</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="n">pressures</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">initial_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SampledPulse</span><span class="p">:</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a ``SampledPulse`` from uniformly-spaced samples.</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">    pressures : jax.Array, shape (N,)</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">        Pressure values [Pa].</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    dt : float</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">        Time step between samples [s].</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">    initial_time : float</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">        Time of the first sample [s].  Default: 0.</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="n">ts</span> <span class="o">=</span> <span class="n">initial_time</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">pressures</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">dt</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="k">return</span> <span class="n">SampledPulse</span><span class="p">(</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span> <span class="n">pressures</span><span class="o">=</span><span class="n">pressures</span><span class="p">,</span> <span class="n">initial_time</span><span class="o">=</span><span class="n">initial_time</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
 
 </div>
 
-<div class="doc doc-object doc-function">
 
 
-<h3 id="jbubble.pulse.Pulse.get_scaled" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_scaled</span><span class="p">(</span><span class="n">units</span><span class="p">)</span></code>
+  </div>
 
-<a href="#jbubble.pulse.Pulse.get_scaled" class="headerlink" title="Permanent link">&para;</a></h3>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
 
 
-    <div class="doc doc-contents ">
 
-        <p>Return a dimensionless copy of this pulse scaled by <em>units</em>.</p>
+<h2 id="jbubble.pulse.neural.NeuralPulse" class="doc doc-heading">
+            <code>jbubble.pulse.neural.NeuralPulse</code>
+
+
+<a href="#jbubble.pulse.neural.NeuralPulse" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.base.Pulse" href="#jbubble.pulse.base.Pulse">Pulse</a></code></p>
+
+
+
+        <p>Acoustic pulse parameterised by a neural network.</p>
+<p>The network maps normalised time <code>t / duration</code> to instantaneous
+pressure, scaled by <code>pressure_scale</code>.  Because the entire pulse is an
+Equinox module, its parameters participate in JAX transformations
+(<code>jit</code>, <code>grad</code>, <code>vmap</code>) — making it straightforward to optimise
+the driving waveform via gradient descent.</p>
+<p>The <code>initial_time</code> and <code>envelope</code> fields are inherited from
+:class:<code>Pulse</code> and can be set as keyword arguments.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1279,14 +2771,49 @@ Default: <code>False</code>.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>units</code>
+                <code>net</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="jbubble.Units (jbubble.units.Units)" href="../units/#jbubble.Units">Units</a></code>
+                  <code><span title="equinox.Module">Module</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Non-dimensionalisation factors.</p>
+                <p>Any callable Equinox module (e.g. <code>eqx.nn.MLP</code>) mapping a
+scalar (or 1-element array) to a scalar output.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pulse_duration</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Nominal pulse duration [s] — used for time normalisation and
+the :attr:<code>duration</code> property.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pressure_scale</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Multiplicative scaling applied to the network output [Pa].
+Default: 1.0.</p>
               </div>
             </td>
             <td>
@@ -1297,82 +2824,355 @@ Default: <code>False</code>.</p>
     </table>
 
 
-    <p><span class="doc-section-title">Returns:</span></p>
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">NeuralPulse</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">mlp</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MLP</span><span class="p">(</span><span class="n">in_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">width_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>                  <span class="n">depth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pulse</span> <span class="o">=</span> <span class="n">NeuralPulse</span><span class="p">(</span><span class="n">net</span><span class="o">=</span><span class="n">mlp</span><span class="p">,</span> <span class="n">pulse_duration</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span>                    <span class="n">pressure_scale</span><span class="o">=</span><span class="mf">200e3</span><span class="p">)</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><hr />
+<h2 id="envelopes">Envelopes<a class="headerlink" href="#envelopes" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.envelope.Envelope" class="doc doc-heading">
+            <code>jbubble.pulse.envelope.Envelope</code>
+
+
+<a href="#jbubble.pulse.envelope.Envelope" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="equinox.Module">Module</span></code>, <code><span title="abc.ABC">ABC</span></code></p>
+
+
+
+        <p>Window function mapping relative time <em>tau</em> to a scale in [0, 1].</p>
+<p>Called as <code>envelope(tau, duration)</code> where <em>tau</em> = t − initial_time.
+Returns 0 outside [0, duration].</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.envelope.RectangularEnvelope" class="doc doc-heading">
+            <code>jbubble.pulse.envelope.RectangularEnvelope</code>
+
+
+<a href="#jbubble.pulse.envelope.RectangularEnvelope" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.envelope.Envelope" href="#jbubble.pulse.envelope.Envelope">Envelope</a></code></p>
+
+
+
+        <p>Hard on/off gating — 1 inside [0, duration], 0 outside.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.envelope.SoftRectangularEnvelope" class="doc doc-heading">
+            <code>jbubble.pulse.envelope.SoftRectangularEnvelope</code>
+
+
+<a href="#jbubble.pulse.envelope.SoftRectangularEnvelope" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.envelope.Envelope" href="#jbubble.pulse.envelope.Envelope">Envelope</a></code></p>
+
+
+
+        <p>Smooth approximation to a rectangular window using sigmoid transitions.</p>
+<p>Replaces the hard on/off step of :class:<code>RectangularEnvelope</code> with
+smooth sigmoid ramps, keeping <code>dp_ac/dt</code> continuous everywhere.
+This is the preferred envelope when a near-rectangular window is needed
+for gradient-based parameter fitting via the adjoint method.</p>
+<p>The window value is::</p>
+<div class="highlight"><pre><span></span><code>w(τ) = σ(τ / k) · σ((T − τ) / k),   k = T / steepness
+</code></pre></div>
+<p>where <code>σ</code> is the logistic sigmoid and <code>T</code> is the pulse duration.
+The plateau is flat to within <code>2·exp(−steepness/2)</code> of 1.0.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
     <table>
       <thead>
         <tr>
+          <th>Name</th>
           <th>Type</th>
           <th>Description</th>
+          <th>Default</th>
         </tr>
       </thead>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="jbubble.pulse.Pulse" href="#jbubble.pulse.Pulse">Pulse</a></code>
+                <code>steepness</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Copy with <code>freq</code>, <code>pressure</code>, and <code>initial_time</code> divided by
-their respective scale factors.</p>
+                <p>Controls transition sharpness.  Transitions span roughly
+<code>4·T / steepness</code> in time (±2σ).  Default 100 gives transitions
+of ≈ 4% of the pulse duration — imperceptible for bursts of 5+ cycles.</p>
               </div>
+            </td>
+            <td>
+                <em>required</em>
             </td>
           </tr>
       </tbody>
     </table>
 
 
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>jbubble/pulse.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-80"> 80</a></span>
-<span class="normal"><a href="#__codelineno-0-81"> 81</a></span>
-<span class="normal"><a href="#__codelineno-0-82"> 82</a></span>
-<span class="normal"><a href="#__codelineno-0-83"> 83</a></span>
-<span class="normal"><a href="#__codelineno-0-84"> 84</a></span>
-<span class="normal"><a href="#__codelineno-0-85"> 85</a></span>
-<span class="normal"><a href="#__codelineno-0-86"> 86</a></span>
-<span class="normal"><a href="#__codelineno-0-87"> 87</a></span>
-<span class="normal"><a href="#__codelineno-0-88"> 88</a></span>
-<span class="normal"><a href="#__codelineno-0-89"> 89</a></span>
-<span class="normal"><a href="#__codelineno-0-90"> 90</a></span>
-<span class="normal"><a href="#__codelineno-0-91"> 91</a></span>
-<span class="normal"><a href="#__codelineno-0-92"> 92</a></span>
-<span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
-<span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
-<span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
-<span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
-<span class="normal"><a href="#__codelineno-0-97"> 97</a></span>
-<span class="normal"><a href="#__codelineno-0-98"> 98</a></span>
-<span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
-<span class="normal"><a href="#__codelineno-0-100">100</a></span>
-<span class="normal"><a href="#__codelineno-0-101">101</a></span>
-<span class="normal"><a href="#__codelineno-0-102">102</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_scaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="n">Units</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Pulse&quot;</span><span class="p">:</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a dimensionless copy of this pulse scaled by *units*.</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">    Parameters</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">    units : Units</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">        Non-dimensionalisation factors.</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    Pulse</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">        Copy with ``freq``, ``pressure``, and ``initial_time`` divided by</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">        their respective scale factors.</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="k">return</span> <span class="n">Pulse</span><span class="p">(</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a>        <span class="n">freq</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">freq</span> <span class="o">/</span> <span class="n">units</span><span class="o">.</span><span class="n">freq_scale</span><span class="p">,</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">pressure</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pressure</span> <span class="o">/</span> <span class="n">units</span><span class="o">.</span><span class="n">P_scale</span><span class="p">,</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a>        <span class="n">phase</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">,</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a>        <span class="n">initial_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_time</span> <span class="o">/</span> <span class="n">units</span><span class="o">.</span><span class="n">T_scale</span><span class="p">,</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>        <span class="n">cycle_num</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_num</span><span class="p">,</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>        <span class="n">apply_hann</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apply_hann</span><span class="p">,</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a>    <span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
     </div>
 
 </div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.envelope.HannEnvelope" class="doc doc-heading">
+            <code>jbubble.pulse.envelope.HannEnvelope</code>
+
+
+<a href="#jbubble.pulse.envelope.HannEnvelope" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.envelope.Envelope" href="#jbubble.pulse.envelope.Envelope">Envelope</a></code></p>
+
+
+
+        <p>Hann (raised-cosine) window for smooth on/off transitions.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.pulse.envelope.TukeyEnvelope" class="doc doc-heading">
+            <code>jbubble.pulse.envelope.TukeyEnvelope</code>
+
+
+<a href="#jbubble.pulse.envelope.TukeyEnvelope" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="jbubble.pulse.envelope.Envelope" href="#jbubble.pulse.envelope.Envelope">Envelope</a></code></p>
+
+
+
+        <p>Tukey (tapered cosine) window — flat in the middle, cosine tapers.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>alpha</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Fraction of the window inside the cosine tapers.
+<code>alpha = 0</code> → rectangular, <code>alpha = 1</code> → Hann.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
 
 
 

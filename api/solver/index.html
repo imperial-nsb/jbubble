@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../shapes/">
+        <link rel="prev" href="../acoustics/">
       
       
         <link rel="next" href="../simulation/">
@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -495,34 +495,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guide/units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Units & scaling
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../guide/jax_tips/" class="md-nav__link">
         
   
@@ -671,34 +643,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../units/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    units
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../pulse/" class="md-nav__link">
         
   
@@ -735,6 +679,34 @@
     
   
     shapes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    acoustics
   
 
     
@@ -826,10 +798,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#jbubble.solver.solve_bubble" class="md-nav__link">
+  <a href="#jbubble.solver.SolverConfig" class="md-nav__link">
     <span class="md-ellipsis">
       
-        solve_bubble
+        SolverConfig
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.solver.solve_eom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        solve_eom
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solver-choice-and-tolerances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solver choice and tolerances
       
     </span>
   </a>
@@ -860,6 +854,62 @@
     
   
     simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fitting
   
 
     
@@ -928,7 +978,11 @@
   
 
 
-<h1 id="solver">Solver<a class="headerlink" href="#solver" title="Permanent link">&para;</a></h1>
+<h1 id="solver">solver<a class="headerlink" href="#solver" title="Permanent link">&para;</a></h1>
+<p>Low-level ODE integration primitives. Most users should prefer <code>run_simulation</code> from <code>jbubble.simulation</code>, which wraps these with post-processing. Use <code>solve_eom</code> directly when you need access to the raw <code>diffrax.Solution</code> object.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_eom</span><span class="p">,</span> <span class="n">SaveSpec</span><span class="p">,</span> <span class="n">SolverConfig</span>
+</code></pre></div>
+<hr />
 
 
 <div class="doc doc-object doc-class">
@@ -1010,18 +1064,78 @@
 
 </div>
 
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.solver.SolverConfig" class="doc doc-heading">
+            <code>jbubble.solver.SolverConfig</code>
+
+
+<a href="#jbubble.solver.SolverConfig" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="equinox.Module">Module</span></code></p>
+
+
+
+        <p>Numerical integration settings for :func:<code>solve_eom</code>.</p>
+
+
+<details class="fields" open>
+  <summary>Fields</summary>
+  <p>solver : diffrax.AbstractSolver
+    ODE solver.  Default: <code>Kvaerno5()</code>.
+stepsize_controller : diffrax.AbstractStepSizeController
+    Step-size controller.  Default: <code>PIDController(rtol=1e-3, atol=1e-6)</code>.
+dt0 : float
+    Initial step size [s].  Default: 1e-9.
+max_steps : int
+    Maximum solver steps per integration.  Default: 50 000.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
 <div class="doc doc-object doc-function">
 
 
-<h2 id="jbubble.solver.solve_bubble" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">jbubble</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">solve_bubble</span><span class="p">(</span><span class="n">bubble</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">t_span</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dt0</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stepsize_controller</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span></code>
+<h2 id="jbubble.solver.solve_eom" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">jbubble</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">solve_eom</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">y0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t_max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adjoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
-<a href="#jbubble.solver.solve_bubble" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#jbubble.solver.solve_eom" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
     <div class="doc doc-contents first">
 
-        <p>Solve the bubble dynamics for any bubble model with a given pulse.</p>
+        <p>Solve bubble dynamics for an <code>EquationOfMotion</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1037,15 +1151,14 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>bubble</code>
+                <code>eom</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="jbubble.bubble.Bubble" href="../bubble/#jbubble.bubble.Bubble">Bubble</a></code>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.bubble.eom.EquationOfMotion" href="../bubble/#jbubble.bubble.eom.EquationOfMotion">EquationOfMotion</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Bubble model instance (e.g., Marmottant, MarmottantGompertz).
-Must have a <code>bubble_equation(t, state, pulse)</code> method.</p>
+                <p>Assembled equation of motion (e.g. <code>KellerMiksis</code>).</p>
               </div>
             </td>
             <td>
@@ -1057,11 +1170,11 @@ Must have a <code>bubble_equation(t, state, pulse)</code> method.</p>
                 <code>pulse</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="jbubble.pulse.Pulse" href="../pulse/#jbubble.pulse.Pulse">Pulse</a></code>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.pulse.base.Pulse (jbubble.pulse.Pulse)" href="../pulse/#jbubble.pulse.base.Pulse">Pulse</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Driving pulse</p>
+                <p>Driving acoustic pulse.</p>
               </div>
             </td>
             <td>
@@ -1070,14 +1183,15 @@ Must have a <code>bubble_equation(t, state, pulse)</code> method.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>t_span</code>
+                <code>y0</code>
             </td>
             <td>
-                  <code><span title="Tuple">Tuple</span>[<span title="float">float</span>, <span title="float">float</span>]</code>
+                  <code><span title="BubbleState">BubbleState</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Time span (t0, t1). If None, computed from pulse duration</p>
+                <p>Initial state (dimensionless).  If <em>None</em>, derived from
+<code>eom.initial_state()</code>.</p>
               </div>
             </td>
             <td>
@@ -1086,18 +1200,18 @@ Must have a <code>bubble_equation(t, state, pulse)</code> method.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>dt0</code>
+                <code>t_max</code>
             </td>
             <td>
                   <code><span title="float">float</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Initial time step</p>
+                <p>Integration end time [s].  If <em>None</em>, derived from <code>pulse.t_end</code>.</p>
               </div>
             </td>
             <td>
-                  <code>0.001</code>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1109,7 +1223,8 @@ Must have a <code>bubble_equation(t, state, pulse)</code> method.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Output specification. Default: 1000 samples</p>
+                <p>Output sampling specification.  Default: 1024 evenly-spaced
+time points.</p>
               </div>
             </td>
             <td>
@@ -1118,14 +1233,15 @@ Must have a <code>bubble_equation(t, state, pulse)</code> method.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>solver</code>
+                <code>config</code>
             </td>
             <td>
-                  <code><span title="diffrax.AbstractSolver">AbstractSolver</span></code>
+                  <code><a class="autorefs autorefs-internal" title="jbubble.solver.SolverConfig" href="#jbubble.solver.SolverConfig">SolverConfig</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>ODE solver. Default: Kvaerno5</p>
+                <p>Numerical integration settings.  Default: Kvaerno5 with
+PIDController(rtol=1e-3, atol=1e-6).</p>
               </div>
             </td>
             <td>
@@ -1134,14 +1250,16 @@ Must have a <code>bubble_equation(t, state, pulse)</code> method.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>stepsize_controller</code>
+                <code>adjoint</code>
             </td>
             <td>
-                  <code><span title="diffrax.AbstractStepSizeController">AbstractStepSizeController</span></code>
+                  <code><span title="diffrax.AbstractAdjoint">AbstractAdjoint</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Step size controller. Default: PIDController(rtol=1e-3, atol=1e-6)</p>
+                <p>Adjoint method for gradient computation.  Default: diffrax built-in
+(<code>RecursiveCheckpointAdjoint</code>).  For gradient-based fitting through
+an explicit solver use <code>diffrax.BacksolveAdjoint()</code>.</p>
               </div>
             </td>
             <td>
@@ -1157,27 +1275,11 @@ Must have a <code>bubble_equation(t, state, pulse)</code> method.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Show progress meter</p>
+                <p>Show a text progress meter.</p>
               </div>
             </td>
             <td>
                   <code>False</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>max_steps</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Maximum number of steps</p>
-              </div>
-            </td>
-            <td>
-                  <code>10000</code>
             </td>
           </tr>
       </tbody>
@@ -1199,7 +1301,7 @@ Must have a <code>bubble_equation(t, state, pulse)</code> method.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Solution object with ts, ys (radius and velocity over time)</p>
+                <p>Solution object with <code>ts</code> and <code>ys</code>.</p>
               </div>
             </td>
           </tr>
@@ -1209,33 +1311,7 @@ Must have a <code>bubble_equation(t, state, pulse)</code> method.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>jbubble/solver.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-30"> 30</a></span>
-<span class="normal"><a href="#__codelineno-0-31"> 31</a></span>
-<span class="normal"><a href="#__codelineno-0-32"> 32</a></span>
-<span class="normal"><a href="#__codelineno-0-33"> 33</a></span>
-<span class="normal"><a href="#__codelineno-0-34"> 34</a></span>
-<span class="normal"><a href="#__codelineno-0-35"> 35</a></span>
-<span class="normal"><a href="#__codelineno-0-36"> 36</a></span>
-<span class="normal"><a href="#__codelineno-0-37"> 37</a></span>
-<span class="normal"><a href="#__codelineno-0-38"> 38</a></span>
-<span class="normal"><a href="#__codelineno-0-39"> 39</a></span>
-<span class="normal"><a href="#__codelineno-0-40"> 40</a></span>
-<span class="normal"><a href="#__codelineno-0-41"> 41</a></span>
-<span class="normal"><a href="#__codelineno-0-42"> 42</a></span>
-<span class="normal"><a href="#__codelineno-0-43"> 43</a></span>
-<span class="normal"><a href="#__codelineno-0-44"> 44</a></span>
-<span class="normal"><a href="#__codelineno-0-45"> 45</a></span>
-<span class="normal"><a href="#__codelineno-0-46"> 46</a></span>
-<span class="normal"><a href="#__codelineno-0-47"> 47</a></span>
-<span class="normal"><a href="#__codelineno-0-48"> 48</a></span>
-<span class="normal"><a href="#__codelineno-0-49"> 49</a></span>
-<span class="normal"><a href="#__codelineno-0-50"> 50</a></span>
-<span class="normal"><a href="#__codelineno-0-51"> 51</a></span>
-<span class="normal"><a href="#__codelineno-0-52"> 52</a></span>
-<span class="normal"><a href="#__codelineno-0-53"> 53</a></span>
-<span class="normal"><a href="#__codelineno-0-54"> 54</a></span>
-<span class="normal"><a href="#__codelineno-0-55"> 55</a></span>
-<span class="normal"><a href="#__codelineno-0-56"> 56</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-56"> 56</a></span>
 <span class="normal"><a href="#__codelineno-0-57"> 57</a></span>
 <span class="normal"><a href="#__codelineno-0-58"> 58</a></span>
 <span class="normal"><a href="#__codelineno-0-59"> 59</a></span>
@@ -1291,94 +1367,133 @@ Must have a <code>bubble_equation(t, state, pulse)</code> method.</p>
 <span class="normal"><a href="#__codelineno-0-109">109</a></span>
 <span class="normal"><a href="#__codelineno-0-110">110</a></span>
 <span class="normal"><a href="#__codelineno-0-111">111</a></span>
-<span class="normal"><a href="#__codelineno-0-112">112</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="k">def</span><span class="w"> </span><span class="nf">solve_bubble</span><span class="p">(</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="n">bubble</span><span class="p">:</span> <span class="n">Bubble</span><span class="p">,</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32"></a>    <span class="n">pulse</span><span class="p">:</span> <span class="n">Pulse</span><span class="p">,</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a>    <span class="n">t_span</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a>    <span class="n">dt0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>    <span class="n">save_spec</span><span class="p">:</span> <span class="n">SaveSpec</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a>    <span class="n">solver</span><span class="p">:</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">AbstractSolver</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>    <span class="n">stepsize_controller</span><span class="p">:</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">AbstractStepSizeController</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>    <span class="n">progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>    <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10_000</span><span class="p">,</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">Solution</span><span class="p">:</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">    Solve the bubble dynamics for any bubble model with a given pulse.</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">    Parameters</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    bubble : Bubble</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">        Bubble model instance (e.g., Marmottant, MarmottantGompertz).</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">        Must have a ``bubble_equation(t, state, pulse)`` method.</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="sd">    pulse : Pulse</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">        Driving pulse</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">    t_span : Tuple[float, float], optional</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">        Time span (t0, t1). If None, computed from pulse duration</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    dt0 : float</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">        Initial time step</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">    save_spec : SaveSpec, optional</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        Output specification. Default: 1000 samples</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">    solver : diffrax.AbstractSolver, optional</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">        ODE solver. Default: Kvaerno5</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">    stepsize_controller : diffrax.AbstractStepSizeController, optional</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">        Step size controller. Default: PIDController(rtol=1e-3, atol=1e-6)</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">    progress : bool</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">        Show progress meter</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">    max_steps : int</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">        Maximum number of steps</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">    diffrax.Solution</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">        Solution object with ts, ys (radius and velocity over time)</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="k">if</span> <span class="n">t_span</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a>        <span class="n">pulse_duration</span> <span class="o">=</span> <span class="n">pulse</span><span class="o">.</span><span class="n">cycle_num</span> <span class="o">/</span> <span class="n">pulse</span><span class="o">.</span><span class="n">freq</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a>        <span class="n">t_span</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">pulse</span><span class="o">.</span><span class="n">initial_time</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">pulse_duration</span><span class="p">)</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="k">if</span> <span class="n">save_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a>        <span class="n">save_spec</span> <span class="o">=</span> <span class="n">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a>    <span class="k">if</span> <span class="n">solver</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a>        <span class="n">solver</span> <span class="o">=</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">Kvaerno5</span><span class="p">()</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="k">if</span> <span class="n">stepsize_controller</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a>        <span class="n">stepsize_controller</span> <span class="o">=</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">PIDController</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a>    <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="n">t_span</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a>    <span class="n">y0</span> <span class="o">=</span> <span class="n">bubble</span><span class="o">.</span><span class="n">initial_state</span><span class="p">()</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a>    <span class="n">saveat</span> <span class="o">=</span> <span class="n">save_spec</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a>    <span class="c1"># Create ODE term that calls bubble.bubble_equation</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">ode_func</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a>        <span class="n">bubble_model</span><span class="p">,</span> <span class="n">pulse_model</span> <span class="o">=</span> <span class="n">args</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a>        <span class="k">return</span> <span class="n">bubble_model</span><span class="o">.</span><span class="n">bubble_equation</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">pulse_model</span><span class="p">)</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="n">term</span> <span class="o">=</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">ODETerm</span><span class="p">(</span><span class="n">ode_func</span><span class="p">)</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="n">progress_meter</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a>        <span class="n">diffrax</span><span class="o">.</span><span class="n">TextProgressMeter</span><span class="p">()</span> <span class="k">if</span> <span class="n">progress</span> <span class="k">else</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">NoProgressMeter</span><span class="p">()</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a>    <span class="p">)</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a>    <span class="k">return</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">diffeqsolve</span><span class="p">(</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>        <span class="n">term</span><span class="p">,</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>        <span class="n">solver</span><span class="p">,</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a>        <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>        <span class="n">t1</span><span class="o">=</span><span class="n">t1</span><span class="p">,</span>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a>        <span class="n">dt0</span><span class="o">=</span><span class="n">dt0</span><span class="p">,</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="n">y0</span><span class="o">=</span><span class="n">y0</span><span class="p">,</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">bubble</span><span class="p">,</span> <span class="n">pulse</span><span class="p">),</span>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a>        <span class="n">saveat</span><span class="o">=</span><span class="n">saveat</span><span class="p">,</span>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a>        <span class="n">stepsize_controller</span><span class="o">=</span><span class="n">stepsize_controller</span><span class="p">,</span>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a>        <span class="n">max_steps</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a>        <span class="n">progress_meter</span><span class="o">=</span><span class="n">progress_meter</span><span class="p">,</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a>        <span class="n">throw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a>    <span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-112">112</a></span>
+<span class="normal"><a href="#__codelineno-0-113">113</a></span>
+<span class="normal"><a href="#__codelineno-0-114">114</a></span>
+<span class="normal"><a href="#__codelineno-0-115">115</a></span>
+<span class="normal"><a href="#__codelineno-0-116">116</a></span>
+<span class="normal"><a href="#__codelineno-0-117">117</a></span>
+<span class="normal"><a href="#__codelineno-0-118">118</a></span>
+<span class="normal"><a href="#__codelineno-0-119">119</a></span>
+<span class="normal"><a href="#__codelineno-0-120">120</a></span>
+<span class="normal"><a href="#__codelineno-0-121">121</a></span>
+<span class="normal"><a href="#__codelineno-0-122">122</a></span>
+<span class="normal"><a href="#__codelineno-0-123">123</a></span>
+<span class="normal"><a href="#__codelineno-0-124">124</a></span>
+<span class="normal"><a href="#__codelineno-0-125">125</a></span>
+<span class="normal"><a href="#__codelineno-0-126">126</a></span>
+<span class="normal"><a href="#__codelineno-0-127">127</a></span>
+<span class="normal"><a href="#__codelineno-0-128">128</a></span>
+<span class="normal"><a href="#__codelineno-0-129">129</a></span>
+<span class="normal"><a href="#__codelineno-0-130">130</a></span>
+<span class="normal"><a href="#__codelineno-0-131">131</a></span>
+<span class="normal"><a href="#__codelineno-0-132">132</a></span>
+<span class="normal"><a href="#__codelineno-0-133">133</a></span>
+<span class="normal"><a href="#__codelineno-0-134">134</a></span>
+<span class="normal"><a href="#__codelineno-0-135">135</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="k">def</span><span class="w"> </span><span class="nf">solve_eom</span><span class="p">(</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="n">eom</span><span class="p">:</span> <span class="n">EquationOfMotion</span><span class="p">,</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="n">pulse</span><span class="p">:</span> <span class="n">Pulse</span><span class="p">,</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="n">y0</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="n">t_max</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="n">save_spec</span><span class="p">:</span> <span class="n">SaveSpec</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="n">config</span><span class="p">:</span> <span class="n">SolverConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a>    <span class="n">adjoint</span><span class="p">:</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">AbstractAdjoint</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>    <span class="n">progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">Solution</span><span class="p">:</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Solve bubble dynamics for an ``EquationOfMotion``.</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">    eom : EquationOfMotion</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">        Assembled equation of motion (e.g. ``KellerMiksis``).</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">    pulse : Pulse</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">        Driving acoustic pulse.</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">    y0 : BubbleState, optional</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">        Initial state (dimensionless).  If *None*, derived from</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">        ``eom.initial_state()``.</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">    t_max : float, optional</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">        Integration end time [s].  If *None*, derived from ``pulse.t_end``.</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">    save_spec : SaveSpec, optional</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">        Output sampling specification.  Default: 1024 evenly-spaced</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">        time points.</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">    config : SolverConfig, optional</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">        Numerical integration settings.  Default: Kvaerno5 with</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">        PIDController(rtol=1e-3, atol=1e-6).</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">    adjoint : diffrax.AbstractAdjoint, optional</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">        Adjoint method for gradient computation.  Default: diffrax built-in</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">        (``RecursiveCheckpointAdjoint``).  For gradient-based fitting through</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">        an explicit solver use ``diffrax.BacksolveAdjoint()``.</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    progress : bool</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">        Show a text progress meter.</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">    diffrax.Solution</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="sd">        Solution object with ``ts`` and ``ys``.</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="k">if</span> <span class="n">save_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>        <span class="n">save_spec</span> <span class="o">=</span> <span class="n">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a>        <span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">()</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>    <span class="k">if</span> <span class="n">y0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="n">y0</span> <span class="o">=</span> <span class="n">eom</span><span class="o">.</span><span class="n">initial_state</span><span class="p">()</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a>    <span class="n">t0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a>    <span class="n">t1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pulse</span><span class="o">.</span><span class="n">t_end</span> <span class="k">if</span> <span class="n">t_max</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">t_max</span><span class="p">)</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a>    <span class="n">saveat</span> <span class="o">=</span> <span class="n">save_spec</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">ode_func</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a>        <span class="n">eom_model</span><span class="p">,</span> <span class="n">pulse_model</span> <span class="o">=</span> <span class="n">args</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a>        <span class="k">return</span> <span class="n">eom_model</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">pulse_model</span><span class="p">)</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a>    <span class="n">term</span> <span class="o">=</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">ODETerm</span><span class="p">(</span><span class="n">ode_func</span><span class="p">)</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a>    <span class="n">progress_meter</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a>        <span class="n">diffrax</span><span class="o">.</span><span class="n">TextProgressMeter</span><span class="p">()</span> <span class="k">if</span> <span class="n">progress</span> <span class="k">else</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">NoProgressMeter</span><span class="p">()</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a>    <span class="p">)</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a>    <span class="n">_adjoint</span> <span class="o">=</span> <span class="n">adjoint</span> <span class="k">if</span> <span class="n">adjoint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">RecursiveCheckpointAdjoint</span><span class="p">()</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a>    <span class="k">return</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">diffeqsolve</span><span class="p">(</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>        <span class="n">term</span><span class="p">,</span>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a>        <span class="n">config</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124"></a>        <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a>        <span class="n">t1</span><span class="o">=</span><span class="n">t1</span><span class="p">,</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a>        <span class="n">dt0</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">dt0</span><span class="p">,</span>
+<a id="__codelineno-0-127" name="__codelineno-0-127"></a>        <span class="n">y0</span><span class="o">=</span><span class="n">y0</span><span class="p">,</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128"></a>        <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">),</span>
+<a id="__codelineno-0-129" name="__codelineno-0-129"></a>        <span class="n">saveat</span><span class="o">=</span><span class="n">saveat</span><span class="p">,</span>
+<a id="__codelineno-0-130" name="__codelineno-0-130"></a>        <span class="n">stepsize_controller</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">stepsize_controller</span><span class="p">,</span>
+<a id="__codelineno-0-131" name="__codelineno-0-131"></a>        <span class="n">max_steps</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">max_steps</span><span class="p">,</span>
+<a id="__codelineno-0-132" name="__codelineno-0-132"></a>        <span class="n">progress_meter</span><span class="o">=</span><span class="n">progress_meter</span><span class="p">,</span>
+<a id="__codelineno-0-133" name="__codelineno-0-133"></a>        <span class="n">throw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-0-134" name="__codelineno-0-134"></a>        <span class="n">adjoint</span><span class="o">=</span><span class="n">_adjoint</span><span class="p">,</span>
+<a id="__codelineno-0-135" name="__codelineno-0-135"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
 
-</div>
+</div><hr />
+<h2 id="solver-choice-and-tolerances">Solver choice and tolerances<a class="headerlink" href="#solver-choice-and-tolerances" title="Permanent link">&para;</a></h2>
+<p>The default solver is <code>Kvaerno5</code> (an implicit 5th-order Runge–Kutta method) with a PID step-size controller at relative tolerance <span class="arithmatex">\(10^{-3}\)</span> and absolute tolerance <span class="arithmatex">\(10^{-6}\)</span>. This is appropriate for most bubble dynamics simulations.</p>
+<p>For highly stiff problems (e.g. very small bubbles, extreme driving pressures, or large shear moduli in the medium), tighten the tolerances:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">diffrax</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverConfig</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">(</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">stepsize_controller</span><span class="o">=</span><span class="n">diffrax</span><span class="o">.</span><span class="n">PIDController</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">),</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">max_steps</span><span class="o">=</span><span class="mi">50_000</span><span class="p">,</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">)</span>
+</code></pre></div>
+<p>For gradient-based fitting, consider using the <code>RecursiveCheckpointAdjoint</code> to reduce memory usage during backpropagation:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">diffrax</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">result</span> <span class="o">=</span> <span class="n">fit_parameters</span><span class="p">(</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="o">...</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">adjoint</span><span class="o">=</span><span class="n">diffrax</span><span class="o">.</span><span class="n">RecursiveCheckpointAdjoint</span><span class="p">(),</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">)</span>
+</code></pre></div>
 
 
 
