@@ -502,9 +502,23 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         dp_gas_dt = gas_tangent.R * R_dot
         p_gas_damped = p_gas + (R / self.c_L) * dp_gas_dt
 
-        # Shell and medium contributions at the bubble wall
+        # Shell and medium contributions at the bubble wall.
+        #
+        # Elastic term: geometry-independent — use the medium model directly.
+        # Viscous term: split into bubble-wall and vessel-wall contributions.
+        #   p_viscous(state)  gives the standard  4μṘ/R  (or its generalised-
+        #     Newtonian equivalent) from integrating the wall stress at r = R.
+        #   The vessel-wall correction  4μȧ/a  is the additional contribution
+        #     from the moving vessel wall; it is exact for Newtonian media and
+        #     a linear approximation for generalised-Newtonian (power-law, …)
+        #     media where the confined velocity field differs from the
+        #     unconfined one.
         p_shell = self.shell(state)
-        p_medium_visc = 4.0 * self.medium.mu(state) * (R_dot / R + a_dot / a)
+        p_medium_elastic = self.medium.p_elastic(state)
+        p_medium_visc = (
+            self.medium.p_viscous(state)
+            + 4.0 * self.medium.mu(state) * a_dot / a
+        )
 
         # Vessel wall pressure (thin shell, nearly-incompressible)
         nu = self.vessel_nu
@@ -523,6 +537,7 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
             p_gas_damped
             - 2.0 * R * R_dot * self.rho_L * (1.0 / R - 1.0 / a)
             - p_shell
+            - p_medium_elastic
             - p_medium_visc
             - P_wall
             - self.P_amb

@@ -93,6 +93,18 @@ class LipidShell(ShellModel):
     This is the shell model used by Marmottant (2005) and most
     Gompertz-smoothed variants.
 
+    Note on elastic contributions
+    -----------------------------
+    ``p_elastic`` returns zero for this model.  The shell elasticity is
+    not absent — it is encoded entirely in the surface tension Property
+    ``sigma``.  When ``sigma`` is state-dependent (e.g.
+    ``MarmottantSurfaceTension``, ``GompertzSurfaceTension``), the
+    area-elasticity term χ((R/Rb)² − 1) enters through ``p_laplace =
+    2 σ(R) / R``, not through a separate ``p_elastic`` term.  This is
+    consistent with how the Marmottant model is written in the
+    literature: the elastic and ruptured regimes modify σ(R) rather than
+    adding an independent stress contribution.
+
     Fields
     ------
     sigma : float or Property

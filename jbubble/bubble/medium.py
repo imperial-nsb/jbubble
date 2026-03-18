@@ -34,7 +34,10 @@ class MediumModel(eqx.Module, abc.ABC):
     Fields
     ------
     mu : float or Property
-        Dynamic viscosity  [Pa s].
+        Viscous scaling parameter.  For Newtonian, Kelvin-Voigt, and
+        Neo-Hookean media this is the dynamic viscosity [Pa s].  For
+        ``PowerLawMedium`` it is the consistency index K [Pa·s^n],
+        which reduces to dynamic viscosity when n = 1.
     """
 
     mu: Property = eqx.field(converter=as_property)
@@ -110,17 +113,32 @@ class KelvinVoigtMedium(MediumModel):
 class NeoHookeanMedium(MediumModel):
     """Neo-Hookean finite-strain viscoelastic medium.
 
-    p_medium = 4 mu Rdot / R  +  (4 G / 3) ((R0/R)^3 - (R/R0)^3)
-
     Correctly captures finite-strain behaviour at large oscillation
     amplitudes where the Kelvin-Voigt linear approximation breaks down.
+
+    The elastic pressure is derived by integrating the deviatoric stress
+    difference (σ_θθ − σ_rr) through the surrounding incompressible
+    neo-Hookean solid.  With the substitution v = r₀/r the integral
+    collapses exactly to 2G ∫(1 + v³) dv, giving::
+
+        p_elastic = G (5/2 − 2 (R0/R) − (1/2) (R0/R)^4)
+
+    Key behaviour:
+
+    - Zero at R = R0  (no elastic stress at equilibrium).
+    - Reduces to 4G(R − R0)/R0 for small strains  (identical to KV).
+    - Saturates to 5G/2 as R → ∞  (physical: material density near
+      bubble thins to zero so elastic pressure plateaus).
+    - Diverges to −∞ for R → 0  (strong restoring when compressed).
+
+    Total medium pressure::
+
+        p_medium = 4 mu Rdot / R  +  G (5/2 − 2 (R0/R) − (1/2) (R0/R)^4)
 
     Fields
     ------
     mu : float or Property
         Dynamic viscosity  [Pa s].  A plain float is auto-converted.
-    R0 : float
-        Equilibrium bubble radius  [m].
     G : float or Property
         Shear modulus  [Pa].  A plain float is auto-converted.  May be
         state-dependent (e.g. strain-stiffening).
@@ -132,11 +150,8 @@ class NeoHookeanMedium(MediumModel):
         return 4.0 * self.mu(state) * state.R_dot / state.R
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
-        return (
-            (4.0 / 3.0)
-            * self.G(state)
-            * ((state.R0 / state.R) ** 3 - (state.R / state.R0) ** 3)
-        )
+        beta = state.R0 / state.R  # R0/R
+        return self.G(state) * (2.5 - 2.0 * beta - 0.5 * beta**4)
 
 
 class PowerLawMedium(MediumModel):
@@ -167,8 +182,9 @@ class PowerLawMedium(MediumModel):
     Fields
     ------
     mu : float or Property
-        Consistency index K  [Pa·s^n].  Equals the dynamic viscosity for
-        n = 1.
+        Consistency index K  [Pa·s^n].  Stored as ``mu`` (inherited field
+        name) but has dimensions [Pa·s^n], not [Pa·s].  Equals the
+        dynamic viscosity when n = 1.
     n_exp : float or Property
         Power-law exponent  (dimensionless, positive).
     eps : float
