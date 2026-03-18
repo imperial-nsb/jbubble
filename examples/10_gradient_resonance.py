@@ -94,7 +94,7 @@ def make_model(params):
             sigma=GompertzSurfaceTension(
                 R_buckle_ratio=0.99,
                 chi=0.38,
-                sigma_break=72e-3,
+                sigma_rupture=72e-3,
             ),
             kappa_s=2.4e-9,
         ),
@@ -172,7 +172,7 @@ def find_resonance(init_freq, init_r0, n_steps, learning_rate):
         optimizer=optax.adam(learning_rate),
         n_steps=n_steps,
         step_callback=callback,
-        verbose=True,
+        log_every=1,
     )
 
     final_freq, final_r0 = params_to_physical(fit_res.params)
