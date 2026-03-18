@@ -13,23 +13,32 @@ import jax.numpy as jnp
 import optax
 import matplotlib.pyplot as plt
 from jbubble import run_simulation, fit_parameters, SaveSpec
-from jbubble.bubble.eom import ModifiedRayleighPlesset
+from jbubble.bubble.eom import EquationOfMotion, ModifiedRayleighPlesset
 from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium
-from jbubble.bubble.shell import LipidShell, MarmottantSurfaceTension
+from jbubble.bubble.shell import (
+    GompertzSurfaceTension,
+    LipidShell,
+    MarmottantSurfaceTension,
+)
 from jbubble.pulse import ToneBurst
+from jbubble.pulse.envelope import HannEnvelope
 from jbubble.pulse.shapes import Sine
 from jbubble.simulation import SimulationResult
 
 
 # 1. Define the forward model factory
 # This builds an EquationOfMotion from the parameter we want to fit (chi).
-def make_eom(kappa_s):
+def make_eom(params: dict) -> EquationOfMotion:
     # Marmottant shell elasticity (chi) is what we will estimate.
-    sigma = MarmottantSurfaceTension(R_buckle_ratio=0.98, chi=0.38, sigma_rupture=0.072)
+    sigma = GompertzSurfaceTension(
+        R_buckle_ratio=0.98,
+        chi=params["chi"],
+        sigma_rupture=0.072,
+    )
     return ModifiedRayleighPlesset(
         gas=PolytropicGas(gamma=1.07),
-        shell=LipidShell(sigma=sigma, kappa_s=kappa_s),
+        shell=LipidShell(sigma=sigma, kappa_s=2.5e-9),
         medium=NewtonianMedium(mu=0.001),
         R0=2e-6,
         P_amb=101325.0,
@@ -39,13 +48,21 @@ def make_eom(kappa_s):
 
 
 # Common settings
-pulse = ToneBurst(freq=1e6, pressure=120e3, shape=Sine(), cycle_num=5)
+pulse = ToneBurst(
+    freq=1e6,
+    pressure=1e3,
+    shape=Sine(),
+    cycle_num=5,
+    envelope=HannEnvelope(),
+)
 save_spec = SaveSpec(num_samples=256)
 
 # 2. Generate "Experimental Data" (Ground truth)
 # We pretend chi=0.5 is the real physical value we don't know.
-true_kappa_s = 2.5e-9
-ground_truth_res = run_simulation(make_eom(true_kappa_s), pulse, save_spec=save_spec)
+true_chi = 0.5
+ground_truth_res = run_simulation(
+    make_eom({"chi": true_chi}), pulse, save_spec=save_spec
+)
 # Target radius curve with a little bit of noise could be added,
 # but we'll stick to a clean curve for simplicity.
 target_radius = ground_truth_res.radius
@@ -60,24 +77,23 @@ def loss_fn(result: SimulationResult) -> jax.Array:
 
 
 # 4. Run Gradient-Based Optimization
-print("Starting gradient-based fitting of shell elasticity (kappa)...")
-print(f"Ground truth chi = {true_kappa_s}")
+print("Starting gradient-based fitting of shell elasticity (chi)...")
+print(f"Ground truth chi = {true_chi:.4f}")
 
 # Initial guess chi = 0.1
-initial_guess = 1e-8
+initial_guess = {"chi": jnp.array(0.1)}
 
 fit_res = fit_parameters(
-    make_eom=make_eom,
-    pulse=pulse,
+    make_model=lambda p: (make_eom(p), pulse),
     params0=initial_guess,
     save_spec=save_spec,
     loss_fn=loss_fn,
-    optimizer=optax.adam(learning_rate=0.001),
-    n_steps=60,
+    optimizer=optax.adam(learning_rate=0.05),
+    n_steps=200,
 )
 
-fitted_kappa = float(fit_res.params)
-print(f"Final fitted chi = {fitted_kappa:.4f}")
+fitted_chi = float(fit_res.params["chi"])
+print(f"Final fitted chi = {fitted_chi:.4f}")
 
 # 5. Visualize the results
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
@@ -103,7 +119,7 @@ ax2.plot(
 )
 ax2.set_xlabel("Time (µs)")
 ax2.set_ylabel("Radius (µm)")
-ax2.set_title(f"Target vs Fitted Curve (kappa = {fitted_kappa:.3f})")
+ax2.set_title(f"Target vs Fitted Curve (chi = {fitted_chi:.3f})")
 ax2.legend()
 ax2.grid(True, alpha=0.3)
 
