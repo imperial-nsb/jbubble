@@ -44,9 +44,7 @@ def run_timed_demo(pressure):
     start = time.perf_counter()
     # Note: .radius.block_until_ready() is important for accurate timing
     # because JAX is asynchronous.
-    result = jit_sim(
-        eom, pulse, save_spec=SaveSpec(num_samples=1000), t_max=10e-6
-    )
+    result = jit_sim(eom, pulse, save_spec=SaveSpec(num_samples=1000), t_max=10e-6)
     result.radius.block_until_ready()
     end = time.perf_counter()
 

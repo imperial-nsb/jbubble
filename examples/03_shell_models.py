@@ -62,9 +62,7 @@ sim_fn = jax.jit(run_simulation)
 res_no_shell = sim_fn(
     eom_no_shell, pulse, save_spec=SaveSpec(num_samples=1000), t_max=window
 )
-res_lipid = sim_fn(
-    eom_lipid, pulse, save_spec=SaveSpec(num_samples=1000), t_max=window
-)
+res_lipid = sim_fn(eom_lipid, pulse, save_spec=SaveSpec(num_samples=1000), t_max=window)
 
 # Visualize comparison
 plt.figure(figsize=(10, 5))

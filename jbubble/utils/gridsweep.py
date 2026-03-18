@@ -48,9 +48,6 @@ from tqdm import tqdm
 PyTree = Any
 
 
-# ── main class ────────────────────────────────────────────────────────────────
-
-
 class GridSweep:
     """Batched Cartesian-product sweep over named parameter axes.
 
@@ -89,8 +86,6 @@ class GridSweep:
 
         self._eval_batch = jax.jit(jax.vmap(lambda p: self.fn(**p)))
 
-    # ── properties ──────────────────────────────────────────────
-
     @property
     def grid_shape(self) -> tuple[int, ...]:
         """Shape of the full parameter grid (one int per axis)."""
@@ -105,8 +100,6 @@ class GridSweep:
     def axes(self) -> dict[str, jnp.ndarray]:
         """Parameter axes in sweep order."""
         return dict(zip(self._keys, self._axes, strict=True))
-
-    # ── core primitive ───────────────────────────────────────────
 
     def batches(self):
         """Lazy iterator over the grid.
@@ -132,8 +125,6 @@ class GridSweep:
             params = {k: self._axes[i][multi[i]] for i, k in enumerate(self._keys)}
             outputs = self._eval_batch(params)
             yield params, outputs
-
-    # ── full-sweep convenience ────────────────────────────────────
 
     def run(self) -> PyTree:
         """Run the full sweep and return a grid-shaped PyTree.

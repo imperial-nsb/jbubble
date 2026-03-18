@@ -44,8 +44,8 @@ CYCLE_NUM = 5
 SAVE_SPEC = SaveSpec(num_samples=200)
 
 # Physical bounds for sigmoid-normalised optimisation
-FREQ_MIN, FREQ_MAX = 0.1e6, 1.5e6   # Hz
-R0_MIN, R0_MAX = 2.0e-6, 10.0e-6    # m
+FREQ_MIN, FREQ_MAX = 0.1e6, 1.5e6  # Hz
+R0_MIN, R0_MAX = 2.0e-6, 10.0e-6  # m
 
 
 def _scaled_sigmoid(x, lo, hi):
@@ -113,6 +113,7 @@ def make_model(params):
 # PARAMETER SWEEP (background heatmap)
 # ============================================================================
 
+
 def expansion_ratio_sweep(freq, R0):
     """Return max expansion ratio for (freq, R0).  vmappable."""
     eom, pulse = make_model(physical_to_params(freq, R0))
@@ -123,6 +124,7 @@ def expansion_ratio_sweep(freq, R0):
 # ============================================================================
 # RESONANCE OPTIMISATION via fit_parameters
 # ============================================================================
+
 
 def find_resonance(init_freq, init_r0, n_steps, learning_rate):
     """Find the (freq, R0) pair that maximises expansion ratio.
@@ -155,7 +157,7 @@ def find_resonance(init_freq, init_r0, n_steps, learning_rate):
         expansion_hist.append(-loss_val)  # loss is negated expansion ratio
 
     print("Starting resonance search from:")
-    print(f"  freq = {init_freq/1e6:.3f} MHz,  R0 = {init_r0*1e6:.2f} µm")
+    print(f"  freq = {init_freq / 1e6:.3f} MHz,  R0 = {init_r0 * 1e6:.2f} µm")
     print(f"  lr = {learning_rate},  steps = {n_steps}\n")
 
     fit_res = fit_parameters(
@@ -170,31 +172,62 @@ def find_resonance(init_freq, init_r0, n_steps, learning_rate):
     )
 
     final_freq, final_r0 = params_to_physical(fit_res.params)
-    print(f"\nConverged: freq = {float(final_freq)/1e6:.3f} MHz,  "
-          f"R0 = {float(final_r0)*1e6:.2f} µm,  "
-          f"expansion = {expansion_hist[-1]:.4f}")
+    print(
+        f"\nConverged: freq = {float(final_freq) / 1e6:.3f} MHz,  "
+        f"R0 = {float(final_r0) * 1e6:.2f} µm,  "
+        f"expansion = {expansion_hist[-1]:.4f}"
+    )
 
-    return (jnp.array(freq_hist), jnp.array(r0_hist),
-            jnp.array(expansion_hist), fit_res)
+    return (
+        jnp.array(freq_hist),
+        jnp.array(r0_hist),
+        jnp.array(expansion_hist),
+        fit_res,
+    )
 
 
 # ============================================================================
 # VISUALIZATION
 # ============================================================================
 
-def plot_trajectory(freq_grid, r0_grid, expansion_grid,
-                    freq_hist, r0_hist, init_freq, init_r0):
+
+def plot_trajectory(
+    freq_grid, r0_grid, expansion_grid, freq_hist, r0_hist, init_freq, init_r0
+):
     fig, ax = plt.subplots(figsize=(12, 9))
-    im = ax.pcolormesh(freq_grid / 1e6, r0_grid * 1e6, expansion_grid,
-                       shading="auto", cmap="viridis")
+    im = ax.pcolormesh(
+        freq_grid / 1e6, r0_grid * 1e6, expansion_grid, shading="auto", cmap="viridis"
+    )
     plt.colorbar(im, ax=ax, label="$R_\\mathrm{max}/R_0$")
-    ax.plot(freq_hist / 1e6, r0_hist * 1e6, "w-", lw=2.5, alpha=0.9,
-            label="Gradient descent")
+    ax.plot(
+        freq_hist / 1e6,
+        r0_hist * 1e6,
+        "w-",
+        lw=2.5,
+        alpha=0.9,
+        label="Gradient descent",
+    )
     ax.plot(freq_hist / 1e6, r0_hist * 1e6, "wo", ms=5, alpha=0.7)
-    ax.plot(init_freq / 1e6, init_r0 * 1e6, "ro", ms=14,
-            markeredgecolor="w", markeredgewidth=2, label="Start", zorder=10)
-    ax.plot(float(freq_hist[-1]) / 1e6, float(r0_hist[-1]) * 1e6, "g*", ms=20,
-            markeredgecolor="w", markeredgewidth=2, label="Converged", zorder=10)
+    ax.plot(
+        init_freq / 1e6,
+        init_r0 * 1e6,
+        "ro",
+        ms=14,
+        markeredgecolor="w",
+        markeredgewidth=2,
+        label="Start",
+        zorder=10,
+    )
+    ax.plot(
+        float(freq_hist[-1]) / 1e6,
+        float(r0_hist[-1]) * 1e6,
+        "g*",
+        ms=20,
+        markeredgecolor="w",
+        markeredgewidth=2,
+        label="Converged",
+        zorder=10,
+    )
     ax.set_xlabel("Frequency (MHz)", fontsize=12)
     ax.set_ylabel("Initial Radius (µm)", fontsize=12)
     ax.set_title("Gradient Descent to Resonance", fontsize=14)
@@ -203,11 +236,10 @@ def plot_trajectory(freq_grid, r0_grid, expansion_grid,
     plt.show()
 
 
-
-
 # ============================================================================
 # MAIN
 # ============================================================================
+
 
 def main():
     # ── Step 1: parameter sweep ──────────────────────────────────────────────
@@ -226,7 +258,7 @@ def main():
     print(f"Running {gs.total_points} simulations …")
     t0 = time.time()
     expansion_grid = gs.run()  # shape (len(R0), len(freq))
-    print(f"Sweep done in {time.time()-t0:.1f}s")
+    print(f"Sweep done in {time.time() - t0:.1f}s")
 
     # GridSweep sorts keys alphabetically: ["R0", "freq"]
     freq_grid, r0_grid = jnp.meshgrid(freq_values, r0_values)
@@ -247,8 +279,9 @@ def main():
     )
 
     # ── Step 3: plot ─────────────────────────────────────────────────────────
-    plot_trajectory(freq_grid, r0_grid, expansion_grid,
-                    freq_hist, r0_hist, init_freq, init_r0)
+    plot_trajectory(
+        freq_grid, r0_grid, expansion_grid, freq_hist, r0_hist, init_freq, init_r0
+    )
 
 
 if __name__ == "__main__":
