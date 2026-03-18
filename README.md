@@ -8,12 +8,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 <p align="center">
-  <img src="docs/assets/readme_radius_curve.png" alt="Bubble radius R(t) oscillation curve" width="32%">
-  <img src="docs/assets/readme_fitting.png" alt="Gradient-based parameter estimation fitting to noisy data" width="32%">
-  <img src="docs/assets/readme_resonance.png" alt="Gradient descent trajectory to resonance on expansion ratio heatmap" width="32%">
+  <img src="docs/assets/bubble_coating_comparison.png" alt="Comparison of R(t) curves, with and without a lipid coating." width="100%">
 </p>
 <p align="center">
-  <em>Left: Bubble wall dynamics R(t). Centre: Gradient-based parameter fitting. Right: Differentiable resonance finding.</em>
+  <em>Comparison of R(t) curves, with and without a lipid coating.</em>
 </p>
 
 ---
