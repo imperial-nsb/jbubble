@@ -22,7 +22,6 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import optax
-from matplotlib import animation
 
 from jbubble import SaveSpec, fit_parameters, run_simulation
 from jbubble.bubble.eom import KellerMiksis
@@ -209,79 +208,6 @@ def plot_trajectory(freq_grid, r0_grid, expansion_grid,
     plt.show()
 
 
-def animate_learning(freq_grid, r0_grid, expansion_grid,
-                     freq_hist, r0_hist, expansion_hist,
-                     init_freq, init_r0,
-                     output_path="gradient_resonance.mp4", fps=20):
-    """Animate gradient descent trajectory over the heatmap.  Saves MP4."""
-    n = len(freq_hist)
-    steps = jnp.arange(n)
-
-    fig, (ax_map, ax_curve) = plt.subplots(1, 2, figsize=(16, 7))
-
-    im = ax_map.pcolormesh(freq_grid / 1e6, r0_grid * 1e6, expansion_grid,
-                           shading="auto", cmap="viridis")
-    plt.colorbar(im, ax=ax_map, label="$R_\\mathrm{max}/R_0$")
-    ax_map.set_xlabel("Frequency (MHz)", fontsize=12)
-    ax_map.set_ylabel("Initial Radius (µm)", fontsize=12)
-    ax_map.set_title("Gradient Descent to Resonance", fontsize=14)
-    ax_map.plot(init_freq / 1e6, init_r0 * 1e6, "ro", ms=12,
-                markeredgecolor="w", markeredgewidth=2, label="Start", zorder=10)
-    (traj_line,) = ax_map.plot([], [], "w-", lw=2.5, alpha=0.9)
-    (traj_dots,) = ax_map.plot([], [], "wo", ms=4, alpha=0.7)
-    (cur_pt,) = ax_map.plot([], [], "g*", ms=18, markeredgecolor="w",
-                             markeredgewidth=2, zorder=11)
-    ax_map.legend(loc="upper right")
-    step_txt = ax_map.text(0.02, 0.97, "", transform=ax_map.transAxes,
-                           color="w", fontsize=10, va="top",
-                           bbox=dict(facecolor="k", alpha=0.5, boxstyle="round"))
-
-    ax_curve.set_xlim(0, n - 1)
-    ax_curve.set_ylim(float(jnp.nanmin(expansion_hist)) * 0.99,
-                      float(jnp.nanmax(expansion_hist)) * 1.01)
-    ax_curve.set_xlabel("Step", fontsize=12)
-    ax_curve.set_ylabel("Expansion Ratio ($R_\\mathrm{max}/R_0$)", fontsize=12)
-    ax_curve.set_title("Learning Curve", fontsize=14)
-    ax_curve.grid(True, alpha=0.3)
-    (curve_line,) = ax_curve.plot([], [], "b-", lw=2)
-    (curve_pt,) = ax_curve.plot([], [], "ro", ms=8)
-
-    plt.tight_layout()
-
-    def init():
-        traj_line.set_data([], [])
-        traj_dots.set_data([], [])
-        cur_pt.set_data([], [])
-        curve_line.set_data([], [])
-        curve_pt.set_data([], [])
-        step_txt.set_text("")
-        return traj_line, traj_dots, cur_pt, curve_line, curve_pt, step_txt
-
-    def update(frame):
-        i = frame + 1
-        freqs = freq_hist[:i] / 1e6
-        r0s = r0_hist[:i] * 1e6
-        losses = expansion_hist[:i]
-        traj_line.set_data(freqs, r0s)
-        traj_dots.set_data(freqs, r0s)
-        cur_pt.set_data([float(freqs[-1])], [float(r0s[-1])])
-        curve_line.set_data(steps[:i], losses)
-        curve_pt.set_data([float(steps[i - 1])], [float(losses[-1])])
-        label = "Start" if frame == 0 else f"Step {frame}"
-        step_txt.set_text(
-            f"{label}\nExpansion: {float(losses[-1]):.4f}\n"
-            f"Freq: {float(freqs[-1]):.3f} MHz\nR₀: {float(r0s[-1]):.3f} µm"
-        )
-        return traj_line, traj_dots, cur_pt, curve_line, curve_pt, step_txt
-
-    anim = animation.FuncAnimation(fig, update, frames=n,
-                                   init_func=init, blit=True,
-                                   interval=1000 / fps)
-    writer = animation.FFMpegWriter(fps=fps, bitrate=2000)
-    print(f"Saving animation to '{output_path}' …")
-    anim.save(output_path, writer=writer, dpi=120)
-    print(f"Saved: {output_path}")
-    plt.close(fig)
 
 
 # ============================================================================
@@ -319,25 +245,16 @@ def main():
     init_freq = 1.2e6
     init_r0 = 5.0e-6
 
-    freq_hist, r0_hist, expansion_hist, fit_res = find_resonance(
+    freq_hist, r0_hist, *_ = find_resonance(
         init_freq=init_freq,
         init_r0=init_r0,
         n_steps=50,
         learning_rate=0.3,
     )
 
-    # ── Step 3: animate ──────────────────────────────────────────────────────
-    print("\n" + "=" * 60)
-    print("STEP 3: Animating results")
-    print("=" * 60)
-
-    animate_learning(
-        freq_grid, r0_grid, expansion_grid,
-        freq_hist, r0_hist, expansion_hist,
-        init_freq, init_r0,
-        output_path="gradient_resonance.mp4",
-        fps=20,
-    )
+    # ── Step 3: plot ─────────────────────────────────────────────────────────
+    plot_trajectory(freq_grid, r0_grid, expansion_grid,
+                    freq_hist, r0_hist, init_freq, init_r0)
 
 
 if __name__ == "__main__":
