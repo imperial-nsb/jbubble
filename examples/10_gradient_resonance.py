@@ -40,7 +40,6 @@ from jbubble.utils import GridSweep
 
 PRESSURE = 10e3   # Pa — nonlinear regime gives a well-defined interior resonance peak
 CYCLE_NUM = 5
-T_MAX = 20e-6  # s
 SAVE_SPEC = SaveSpec(num_samples=200)
 
 # Physical bounds for sigmoid-normalised optimisation
@@ -120,7 +119,7 @@ def make_model(params):
 def expansion_ratio_sweep(freq, R0):
     """Return max expansion ratio for (freq, R0).  vmappable."""
     eom, pulse = make_model(physical_to_params(freq, R0))
-    result = run_simulation(eom, pulse, save_spec=SAVE_SPEC, t_max=T_MAX)
+    result = run_simulation(eom, pulse, save_spec=SAVE_SPEC)
     return soft_max(result.radius) / R0
 
 
@@ -146,7 +145,7 @@ def find_resonance(init_freq, init_r0, n_steps, learning_rate):
 
     # Add initial state before optimization
     eom, pulse = make_model(physical_to_params(init_freq, init_r0))
-    init_result = run_simulation(eom, pulse, save_spec=SAVE_SPEC, t_max=T_MAX)
+    init_result = run_simulation(eom, pulse, save_spec=SAVE_SPEC)
     init_expansion = float(soft_max(init_result.radius) / init_result.state.R0[0])
     freq_hist.append(init_freq)
     r0_hist.append(init_r0)
@@ -166,7 +165,6 @@ def find_resonance(init_freq, init_r0, n_steps, learning_rate):
         make_model=make_model,
         params0=physical_to_params(init_freq, init_r0),
         save_spec=SAVE_SPEC,
-        t_max=T_MAX,
         loss_fn=lambda result: -soft_max(result.radius) / result.state.R0[0],
         optimizer=optax.adam(learning_rate),
         n_steps=n_steps,
@@ -220,8 +218,8 @@ def main():
     print("STEP 1: Parameter sweep (background heatmap)")
     print("=" * 60)
 
-    r0_values = jnp.linspace(2.0e-6, 10.0e-6, 100)
-    freq_values = jnp.linspace(0.1e6, 1.5e6, 100)
+    r0_values = jnp.linspace(R0_MIN, R0_MAX, 100)
+    freq_values = jnp.linspace(FREQ_MIN, FREQ_MAX, 100)
 
     gs = GridSweep(
         fn=expansion_ratio_sweep,
