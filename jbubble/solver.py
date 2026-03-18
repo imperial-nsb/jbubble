@@ -48,7 +48,7 @@ class SolverConfig(eqx.Module):
         default_factory=lambda: diffrax.PIDController(rtol=1e-3, atol=1e-6)
     )
     dt0: float = 1e-9
-    max_steps: int = eqx.field(default=50_000, static=True)
+    max_steps: int = eqx.field(default=10_000, static=True)
 
 
 def solve_eom(
