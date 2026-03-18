@@ -26,6 +26,8 @@ from jbubble.pulse.envelope import HannEnvelope
 from jbubble.pulse.shapes import Sine
 from jbubble.simulation import SimulationResult
 
+R0 = 2e-6  # [m]
+
 
 # 1. Define the forward model factory
 # This builds an EquationOfMotion from the parameter we want to fit (chi).
@@ -40,7 +42,7 @@ def make_eom(params: dict) -> EquationOfMotion:
         gas=PolytropicGas(gamma=1.07),
         shell=LipidShell(sigma=sigma, kappa_s=2.5e-9),
         medium=NewtonianMedium(mu=0.001),
-        R0=2e-6,
+        R0=R0,
         P_amb=101325.0,
         rho_L=998.0,
         c_L=1500.0,
@@ -76,7 +78,7 @@ target_radius = ground_truth_res.radius + noise
 def loss_fn(result: SimulationResult) -> jax.Array:
     # Mean Squared Error between simulated radius and ground truth.
     # Normalizing by the equilibrium radius improves optimization stability.
-    return jnp.mean((result.state.R - target_radius) ** 2) / 2e-6**2
+    return jnp.mean((result.state.R - target_radius) ** 2) / R0
 
 
 # 4. Run Gradient-Based Optimization
@@ -91,8 +93,8 @@ fit_res = fit_parameters(
     params0=initial_guess,
     save_spec=save_spec,
     loss_fn=loss_fn,
-    optimizer=optax.adam(learning_rate=0.05),
-    n_steps=200,
+    optimizer=optax.adam(learning_rate=0.03),
+    n_steps=100,
 )
 
 fitted_chi = float(fit_res.params["chi"])
