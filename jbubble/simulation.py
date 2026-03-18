@@ -85,7 +85,7 @@ def run_simulation(
     *,
     save_spec: SaveSpec,
     state0: Any = None,
-    t_span: tuple[float, float] | None = None,
+    t_max: float | None = None,
     config: SolverConfig | None = None,
     progress: bool = False,
 ) -> SimulationResult:
@@ -101,9 +101,8 @@ def run_simulation(
         Output specification (number of samples).
     state0 : BubbleState, optional
         Initial state.  Defaults to ``eom.initial_state()``.
-    t_span : tuple[float, float], optional
-        Integration interval ``(t0, t1)`` [s].  ``None`` uses the pulse
-        duration as reported by ``pulse.t_end``.
+    t_max : float, optional
+        Integration end time [s].  ``None`` uses ``pulse.t_end``.
     config : SolverConfig, optional
         ODE solver settings.
     progress : bool
@@ -117,7 +116,7 @@ def run_simulation(
         eom,
         pulse,
         y0=state0,  # None → solve_eom calls eom.initial_state()
-        t_span=t_span,
+        t_max=t_max,
         save_spec=save_spec,
         config=config,
         progress=progress,

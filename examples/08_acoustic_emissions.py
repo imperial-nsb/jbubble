@@ -43,7 +43,7 @@ result = jax.jit(run_simulation)(
     eom,
     pulse,
     save_spec=SaveSpec(num_samples=2048),
-    t_span=(0, 10e-6),
+    t_max=10e-6,
 )
 
 # 2. Compute emission at a single distance

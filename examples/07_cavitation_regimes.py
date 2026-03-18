@@ -57,7 +57,7 @@ pulse_inertial = ToneBurst(
 # We can define a helper and vmap it over the pulses.
 def sim(p):
     return run_simulation(
-        eom, p, save_spec=SaveSpec(num_samples=2000), t_span=(0, 15e-6)
+        eom, p, save_spec=SaveSpec(num_samples=2000), t_max=15e-6
     )
 
 

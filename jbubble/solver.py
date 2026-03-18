@@ -56,7 +56,7 @@ def solve_eom(
     pulse: Pulse,
     *,
     y0: Any = None,
-    t_span: tuple[float, float] | None = None,
+    t_max: float | None = None,
     save_spec: SaveSpec | None = None,
     config: SolverConfig | None = None,
     adjoint: diffrax.AbstractAdjoint | None = None,
@@ -73,9 +73,8 @@ def solve_eom(
     y0 : BubbleState, optional
         Initial state (dimensionless).  If *None*, derived from
         ``eom.initial_state()``.
-    t_span : tuple[float, float], optional
-        Integration interval ``(t0, t1)``.  If *None*, derived from
-        the pulse duration.
+    t_max : float, optional
+        Integration end time [s].  If *None*, derived from ``pulse.t_end``.
     save_spec : SaveSpec, optional
         Output sampling specification.  Default: 1024 evenly-spaced
         time points.
@@ -94,8 +93,8 @@ def solve_eom(
     diffrax.Solution
         Solution object with ``ts`` and ``ys``.
     """
-    if t_span is None:
-        t_span = (0.0, pulse.t_end)
+    if t_max is None:
+        t_max = pulse.t_end
 
     if save_spec is None:
         save_spec = SaveSpec(num_samples=1024)
@@ -106,7 +105,7 @@ def solve_eom(
     if y0 is None:
         y0 = eom.initial_state()
 
-    t0, t1 = t_span
+    t0, t1 = 0.0, t_max
     saveat = save_spec.build(t0, t1)
 
     def ode_func(t, state, args):

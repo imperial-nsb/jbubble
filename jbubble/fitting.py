@@ -54,7 +54,7 @@ def fit_parameters(
     params0: PyTree,
     *,
     save_spec: SaveSpec,
-    t_span: tuple[float, float] | None = None,
+    t_max: float | None = None,
     loss_fn: Callable[[SimulationResult], jax.Array],
     optimizer: optax.GradientTransformation,
     n_steps: int = 200,
@@ -102,9 +102,8 @@ def fit_parameters(
         array, dict, tuple, or ``eqx.Module``).
     save_spec : SaveSpec
         Output sampling specification.
-    t_span : tuple[float, float], optional
-        Integration interval ``(t0, t1)`` [s].  ``None`` uses the pulse
-        duration as reported by ``pulse.t_end``.
+    t_max : float, optional
+        Integration end time [s].  ``None`` uses ``pulse.t_end``.
     loss_fn : callable
         ``(result: SimulationResult) → scalar``.  Receives the full
         :class:`~jbubble.simulation.SimulationResult`; close over any
@@ -154,11 +153,13 @@ def fit_parameters(
         sol = solve_eom(
             eom,
             pulse,
-            t_span=t_span,
+            t_max=t_max,
             save_spec=save_spec,
             config=config,
             adjoint=adjoint,
         )
+        assert sol.ts is not None
+        assert sol.ys is not None
         ys = sol.ys
         ys_dot = jax.vmap(lambda t, s: eom(t, s, pulse))(sol.ts, ys)
         result = SimulationResult(
@@ -197,7 +198,7 @@ def fit_parameters(
         eom,
         pulse,
         save_spec=save_spec,
-        t_span=t_span,
+        t_max=t_max,
         config=config,
     )
 
