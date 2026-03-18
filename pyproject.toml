@@ -12,6 +12,15 @@ authors = [
   {name = "Callum Rhys Tilbury"},
 ]
 license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Physics",
+]
 dependencies = [
     "jax==0.8.1",
     "jaxlib==0.8.1",

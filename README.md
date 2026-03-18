@@ -3,8 +3,8 @@
 
 <p align="center">
   <a href="https://github.com/imperial-nsb/jbubble/actions/workflows/ci.yml"><img src="https://github.com/imperial-nsb/jbubble/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://pypi.org/project/jbubble/"><img src="https://img.shields.io/pypi/v/jbubble" alt="PyPI"></a>
-  <a href="https://pypi.org/project/jbubble/"><img src="https://img.shields.io/pypi/pyversions/jbubble" alt="Python"></a>
+  <a href="https://pypi.org/project/jbubble/"><img src="https://badge.fury.io/py/jbubble.svg" alt="PyPI"></a>
+  <a href="https://pypi.org/project/jbubble/"><img src="https://img.shields.io/pypi/pyversions/jbubble.svg" alt="Python"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
@@ -12,7 +12,7 @@
 > **Alpha release.** jbubble is under active development. APIs may change without deprecation. Please reach out if you'd like to use or contribute to the project!
 
 <p align="center">
-  <img src="docs/assets/bubble_coating_comparison.png" alt="Comparison of R(t) curves, with and without a lipid coating." width="100%">
+  <img src="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/bubble_coating_comparison.png" alt="Comparison of R(t) curves, with and without a lipid coating." width="100%">
 </p>
 <p align="center">
   <em>Comparison of R(t) curves, with and without a lipid coating.</em>
