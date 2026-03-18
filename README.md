@@ -51,7 +51,7 @@ cd jbubble
 pip install -e ".[dev]"
 ```
 
-Requires Python &ge; 3.11. See the [installation guide] for more information.
+Requires Python &ge; 3.11. See the docs for more information.
 
 ## Quick start
 
@@ -147,7 +147,7 @@ The [`examples/`](examples/) directory contains 12 self-contained scripts:
 
 ## Documentation
 
-Full documentation is available at **[imperial-nsb.github.io/jbubble](https://imperial-nsb.github.io/jbubble/)**, including:
+Full documentation is available at <span style="color: red;"><strong>TODO:</strong></span>, including:
 
 - [Quickstart guide](https://imperial-nsb.github.io/jbubble/guide/quickstart/)
 - [Bubble models guide](https://imperial-nsb.github.io/jbubble/guide/bubble_models/)
