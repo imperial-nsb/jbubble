@@ -19,12 +19,9 @@
 jbubble is a research library for simulating and fitting acoustic microbubble
 dynamics, built on [JAX](https://github.com/jax-ml/jax),
 [Equinox](https://github.com/patrick-kidger/equinox), and
-[diffrax](https://github.com/patrick-kidger/diffrax). Every simulation is fully
-differentiable and JIT-compilable, enabling gradient-based parameter estimation,
-batched parameter sweeps via `vmap`, and neural surrogate components — all from
-the same model code.
+[diffrax](https://github.com/patrick-kidger/diffrax). Models are designed to be composable, extendable, fully differentiable, and jit-compatible.
 
-Developed by the [Noninvasive Surgery & Biopsy Laboratory](https://www.imperial.ac.uk/non-invasive-surgery-biopsy) at Imperial College London.
+Developed by the [Noninvasive Surgery & Biopsy Laboratory](https://www.nsblab.org/) at Imperial College London.
 
 ## Why jbubble?
 
@@ -50,7 +47,7 @@ cd jbubble
 pip install -e ".[dev]"
 ```
 
-Requires Python &ge; 3.11. See the [installation guide](https://imperial-nsb.github.io/jbubble/guide/installation/) for GPU/TPU JAX setup.
+Requires Python &ge; 3.11. See the [installation guide] for more information.
 
 ## Quick start
 
@@ -100,20 +97,20 @@ result = jax.jit(run_simulation)(
 )
 ```
 
-Any gas model works with any shell model and any medium model — all
+Any gas model works with any shell model and any medium model—all
 combinations are valid and differentiated through automatically via `jax.grad`.
 
 ## Key capabilities
 
 - **Composable physics** — Mix and match 6 equations of motion (Rayleigh-Plesset through Gilmore), 2 gas models, 3 shell models, and 4 medium models. All combinations work automatically.
 
-- **Batch parameter sweeps** — Run thousands of simulations in parallel with `jax.vmap` and `GridSweep`:
+- **Batch parameter sweeps** — Run thousands of simulations in parallel with `GridSweep`, which uses `jax.vmap` under the hood:
   ```python
   sweep = GridSweep(fn=simulate, search_space={"R0": radii, "freq": freqs})
   results = sweep.run()  # shape (len(radii), len(freqs))
   ```
 
-- **Gradient-based fitting** — Fit any model parameter to experimental data via `fit_parameters` and `optax`:
+- **Gradient-based fitting** — Fit model parameters to experimental data via `fit_parameters` and `optax`:
   ```python
   fit_result = fit_parameters(
       make_model=lambda p: (make_eom(p), pulse),
@@ -127,7 +124,7 @@ combinations are valid and differentiated through automatically via `jax.grad`.
 
 ## Examples
 
-The [`examples/`](examples/) directory contains 12 self-contained scripts, ordered by complexity:
+The [`examples/`](examples/) directory contains 12 self-contained scripts:
 
 | # | Script | Description |
 |---|--------|-------------|
