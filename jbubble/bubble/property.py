@@ -17,10 +17,13 @@ plain floats while still storing a proper ``Property`` internally.
 from __future__ import annotations
 
 import abc
+from collections.abc import Callable
+from typing import cast
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 from .state import BubbleState
 
@@ -62,10 +65,10 @@ class ConstantProperty(Property):
         inside ``jax.grad`` / ``jax.jit``) so that gradients flow through.
     """
 
-    val: float | jax.Array
+    val: ArrayLike
 
     def __call__(self, state: BubbleState) -> jax.Array:
-        return self.val + state.R * 0.0
+        return jnp.asarray(self.val) + state.R * 0.0
 
 
 class NeuralProperty(Property):
@@ -98,10 +101,11 @@ class NeuralProperty(Property):
 
     def __call__(self, state: BubbleState) -> jax.Array:
         x = jnp.array([state.R / state.R0])
-        return self.net(x).squeeze()
+        net_fn = cast(Callable[[jax.Array], jax.Array], self.net)
+        return net_fn(x).squeeze()
 
 
-def as_property(val: float | jax.Array | Property) -> Property:
+def as_property(val: ArrayLike | Property) -> Property:
     """Coerce a plain scalar or JAX array to a ``ConstantProperty``, or pass through.
 
     Parameters

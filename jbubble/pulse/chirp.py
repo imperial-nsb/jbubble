@@ -7,6 +7,7 @@ import abc
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 from .base import Pulse
 from .shapes import PulseShape, Sine
@@ -24,9 +25,9 @@ class ChirpSweep(eqx.Module):
     def __call__(
         self,
         tau: jax.Array,
-        freq_start: float,
-        freq_end: float,
-        duration: float,
+        freq_start: ArrayLike,
+        freq_end: ArrayLike,
+        duration: ArrayLike,
     ) -> jax.Array:
         """Return accumulated phase Φ(τ) [rad]."""
         ...
@@ -40,8 +41,14 @@ class LinearSweep(ChirpSweep):
         Φ(τ) = 2π [f₀ τ + (f₁ − f₀) τ² / (2 T)]
     """
 
-    def __call__(self, tau, freq_start, freq_end, duration):
-        f0, f1, T = freq_start, freq_end, duration
+    def __call__(
+        self,
+        tau: jax.Array,
+        freq_start: ArrayLike,
+        freq_end: ArrayLike,
+        duration: ArrayLike,
+    ) -> jax.Array:
+        f0, f1, T = jnp.asarray(freq_start), jnp.asarray(freq_end), jnp.asarray(duration)
         return 2.0 * jnp.pi * (f0 * tau + (f1 - f0) * tau**2 / (2.0 * T))
 
 
@@ -53,8 +60,14 @@ class ExponentialSweep(ChirpSweep):
         Φ(τ) = 2π f₀ T (r^(τ/T) − 1) / ln(r),   r = f₁/f₀
     """
 
-    def __call__(self, tau, freq_start, freq_end, duration):
-        f0, f1, T = freq_start, freq_end, duration
+    def __call__(
+        self,
+        tau: jax.Array,
+        freq_start: ArrayLike,
+        freq_end: ArrayLike,
+        duration: ArrayLike,
+    ) -> jax.Array:
+        f0, f1, T = jnp.asarray(freq_start), jnp.asarray(freq_end), jnp.asarray(duration)
         ratio = f1 / f0
         return (
             2.0 * jnp.pi * f0 * T * (jnp.power(ratio, tau / T) - 1.0) / jnp.log(ratio)
@@ -100,16 +113,16 @@ class ChirpPulse(Pulse):
     ... )
     """
 
-    freq_start: float
-    freq_end: float
-    pressure: float
-    sweep_duration: float
+    freq_start: ArrayLike
+    freq_end: ArrayLike
+    pressure: ArrayLike
+    sweep_duration: ArrayLike
     shape: PulseShape = eqx.field(default_factory=Sine)
     sweep: ChirpSweep = eqx.field(default_factory=LinearSweep)
 
     @property
-    def duration(self) -> float:
-        return self.sweep_duration
+    def duration(self) -> float | jax.Array:
+        return jnp.asarray(self.sweep_duration)
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
         tau = t - self.initial_time

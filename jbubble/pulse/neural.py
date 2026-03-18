@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import cast
+
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 from .base import Pulse
 
@@ -46,13 +50,14 @@ class NeuralPulse(Pulse):
     """
 
     net: eqx.Module
-    pulse_duration: float
-    pressure_scale: float = 1.0
+    pulse_duration: ArrayLike
+    pressure_scale: ArrayLike = 1.0
 
     @property
-    def duration(self) -> float:
-        return self.pulse_duration
+    def duration(self) -> float | jax.Array:
+        return jnp.asarray(self.pulse_duration)
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
         t_norm = t / self.pulse_duration
-        return self.net(jnp.atleast_1d(t_norm)).squeeze() * self.pressure_scale
+        net_fn = cast(Callable[[jax.Array], jax.Array], self.net)
+        return net_fn(jnp.atleast_1d(t_norm)).squeeze() * self.pressure_scale

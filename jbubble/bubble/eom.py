@@ -9,25 +9,34 @@ from __future__ import annotations
 
 import abc
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 from .gas import GasModel
 from .medium import MediumModel
 from .shell import ShellModel
 from .state import BubbleState, ConfinedBubbleState
 
+StateType = TypeVar("StateType", bound=BubbleState)
 
-class EquationOfMotion(eqx.Module, abc.ABC):
+
+class EquationOfMotion(eqx.Module, abc.ABC, Generic[StateType]):
     """Macroscopic equation of motion for bubble dynamics.
 
     Assembles a ``GasModel``, ``ShellModel``, and ``MediumModel`` into a
     complete ODE right-hand side.  Concrete subclasses encode different
     EoM formulations (Rayleigh-Plesset, Keller-Miksis, ...) which differ
     in how they relate p_L to the radial acceleration Rddot.
+
+    The type parameter ``StateType`` binds each EoM to the state it operates
+    on — standard EoMs use ``BubbleState``, confined models use
+    ``ConfinedBubbleState``.  Passing the wrong state type is caught by
+    the type checker rather than failing at runtime deep inside a JAX
+    trace.
 
     The liquid-side boundary pressure is computed by the concrete helper
     ``p_L`` as::
@@ -66,9 +75,9 @@ class EquationOfMotion(eqx.Module, abc.ABC):
     shell: ShellModel
     medium: MediumModel
 
-    R0: float | jax.Array
-    P_amb: float | jax.Array
-    rho_L: float | jax.Array
+    R0: ArrayLike
+    P_amb: ArrayLike
+    rho_L: ArrayLike
 
     def p_L(self, state: BubbleState) -> jax.Array:
         """Liquid-side boundary pressure.
@@ -84,37 +93,37 @@ class EquationOfMotion(eqx.Module, abc.ABC):
         Override for coupled systems with a larger state vector.
         """
         R0 = jnp.asarray(self.R0)
-        P_gas0 = self.P_amb + 2.0 * self.shell.sigma(BubbleState(R=R0, R0=R0)) / R0
+        P_gas0 = jnp.asarray(self.P_amb) + 2.0 * self.shell.sigma(BubbleState(R=R0, R0=R0)) / R0
         return BubbleState(R=R0, R0=R0, P_gas0=P_gas0)
 
     @abc.abstractmethod
     def __call__(
         self,
         t: Any,
-        state: BubbleState,
+        state: StateType,
         p_ac_fn: Callable,
-    ) -> BubbleState:
+    ) -> StateType:
         """Compute the ODE right-hand side  d(state)/dt.
 
         Parameters
         ----------
         t : scalar
             Current time.
-        state : BubbleState
-            Current bubble state.
+        state : StateType
+            Current bubble state (type matches the EoM's state parameter).
         p_ac_fn : callable  (t -> scalar)
             Driving acoustic pressure as a function of time.
 
         Returns
         -------
-        BubbleState
+        StateType
             Time derivative of the state.  ``R0`` and ``P_gas0``
             derivatives are zero in the standard case.
         """
         ...
 
 
-class RayleighPlesset(EquationOfMotion):
+class RayleighPlesset(EquationOfMotion[BubbleState]):
     """Rayleigh-Plesset equation of motion (incompressible liquid).
 
     R Rddot + 3/2 Rdot^2 = (1/rho) (p_L - P_amb - p_ac)
@@ -136,7 +145,7 @@ class RayleighPlesset(EquationOfMotion):
         return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
-class ModifiedRayleighPlesset(EquationOfMotion):
+class ModifiedRayleighPlesset(EquationOfMotion[BubbleState]):
     """Modified Rayleigh-Plesset with gas radiation damping.
 
     Adds a first-order compressibility correction to the gas pressure
@@ -153,7 +162,7 @@ class ModifiedRayleighPlesset(EquationOfMotion):
         Speed of sound in the liquid  [m/s].
     """
 
-    c_L: float | jax.Array
+    c_L: ArrayLike
 
     def __call__(
         self,
@@ -176,7 +185,7 @@ class ModifiedRayleighPlesset(EquationOfMotion):
         return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
-class KellerMiksis(EquationOfMotion):
+class KellerMiksis(EquationOfMotion[BubbleState]):
     """Keller-Miksis equation of motion (first-order compressibility).
 
     Accounts for liquid compressibility up to first order in the Mach
@@ -197,7 +206,7 @@ class KellerMiksis(EquationOfMotion):
         Speed of sound in the liquid  [m/s].
     """
 
-    c_L: float | jax.Array
+    c_L: ArrayLike
 
     def __call__(
         self,
@@ -238,7 +247,7 @@ class KellerMiksis(EquationOfMotion):
         return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
-class Gilmore(EquationOfMotion):
+class Gilmore(EquationOfMotion[BubbleState]):
     """Gilmore equation of motion (Kirkwood-Bethe hypothesis).
 
     Improves on Keller-Miksis by treating liquid compressibility through
@@ -284,16 +293,18 @@ class Gilmore(EquationOfMotion):
         Tait pressure constant  [Pa].  Default 304.9e6.
     """
 
-    n_tait: float | jax.Array = 7.0
-    B_tait: float | jax.Array = 304.9e6
+    n_tait: ArrayLike = 7.0
+    B_tait: ArrayLike = 304.9e6
 
     def _tait_K(self) -> jax.Array:
         """Tait EOS prefactor: (P_amb + B)^(1/n) / rho_L."""
-        return (self.P_amb + self.B_tait) ** (1.0 / self.n_tait) / self.rho_L
+        return jnp.asarray(
+            (self.P_amb + self.B_tait) ** (1.0 / self.n_tait) / self.rho_L
+        )
 
     def _H_and_C(self, p_L: jax.Array, p_inf: jax.Array) -> tuple[jax.Array, jax.Array]:
         """Enthalpy H [m²/s²] and bubble-wall sound speed C [m/s]."""
-        n, B = self.n_tait, self.B_tait
+        n, B = jnp.asarray(self.n_tait), jnp.asarray(self.B_tait)
         K = self._tait_K()
         exp = (n - 1.0) / n
         H = n / (n - 1.0) * K * ((p_L + B) ** exp - (p_inf + B) ** exp)
@@ -350,7 +361,7 @@ class Gilmore(EquationOfMotion):
         return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
-class LeightonTube(EquationOfMotion):
+class LeightonTube(EquationOfMotion[BubbleState]):
     """Leighton model for a bubble confined in a rigid-walled tube.
 
     Modifies the inertia terms of the standard Rayleigh-Plesset equation
@@ -373,9 +384,9 @@ class LeightonTube(EquationOfMotion):
         Length of the confining tube  [m].
     """
 
-    c_L: float | jax.Array
-    tube_radius: float | jax.Array
-    tube_length: float | jax.Array
+    c_L: ArrayLike
+    tube_radius: ArrayLike
+    tube_length: ArrayLike
 
     def __call__(
         self,
@@ -410,7 +421,7 @@ class LeightonTube(EquationOfMotion):
         return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
-class SphericalConfinement(EquationOfMotion):
+class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
     """Bubble confined inside a thin elastic spherical vessel.
 
     Couples the bubble wall dynamics to the vessel wall motion, producing
@@ -442,14 +453,14 @@ class SphericalConfinement(EquationOfMotion):
         Surrounding tissue thickness  [m].
     """
 
-    c_L: float | jax.Array
-    vessel_radius: float | jax.Array
-    vessel_rho: float | jax.Array
-    vessel_E: float | jax.Array
-    vessel_nu: float | jax.Array
-    vessel_d: float | jax.Array
-    tissue_rho: float | jax.Array
-    tissue_d: float | jax.Array
+    c_L: ArrayLike
+    vessel_radius: ArrayLike
+    vessel_rho: ArrayLike
+    vessel_E: ArrayLike
+    vessel_nu: ArrayLike
+    vessel_d: ArrayLike
+    tissue_rho: ArrayLike
+    tissue_d: ArrayLike
 
     def initial_state(self) -> ConfinedBubbleState:
         """Initial state: equilibrium bubble and vessel radii, zero velocities."""
@@ -462,7 +473,7 @@ class SphericalConfinement(EquationOfMotion):
             a=jnp.asarray(self.vessel_radius),
             a_dot=jnp.zeros(()),
         )
-        P_gas0 = self.P_amb + 2.0 * self.shell.sigma(s0) / R0
+        P_gas0 = jnp.asarray(self.P_amb) + 2.0 * self.shell.sigma(s0) / R0
         return ConfinedBubbleState(
             R=R0,
             R_dot=jnp.zeros(()),

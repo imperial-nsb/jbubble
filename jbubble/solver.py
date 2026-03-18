@@ -6,7 +6,9 @@ from typing import Any
 
 import diffrax
 import equinox as eqx
+import jax
 import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 from .bubble.eom import EquationOfMotion
 from .pulse import Pulse
@@ -23,7 +25,7 @@ class SaveSpec(eqx.Module):
 
     num_samples: int = eqx.field(default=1024, static=True)
 
-    def build(self, t0: float, t1: float) -> diffrax.SaveAt:
+    def build(self, t0: jax.Array, t1: jax.Array) -> diffrax.SaveAt:
         ts = jnp.linspace(t0, t1, self.num_samples)
         return diffrax.SaveAt(ts=ts)
 
@@ -56,7 +58,7 @@ def solve_eom(
     pulse: Pulse,
     *,
     y0: Any = None,
-    t_max: float | None = None,
+    t_max: ArrayLike | None = None,
     save_spec: SaveSpec | None = None,
     config: SolverConfig | None = None,
     adjoint: diffrax.AbstractAdjoint | None = None,
@@ -93,9 +95,6 @@ def solve_eom(
     diffrax.Solution
         Solution object with ``ts`` and ``ys``.
     """
-    if t_max is None:
-        t_max = pulse.t_end
-
     if save_spec is None:
         save_spec = SaveSpec(num_samples=1024)
 
@@ -105,7 +104,8 @@ def solve_eom(
     if y0 is None:
         y0 = eom.initial_state()
 
-    t0, t1 = 0.0, t_max
+    t0 = jnp.asarray(0.0)
+    t1 = jnp.asarray(pulse.t_end if t_max is None else t_max)
     saveat = save_spec.build(t0, t1)
 
     def ode_func(t, state, args):
@@ -116,8 +116,7 @@ def solve_eom(
     progress_meter = (
         diffrax.TextProgressMeter() if progress else diffrax.NoProgressMeter()
     )
-
-    adjoint_kwargs = {} if adjoint is None else {"adjoint": adjoint}
+    _adjoint = adjoint if adjoint is not None else diffrax.RecursiveCheckpointAdjoint()
 
     return diffrax.diffeqsolve(
         term,
@@ -132,5 +131,5 @@ def solve_eom(
         max_steps=config.max_steps,
         progress_meter=progress_meter,
         throw=False,
-        **adjoint_kwargs,
+        adjoint=_adjoint,
     )

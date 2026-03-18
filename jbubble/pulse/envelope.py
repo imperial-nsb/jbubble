@@ -7,6 +7,7 @@ import abc
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 
 class Envelope(eqx.Module, abc.ABC):
@@ -17,20 +18,20 @@ class Envelope(eqx.Module, abc.ABC):
     """
 
     @abc.abstractmethod
-    def __call__(self, tau: jax.Array, duration: float) -> jax.Array: ...
+    def __call__(self, tau: jax.Array, duration: ArrayLike) -> jax.Array: ...
 
 
 class RectangularEnvelope(Envelope):
     """Hard on/off gating — 1 inside [0, duration], 0 outside."""
 
-    def __call__(self, tau: jax.Array, duration: float) -> jax.Array:
+    def __call__(self, tau: jax.Array, duration: ArrayLike) -> jax.Array:
         return jnp.where((tau >= 0) & (tau <= duration), 1.0, 0.0)
 
 
 class HannEnvelope(Envelope):
     """Hann (raised-cosine) window for smooth on/off transitions."""
 
-    def __call__(self, tau: jax.Array, duration: float) -> jax.Array:
+    def __call__(self, tau: jax.Array, duration: ArrayLike) -> jax.Array:
         in_window = (tau >= 0) & (tau <= duration)
         hann = 0.5 * (1.0 - jnp.cos(2.0 * jnp.pi * tau / duration))
         return jnp.where(in_window, hann, 0.0)
@@ -61,7 +62,7 @@ class SoftRectangularEnvelope(Envelope):
 
     steepness: float = 100.0
 
-    def __call__(self, tau: jax.Array, duration: float) -> jax.Array:
+    def __call__(self, tau: jax.Array, duration: ArrayLike) -> jax.Array:
         k = duration / self.steepness
         return jax.nn.sigmoid(tau / k) * jax.nn.sigmoid((duration - tau) / k)
 
@@ -78,7 +79,7 @@ class TukeyEnvelope(Envelope):
 
     alpha: float = 0.5
 
-    def __call__(self, tau: jax.Array, duration: float) -> jax.Array:
+    def __call__(self, tau: jax.Array, duration: ArrayLike) -> jax.Array:
         in_window = (tau >= 0) & (tau <= duration)
         frac = tau / duration  # normalised position in [0, 1]
 

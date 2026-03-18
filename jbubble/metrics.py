@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import jax
 import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 
 def mse_radius(r_sim: jax.Array, r_target: jax.Array) -> jax.Array:
@@ -39,7 +40,7 @@ def mse_radius(r_sim: jax.Array, r_target: jax.Array) -> jax.Array:
 def normalised_mse_radius(
     r_sim: jax.Array,
     r_target: jax.Array,
-    R0: float | jax.Array,
+    R0: ArrayLike,
 ) -> jax.Array:
     """Normalised mean squared radius error (dimensionless).
 
@@ -59,7 +60,7 @@ def normalised_mse_radius(
     return jnp.mean(((r_sim - r_target) / R0) ** 2)
 
 
-def peak_expansion(r_sim: jax.Array, R0: float | jax.Array) -> jax.Array:
+def peak_expansion(r_sim: jax.Array, R0: ArrayLike) -> jax.Array:
     """Maximum radial expansion ratio R_max / R0.
 
     Parameters
@@ -74,8 +75,8 @@ def peak_expansion(r_sim: jax.Array, R0: float | jax.Array) -> jax.Array:
 
 def peak_expansion_error(
     r_sim: jax.Array,
-    R0: float | jax.Array,
-    target_expansion: float | jax.Array,
+    R0: ArrayLike,
+    target_expansion: ArrayLike,
 ) -> jax.Array:
     """Squared error in peak expansion ratio.
 
@@ -113,7 +114,7 @@ def mse_emission(
 def normalised_mse_emission(
     p_sim: jax.Array,
     p_target: jax.Array,
-    p_ref: float | jax.Array,
+    p_ref: ArrayLike,
 ) -> jax.Array:
     """Normalised MSE for emission pressure (dimensionless).
 

@@ -7,6 +7,7 @@ import abc
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 NUM_FOURIER_TERMS = 10
 
@@ -16,9 +17,9 @@ class PulseShape(eqx.Module):
     def __call__(
         self,
         t: jax.Array,
-        freq: float | jax.Array,
-        phase: float | jax.Array,
-        initial_time: float | jax.Array,
+        freq: ArrayLike,
+        phase: ArrayLike,
+        initial_time: ArrayLike,
     ) -> jax.Array:
         pass
 
@@ -33,21 +34,27 @@ class FourierPulseShape(PulseShape):
         self,
         m: jax.Array,
         t: jax.Array,
-        freq: float | jax.Array,
-        phase: float | jax.Array,
+        freq: ArrayLike,
+        phase: ArrayLike,
     ) -> jax.Array:
         pass
 
     @property
     @abc.abstractmethod
-    def norm_factor(self) -> float | jax.Array:
+    def norm_factor(self) -> ArrayLike:
         pass
 
     @property
     def dc_offset(self) -> float:
         return 0.0
 
-    def __call__(self, t, freq, phase, initial_time):
+    def __call__(
+        self,
+        t: jax.Array,
+        freq: ArrayLike,
+        phase: ArrayLike,
+        initial_time: ArrayLike,
+    ) -> jax.Array:
         t = t - initial_time
         m = jnp.arange(1, NUM_FOURIER_TERMS + 1, dtype=float)
 
@@ -61,7 +68,13 @@ class FourierPulseShape(PulseShape):
 
 
 class Sine(PulseShape):
-    def __call__(self, t, freq, phase, initial_time):
+    def __call__(
+        self,
+        t: jax.Array,
+        freq: ArrayLike,
+        phase: ArrayLike,
+        initial_time: ArrayLike,
+    ) -> jax.Array:
         t = t - initial_time
         return jnp.sin(2.0 * jnp.pi * freq * t - phase)
 
@@ -71,11 +84,13 @@ class Sine(PulseShape):
 
 
 class Sawtooth(FourierPulseShape):
-    def term(self, m, t, freq, phase):
+    def term(
+        self, m: jax.Array, t: jax.Array, freq: ArrayLike, phase: ArrayLike
+    ) -> jax.Array:
         return -((-1) ** m / m) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
 
     @property
-    def norm_factor(self) -> float | jax.Array:
+    def norm_factor(self) -> ArrayLike:
         return jnp.pi / 2.0
 
     @property
@@ -84,11 +99,13 @@ class Sawtooth(FourierPulseShape):
 
 
 class InvertedSawtooth(FourierPulseShape):
-    def term(self, m, t, freq, phase):
+    def term(
+        self, m: jax.Array, t: jax.Array, freq: ArrayLike, phase: ArrayLike
+    ) -> jax.Array:
         return ((-1) ** m / m) * jnp.sin(2.0 * jnp.pi * m * freq * t - m * phase)
 
     @property
-    def norm_factor(self) -> float | jax.Array:
+    def norm_factor(self) -> ArrayLike:
         return jnp.pi / 2.0
 
     @property
@@ -97,13 +114,15 @@ class InvertedSawtooth(FourierPulseShape):
 
 
 class Triangle(FourierPulseShape):
-    def term(self, m, t, freq, phase):
+    def term(
+        self, m: jax.Array, t: jax.Array, freq: ArrayLike, phase: ArrayLike
+    ) -> jax.Array:
         return -((1 - (-1) ** m) / (m**2)) * jnp.cos(
             2.0 * jnp.pi * m * freq * (t + (1.0 / (4.0 * freq))) - m * phase
         )
 
     @property
-    def norm_factor(self) -> float | jax.Array:
+    def norm_factor(self) -> ArrayLike:
         return (jnp.pi**2) / 4.0
 
     @property
@@ -112,14 +131,16 @@ class Triangle(FourierPulseShape):
 
 
 class Quadratic(FourierPulseShape):
-    def term(self, m, t, freq, phase):
+    def term(
+        self, m: jax.Array, t: jax.Array, freq: ArrayLike, phase: ArrayLike
+    ) -> jax.Array:
         p = jnp.pi / jnp.sqrt(3.0)
         return ((-1) ** m / (m**2)) * jnp.cos(
             2.0 * jnp.pi * m * freq * t - m * phase - m * p
         )
 
     @property
-    def norm_factor(self) -> float | jax.Array:
+    def norm_factor(self) -> ArrayLike:
         return (jnp.pi**2) / 6.0
 
     @property
@@ -128,7 +149,13 @@ class Quadratic(FourierPulseShape):
 
 
 class NegativeQuadratic(Quadratic):
-    def __call__(self, t, freq, phase, initial_time):
+    def __call__(
+        self,
+        t: jax.Array,
+        freq: ArrayLike,
+        phase: ArrayLike,
+        initial_time: ArrayLike,
+    ) -> jax.Array:
         return -super().__call__(t, freq, phase, initial_time)
 
     @property
@@ -137,13 +164,15 @@ class NegativeQuadratic(Quadratic):
 
 
 class Square(FourierPulseShape):
-    def term(self, m, t, freq, phase):
+    def term(
+        self, m: jax.Array, t: jax.Array, freq: ArrayLike, phase: ArrayLike
+    ) -> jax.Array:
         return (1.0 / (2 * m - 1)) * jnp.sin(
             2.0 * jnp.pi * (2 * m - 1) * freq * t - (2 * m - 1) * phase
         )
 
     @property
-    def norm_factor(self) -> float | jax.Array:
+    def norm_factor(self) -> ArrayLike:
         return jnp.pi / 4.0
 
     @property
@@ -154,7 +183,13 @@ class Square(FourierPulseShape):
 class TimeDomainSquare(PulseShape):
     sharpness: float = 50.0
 
-    def __call__(self, t, freq, phase, initial_time):
+    def __call__(
+        self,
+        t: jax.Array,
+        freq: ArrayLike,
+        phase: ArrayLike,
+        initial_time: ArrayLike,
+    ) -> jax.Array:
         t = t - initial_time
         return jnp.tanh(self.sharpness * jnp.sin(2.0 * jnp.pi * freq * t - phase))
 
@@ -164,7 +199,13 @@ class TimeDomainSquare(PulseShape):
 
 
 class TimeDomainSawtooth(PulseShape):
-    def __call__(self, t, freq, phase, initial_time):
+    def __call__(
+        self,
+        t: jax.Array,
+        freq: ArrayLike,
+        phase: ArrayLike,
+        initial_time: ArrayLike,
+    ) -> jax.Array:
         t = t - initial_time
         return (2.0 / jnp.pi) * jnp.arctan(jnp.tan(jnp.pi * freq * t - phase / 2.0))
 
@@ -174,7 +215,13 @@ class TimeDomainSawtooth(PulseShape):
 
 
 class TimeDomainTriangle(PulseShape):
-    def __call__(self, t, freq, phase, initial_time):
+    def __call__(
+        self,
+        t: jax.Array,
+        freq: ArrayLike,
+        phase: ArrayLike,
+        initial_time: ArrayLike,
+    ) -> jax.Array:
         t = t - initial_time
         return (2.0 / jnp.pi) * jnp.arcsin(jnp.sin(2.0 * jnp.pi * freq * t - phase))
 
@@ -223,7 +270,9 @@ class Rectangular(FourierPulseShape):
     low_level: float = -1.0
     phase_offset: float = 0.0
 
-    def term(self, m, t, freq, phase):
+    def term(
+        self, m: jax.Array, t: jax.Array, freq: ArrayLike, phase: ArrayLike
+    ) -> jax.Array:
         D = self.duty
         A = self.high_level
         B = self.low_level

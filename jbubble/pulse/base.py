@@ -39,12 +39,12 @@ class Pulse(eqx.Module, abc.ABC):
 
     @property
     @abc.abstractmethod
-    def duration(self) -> float:
+    def duration(self) -> float | jax.Array:
         """Active pulse duration [s] (excluding any leading silence)."""
         ...
 
     @property
-    def t_end(self) -> float:
+    def t_end(self) -> float | jax.Array:
         """Suggested simulation end time [s].
 
         Default: ``initial_time + 2 × duration``.
@@ -152,11 +152,11 @@ class Scaled(Pulse):
     factor: float
 
     @property
-    def duration(self) -> float:
+    def duration(self) -> float | jax.Array:
         return self.pulse.duration
 
     @property
-    def t_end(self) -> float:
+    def t_end(self) -> float | jax.Array:
         return self.pulse.t_end
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
@@ -186,11 +186,11 @@ class Offset(Pulse):
     offset: float
 
     @property
-    def duration(self) -> float:
+    def duration(self) -> float | jax.Array:
         return self.pulse.duration
 
     @property
-    def t_end(self) -> float:
+    def t_end(self) -> float | jax.Array:
         return self.pulse.t_end
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
@@ -221,12 +221,14 @@ class Summed(Pulse):
     @property
     def duration(self) -> float:
         # Span from self.initial_time to the latest child endpoint.
-        ends = [p.initial_time + p.duration for p in self.pulses]
-        return max(ends) - self.initial_time
+        # float() is intentional: Summed uses Python's max(), which requires
+        # concrete values — JAX-traced durations are not supported here.
+        ends = [float(p.initial_time + p.duration) for p in self.pulses]
+        return max(ends) - float(self.initial_time)
 
     @property
     def t_end(self) -> float:
-        return max(p.t_end for p in self.pulses)
+        return max(float(p.t_end) for p in self.pulses)
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
         # Each p(t) includes the child's own envelope.

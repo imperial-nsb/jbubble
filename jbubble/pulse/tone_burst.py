@@ -1,6 +1,10 @@
 """Parametric tone-burst pulse — fixed frequency, shape, and envelope."""
 
+from __future__ import annotations
+
 import jax
+import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 from .base import Pulse
 from .shapes import PulseShape
@@ -39,15 +43,15 @@ class ToneBurst(Pulse):
     True
     """
 
-    freq: float
-    pressure: float
+    freq: ArrayLike
+    pressure: ArrayLike
     shape: PulseShape
-    phase: float = 0.0
-    cycle_num: float = 4.0
+    phase: ArrayLike = 0.0
+    cycle_num: ArrayLike = 4.0
 
     @property
-    def duration(self) -> float:
-        return self.cycle_num / self.freq
+    def duration(self) -> float | jax.Array:
+        return jnp.asarray(self.cycle_num) / jnp.asarray(self.freq)
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
         return self.shape(t, self.freq, self.phase, self.initial_time) * self.pressure

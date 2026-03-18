@@ -8,6 +8,7 @@ from typing import Any, cast
 import diffrax
 import equinox as eqx
 import jax
+from jax.typing import ArrayLike
 
 from .bubble.eom import EquationOfMotion
 from .bubble.state import BubbleState, ConfinedBubbleState
@@ -86,7 +87,7 @@ def run_simulation(
     *,
     save_spec: SaveSpec,
     state0: Any = None,
-    t_max: float | None = None,
+    t_max: ArrayLike | None = None,
     config: SolverConfig | None = None,
     progress: bool = False,
 ) -> SimulationResult:
