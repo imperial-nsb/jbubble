@@ -38,7 +38,8 @@ from jbubble.utils import GridSweep
 # SHARED PHYSICS
 # ============================================================================
 
-PRESSURE = 10e3   # Pa — nonlinear regime gives a well-defined interior resonance peak
+# Note: keep pressure low to avoid violent collapse (issues with differentiability)
+PRESSURE = 10e3
 CYCLE_NUM = 5
 SAVE_SPEC = SaveSpec(num_samples=200)
 
