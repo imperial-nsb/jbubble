@@ -10,6 +10,7 @@ elasticity, etc.) and use it to fit models to experimental data.
 
 import jax
 import jax.numpy as jnp
+import jax.random as jr
 import optax
 import matplotlib.pyplot as plt
 from jbubble import run_simulation, fit_parameters, SaveSpec
@@ -49,7 +50,7 @@ def make_eom(params: dict) -> EquationOfMotion:
 # Common settings
 pulse = ToneBurst(
     freq=1e6,
-    pressure=1e3,
+    pressure=50e3,
     shape=Sine(),
     cycle_num=5,
     envelope=HannEnvelope(),
@@ -62,9 +63,12 @@ true_chi = 0.5
 ground_truth_res = run_simulation(
     make_eom({"chi": true_chi}), pulse, save_spec=save_spec
 )
-# Target radius curve with a little bit of noise could be added,
-# but we'll stick to a clean curve for simplicity.
-target_radius = ground_truth_res.radius
+# Add Gaussian noise to simulate realistic measurement uncertainty.
+key = jr.PRNGKey(42)
+radius_span = ground_truth_res.radius.max() - ground_truth_res.radius.min()
+noise_std = 0.05 * radius_span  # 5% of radius span
+noise = jr.normal(key, shape=ground_truth_res.radius.shape) * noise_std
+target_radius = ground_truth_res.radius + noise
 
 
 # 3. Define the Loss Function
