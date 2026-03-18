@@ -147,7 +147,7 @@ The [`examples/`](examples/) directory contains 12 self-contained scripts:
 
 ## Documentation
 
-Full documentation is available at <span style="color: red;"><strong>TODO:</strong></span>, including:
+Full documentation is available at **[imperial-nsb.github.io/jbubble](https://imperial-nsb.github.io/jbubble/)**, including:
 
 - [Quickstart guide](https://imperial-nsb.github.io/jbubble/guide/quickstart/)
 - [Bubble models guide](https://imperial-nsb.github.io/jbubble/guide/bubble_models/)
