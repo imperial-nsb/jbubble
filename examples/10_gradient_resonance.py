@@ -225,8 +225,7 @@ def main():
     )
     print(f"Running {gs.total_points} simulations …")
     t0 = time.time()
-    flat = gs.collect()
-    expansion_grid = gs.reshape(flat)  # shape (len(R0), len(freq))
+    expansion_grid = gs.run()  # shape (len(R0), len(freq))
     print(f"Sweep done in {time.time()-t0:.1f}s")
 
     # GridSweep sorts keys alphabetically: ["R0", "freq"]

@@ -72,8 +72,7 @@ gs = GridSweep(
 )
 
 print(f"Running sweep over {gs.total_points} grid points...")
-flat_results = gs.collect()
-grid_results = gs.reshape(flat_results)
+grid_results = gs.run()
 
 # 4. Visualize the results as a heatmap
 plt.figure(figsize=(8, 6))
