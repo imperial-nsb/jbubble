@@ -1,4 +1,4 @@
-<h1 align="center">jbubble</h1>
+<h1 align="center">🫧 jbubble 🫧</h1>
 <p align="center"><strong>Differentiable microbubble dynamics in JAX.</strong></p>
 
 <p align="center">
