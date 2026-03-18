@@ -19,7 +19,6 @@ from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import (
     GompertzSurfaceTension,
     LipidShell,
-    MarmottantSurfaceTension,
 )
 from jbubble.pulse import ToneBurst
 from jbubble.pulse.envelope import HannEnvelope
