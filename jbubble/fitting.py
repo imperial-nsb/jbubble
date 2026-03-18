@@ -17,11 +17,16 @@ from .pulse import Pulse
 from .simulation import SimulationResult, run_simulation
 from .solver import SaveSpec, SolverConfig, solve_eom
 
+PyTree = Any  # any JAX-compatible pytree (scalar, array, dict, eqx.Module, …)
 
-def _format_params(params: Any) -> str:
+
+def _format_params(params: PyTree) -> str:
     """Format a params pytree for logging — scalars shown as values, arrays as shapes."""
-    leaves = jax.tree_util.tree_leaves(params)
-    parts = [f"{float(x):.4g}" if x.ndim == 0 else f"array{x.shape}" for x in leaves]
+    parts = []
+    for path, x in jax.tree_util.tree_leaves_with_path(params):
+        name = jax.tree_util.keystr(path)
+        val = f"{float(x):.4g}" if x.ndim == 0 else f"array{x.shape}"
+        parts.append(f"{name}={val}" if name else val)
     return parts[0] if len(parts) == 1 else "[" + ", ".join(parts) + "]"
 
 
@@ -31,7 +36,7 @@ class FitResult:
 
     Attributes
     ----------
-    params : Any
+    params : PyTree
         Fitted parameter values — same type and structure as ``params0``.
     loss_history : jax.Array, shape (n_steps,)
         Loss value recorded at each optimisation step.
@@ -39,14 +44,14 @@ class FitResult:
         Final forward simulation run with the fitted parameters.
     """
 
-    params: Any
+    params: PyTree
     loss_history: jax.Array
     result: SimulationResult
 
 
 def fit_parameters(
-    make_model: Callable[..., tuple[EquationOfMotion, Pulse]],
-    params0: Any,
+    make_model: Callable[[PyTree], tuple[EquationOfMotion, Pulse]],
+    params0: PyTree,
     *,
     save_spec: SaveSpec,
     t_span: tuple[float, float] | None = None,
@@ -55,7 +60,7 @@ def fit_parameters(
     n_steps: int = 200,
     config: SolverConfig | None = None,
     adjoint: diffrax.AbstractAdjoint | None = None,
-    step_callback: Callable[[int, Any, float], None] | None = None,
+    step_callback: Callable[[int, PyTree, float], None] | None = None,
     log_every: int = 25,
 ) -> FitResult:
     """Fit model parameters by differentiating through the ODE integration.
@@ -64,10 +69,10 @@ def fit_parameters(
     so anything that affects either the bubble physics or the acoustic drive
     can be optimised jointly from a single params pytree.  Examples::
 
-        # Fixed pulse — close over it
+        # Single parameter as a dict
         fit_parameters(
-            make_model=lambda kappa_s: (make_eom(kappa_s), my_pulse),
-            params0=2.4e-9,
+            make_model=lambda p: (make_eom(p), my_pulse),
+            params0={'kappa_s': 2.4e-9},
             ...
         )
 
@@ -92,7 +97,7 @@ def fit_parameters(
     ----------
     make_model : callable
         ``params → (EquationOfMotion, Pulse)``.  Must be JAX-traceable.
-    params0 : Any
+    params0 : PyTree
         Initial parameter values — any JAX-compatible pytree (scalar,
         array, dict, tuple, or ``eqx.Module``).
     save_spec : SaveSpec
@@ -115,7 +120,7 @@ def fit_parameters(
         Adjoint method.  Default: ``RecursiveCheckpointAdjoint()``
         (checkpoints the forward pass for stable gradients).
     step_callback : callable, optional
-        ``(step: int, params: Any, loss: float) → None``.  Called after
+        ``(step: int, params: PyTree, loss: float) → None``.  Called after
         each optimisation step in the Python loop (outside JIT), so Python
         side-effects like appending to a list work correctly.  Useful for
         recording parameter trajectories.
@@ -143,7 +148,7 @@ def fit_parameters(
     # eqx.Module params (e.g. a NeuralProperty network) transparently.
     array_params, static = eqx.partition(params0, eqx.is_array)
 
-    def _loss(array_p: Any) -> jax.Array:
+    def _loss(array_p: PyTree) -> jax.Array:
         params = eqx.combine(array_p, static)
         eom, pulse = make_model(params)
         sol = solve_eom(

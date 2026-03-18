@@ -63,14 +63,14 @@ def _logit(frac):
 
 
 def physical_to_params(freq, r0):
-    return jnp.array([
-        _logit((freq - FREQ_MIN) / (FREQ_MAX - FREQ_MIN)),
-        _logit((r0 - R0_MIN) / (R0_MAX - R0_MIN)),
-    ])
+    return {
+        "freq": _logit((freq - FREQ_MIN) / (FREQ_MAX - FREQ_MIN)),
+        "R0": _logit((r0 - R0_MIN) / (R0_MAX - R0_MIN)),
+    }
 
 
 def params_to_physical(params):
-    return _sigmoid_freq(params[0]), _sigmoid_r0(params[1])
+    return _sigmoid_freq(params["freq"]), _sigmoid_r0(params["R0"])
 
 
 def soft_max(x, beta=1e6):
