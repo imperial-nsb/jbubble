@@ -3,14 +3,12 @@
 import jax
 import jax.numpy as jnp
 import pytest
-
 from jbubble.pulse.envelope import (
     HannEnvelope,
     RectangularEnvelope,
     SoftRectangularEnvelope,
     TukeyEnvelope,
 )
-
 
 DURATION = 5e-6
 

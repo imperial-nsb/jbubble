@@ -3,7 +3,6 @@
 import jax
 import jax.numpy as jnp
 import pytest
-
 from jbubble.bubble.medium import (
     KelvinVoigtMedium,
     NeoHookeanMedium,

@@ -2,7 +2,6 @@
 
 import jax
 import jax.numpy as jnp
-
 from jbubble.bubble.state import BubbleState, ConfinedBubbleState
 
 
@@ -28,7 +27,7 @@ class TestBubbleState:
     def test_is_pytree(self):
         s = BubbleState(R=jnp.asarray(2e-6), R0=jnp.asarray(2e-6))
         leaves = jax.tree_util.tree_leaves(s)
-        assert all(isinstance(l, jax.Array) for l in leaves)
+        assert all(isinstance(leaf, jax.Array) for leaf in leaves)
 
     def test_jit_compatible(self):
         @jax.jit

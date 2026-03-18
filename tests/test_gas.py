@@ -3,10 +3,8 @@
 import jax
 import jax.numpy as jnp
 import pytest
-
 from jbubble.bubble.gas import PolytropicGas, VanDerWaalsGas
 from jbubble.bubble.state import BubbleState
-
 
 P_GAS0 = 173_325.0  # typical equilibrium gas pressure
 R0 = 2e-6

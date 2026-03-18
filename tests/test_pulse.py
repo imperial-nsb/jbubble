@@ -4,7 +4,6 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 import pytest
-
 from jbubble.pulse import (
     ChirpPulse,
     HannEnvelope,
@@ -12,12 +11,11 @@ from jbubble.pulse import (
     Offset,
     SampledPulse,
     Scaled,
-    SoftRectangularEnvelope,
     Summed,
     ToneBurst,
 )
-from jbubble.pulse.chirp import ExponentialSweep, LinearSweep
-from jbubble.pulse.shapes import Sine, Square
+from jbubble.pulse.chirp import ExponentialSweep
+from jbubble.pulse.shapes import Sine
 
 
 class TestToneBurst:

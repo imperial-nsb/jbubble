@@ -1,9 +1,7 @@
 """Shared fixtures for jbubble tests."""
 
-import jax
 import jax.numpy as jnp
 import pytest
-
 from jbubble.bubble.eom import KellerMiksis, RayleighPlesset
 from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium

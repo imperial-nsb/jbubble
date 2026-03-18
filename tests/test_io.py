@@ -2,8 +2,6 @@
 
 import jax.numpy as jnp
 import numpy as np
-import pytest
-
 from jbubble.utils.io import export_hdf5, load_hdf5
 
 

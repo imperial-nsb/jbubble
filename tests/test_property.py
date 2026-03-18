@@ -4,8 +4,12 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 import pytest
-
-from jbubble.bubble.property import ConstantProperty, NeuralProperty, Property, as_property
+from jbubble.bubble.property import (
+    ConstantProperty,
+    NeuralProperty,
+    Property,
+    as_property,
+)
 from jbubble.bubble.state import BubbleState
 
 

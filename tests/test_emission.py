@@ -3,7 +3,6 @@
 import jax
 import jax.numpy as jnp
 import pytest
-
 from jbubble import SaveSpec, run_simulation
 from jbubble.acoustics.emission import IncompressibleMonopole, QuasiAcoustic
 from jbubble.bubble.eom import KellerMiksis

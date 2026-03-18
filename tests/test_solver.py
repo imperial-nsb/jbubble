@@ -3,7 +3,6 @@
 import diffrax
 import jax.numpy as jnp
 import pytest
-
 from jbubble.solver import SaveSpec, SolverConfig, solve_eom
 
 

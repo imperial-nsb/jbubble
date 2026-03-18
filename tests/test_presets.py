@@ -1,9 +1,7 @@
 """Tests for jbubble.utils.presets."""
 
 import jax
-import jax.numpy as jnp
 import pytest
-
 from jbubble import SaveSpec, run_simulation
 from jbubble.bubble.eom import EquationOfMotion, KellerMiksis
 from jbubble.bubble.shell import LipidShell, ThickShell

@@ -2,7 +2,6 @@
 
 import jax.numpy as jnp
 import pytest
-
 from jbubble.utils.gridsweep import GridSweep
 
 
@@ -85,7 +84,7 @@ class TestGridSweep:
             progress=False,
         )
         total = 0
-        for params, outputs in gs.batches():
+        for _params, outputs in gs.batches():
             total += outputs.shape[0]
         assert total == 6
 

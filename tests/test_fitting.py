@@ -1,11 +1,9 @@
 """Tests for jbubble.fitting."""
 
-import diffrax
 import jax
 import jax.numpy as jnp
 import optax
 import pytest
-
 from jbubble import SaveSpec, run_simulation
 from jbubble.bubble.eom import KellerMiksis
 from jbubble.bubble.gas import PolytropicGas
@@ -71,9 +69,7 @@ class TestFitParameters:
         assert isinstance(fit_result, FitResult)
         assert fit_result.loss_history.shape == (10,)
         # Loss should decrease
-        assert float(fit_result.loss_history[-1]) < float(
-            fit_result.loss_history[0]
-        )
+        assert float(fit_result.loss_history[-1]) < float(fit_result.loss_history[0])
 
     def test_fit_result_has_simulation(self):
         target_radius = self._target_radius()

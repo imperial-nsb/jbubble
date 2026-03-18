@@ -3,7 +3,6 @@
 import jax
 import jax.numpy as jnp
 import pytest
-
 from jbubble.bubble.shell import (
     GompertzSurfaceTension,
     LipidShell,
@@ -103,24 +102,32 @@ class TestThickShell:
 
 class TestMarmottantSurfaceTension:
     def test_buckled_regime(self):
-        st = MarmottantSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
+        st = MarmottantSurfaceTension(
+            R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072
+        )
         s = _make_state(0.95)  # well below buckle
         assert float(st(s)) == pytest.approx(0.0, abs=1e-10)
 
     def test_elastic_regime(self):
-        st = MarmottantSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
+        st = MarmottantSurfaceTension(
+            R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072
+        )
         s = _make_state(1.0)  # R = R0, above R_buckle = 0.98*R0
         R_buckle = 0.98 * R0
         expected = 0.55 * ((R0 / R_buckle) ** 2 - 1.0)
         assert float(st(s)) == pytest.approx(expected, rel=1e-8)
 
     def test_ruptured_regime(self):
-        st = MarmottantSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
+        st = MarmottantSurfaceTension(
+            R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072
+        )
         s = _make_state(1.5)  # large expansion → ruptured
         assert float(st(s)) == pytest.approx(0.072, rel=1e-8)
 
     def test_transitions_are_monotonic(self):
-        st = MarmottantSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
+        st = MarmottantSurfaceTension(
+            R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072
+        )
         R0_arr = jnp.asarray(R0)
         P_gas0_arr = jnp.asarray(P_GAS0)
         ratios = jnp.linspace(0.9, 1.5, 100)
@@ -141,9 +148,7 @@ class TestGompertzSurfaceTension:
         # With R_buckle_ratio=0.85, sigma(R0) = chi*(1/0.85^2 - 1) = 0.55 * 0.384 = 0.211
         # which is > sigma_rupture=0.072
         with pytest.raises(ValueError, match="ill-posed"):
-            GompertzSurfaceTension(
-                R_buckle_ratio=0.85, chi=0.55, sigma_rupture=0.072
-            )
+            GompertzSurfaceTension(R_buckle_ratio=0.85, chi=0.55, sigma_rupture=0.072)
 
     def test_well_posed_creates_successfully(self):
         st = GompertzSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)

@@ -3,9 +3,8 @@
 import jax
 import jax.numpy as jnp
 import pytest
-
 from jbubble import SaveSpec, run_simulation
-from jbubble.bubble.eom import KellerMiksis, SphericalConfinement
+from jbubble.bubble.eom import SphericalConfinement
 from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import NoShell

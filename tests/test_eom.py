@@ -3,7 +3,6 @@
 import jax
 import jax.numpy as jnp
 import pytest
-
 from jbubble.bubble.eom import (
     Gilmore,
     KellerMiksis,
@@ -13,7 +12,7 @@ from jbubble.bubble.eom import (
     SphericalConfinement,
 )
 from jbubble.bubble.gas import PolytropicGas
-from jbubble.bubble.medium import KelvinVoigtMedium, NewtonianMedium
+from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import NoShell
 from jbubble.bubble.state import BubbleState, ConfinedBubbleState
 
@@ -144,9 +143,7 @@ class TestKellerMiksis:
         )
         rp_result = rp(jnp.asarray(0.0), s, _zero_pulse)
         km_result = km(jnp.asarray(0.0), s, _zero_pulse)
-        assert float(km_result.R_dot) == pytest.approx(
-            float(rp_result.R_dot), rel=1e-4
-        )
+        assert float(km_result.R_dot) == pytest.approx(float(rp_result.R_dot), rel=1e-4)
 
     def test_differentiable(self):
         eom = KellerMiksis(**_common_args(), c_L=C_L)

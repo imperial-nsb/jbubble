@@ -3,7 +3,6 @@
 import jax
 import jax.numpy as jnp
 import pytest
-
 from jbubble.metrics import (
     mse_emission,
     mse_radius,
@@ -83,7 +82,9 @@ class TestMseEmission:
         p_sim = jnp.array([100.0, 200.0])
         p_target = jnp.array([110.0, 220.0])
         expected = float(jnp.mean(jnp.array([10.0**2, 20.0**2])))
-        assert float(mse_emission(p_sim, p_target)) == pytest.approx(expected, rel=1e-10)
+        assert float(mse_emission(p_sim, p_target)) == pytest.approx(
+            expected, rel=1e-10
+        )
 
 
 class TestNormalisedMseEmission:

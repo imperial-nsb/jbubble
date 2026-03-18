@@ -3,7 +3,6 @@
 import jax
 import jax.numpy as jnp
 import pytest
-
 from jbubble.pulse.shapes import (
     InvertedSawtooth,
     NegativeQuadratic,
@@ -17,7 +16,6 @@ from jbubble.pulse.shapes import (
     TimeDomainTriangle,
     Triangle,
 )
-
 
 FREQ = 1e6
 PHASE = 0.0
@@ -67,7 +65,9 @@ class TestFourierShapes:
     def test_bounded_output(self, shape):
         ts = jnp.linspace(0, 2.0 / FREQ, 500)
         vals = jax.vmap(lambda t: shape(t, FREQ, PHASE, T0))(ts)
-        assert float(jnp.max(jnp.abs(vals))) < 1.5  # bounded (Gibbs overshoot up to ~9%)
+        assert (
+            float(jnp.max(jnp.abs(vals))) < 1.5
+        )  # bounded (Gibbs overshoot up to ~9%)
 
     def test_finite_output(self, shape):
         ts = jnp.linspace(0, 1.0 / FREQ, 100)
