@@ -215,8 +215,8 @@ class GompertzSurfaceTension(Property):
 
     where R_buckle = R_buckle_ratio * state.R0.
 
-    The Gompertz parameters b and c are derived from chi and sigma_break
-    such that sigma(R0) matches the elastic regime and sigma -> sigma_break
+    The Gompertz parameters b and c are derived from chi and sigma_rupture
+    such that sigma(R0) matches the elastic regime and sigma -> sigma_rupture
     as R -> infinity.  R0 is read from the state so this model stays
     consistent when R0 evolves (e.g. rectified diffusion).
 
@@ -226,19 +226,19 @@ class GompertzSurfaceTension(Property):
         Buckling radius as a fraction of R0  (dimensionless).
     chi : float or Property
         Shell elasticity  [N/m].
-    sigma_break : float or Property
+    sigma_rupture : float or Property
         Asymptotic (ruptured) surface tension  [N/m].
     """
 
     R_buckle_ratio: float
     chi: float
-    sigma_break: float
+    sigma_rupture: float
 
     def __call__(self, state: BubbleState) -> jax.Array:
         R, R0 = state.R, state.R0
         R_buckle = self.R_buckle_ratio * R0
         chi = self.chi
-        a = self.sigma_break
+        a = self.sigma_rupture
         c = (2.0 * chi / a) * jnp.sqrt(1.0 + a / (2.0 * chi))
         sigma_R0 = chi * ((R0 / R_buckle) ** 2 - 1.0)
         b = -jnp.log(sigma_R0 / a) / jnp.exp(c * (1.0 - R0 / R_buckle))
