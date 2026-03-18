@@ -38,8 +38,7 @@ class FitResult:
 
 
 def fit_parameters(
-    make_eom: Callable[..., EquationOfMotion],
-    pulse: Pulse,
+    make_model: Callable[..., tuple[EquationOfMotion, Pulse]],
     params0: Any,
     *,
     save_spec: SaveSpec,
@@ -49,43 +48,55 @@ def fit_parameters(
     n_steps: int = 200,
     config: SolverConfig | None = None,
     adjoint: diffrax.AbstractAdjoint | None = None,
+    step_callback: Callable[[int, Any, float], None] | None = None,
     verbose: bool = True,
 ) -> FitResult:
-    """Fit model parameters to a target radius-time curve.
+    """Fit model parameters by differentiating through the ODE integration.
 
-    Minimises ``loss_fn(simulated_radius, target)`` with respect to
-    ``params0`` by differentiating through the ODE integration.
+    ``make_model`` maps the current ``params`` to an ``(eom, pulse)`` pair,
+    so anything that affects either the bubble physics or the acoustic drive
+    can be optimised jointly from a single params pytree.  Examples::
 
-    Uses an explicit solver (``Tsit5``) and ``BacksolveAdjoint`` by default.
-    Explicit solvers avoid the ill-conditioned linear-system adjoint that
-    implicit solvers (e.g. ``Kvaerno5``) can produce during backward passes.
+        # Fixed pulse — close over it
+        fit_parameters(
+            make_model=lambda kappa_s: (make_eom(kappa_s), my_pulse),
+            params0=2.4e-9,
+            ...
+        )
+
+        # Joint frequency + radius optimisation
+        fit_parameters(
+            make_model=lambda p: (make_eom(p['R0']), make_pulse(p['freq'])),
+            params0={'R0': 5e-6, 'freq': 1e6},
+            ...
+        )
+
+        # Heterogeneous — neural surface tension + scalar kappa_s + neural pulse
+        fit_parameters(
+            make_model=lambda p: (
+                KellerMiksis(shell=LipidShell(sigma=p.sigma, kappa_s=p.kappa_s), ...),
+                p.pulse,
+            ),
+            params0=LearnedParams(sigma=NeuralProperty(...), kappa_s=2.4e-9, pulse=NeuralPulse(...)),
+            ...
+        )
 
     Parameters
     ----------
-    make_eom : callable
-        Factory that builds an ``EquationOfMotion`` from the current
-        parameter values.  Must be JAX-traceable (use ``jnp`` operations
-        on the parameters, not bare Python conditionals on JAX values).
-    pulse : Pulse
-        Driving acoustic pulse.
+    make_model : callable
+        ``params → (EquationOfMotion, Pulse)``.  Must be JAX-traceable.
     params0 : Any
         Initial parameter values — any JAX-compatible pytree (scalar,
-        array, tuple, or ``eqx.Module``).
+        array, dict, tuple, or ``eqx.Module``).
     save_spec : SaveSpec
-        Output sampling specification.  The simulated state is evaluated
-        on this grid and passed to ``loss_fn``.
+        Output sampling specification.
     t_span : tuple[float, float], optional
         Integration interval ``(t0, t1)`` [s].  ``None`` uses the pulse
         duration as reported by ``pulse.t_end``.
     loss_fn : callable
         ``(result: SimulationResult) → scalar``.  Receives the full
-        :class:`~jbubble.simulation.SimulationResult` (state, state_dot,
-        ts, driving_pressure); close over any target data and reference
-        constants.  See :mod:`jbubble.metrics` for differentiable array
-        utilities, e.g.::
-
-            from jbubble.metrics import normalised_mse_radius
-            loss_fn=lambda result: normalised_mse_radius(result.state.R, target, R0)
+        :class:`~jbubble.simulation.SimulationResult`; close over any
+        target data and reference constants.
     optimizer : optax.GradientTransformation
         Gradient-based optimiser, e.g. ``optax.adam(1e-2)``.
     n_steps : int
@@ -94,8 +105,13 @@ def fit_parameters(
         ODE solver settings.  Default: Tsit5 with PID(rtol=1e-4, atol=1e-8),
         50 000 max steps.
     adjoint : diffrax.AbstractAdjoint, optional
-        Adjoint method.  Default: ``BacksolveAdjoint()`` (memory-efficient,
-        works with explicit solvers).
+        Adjoint method.  Default: ``RecursiveCheckpointAdjoint()``
+        (checkpoints the forward pass for stable gradients).
+    step_callback : callable, optional
+        ``(step: int, params: Any, loss: float) → None``.  Called after
+        each optimisation step in the Python loop (outside JIT), so Python
+        side-effects like appending to a list work correctly.  Useful for
+        recording parameter trajectories.
     verbose : bool
         Print loss every 25 steps.  Default: True.
 
@@ -107,13 +123,13 @@ def fit_parameters(
     """
     if config is None:
         config = SolverConfig(
-            solver=diffrax.Tsit5(),
+            solver=diffrax.Dopri5(),
             stepsize_controller=diffrax.PIDController(rtol=1e-4, atol=1e-8),
             dt0=1e-9,
             max_steps=50_000,
         )
     if adjoint is None:
-        adjoint = diffrax.BacksolveAdjoint()
+        adjoint = diffrax.RecursiveCheckpointAdjoint()
 
     # Partition params into array leaves (to be differentiated and tracked by
     # the optimiser) and static leaves (integer shapes, activation types, etc.)
@@ -123,7 +139,7 @@ def fit_parameters(
 
     def _loss(array_p: Any) -> jax.Array:
         params = eqx.combine(array_p, static)
-        eom = make_eom(params)
+        eom, pulse = make_model(params)
         sol = solve_eom(
             eom,
             pulse,
@@ -154,13 +170,17 @@ def fit_parameters(
         array_params = optax.apply_updates(array_params, updates)
         loss_history.append(float(loss_val))
 
+        if step_callback is not None:
+            step_callback(step, eqx.combine(array_params, static), float(loss_val))
+
         if verbose and (step % 25 == 0 or step == n_steps - 1):
             print(f"  step {step:>4} / {n_steps}  loss = {float(loss_val):.4e}")
 
     params = eqx.combine(array_params, static)
+    eom, pulse = make_model(params)
 
     final_result = run_simulation(
-        make_eom(params),
+        eom,
         pulse,
         save_spec=save_spec,
         t_span=t_span,
