@@ -516,8 +516,7 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         p_shell = self.shell(state)
         p_medium_elastic = self.medium.p_elastic(state)
         p_medium_visc = (
-            self.medium.p_viscous(state)
-            + 4.0 * self.medium.mu(state) * a_dot / a
+            self.medium.p_viscous(state) + 4.0 * self.medium.mu(state) * a_dot / a
         )
 
         # Vessel wall pressure (thin shell, nearly-incompressible)
