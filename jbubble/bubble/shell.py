@@ -259,14 +259,18 @@ class GompertzSurfaceTension(Property):
 
     def __post_init__(self) -> None:
         sigma_at_R0 = self.chi * ((1.0 / self.R_buckle_ratio) ** 2 - 1.0)
-        if sigma_at_R0 >= self.sigma_rupture:
-            raise ValueError(
-                f"GompertzSurfaceTension: sigma(R0) = {sigma_at_R0:.4g} N/m "
-                f">= sigma_rupture = {self.sigma_rupture:.4g} N/m.  "
-                f"The bubble starts in the ruptured regime and the Gompertz "
-                f"fit is ill-posed.  Increase R_buckle_ratio (try 0.98) or "
-                f"decrease chi."
-            )
+
+        def _check(s_at_r0, s_rupture):
+            if s_at_r0 >= s_rupture:
+                raise ValueError(
+                    f"GompertzSurfaceTension: sigma(R0) = {s_at_r0:.4g} N/m "
+                    f">= sigma_rupture = {s_rupture:.4g} N/m.  "
+                    f"The bubble starts in the ruptured regime and the Gompertz "
+                    f"fit is ill-posed.  Increase R_buckle_ratio (try 0.98) or "
+                    f"decrease chi."
+                )
+
+        jax.debug.callback(_check, sigma_at_R0, self.sigma_rupture)
 
     def __call__(self, state: BubbleState) -> jax.Array:
         R, R0 = state.R, state.R0
