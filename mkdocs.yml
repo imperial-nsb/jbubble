@@ -23,6 +23,7 @@ plugins:
             show_source: true
             show_root_heading: true
             merge_init_into_class: true
+            members_order: source
 
 markdown_extensions:
   - admonition
@@ -48,14 +49,15 @@ nav:
     - Quickstart: guide/quickstart.md
     - Bubble models: guide/bubble_models.md
     - Pulse shapes: guide/pulse_shapes.md
-    - Units & scaling: guide/units.md
     - JAX tips: guide/jax_tips.md
   - API reference:
     - Overview: api/index.md
-    - bubble components: api/bubble.md
-    - units: api/units.md
+    - bubble: api/bubble.md
     - pulse: api/pulse.md
     - shapes: api/shapes.md
+    - acoustics: api/acoustics.md
     - solver: api/solver.md
     - simulation: api/simulation.md
+    - metrics: api/metrics.md
+    - fitting: api/fitting.md
     - utils: api/utils.md
