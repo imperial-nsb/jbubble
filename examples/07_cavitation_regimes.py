@@ -19,7 +19,8 @@ from jbubble.bubble.eom import KellerMiksis
 from jbubble.bubble.gas import VanDerWaalsGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import LipidShell, MarmottantSurfaceTension
-from jbubble.pulse import ToneBurst, Sine, HannEnvelope
+from jbubble.pulse import ToneBurst, HannEnvelope
+from jbubble.pulse.shapes import Sine
 from jbubble.solver import SaveSpec
 
 # 1. Physics setup (using Keller-Miksis for better collapse accuracy)
@@ -56,7 +57,7 @@ pulse_inertial = ToneBurst(
 # 3. Use JAX parallelization (vmap) to run both at once
 # We can define a helper and vmap it over the pulses.
 def sim(p):
-    return run_simulation(eom, p, save_spec=SaveSpec(num_samples=2000), t_max=15e-6)
+    return run_simulation(eom, p, save_spec=SaveSpec(num_samples=2000))
 
 
 v_sim = jax.jit(jax.vmap(sim))

@@ -42,8 +42,6 @@ pulse = ToneBurst(freq=1e6, pressure=200e3, shape=Sine(), cycle_num=5)
 result = jax.jit(run_simulation)(
     eom,
     pulse,
-    save_spec=SaveSpec(num_samples=2048),
-    t_max=10e-6,
 )
 
 # 2. Compute emission at a single distance

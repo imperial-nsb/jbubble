@@ -14,14 +14,14 @@ from jbubble.bubble.eom import ModifiedRayleighPlesset
 from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import NoShell, LipidShell, MarmottantSurfaceTension
-from jbubble.pulse import ToneBurst, Sine, HannEnvelope
+from jbubble.pulse import ToneBurst, HannEnvelope
+from jbubble.pulse.shapes import Sine
 from jbubble.solver import SaveSpec
 
 # Common setup
 R0 = 2e-6
 pressure = 150e3  # 150 kPa
 freq = 1e6
-window = 15e-6
 
 # 1. Uncoated Bubble (No Shell)
 # Only water-air surface tension (0.072 N/m)
@@ -59,10 +59,8 @@ pulse = ToneBurst(
 # JIT-compiling the simulation function
 sim_fn = jax.jit(run_simulation)
 
-res_no_shell = sim_fn(
-    eom_no_shell, pulse, save_spec=SaveSpec(num_samples=1000), t_max=window
-)
-res_lipid = sim_fn(eom_lipid, pulse, save_spec=SaveSpec(num_samples=1000), t_max=window)
+res_no_shell = sim_fn(eom_no_shell, pulse, save_spec=SaveSpec(num_samples=1000))
+res_lipid = sim_fn(eom_lipid, pulse, save_spec=SaveSpec(num_samples=1000))
 
 # Visualize comparison
 plt.figure(figsize=(10, 5))

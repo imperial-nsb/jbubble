@@ -53,7 +53,6 @@ def get_expansion(R0, freq):
         eom,
         pulse,
         save_spec=SaveSpec(num_samples=200),
-        t_max=10e-6,
     )
 
     # Return the metric we want to plot

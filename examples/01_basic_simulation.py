@@ -52,7 +52,6 @@ result = jax.jit(run_simulation)(
     eom,
     pulse,
     save_spec=SaveSpec(num_samples=1000),
-    t_max=10e-6,  # Simulate for 10 microseconds
 )
 
 # 5. Visualize the radius over time
