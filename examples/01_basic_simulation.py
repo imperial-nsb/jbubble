@@ -22,7 +22,7 @@ from jbubble.solver import SaveSpec
 # 1. Define physics components
 # jbubble uses a 'composition' approach: you build an Equation of Motion (EoM)
 # by picking a gas law, a shell model, and a medium model.
-gas = PolytropicGas(gamma=1.4)
+gas = PolytropicGas(gamma=1.4) # Air (gamma=1.4)
 shell = NoShell(sigma=0.072)  # Surface tension of water (0.072 N/m)
 medium = NewtonianMedium(mu=0.001)  # Viscosity of water (0.001 Pa s)
 

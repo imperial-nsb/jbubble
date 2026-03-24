@@ -33,7 +33,7 @@ eom = SomeEoM(
 
 ### Rayleigh–Plesset
 
-The classic incompressible model. Suitable for low driving pressures where liquid compressibility is negligible.
+The classic model for a spherical bubble in an incompressible fluid. Suitable for low driving pressures where liquid compressibility is negligible.
 
 $$R\ddot{R} + \frac{3}{2}\dot{R}^2 = \frac{1}{\rho_L}\left(p_L - P_\infty - p_{ac}(t)\right)$$
 
@@ -44,7 +44,12 @@ eom = RayleighPlesset(gas=..., shell=..., medium=..., R0=2e-6, P_amb=101325, rho
 
 ### Modified Rayleigh–Plesset
 
-Adds a gas-radiation damping correction term $\frac{R}{c_L}\dot{p}_\text{gas}$ to the RP equation. Provides a lightweight compressibility correction without the full Keller–Miksis coupling.
+Adds a first-order compressibility correction to the RP equation via the acoustic radiation damping term $\frac{R}{c_L}\dot{p}_\text{gas}$. It is simply the Keller-Miksis equation without the $$O(\dot R/c)$$ prefactor terms. Suitable for low driving pressures and for instances where $$M = \dot R/ c\ll 1$$. 
+
+
+$$(1 - M)\, R \ddot{R} + \frac{3}{2}\left(1 - \frac{M}{3}\right)\dot{R}^2
+= \frac{1}{\rho}(1 + M)\left(p_L - P_{\text{amb}} - p_{\text{ac}}\right)
++ \frac{R}{\rho c}\left(\frac{d p_L}{dt} - \frac{d p_{\text{ac}}}{dt}\right)$$
 
 ```python
 from jbubble.bubble.eom import ModifiedRayleighPlesset
@@ -53,7 +58,7 @@ eom = ModifiedRayleighPlesset(..., c_L=1500.0)
 
 ### Keller–Miksis
 
-First-order compressible model. The standard choice for moderate-to-high driving pressures. Accounts for Mach-number corrections and the time derivative of $p_L$.
+First-order compressible model. The standard choice for moderate-to-high driving pressures. Breaks down when $$M = \dot R/c \approx 1$$.
 
 $$\left(1 - \frac{\dot{R}}{c_L}\right)R\ddot{R} + \frac{3}{2}\left(1 - \frac{\dot{R}}{3c_L}\right)\dot{R}^2 = \left(1 + \frac{\dot{R}}{c_L}\right)\frac{p_L - P_\infty - p_{ac}}{\rho_L} + \frac{R}{\rho_L c_L}\frac{d}{dt}(p_L - p_{ac})$$
 
@@ -66,7 +71,14 @@ eom = KellerMiksis(..., c_L=1500.0)
 
 ### Gilmore
 
-Uses the Tait equation of state for the liquid. Extends validity to higher Mach numbers than Keller–Miksis via the Kirkwood–Bethe hypothesis. The enthalpy $H$ and local sound speed $C$ are computed from the Tait EOS; $\dot{H}$ is expanded analytically via the chain rule.
+First-order compressible model. Uses enthalpy $H$ rather than pressure and assumes that the speed of sound $C$ varies with $H$. Handles cases where $$M \approx 1$$ well by suppressing the Mach number during violent collapses. Uses the Tait equation of state for the liquid, from which the enthalpy $H$ and local sound speed $C$ are computed; $\dot{H}$ is expanded analytically via the chain rule.
+
+$$
+\left(1 - \frac{\dot{R}}{C}\right) R \ddot{R}
++ \frac{3}{2}\left(1 - \frac{\dot{R}}{3C}\right)\dot{R}^2
+= \left(1 + \frac{\dot{R}}{C}\right) H
++ \frac{R}{C}\left(1 - \frac{\dot{R}}{C}\right)\dot{H}
+$$
 
 ```python
 from jbubble.bubble.eom import Gilmore
@@ -80,6 +92,13 @@ eom = Gilmore(
 ### Leighton tube
 
 Rayleigh–Plesset modified for a bubble centred in a rigid cylindrical tube. The tube geometry adds an inertia correction and additional added-mass terms.
+
+$$
+R \ddot{R}\left(1 + \frac{R}{\Gamma}\beta\right)
++ \frac{3}{2}\dot{R}^2\left(1 + \frac{4R}{3\Gamma}\beta\right)
+= \frac{1}{\rho}\left(p_{L,\text{damped}} - P_{\text{amb}} - p_{\text{ac}}\right)
+$$
+
 
 ```python
 from jbubble.bubble.eom import LeightonTube
@@ -118,22 +137,23 @@ eom = SphericalConfinement(
 
 The most common gas model. Assumes a polytropic process:
 
-$$p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0}{R}\right)^{3\gamma}$$
+$$p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0}{R}\right)^{3\gamma}$$.
 
-- $\gamma = 1$ — isothermal (slow oscillations or good thermal conduction)
-- $\gamma = 1.4$ — adiabatic ideal gas (fast oscillations)
-- $\gamma \in (1, 1.4)$ — intermediate thermal damping models
+In an isothermal process, heat transfer is fast compared bubble oscillations and $\gamma = 1$ for all gases. 
+
+In an adiabatic process, heat transfer is slow compared to bubble oscillations. The adiabatic index for SF6, which is commonly used as the gaseous core of lipid-coated microbubbles, is $$approx 1.095$$. 
+
 
 ```python
 from jbubble.bubble.gas import PolytropicGas
-gas = PolytropicGas(gamma=1.4)
+gas = PolytropicGas(gamma=1.095)
 ```
 
 `gamma` accepts a plain float or any `Property` — useful for learned or state-dependent $\gamma$.
 
 ### VanDerWaalsGas
 
-Adds a hard-core repulsion: the bubble cannot be compressed below a fraction $h = h_\text{frac} \cdot R_0$ of its equilibrium radius. Relevant for highly driven bubbles near minimum radius.
+Adds a hard-core repulsion to the polytropic gas model: the bubble cannot be compressed below a fraction $h = h_\text{frac} \cdot R_0$ of its equilibrium radius. Relevant for highly driven bubbles near minimum radius.
 
 $$p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0^3 - h^3}{R^3 - h^3}\right)^\gamma$$
 
@@ -148,7 +168,7 @@ gas = VanDerWaalsGas(gamma=1.4, h_frac=0.2)
 
 ### NoShell
 
-No coating — bare bubble in a liquid. Only Laplace pressure ($2\sigma/R$) acts at the interface.
+No coating — bare bubble in a liquid. The bubble's surface contributes to the interfacial stresses through the Laplace pressure ($2\sigma/R$), whereby $\sigma$ is the constant surface tension of the surrounding liquid. 
 
 ```python
 from jbubble.bubble.shell import NoShell
@@ -157,9 +177,12 @@ shell = NoShell(sigma=0.072)  # water–air surface tension [N/m]
 
 ### LipidShell
 
-Thin lipid monolayer (Marmottant 2005 model). The lipid film modifies the surface tension and adds a surface-dilatational viscous term:
+The effects of a thin lipid monolayer is captured by a radius-dependent surface tension law, specifically the piecewise Marmottant model or its differentiable form, the Marmottant-Gompertz law. The lipid coating contributes to the interfacial stresses through 
 
-$$p_\text{viscous} = \frac{4\kappa_s \dot{R}}{R^2}$$
+- the Laplace pressure  ($2\sigma(R)/R$)
+- the lipid's surface dilatational viscosity, which adds the viscous stress term $p_\text{viscous} = \frac{4\kappa_s \dot{R}}{R^2}$
+
+
 
 The effective surface tension is encoded as a `Property` (e.g. `MarmottantSurfaceTension` or `GompertzSurfaceTension`) passed to `sigma`.
 
@@ -199,9 +222,10 @@ shell = ThickShell(
 
 ## Medium models
 
-### NewtonianMedium
 
-Incompressible Newtonian liquid. Standard model for water.
+### NewtonianMedium 
+
+Dynamic viscosity $\mu$ is constant and independent of fluid flow. Contributes to the interfacial stresses through 
 
 $$p_\text{viscous} = \frac{4\mu \dot{R}}{R}$$
 
@@ -212,9 +236,10 @@ medium = NewtonianMedium(mu=1e-3)  # [Pa·s]
 
 ### KelvinVoigtMedium
 
-Linear viscoelastic medium (solid or gel). Adds a spring-like elastic restoring term.
+Linear viscoelastic medium (solid or gel). Contributes to the interfacial stresses through
 
-$$p_\text{elastic} = \frac{4G}{3}\left[\left(\frac{R}{R_0}\right)^3 - 1\right]$$
+- a viscosity term $$p_\text{viscous} = \frac{4\mu \dot{R}}{R}$$
+- a spring-like elastic restoring term $$p_\text{elastic} = \frac{4G}{3}\left[\left(\frac{R}{R_0}\right)^3 - 1\right]$$
 
 Valid only for small strains ($|R - R_0| \ll R_0$). Prefer `NeoHookeanMedium` for large oscillations.
 

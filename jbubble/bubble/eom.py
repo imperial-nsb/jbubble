@@ -496,12 +496,7 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         a, a_dot = state.a, state.a_dot
         p_ac = p_ac_fn(t)
 
-        # Gas pressure with first-order compressibility damping
         p_gas = self.gas(state)
-        gas_tangent = jax.grad(self.gas)(state)
-        dp_gas_dt = gas_tangent.R * R_dot
-        p_gas_damped = p_gas + (R / self.c_L) * dp_gas_dt
-
         # Shell and medium contributions at the bubble wall.
         #
         # Elastic term: geometry-independent — use the medium model directly.
@@ -533,7 +528,7 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         E = 2.0 * a * a_dot**2 - 2.0 * R * R_dot**2
 
         F = (
-            p_gas_damped
+            p_gas
             - 2.0 * R * R_dot * self.rho_L * (1.0 / R - 1.0 / a)
             - p_shell
             - p_medium_elastic
