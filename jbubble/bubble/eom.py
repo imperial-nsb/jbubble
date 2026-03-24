@@ -515,29 +515,35 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         #     unconfined one.
         p_shell = self.shell(state)
         p_medium_elastic = self.medium.p_elastic(state)
-        p_medium_visc = (
-            self.medium.p_viscous(state) + 4.0 * self.medium.mu(state) * a_dot / a
-        )
 
-        # Vessel wall pressure (thin shell, nearly-incompressible)
+        # Vessel wall pressure (thin elastic shell)
+        # P = E * d * (a - a0) / ((1 - nu^2) * a^2)
         nu = self.vessel_nu
         a0 = self.vessel_radius
-        P_wall = self.vessel_E * (a - a0) / ((1.0 - nu**2) * a**2)
+        P_wall = (
+            self.vessel_E * self.vessel_d * (a - a0) / ((1.0 - nu**2) * a**2)
+        )
 
-        # 2x2 coupled system coefficients
+        # 2x2 coupled system coefficients [A B; C D] [R_ddot; a_ddot] = [E; F]
+        # Eq 1: Continuity (incompressible liquid layer)
+        # R^2 R_ddot - a^2 a_ddot = 2 * a * a_dot^2 - 2 * R * R_dot^2
         A = R**2
         B = -(a**2)
+        E = 2.0 * a * a_dot**2 - 2.0 * R * R_dot**2
+
+        # Eq 2: Momentum (radial force balance integrated from R to a)
+        # rho*R^2*(1/R - 1/a)*R_ddot + (rho_v*d_v + rho_t*d_t)*a_ddot = F
         C = self.rho_L * R**2 * (1.0 / R - 1.0 / a)
         D = self.vessel_rho * self.vessel_d + self.tissue_rho * self.tissue_d
 
-        E = 2.0 * a * a_dot**2 - 2.0 * R * R_dot**2
-
+        # Corrected momentum RHS terms including the convective acceleration (2*R*R_dot^2)
+        # and the relative viscous damping term -4*mu*(R_dot/R - a_dot/a)
         F = (
             p_gas_damped
-            - 2.0 * R * R_dot * self.rho_L * (1.0 / R - 1.0 / a)
+            - 2.0 * self.rho_L * R * R_dot**2 * (1.0 / R - 1.0 / a)
             - p_shell
             - p_medium_elastic
-            - p_medium_visc
+            - (self.medium.p_viscous(state) - 4.0 * self.medium.mu(state) * a_dot / a)
             - P_wall
             - self.P_amb
             - p_ac
