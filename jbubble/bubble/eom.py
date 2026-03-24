@@ -520,9 +520,7 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         # P = E * d * (a - a0) / ((1 - nu^2) * a^2)
         nu = self.vessel_nu
         a0 = self.vessel_radius
-        P_wall = (
-            self.vessel_E * self.vessel_d * (a - a0) / ((1.0 - nu**2) * a**2)
-        )
+        P_wall = self.vessel_E * self.vessel_d * (a - a0) / ((1.0 - nu**2) * a**2)
 
         # 2x2 coupled system coefficients [A B; C D] [R_ddot; a_ddot] = [E; F]
         # Eq 1: Continuity (incompressible liquid layer)
