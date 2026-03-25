@@ -15,7 +15,7 @@ from jbubble.utils import GridSweep
 from jbubble.solver import SaveSpec
 
 
-# Create a simulation kernel for 3 parameters of interest. 
+# Create a simulation kernel for 3 parameters of interest.
 def get_expansion(R0, freq, chi):
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=1.095),
@@ -44,7 +44,8 @@ def get_expansion(R0, freq, chi):
 
     return jnp.max(result.radius) / R0
 
-# Create utitlities for 3D stacked plot. 
+
+# Create utitlities for 3D stacked plot.
 def edges_from_centers(centers):
     centers = np.asarray(centers)
     mid = 0.5 * (centers[:-1] + centers[1:])
@@ -55,8 +56,8 @@ def edges_from_centers(centers):
 
 def run_3d_sweep_and_plot():
     # Parameter ranges
-    chi_values = jnp.linspace(0.05, 0.38, 5)   # 6 stacked planes
-    radii = jnp.linspace(1e-6, 5e-6, 60) 
+    chi_values = jnp.linspace(0.05, 0.38, 5)  # 6 stacked planes
+    radii = jnp.linspace(1e-6, 5e-6, 60)
     freqs = jnp.linspace(20e3, 300e3, 60)
 
     heats_list = []
@@ -70,13 +71,13 @@ def run_3d_sweep_and_plot():
         )
 
         print(f"Running sweep for chi={float(chi):.3f} ...")
-        heats_2d = gs.run()     # shape: (len(R0), len(freq))
+        heats_2d = gs.run()  # shape: (len(R0), len(freq))
         heats_list.append(heats_2d)
 
-    heats = np.stack(heats_list, axis=0)   # (n_chi, n_R0, n_freq)
+    heats = np.stack(heats_list, axis=0)  # (n_chi, n_R0, n_freq)
 
-    x = radii * 1e6           # μm
-    y = freqs / 1e3           # kHz
+    x = radii * 1e6  # μm
+    y = freqs / 1e3  # kHz
 
     Xe, Ye = np.meshgrid(edges_from_centers(x), edges_from_centers(y), indexing="xy")
 
@@ -86,7 +87,7 @@ def run_3d_sweep_and_plot():
     norm = Normalize(vmin=vmin, vmax=vmax)
     cmap = cm.get_cmap("turbo", 256)
 
-    #Create 3D stacked plane
+    # Create 3D stacked plane
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection="3d")
 
@@ -97,9 +98,12 @@ def run_3d_sweep_and_plot():
         plane_colors = cmap(norm(heats[k].T))  # transpose matches axes
 
         ax.plot_surface(
-            Xe, Ye, Z,
+            Xe,
+            Ye,
+            Z,
             facecolors=plane_colors,
-            rstride=1, cstride=1,
+            rstride=1,
+            cstride=1,
             linewidth=0,
             antialiased=False,
             shade=False,
@@ -122,6 +126,7 @@ def run_3d_sweep_and_plot():
     plt.show()
 
     return fig
+
 
 if __name__ == "__main__":
     run_3d_sweep_and_plot()

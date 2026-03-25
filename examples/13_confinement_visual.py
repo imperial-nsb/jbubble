@@ -66,8 +66,8 @@ fig, ax = plt.subplots(figsize=(6, 6))
 ax.set_aspect("equal")
 
 Rmax = tissue_outer.max()
-ax.set_xlim(-1.2*Rmax, 1.2*Rmax)
-ax.set_ylim(-1.2*Rmax, 1.2*Rmax)
+ax.set_xlim(-1.2 * Rmax, 1.2 * Rmax)
+ax.set_ylim(-1.2 * Rmax, 1.2 * Rmax)
 ax.set_title("Bubble Dynamics in a Confined Vessel")
 ax.set_xlabel("µm")
 ax.set_ylabel("µm")
@@ -80,28 +80,31 @@ bubble_patch = plt.Circle(
 )
 
 lumen_patch = Wedge(
-    (0,0),
+    (0, 0),
     a_inner[0],
-    0, 360,
-    width=a_inner[0]-bubble_r[0],
+    0,
+    360,
+    width=a_inner[0] - bubble_r[0],
     facecolor="#ffcccc",
     edgecolor="none",
 )
 
 vessel_patch = Wedge(
-    (0,0),
+    (0, 0),
     a_outer[0],
-    0, 360,
-    width=a_outer[0]-a_inner[0],
+    0,
+    360,
+    width=a_outer[0] - a_inner[0],
     facecolor="#8B0000",
     edgecolor="none",
 )
 
 tissue_patch = Wedge(
-    (0,0),
+    (0, 0),
     tissue_outer[0],
-    0, 360,
-    width=tissue_outer[0]-a_outer[0],
+    0,
+    360,
+    width=tissue_outer[0] - a_outer[0],
     facecolor="lightgrey",
     edgecolor="none",
 )
@@ -112,7 +115,9 @@ ax.add_patch(lumen_patch)
 ax.add_patch(bubble_patch)
 
 time_text = ax.text(
-    0.02, 0.95, "",
+    0.02,
+    0.95,
+    "",
     transform=ax.transAxes,
     fontsize=12,
     bbox=dict(facecolor="white", alpha=0.6),
@@ -155,6 +160,7 @@ def update(i):
     time_text.set_text(f"t = {time[i]:.2f} µs")
 
     return bubble_patch, lumen_patch, vessel_patch, tissue_patch, time_text
+
 
 ani = animation.FuncAnimation(
     fig,

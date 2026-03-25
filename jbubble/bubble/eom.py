@@ -423,6 +423,7 @@ class LeightonTube(EquationOfMotion[BubbleState]):
         R_ddot = (rhs - inertia) / denom
         return BubbleState(R=R_dot, R_dot=R_ddot)
 
+
 class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
     """Bubble confined inside a thin elastic spherical vessel.
 
@@ -512,10 +513,7 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         # Vessel wall pressure (thin shell, nearly-incompressible)
         nu = self.vessel_nu
         a0 = self.vessel_radius
-        P_wall = (
-            self.vessel_E * self.vessel_d*(a - a0)
-            / ((1.0 - nu**2) * a**2)
-        )
+        P_wall = self.vessel_E * self.vessel_d * (a - a0) / ((1.0 - nu**2) * a**2)
 
         # 2x2 coupled system coefficients
         A = R**2
@@ -527,9 +525,9 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
 
         F = (
             p_gas
-            - 2.0 * self.rho_L * R * R_dot **2 * (1.0 / R - 1.0 / a)
+            - 2.0 * self.rho_L * R * R_dot**2 * (1.0 / R - 1.0 / a)
             - p_shell
-            - 4.0 * mu * (R_dot/R + a_dot/a)
+            - 4.0 * mu * (R_dot / R + a_dot / a)
             - 4.0 * self.shell.kappa_s(state) * R_dot / R**2
             - P_wall
             - self.P_amb
