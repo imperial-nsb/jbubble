@@ -423,7 +423,6 @@ class LeightonTube(EquationOfMotion[BubbleState]):
         R_ddot = (rhs - inertia) / denom
         return BubbleState(R=R_dot, R_dot=R_ddot)
 
-
 class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
     """Bubble confined inside a thin elastic spherical vessel.
 
@@ -466,7 +465,6 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
     tissue_d: ArrayLike
 
     def initial_state(self) -> ConfinedBubbleState:
-        """Initial state: equilibrium bubble and vessel radii, zero velocities."""
         R0 = jnp.asarray(self.R0)
         s0 = ConfinedBubbleState(
             R=R0,
@@ -509,15 +507,15 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         #     media where the confined velocity field differs from the
         #     unconfined one.
         p_shell = self.shell(state)
-        p_medium_elastic = self.medium.p_elastic(state)
-        p_medium_visc = (
-            self.medium.p_viscous(state) + 4.0 * self.medium.mu(state) * a_dot / a
-        )
+        mu = self.medium.mu(state)
 
         # Vessel wall pressure (thin shell, nearly-incompressible)
         nu = self.vessel_nu
         a0 = self.vessel_radius
-        P_wall = self.vessel_E * (a - a0) / ((1.0 - nu**2) * a**2)
+        P_wall = (
+            self.vessel_E * self.vessel_d*(a - a0)
+            / ((1.0 - nu**2) * a**2)
+        )
 
         # 2x2 coupled system coefficients
         A = R**2
@@ -529,16 +527,15 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
 
         F = (
             p_gas
-            - 2.0 * R * R_dot * self.rho_L * (1.0 / R - 1.0 / a)
+            - 2.0 * self.rho_L * R * R_dot **2 * (1.0 / R - 1.0 / a)
             - p_shell
-            - p_medium_elastic
-            - p_medium_visc
+            - 4.0 * mu * (R_dot/R + a_dot/a)
+            - 4.0 * self.shell.kappa_s(state) * R_dot / R**2
             - P_wall
             - self.P_amb
             - p_ac
         )
 
-        # Cramer's rule: Delta = A*D - B*C
         Delta = A * D - B * C
         Delta = jnp.where(jnp.abs(Delta) < 1e-14, 1e-14, Delta)
 

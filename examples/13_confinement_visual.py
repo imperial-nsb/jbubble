@@ -2,7 +2,7 @@ import jax
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from matplotlib.patches import Wedge
+from matplotlib.patches import Wedge, Patch
 
 from jbubble import run_simulation
 from jbubble.bubble.eom import SphericalConfinement
@@ -33,17 +33,17 @@ eom = SphericalConfinement(
     rho_L=998.0,
     c_L=1500.0,
     vessel_radius=8e-6,
-    vessel_rho=1100,
-    vessel_E=3e3,
+    vessel_rho=900,
+    vessel_E=1e6,
     vessel_nu=0.5,
     vessel_d=1e-6,
-    tissue_rho=1100,
+    tissue_rho=900,
     tissue_d=1e-6,
 )
 
 pulse = ToneBurst(
-    freq=1e6,
-    pressure=0.8e6,
+    freq=100e3,
+    pressure=100e3,
     shape=Sine(),
     cycle_num=10,
 )
@@ -59,6 +59,8 @@ a_inner = np.array(result.vessel_radius * 1e6)
 a_outer = a_inner + float(eom.vessel_d * 1e6)
 tissue_outer = a_outer + float(eom.tissue_d * 1e6)
 time = np.array(result.ts * 1e6)
+
+print(a_inner)
 
 fig, ax = plt.subplots(figsize=(6, 6))
 ax.set_aspect("equal")
@@ -115,6 +117,26 @@ time_text = ax.text(
     fontsize=12,
     bbox=dict(facecolor="white", alpha=0.6),
 )
+
+legend_handles = [
+    Patch(facecolor="orange", edgecolor="none", label="Bubble"),
+    Patch(facecolor="#ffcccc", edgecolor="none", label="Lumen"),
+    Patch(facecolor="#8B0000", edgecolor="none", label="Vessel wall"),
+    Patch(facecolor="lightgrey", edgecolor="none", label="Tissue"),
+]
+
+ax.legend(
+    handles=legend_handles,
+    loc="lower right",
+    fontsize=8,
+    framealpha=0.8,
+    borderpad=0.2,
+    labelspacing=0.2,
+    handlelength=0.7,
+    handleheight=0.7,
+    markerscale=0.6,
+)
+
 
 def update(i):
     br = float(bubble_r[i])
