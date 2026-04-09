@@ -97,9 +97,11 @@ def solve_eom(
     """
     if save_spec is None:
         save_spec = SaveSpec(num_samples=1024)
+    assert isinstance(save_spec, SaveSpec)
 
     if config is None:
         config = SolverConfig()
+    assert isinstance(config, SolverConfig)
 
     if y0 is None:
         y0 = eom.initial_state()
