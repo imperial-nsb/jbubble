@@ -98,6 +98,16 @@ python-version = "3.11"
 # gains converter-aware constructor inference.
 invalid-argument-type = "ignore"
 
+# ty treats eqx.Module subclass constructors as returning `Module` (the base
+# class) rather than the specific subclass.  This causes spurious
+# invalid-return-type errors wherever a function returns a freshly-constructed
+# Module subclass (e.g. `return BubbleState(...)`), and invalid-assignment
+# errors wherever such a value is stored in a variable declared as the
+# subclass type.  Both are equinox false positives; suppress until ty gains
+# proper equinox-aware constructor inference.
+invalid-return-type = "ignore"
+invalid-assignment = "ignore"
+
 # ── Pytest ────────────────────────────────────────────────────────────────────
 
 [tool.pytest.ini_options]

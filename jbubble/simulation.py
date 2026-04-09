@@ -73,12 +73,12 @@ class SimulationResult(eqx.Module):
     @property
     def vessel_radius(self) -> jax.Array | None:
         """Vessel wall radius a(t) [m], or ``None`` for unconfined models."""
-        return self.state.a if self.has_vessel else None  # type: ignore[union-attr]
+        return self.state.a if self.has_vessel else None  # ty: ignore[unresolved-attribute]
 
     @property
     def vessel_velocity(self) -> jax.Array | None:
         """Vessel wall velocity ȧ(t) [m/s], or ``None`` for unconfined models."""
-        return self.state.a_dot if self.has_vessel else None  # type: ignore[union-attr]
+        return self.state.a_dot if self.has_vessel else None  # ty: ignore[unresolved-attribute]
 
 
 def run_simulation(
