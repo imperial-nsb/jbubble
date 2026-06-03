@@ -16,6 +16,8 @@ This directory contains clean, minimal examples of how to use the `jbubble` libr
 9. **[09_custom_pulse_shapes.py](09_custom_pulse_shapes.py)**: Shows how to extend jbubble with custom Fourier pulse shapes by subclassing `FourierPulseShape`, and catalogues the built-in `Rectangular` wave variants.
 10. **[10_envelopes.py](10_envelopes.py)**: Compares all built-in envelope types (`Rectangular`, `Hann`, `Tukey`, `SoftRectangular`) and plots their time derivatives to highlight which are safe for adjoint-based gradient fitting.
 11. **[11_gradient_resonance.py](11_gradient_resonance.py)**: Advanced end-to-end demo: runs a 2-D parameter sweep (frequency × bubble radius) to build an expansion-ratio heatmap, then uses `fit_parameters` to follow the gradient to the resonance peak. Saves the trajectory overlay as a plot.
+12. **[12_3D_batch_sweeps.py](12_3D_batch_sweeps.py)**: Extends `GridSweep` to three parameters (shell elasticity `chi` × bubble radius × frequency), sweeping each `chi` slice and rendering the expansion ratio as a stack of colour-mapped planes in 3-D.
+13. **[13_confinement_visual.py](13_confinement_visual.py)**: Simulates a lipid bubble confined in an elastic spherical vessel (`SphericalConfinement`) and animates the coupled bubble / lumen / vessel-wall / tissue motion over time. **Note:** the confinement models are a work in progress and not yet validated — see the warnings in the docs.
 
 ## Running the Examples
 

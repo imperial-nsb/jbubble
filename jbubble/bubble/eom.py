@@ -367,6 +367,14 @@ class Gilmore(EquationOfMotion[BubbleState]):
 class LeightonTube(EquationOfMotion[BubbleState]):
     """Leighton model for a bubble confined in a rigid-walled tube.
 
+    .. warning::
+
+        **Work in progress.**  Like ``SphericalConfinement``, this model is
+        not yet validated.  The geometry factor ``beta`` is also unverified
+        against the reference (see the ``TODO`` in ``__call__``): the code
+        currently uses ``beta = 2 alpha - 1`` while the documented form is
+        ``beta = 2 alpha``.  Use with caution.
+
     Modifies the inertia terms of the standard Rayleigh-Plesset equation
     to account for the added mass effect of a rigid cylindrical tube::
 
@@ -427,16 +435,30 @@ class LeightonTube(EquationOfMotion[BubbleState]):
 class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
     """Bubble confined inside a thin elastic spherical vessel.
 
+    .. warning::
+
+        **Work in progress.**  The confinement models
+        (``SphericalConfinement`` and ``LeightonTube``) are not yet
+        validated against reference solutions and their physics is still
+        being checked.  In particular, this model assumes a **Newtonian
+        lumen liquid**: only ``medium.mu`` is used, so the elastic and
+        non-Newtonian contributions of viscoelastic media
+        (``KelvinVoigtMedium``, ``NeoHookeanMedium``, ``PowerLawMedium``)
+        are **ignored** here.  Surrounding-tissue elasticity is represented
+        by the vessel wall, not by the medium model.  Use with caution.
+
     Couples the bubble wall dynamics to the vessel wall motion, producing
     a 4-DOF state (``ConfinedBubbleState``) where *a* is the vessel wall
     radius.
 
-    The coupled system is::
+    The coupled 2x2 system is::
 
-        A Rddot + B a_ddot = F   (force balance)
-        C Rddot + D a_ddot = E   (vessel inertia)
+        A Rddot + B a_ddot = E   (liquid continuity)
+        C Rddot + D a_ddot = F   (momentum / vessel inertia)
 
-    solved via Cramer's rule at each time step.
+    solved via Cramer's rule at each time step.  Row 1 is the
+    incompressible-lumen constraint d/dt(R^2 Rdot - a^2 adot) = 0; row 2
+    is the radial momentum balance carrying the vessel + tissue inertia D.
 
     Fields
     ------
@@ -448,6 +470,8 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         Vessel wall density  [kg/m^3].
     vessel_E : float or jax.Array
         Vessel Young's modulus  [Pa].
+    vessel_nu : float or jax.Array
+        Vessel Poisson's ratio  (dimensionless).
     vessel_d : float or jax.Array
         Vessel wall thickness  [m].
     tissue_rho : float or jax.Array
@@ -466,7 +490,6 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
     tissue_d: ArrayLike
 
     def initial_state(self) -> ConfinedBubbleState:
-        """Initial state: equilibrium bubble and vessel radii, zero velocities."""
         R0 = jnp.asarray(self.R0)
         s0 = ConfinedBubbleState(
             R=R0,
@@ -496,33 +519,27 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         a, a_dot = state.a, state.a_dot
         p_ac = p_ac_fn(t)
 
-        # Gas pressure with first-order compressibility damping
         p_gas = self.gas(state)
-        gas_tangent = jax.grad(self.gas)(state)
-        dp_gas_dt = gas_tangent.R * R_dot
-        p_gas_damped = p_gas + (R / self.c_L) * dp_gas_dt
-
         # Shell and medium contributions at the bubble wall.
         #
-        # Elastic term: geometry-independent — use the medium model directly.
-        # Viscous term: split into bubble-wall and vessel-wall contributions.
-        #   p_viscous(state)  gives the standard  4μṘ/R  (or its generalised-
-        #     Newtonian equivalent) from integrating the wall stress at r = R.
-        #   The vessel-wall correction  4μȧ/a  is the additional contribution
-        #     from the moving vessel wall; it is exact for Newtonian media and
-        #     a linear approximation for generalised-Newtonian (power-law, …)
-        #     media where the confined velocity field differs from the
-        #     unconfined one.
+        # Shell: the full shell pressure (Laplace + elastic + surface
+        #   viscosity) enters via -p_shell below; do not re-add any shell
+        #   term separately or it will be double-counted.
+        #
+        # Medium: WIP limitation — only the Newtonian viscous part is
+        #   modelled here.  The liquid viscosity acts at both the bubble
+        #   wall (4μṘ/R) and the moving vessel wall (4μȧ/a), so it is
+        #   hand-rolled as 4μ(Ṙ/R + ȧ/a) rather than calling
+        #   ``self.medium(state)``.  Consequently any elastic / non-Newtonian
+        #   contribution from a viscoelastic medium is NOT included — the
+        #   confined model assumes a Newtonian lumen (see class docstring).
         p_shell = self.shell(state)
-        p_medium_elastic = self.medium.p_elastic(state)
-        p_medium_visc = (
-            self.medium.p_viscous(state) + 4.0 * self.medium.mu(state) * a_dot / a
-        )
+        mu = self.medium.mu(state)
 
         # Vessel wall pressure (thin shell, nearly-incompressible)
         nu = self.vessel_nu
         a0 = self.vessel_radius
-        P_wall = self.vessel_E * (a - a0) / ((1.0 - nu**2) * a**2)
+        P_wall = self.vessel_E * self.vessel_d * (a - a0) / ((1.0 - nu**2) * a**2)
 
         # 2x2 coupled system coefficients
         A = R**2
@@ -533,17 +550,15 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         E = 2.0 * a * a_dot**2 - 2.0 * R * R_dot**2
 
         F = (
-            p_gas_damped
-            - 2.0 * R * R_dot * self.rho_L * (1.0 / R - 1.0 / a)
+            p_gas
+            - 2.0 * self.rho_L * R * R_dot**2 * (1.0 / R - 1.0 / a)
             - p_shell
-            - p_medium_elastic
-            - p_medium_visc
+            - 4.0 * mu * (R_dot / R + a_dot / a)
             - P_wall
             - self.P_amb
             - p_ac
         )
 
-        # Cramer's rule: Delta = A*D - B*C
         Delta = A * D - B * C
         Delta = jnp.where(jnp.abs(Delta) < 1e-14, 1e-14, Delta)
 

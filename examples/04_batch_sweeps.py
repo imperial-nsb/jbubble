@@ -79,7 +79,7 @@ plt.figure(figsize=(8, 6))
 im = plt.pcolormesh(
     radii * 1e6, freqs / 1e3, grid_results.T, shading="auto", cmap="viridis"
 )
-plt.colorbar(im, label="Max Expansion Factor (R_max / R0)")
+plt.colorbar(im, label=r"$R_{\\mathrm{max}}/R_0$")
 plt.xlabel("Equilibrium Radius R0 (µm)")
 plt.ylabel("Driving Frequency (kHz)")
 plt.title("Parameter Sweep: Bubble Expansion Map")
