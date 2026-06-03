@@ -58,7 +58,7 @@ def run_3d_sweep_and_plot():
     # Parameter ranges
     chi_values = jnp.linspace(0.05, 0.38, 5)  # 6 stacked planes
     radii = jnp.linspace(1e-6, 5e-6, 60)
-    freqs = jnp.linspace(20e3, 300e3, 60)
+    freqs = jnp.linspace(150e3, 300e3, 60)
 
     heats_list = []
 
