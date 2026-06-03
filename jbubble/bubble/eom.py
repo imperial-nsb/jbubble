@@ -427,16 +427,30 @@ class LeightonTube(EquationOfMotion[BubbleState]):
 class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
     """Bubble confined inside a thin elastic spherical vessel.
 
+    .. warning::
+
+        **Work in progress.**  The confinement models
+        (``SphericalConfinement`` and ``LeightonTube``) are not yet
+        validated against reference solutions and their physics is still
+        being checked.  In particular, this model assumes a **Newtonian
+        lumen liquid**: only ``medium.mu`` is used, so the elastic and
+        non-Newtonian contributions of viscoelastic media
+        (``KelvinVoigtMedium``, ``NeoHookeanMedium``, ``PowerLawMedium``)
+        are **ignored** here.  Surrounding-tissue elasticity is represented
+        by the vessel wall, not by the medium model.  Use with caution.
+
     Couples the bubble wall dynamics to the vessel wall motion, producing
     a 4-DOF state (``ConfinedBubbleState``) where *a* is the vessel wall
     radius.
 
-    The coupled system is::
+    The coupled 2x2 system is::
 
-        A Rddot + B a_ddot = F   (force balance)
-        C Rddot + D a_ddot = E   (vessel inertia)
+        A Rddot + B a_ddot = E   (liquid continuity)
+        C Rddot + D a_ddot = F   (momentum / vessel inertia)
 
-    solved via Cramer's rule at each time step.
+    solved via Cramer's rule at each time step.  Row 1 is the
+    incompressible-lumen constraint d/dt(R^2 Rdot - a^2 adot) = 0; row 2
+    is the radial momentum balance carrying the vessel + tissue inertia D.
 
     Fields
     ------
@@ -448,6 +462,8 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         Vessel wall density  [kg/m^3].
     vessel_E : float or jax.Array
         Vessel Young's modulus  [Pa].
+    vessel_nu : float or jax.Array
+        Vessel Poisson's ratio  (dimensionless).
     vessel_d : float or jax.Array
         Vessel wall thickness  [m].
     tissue_rho : float or jax.Array
