@@ -60,8 +60,6 @@ a_outer = a_inner + float(eom.vessel_d * 1e6)
 tissue_outer = a_outer + float(eom.tissue_d * 1e6)
 time = np.array(result.ts * 1e6)
 
-print(a_inner)
-
 fig, ax = plt.subplots(figsize=(6, 6))
 ax.set_aspect("equal")
 
