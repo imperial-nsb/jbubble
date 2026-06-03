@@ -27,7 +27,7 @@ from jbubble.solver import SaveSpec
 def get_expansion(R0, freq):
     # Setup simple physics for speed
     eom = KellerMiksis(
-        gas=PolytropicGas(gamma=1.095),
+        gas=PolytropicGas(gamma=1.4),
         shell=LipidShell(
             sigma=MarmottantSurfaceTension(
                 R_buckle_ratio=0.99,
