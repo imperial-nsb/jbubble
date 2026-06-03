@@ -528,7 +528,6 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
             - 2.0 * self.rho_L * R * R_dot**2 * (1.0 / R - 1.0 / a)
             - p_shell
             - 4.0 * mu * (R_dot / R + a_dot / a)
-            - 4.0 * self.shell.kappa_s(state) * R_dot / R**2
             - P_wall
             - self.P_amb
             - p_ac
