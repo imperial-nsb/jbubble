@@ -91,6 +91,13 @@ eom = Gilmore(
 
 ### Leighton tube
 
+!!! warning "Work in progress"
+    The confinement models (`LeightonTube` and `SphericalConfinement`) are
+    not yet validated against reference solutions. Treat their output as
+    indicative only. Known caveats: the Leighton geometry factor `beta` is
+    unverified, and `SphericalConfinement` assumes a Newtonian lumen liquid
+    (elastic / non-Newtonian medium contributions are ignored — see below).
+
 Rayleigh–Plesset modified for a bubble centred in a rigid cylindrical tube. The tube geometry adds an inertia correction and additional added-mass terms.
 
 $$
@@ -111,7 +118,7 @@ eom = LeightonTube(
 
 ### Spherical confinement
 
-Coupled two-DOF model: bubble radius $R$ and vessel wall radius $a$. The vessel wall is modelled as a thin elastic shell; surrounding tissue is viscoelastic. The $2\times2$ coupled system is solved via Cramer's rule.
+Coupled two-DOF model: bubble radius $R$ and vessel wall radius $a$. The vessel wall is modelled as a thin elastic shell; surrounding tissue contributes inertia. The $2\times2$ coupled system (liquid continuity + radial momentum) is solved via Cramer's rule. The lumen is assumed Newtonian, so only `medium.mu` is used — elastic / non-Newtonian medium terms are not included.
 
 ```python
 from jbubble.bubble.eom import SphericalConfinement

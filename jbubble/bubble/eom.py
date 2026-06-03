@@ -367,6 +367,14 @@ class Gilmore(EquationOfMotion[BubbleState]):
 class LeightonTube(EquationOfMotion[BubbleState]):
     """Leighton model for a bubble confined in a rigid-walled tube.
 
+    .. warning::
+
+        **Work in progress.**  Like ``SphericalConfinement``, this model is
+        not yet validated.  The geometry factor ``beta`` is also unverified
+        against the reference (see the ``TODO`` in ``__call__``): the code
+        currently uses ``beta = 2 alpha - 1`` while the documented form is
+        ``beta = 2 alpha``.  Use with caution.
+
     Modifies the inertia terms of the standard Rayleigh-Plesset equation
     to account for the added mass effect of a rigid cylindrical tube::
 
@@ -514,15 +522,17 @@ class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
         p_gas = self.gas(state)
         # Shell and medium contributions at the bubble wall.
         #
-        # Elastic term: geometry-independent — use the medium model directly.
-        # Viscous term: split into bubble-wall and vessel-wall contributions.
-        #   p_viscous(state)  gives the standard  4μṘ/R  (or its generalised-
-        #     Newtonian equivalent) from integrating the wall stress at r = R.
-        #   The vessel-wall correction  4μȧ/a  is the additional contribution
-        #     from the moving vessel wall; it is exact for Newtonian media and
-        #     a linear approximation for generalised-Newtonian (power-law, …)
-        #     media where the confined velocity field differs from the
-        #     unconfined one.
+        # Shell: the full shell pressure (Laplace + elastic + surface
+        #   viscosity) enters via -p_shell below; do not re-add any shell
+        #   term separately or it will be double-counted.
+        #
+        # Medium: WIP limitation — only the Newtonian viscous part is
+        #   modelled here.  The liquid viscosity acts at both the bubble
+        #   wall (4μṘ/R) and the moving vessel wall (4μȧ/a), so it is
+        #   hand-rolled as 4μ(Ṙ/R + ȧ/a) rather than calling
+        #   ``self.medium(state)``.  Consequently any elastic / non-Newtonian
+        #   contribution from a viscoelastic medium is NOT included — the
+        #   confined model assumes a Newtonian lumen (see class docstring).
         p_shell = self.shell(state)
         mu = self.medium.mu(state)
 
