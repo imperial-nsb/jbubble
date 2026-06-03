@@ -1203,25 +1203,34 @@
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
 </code></pre></div>
 <h3 id="rayleighplesset">Rayleigh–Plesset<a class="headerlink" href="#rayleighplesset" title="Permanent link">&para;</a></h3>
-<p>The classic incompressible model. Suitable for low driving pressures where liquid compressibility is negligible.</p>
+<p>The classic model for a spherical bubble in an incompressible fluid. Suitable for low driving pressures where liquid compressibility is negligible.</p>
 <div class="arithmatex">\[R\ddot{R} + \frac{3}{2}\dot{R}^2 = \frac{1}{\rho_L}\left(p_L - P_\infty - p_{ac}(t)\right)\]</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">RayleighPlesset</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">eom</span> <span class="o">=</span> <span class="n">RayleighPlesset</span><span class="p">(</span><span class="n">gas</span><span class="o">=...</span><span class="p">,</span> <span class="n">shell</span><span class="o">=...</span><span class="p">,</span> <span class="n">medium</span><span class="o">=...</span><span class="p">,</span> <span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">,</span> <span class="n">P_amb</span><span class="o">=</span><span class="mi">101325</span><span class="p">,</span> <span class="n">rho_L</span><span class="o">=</span><span class="mi">998</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="modified-rayleighplesset">Modified Rayleigh–Plesset<a class="headerlink" href="#modified-rayleighplesset" title="Permanent link">&para;</a></h3>
-<p>Adds a gas-radiation damping correction term <span class="arithmatex">\(\frac{R}{c_L}\dot{p}_\text{gas}\)</span> to the RP equation. Provides a lightweight compressibility correction without the full Keller–Miksis coupling.</p>
+<p>Adds a first-order compressibility correction to the RP equation via the acoustic radiation damping term <span class="arithmatex">\(\frac{R}{c_L}\dot{p}_\text{gas}\)</span>. It is simply the Keller-Miksis equation without the $<span class="arithmatex">\(O(\dot R/c)\)</span>$ prefactor terms. Suitable for low driving pressures and for instances where $<span class="arithmatex">\(M = \dot R/ c\ll 1\)</span>$. </p>
+<div class="arithmatex">\[(1 - M)\, R \ddot{R} + \frac{3}{2}\left(1 - \frac{M}{3}\right)\dot{R}^2
+= \frac{1}{\rho}(1 + M)\left(p_L - P_{\text{amb}} - p_{\text{ac}}\right)
++ \frac{R}{\rho c}\left(\frac{d p_L}{dt} - \frac{d p_{\text{ac}}}{dt}\right)\]</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModifiedRayleighPlesset</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">eom</span> <span class="o">=</span> <span class="n">ModifiedRayleighPlesset</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mf">1500.0</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="kellermiksis">Keller–Miksis<a class="headerlink" href="#kellermiksis" title="Permanent link">&para;</a></h3>
-<p>First-order compressible model. The standard choice for moderate-to-high driving pressures. Accounts for Mach-number corrections and the time derivative of <span class="arithmatex">\(p_L\)</span>.</p>
+<p>First-order compressible model. The standard choice for moderate-to-high driving pressures. Breaks down when $<span class="arithmatex">\(M = \dot R/c \approx 1\)</span>$.</p>
 <div class="arithmatex">\[\left(1 - \frac{\dot{R}}{c_L}\right)R\ddot{R} + \frac{3}{2}\left(1 - \frac{\dot{R}}{3c_L}\right)\dot{R}^2 = \left(1 + \frac{\dot{R}}{c_L}\right)\frac{p_L - P_\infty - p_{ac}}{\rho_L} + \frac{R}{\rho_L c_L}\frac{d}{dt}(p_L - p_{ac})\]</div>
 <p>The time derivative of <span class="arithmatex">\(p_L\)</span> is obtained via <code>jax.grad</code> applied through the entire gas+shell+medium computation.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">KellerMiksis</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">eom</span> <span class="o">=</span> <span class="n">KellerMiksis</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mf">1500.0</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="gilmore">Gilmore<a class="headerlink" href="#gilmore" title="Permanent link">&para;</a></h3>
-<p>Uses the Tait equation of state for the liquid. Extends validity to higher Mach numbers than Keller–Miksis via the Kirkwood–Bethe hypothesis. The enthalpy <span class="arithmatex">\(H\)</span> and local sound speed <span class="arithmatex">\(C\)</span> are computed from the Tait EOS; <span class="arithmatex">\(\dot{H}\)</span> is expanded analytically via the chain rule.</p>
+<p>First-order compressible model. Uses enthalpy <span class="arithmatex">\(H\)</span> rather than pressure and assumes that the speed of sound <span class="arithmatex">\(C\)</span> varies with <span class="arithmatex">\(H\)</span>. Handles cases where $<span class="arithmatex">\(M \approx 1\)</span>$ well by suppressing the Mach number during violent collapses. Uses the Tait equation of state for the liquid, from which the enthalpy <span class="arithmatex">\(H\)</span> and local sound speed <span class="arithmatex">\(C\)</span> are computed; <span class="arithmatex">\(\dot{H}\)</span> is expanded analytically via the chain rule.</p>
+<div class="arithmatex">\[
+\left(1 - \frac{\dot{R}}{C}\right) R \ddot{R}
++ \frac{3}{2}\left(1 - \frac{\dot{R}}{3C}\right)\dot{R}^2
+= \left(1 + \frac{\dot{R}}{C}\right) H
++ \frac{R}{C}\left(1 - \frac{\dot{R}}{C}\right)\dot{H}
+\]</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gilmore</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">eom</span> <span class="o">=</span> <span class="n">Gilmore</span><span class="p">(</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="o">...</span><span class="p">,</span>
@@ -1230,7 +1239,20 @@
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">)</span>
 </code></pre></div>
 <h3 id="leighton-tube">Leighton tube<a class="headerlink" href="#leighton-tube" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Work in progress</p>
+<p>The confinement models (<code>LeightonTube</code> and <code>SphericalConfinement</code>) are
+not yet validated against reference solutions. Treat their output as
+indicative only. Known caveats: the Leighton geometry factor <code>beta</code> is
+unverified, and <code>SphericalConfinement</code> assumes a Newtonian lumen liquid
+(elastic / non-Newtonian medium contributions are ignored — see below).</p>
+</div>
 <p>Rayleigh–Plesset modified for a bubble centred in a rigid cylindrical tube. The tube geometry adds an inertia correction and additional added-mass terms.</p>
+<div class="arithmatex">\[
+R \ddot{R}\left(1 + \frac{R}{\Gamma}\beta\right)
++ \frac{3}{2}\dot{R}^2\left(1 + \frac{4R}{3\Gamma}\beta\right)
+= \frac{1}{\rho}\left(p_{L,\text{damped}} - P_{\text{amb}} - p_{\text{ac}}\right)
+\]</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">LeightonTube</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">eom</span> <span class="o">=</span> <span class="n">LeightonTube</span><span class="p">(</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mf">1500.0</span><span class="p">,</span>
@@ -1239,7 +1261,7 @@
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
 </code></pre></div>
 <h3 id="spherical-confinement">Spherical confinement<a class="headerlink" href="#spherical-confinement" title="Permanent link">&para;</a></h3>
-<p>Coupled two-DOF model: bubble radius <span class="arithmatex">\(R\)</span> and vessel wall radius <span class="arithmatex">\(a\)</span>. The vessel wall is modelled as a thin elastic shell; surrounding tissue is viscoelastic. The <span class="arithmatex">\(2\times2\)</span> coupled system is solved via Cramer's rule.</p>
+<p>Coupled two-DOF model: bubble radius <span class="arithmatex">\(R\)</span> and vessel wall radius <span class="arithmatex">\(a\)</span>. The vessel wall is modelled as a thin elastic shell; surrounding tissue contributes inertia. The <span class="arithmatex">\(2\times2\)</span> coupled system (liquid continuity + radial momentum) is solved via Cramer's rule. The lumen is assumed Newtonian, so only <code>medium.mu</code> is used — elastic / non-Newtonian medium terms are not included.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">SphericalConfinement</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">eom</span> <span class="o">=</span> <span class="n">SphericalConfinement</span><span class="p">(</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="o">...</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mf">1500.0</span><span class="p">,</span>
@@ -1257,18 +1279,15 @@
 <h2 id="gas-models">Gas models<a class="headerlink" href="#gas-models" title="Permanent link">&para;</a></h2>
 <h3 id="polytropicgas">PolytropicGas<a class="headerlink" href="#polytropicgas" title="Permanent link">&para;</a></h3>
 <p>The most common gas model. Assumes a polytropic process:</p>
-<div class="arithmatex">\[p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0}{R}\right)^{3\gamma}\]</div>
-<ul>
-<li><span class="arithmatex">\(\gamma = 1\)</span> — isothermal (slow oscillations or good thermal conduction)</li>
-<li><span class="arithmatex">\(\gamma = 1.4\)</span> — adiabatic ideal gas (fast oscillations)</li>
-<li><span class="arithmatex">\(\gamma \in (1, 1.4)\)</span> — intermediate thermal damping models</li>
-</ul>
+<p>$<span class="arithmatex">\(p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0}{R}\right)^{3\gamma}\)</span>$.</p>
+<p>In an isothermal process, heat transfer is fast compared bubble oscillations and <span class="arithmatex">\(\gamma = 1\)</span> for all gases. </p>
+<p>In an adiabatic process, heat transfer is slow compared to bubble oscillations. The adiabatic index for SF6, which is commonly used as the gaseous core of lipid-coated microbubbles, is $<span class="arithmatex">\(approx 1.095\)</span>$. </p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolytropicGas</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">gas</span> <span class="o">=</span> <span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">gas</span> <span class="o">=</span> <span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.095</span><span class="p">)</span>
 </code></pre></div>
 <p><code>gamma</code> accepts a plain float or any <code>Property</code> — useful for learned or state-dependent <span class="arithmatex">\(\gamma\)</span>.</p>
 <h3 id="vanderwaalsgas">VanDerWaalsGas<a class="headerlink" href="#vanderwaalsgas" title="Permanent link">&para;</a></h3>
-<p>Adds a hard-core repulsion: the bubble cannot be compressed below a fraction <span class="arithmatex">\(h = h_\text{frac} \cdot R_0\)</span> of its equilibrium radius. Relevant for highly driven bubbles near minimum radius.</p>
+<p>Adds a hard-core repulsion to the polytropic gas model: the bubble cannot be compressed below a fraction <span class="arithmatex">\(h = h_\text{frac} \cdot R_0\)</span> of its equilibrium radius. Relevant for highly driven bubbles near minimum radius.</p>
 <div class="arithmatex">\[p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0^3 - h^3}{R^3 - h^3}\right)^\gamma\]</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">VanDerWaalsGas</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">gas</span> <span class="o">=</span> <span class="n">VanDerWaalsGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">,</span> <span class="n">h_frac</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
@@ -1276,13 +1295,16 @@
 <hr />
 <h2 id="shell-models">Shell models<a class="headerlink" href="#shell-models" title="Permanent link">&para;</a></h2>
 <h3 id="noshell">NoShell<a class="headerlink" href="#noshell" title="Permanent link">&para;</a></h3>
-<p>No coating — bare bubble in a liquid. Only Laplace pressure (<span class="arithmatex">\(2\sigma/R\)</span>) acts at the interface.</p>
+<p>No coating — bare bubble in a liquid. The bubble's surface contributes to the interfacial stresses through the Laplace pressure (<span class="arithmatex">\(2\sigma/R\)</span>), whereby <span class="arithmatex">\(\sigma\)</span> is the constant surface tension of the surrounding liquid. </p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoShell</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">shell</span> <span class="o">=</span> <span class="n">NoShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">0.072</span><span class="p">)</span>  <span class="c1"># water–air surface tension [N/m]</span>
 </code></pre></div>
 <h3 id="lipidshell">LipidShell<a class="headerlink" href="#lipidshell" title="Permanent link">&para;</a></h3>
-<p>Thin lipid monolayer (Marmottant 2005 model). The lipid film modifies the surface tension and adds a surface-dilatational viscous term:</p>
-<div class="arithmatex">\[p_\text{viscous} = \frac{4\kappa_s \dot{R}}{R^2}\]</div>
+<p>The effects of a thin lipid monolayer is captured by a radius-dependent surface tension law, specifically the piecewise Marmottant model or its differentiable form, the Marmottant-Gompertz law. The lipid coating contributes to the interfacial stresses through </p>
+<ul>
+<li>the Laplace pressure  (<span class="arithmatex">\(2\sigma(R)/R\)</span>)</li>
+<li>the lipid's surface dilatational viscosity, which adds the viscous stress term <span class="arithmatex">\(p_\text{viscous} = \frac{4\kappa_s \dot{R}}{R^2}\)</span></li>
+</ul>
 <p>The effective surface tension is encoded as a <code>Property</code> (e.g. <code>MarmottantSurfaceTension</code> or <code>GompertzSurfaceTension</code>) passed to <code>sigma</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">LipidShell</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">GompertzSurfaceTension</span>
@@ -1313,14 +1335,17 @@ $$p_\text{viscous} = \frac{4\mu_s d_s \dot{R}}{R^2}\]</div>
 <hr />
 <h2 id="medium-models">Medium models<a class="headerlink" href="#medium-models" title="Permanent link">&para;</a></h2>
 <h3 id="newtonianmedium">NewtonianMedium<a class="headerlink" href="#newtonianmedium" title="Permanent link">&para;</a></h3>
-<p>Incompressible Newtonian liquid. Standard model for water.</p>
+<p>Dynamic viscosity <span class="arithmatex">\(\mu\)</span> is constant and independent of fluid flow. Contributes to the interfacial stresses through </p>
 <div class="arithmatex">\[p_\text{viscous} = \frac{4\mu \dot{R}}{R}\]</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">NewtonianMedium</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">medium</span> <span class="o">=</span> <span class="n">NewtonianMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>  <span class="c1"># [Pa·s]</span>
 </code></pre></div>
 <h3 id="kelvinvoigtmedium">KelvinVoigtMedium<a class="headerlink" href="#kelvinvoigtmedium" title="Permanent link">&para;</a></h3>
-<p>Linear viscoelastic medium (solid or gel). Adds a spring-like elastic restoring term.</p>
-<div class="arithmatex">\[p_\text{elastic} = \frac{4G}{3}\left[\left(\frac{R}{R_0}\right)^3 - 1\right]\]</div>
+<p>Linear viscoelastic medium (solid or gel). Contributes to the interfacial stresses through</p>
+<ul>
+<li>a viscosity term $<span class="arithmatex">\(p_\text{viscous} = \frac{4\mu \dot{R}}{R}\)</span>$</li>
+<li>a spring-like elastic restoring term $<span class="arithmatex">\(p_\text{elastic} = \frac{4G}{3}\left[\left(\frac{R}{R_0}\right)^3 - 1\right]\)</span>$</li>
+</ul>
 <p>Valid only for small strains (<span class="arithmatex">\(|R - R_0| \ll R_0\)</span>). Prefer <code>NeoHookeanMedium</code> for large oscillations.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">KelvinVoigtMedium</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">medium</span> <span class="o">=</span> <span class="n">KelvinVoigtMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="mf">1e3</span><span class="p">)</span>
