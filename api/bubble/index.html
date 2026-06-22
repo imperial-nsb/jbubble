@@ -2865,6 +2865,14 @@ differentiation::</p>
 such that sigma(R0) matches the elastic regime and sigma -&gt; sigma_rupture
 as R -&gt; infinity.  R0 is read from the state so this model stays
 consistent when R0 evolves (e.g. rectified diffusion).</p>
+<p>Steepness of the transition is set by c, which is scaled by the
+dimensionless <code>sharpness</code> factor.  The base c (sharpness = 1) matches
+the Marmottant <em>elastic slope at R0</em>, which gives a poor global fit to
+the piecewise curve.  The default <code>sharpness = 3.3</code> is the mean
+least-squares optimum over the elastic regime across the typical
+parameter range, giving a markedly tighter match to Marmottant.
+Scaling c leaves both anchors fixed: b is re-solved so sigma(R0) is
+unchanged, and sigma -&gt; sigma_rupture as R -&gt; infinity regardless.</p>
 
 
 <details class="well-posedness-constraint" open>
@@ -2885,7 +2893,11 @@ sigma(R0) above sigma_rupture.  Values around 0.95–0.99 are typical.</p>
 chi : float or Property
     Shell elasticity  [N/m].
 sigma_rupture : float or Property
-    Asymptotic (ruptured) surface tension  [N/m].</p>
+    Asymptotic (ruptured) surface tension  [N/m].
+sharpness : float
+    Dimensionless multiplier on the transition rate c.  Default 3.3
+    (least-squares fit to Marmottant); 1.0 recovers the elastic-slope
+    match at R0.</p>
 </details>
 
 
