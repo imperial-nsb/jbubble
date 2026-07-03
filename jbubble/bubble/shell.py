@@ -269,7 +269,7 @@ class GompertzSurfaceTension(Property):
     R_buckle_ratio: float
     chi: float
     sigma_rupture: float
-    sharpness: float = 3.3
+    sharpness: float = 1.0
 
     def __post_init__(self) -> None:
         sigma_at_R0 = self.chi * ((1.0 / self.R_buckle_ratio) ** 2 - 1.0)
