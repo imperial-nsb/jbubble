@@ -108,3 +108,27 @@ class TestGridSweep:
         assert result.shape == (3, 2)
         assert float(result[1, 0]) == pytest.approx(2.0)
         assert float(result[1, 1]) == pytest.approx(4.0)
+
+    def test_pmap_matches_vmap(self):
+        # Forcing parallel=True exercises the pmap path (padding + reshape +
+        # trim); on a single device it must give exactly the vmap result.
+        # Grid size (15) is deliberately not a multiple of the device count.
+        ss = {"x": jnp.arange(5.0), "y": jnp.arange(3.0)}
+        serial = GridSweep(lambda x, y: x * y + 1.0, ss, batch_size=4,
+                           progress=False, parallel=False).run()
+        parallel = GridSweep(lambda x, y: x * y + 1.0, ss, batch_size=4,
+                             progress=False, parallel=True).run()
+        assert parallel.shape == serial.shape == (5, 3)
+        assert bool(jnp.allclose(parallel, serial))
+
+    def test_pmap_pytree_output(self):
+        # pmap path must preserve PyTree-structured outputs.
+        gs = GridSweep(
+            fn=lambda x, y: {"s": x + y, "p": x * y},
+            search_space={"x": jnp.arange(4.0), "y": jnp.arange(3.0)},
+            batch_size=5, progress=False, parallel=True,
+        )
+        out = gs.run()
+        assert out["s"].shape == (4, 3)
+        assert float(out["s"][2, 1]) == pytest.approx(3.0)
+        assert float(out["p"][3, 2]) == pytest.approx(6.0)
