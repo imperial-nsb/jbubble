@@ -61,8 +61,8 @@ def get_expansion(R0, freq):
 
 # 2. Setup the parameter axes
 # We sweep over equilibrium radius (R0) and driving pressure.
-radii = jnp.linspace(1e-6, 5e-6, 100)
-freqs = jnp.linspace(100e3, 800e3, 100)
+radii = jnp.linspace(1e-6, 5e-6, 250)
+freqs = jnp.linspace(100e3, 800e3, 250)
 
 # 3. Use GridSweep to execute the batch
 # This automatically handles vmapping and JIT-compilation of the grid.
