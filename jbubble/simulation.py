@@ -85,7 +85,7 @@ def run_simulation(
     eom: EquationOfMotion,
     pulse: Pulse,
     *,
-    save_spec: SaveSpec,
+    save_spec: SaveSpec | None = None,
     state0: Any = None,
     t_max: ArrayLike | None = None,
     config: SolverConfig | None = None,
