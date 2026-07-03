@@ -24,18 +24,18 @@ class TestSaveSpec:
 class TestSolverConfig:
     def test_defaults(self):
         config = SolverConfig()
-        assert isinstance(config.solver, diffrax.Kvaerno5)
+        assert isinstance(config.solver, diffrax.Dopri5)
         assert isinstance(config.stepsize_controller, diffrax.PIDController)
         assert config.dt0 == 1e-9
         assert config.max_steps == 10_000
 
     def test_custom_config(self):
         config = SolverConfig(
-            solver=diffrax.Dopri5(),
+            solver=diffrax.Kvaerno5(),
             dt0=1e-10,
             max_steps=50_000,
         )
-        assert isinstance(config.solver, diffrax.Dopri5)
+        assert isinstance(config.solver, diffrax.Kvaerno5)
         assert config.dt0 == 1e-10
         assert config.max_steps == 50_000
 

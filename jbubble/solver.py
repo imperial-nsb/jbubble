@@ -36,18 +36,18 @@ class SolverConfig(eqx.Module):
     Fields
     ------
     solver : diffrax.AbstractSolver
-        ODE solver.  Default: ``Kvaerno5()``.
+        ODE solver.  Default: ``Dopri()``.
     stepsize_controller : diffrax.AbstractStepSizeController
-        Step-size controller.  Default: ``PIDController(rtol=1e-3, atol=1e-6)``.
+        Step-size controller.  Default: ``PIDController(rtol=1e-5, atol=1e-6)``.
     dt0 : float
         Initial step size [s].  Default: 1e-9.
     max_steps : int
         Maximum solver steps per integration.  Default: 50 000.
     """
 
-    solver: diffrax.AbstractSolver = eqx.field(default_factory=diffrax.Kvaerno5)
+    solver: diffrax.AbstractSolver = eqx.field(default_factory=diffrax.Dopri5)
     stepsize_controller: diffrax.AbstractStepSizeController = eqx.field(
-        default_factory=lambda: diffrax.PIDController(rtol=1e-3, atol=1e-6)
+        default_factory=lambda: diffrax.PIDController(rtol=1e-6, atol=1e-9)
     )
     dt0: float = 1e-9
     max_steps: int = eqx.field(default=10_000, static=True)
