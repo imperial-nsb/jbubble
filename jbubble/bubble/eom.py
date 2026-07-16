@@ -121,7 +121,20 @@ class EquationOfMotion(eqx.Module, abc.ABC, Generic[StateType]):
             + 2.0 * self.shell.sigma(BubbleState(R=R0, R0=R0)) / R0
         )
         base = BubbleState(R=R0, R0=R0, P_gas0=P_gas0)
-        return self.gas.augment_initial_state(base)
+        # let the gas and shell each extend the state with their own DOFs
+        # (temperature, shell integrity, …).  Note: only one component may add
+        # state per run unless a combined state class exists — they do not stack.
+        base = self.gas.augment_initial_state(base)
+        base = self.shell.augment_initial_state(base)
+        return base
+
+    def _component_d_state(self, state: BubbleState) -> BubbleState:
+        """Sum of the gas- and shell-owned state derivatives (extra DOFs)."""
+        return jax.tree_util.tree_map(
+            lambda a, b: a + b,
+            self.gas.d_state(state),
+            self.shell.d_state(state),
+        )
 
     @abc.abstractmethod
     def __call__(
@@ -249,8 +262,8 @@ class KellerMiksis(EquationOfMotion[BubbleState]):
         tangent = jax.grad(self.p_L)(state)
         dp_L_dRdot = tangent.R_dot
 
-        # -- gas-owned state derivatives (e.g. dT/dt for ThermalGas) -------
-        gas_deriv = self.gas.d_state(state)
+        # -- component-owned state derivatives (dT/dt, dφ/dt, …) -----------
+        comp_deriv = self._component_d_state(state)
 
         # -- known part of dp_L/dt (everything except the Rddot term) ------
         #
@@ -264,7 +277,7 @@ class KellerMiksis(EquationOfMotion[BubbleState]):
         # separately through dp_L_dRdot.  For a plain algebraic gas this reduces
         # exactly to (∂p_L/∂R) Ṙ, so non-thermal results are unchanged.
         d_known = eqx.tree_at(lambda s: s.R, _zeros_like_state(state), R_dot)
-        d_known = _tree_add(d_known, gas_deriv)
+        d_known = _tree_add(d_known, comp_deriv)
         dp_L_dt_known = _tree_dot(tangent, d_known)
 
         # -- driving pressure and its time derivative ----------------------
@@ -286,7 +299,7 @@ class KellerMiksis(EquationOfMotion[BubbleState]):
         dstate = eqx.tree_at(
             lambda s: (s.R, s.R_dot), _zeros_like_state(state), (R_dot, R_ddot)
         )
-        return _tree_add(dstate, gas_deriv)
+        return _tree_add(dstate, comp_deriv)
 
 
 class Gilmore(EquationOfMotion[BubbleState]):

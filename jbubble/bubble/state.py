@@ -83,6 +83,29 @@ class ThermalBubbleState(BubbleState):
     )
 
 
+class HystereticShellState(BubbleState):
+    """Bubble state with a shell-integrity degree of freedom.
+
+    Extends :class:`BubbleState` with a dimensionless shell integrity ``phi``
+    (1 = intact monolayer, 0 = fully ruptured / shed).  Used by shell models
+    whose surface tension depends on loading *history* — e.g.
+    :class:`~jbubble.bubble.shell.HystereticShell`, where ``phi`` drops
+    irreversibly on over-expansion and heals back on compression, so the σ–R
+    curve encloses area and dissipates energy (shell hysteresis) rather than
+    being a single-valued, reversible function of R.
+
+    Fields
+    ------
+    phi : jax.Array
+        Shell integrity  (dimensionless, 0–1).  Initialised to 1 (intact).
+    """
+
+    phi: jax.Array = eqx.field(
+        default_factory=lambda: jnp.ones(()),
+        kw_only=True,
+    )
+
+
 class ConfinedBubbleState(BubbleState):
     """State for a bubble confined in an elastic spherical vessel.
 
