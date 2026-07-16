@@ -14,7 +14,7 @@ import jax
 import jax.numpy as jnp
 
 from .property import Property, as_property
-from .state import BubbleState
+from .state import BubbleState, HystereticShellState
 
 
 class ShellModel(eqx.Module, abc.ABC):
@@ -62,6 +62,22 @@ class ShellModel(eqx.Module, abc.ABC):
             Total inward shell pressure.
         """
         return self.p_laplace(state) + self.p_elastic(state) + self.p_viscous(state)
+
+    # ── optional multi-physics hooks (default: no extra state) ───────────────
+    # A shell with its own dynamics (e.g. an evolving integrity variable)
+    # overrides these; the EoM calls them generically, mirroring GasModel.
+
+    def augment_initial_state(self, base: BubbleState) -> BubbleState:
+        """Return the initial state extended with any shell-owned DOFs.
+
+        Default: pass through.
+        """
+        return base
+
+    def d_state(self, state: BubbleState) -> BubbleState:
+        """Shell-owned contribution to d(state)/dt (zero everywhere except the
+        shell's own dynamic fields).  Default: all zeros (a memoryless shell)."""
+        return jax.tree_util.tree_map(jnp.zeros_like, state)
 
 
 class NoShell(ShellModel):
@@ -120,6 +136,98 @@ class LipidShell(ShellModel):
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         return 4.0 * self.kappa_s(state) * state.R_dot / state.R**2
+
+
+class HystereticShell(LipidShell):
+    """Lipid shell with an irreversible-rupture integrity state (hysteresis).
+
+    A single-valued σ(R) law (Marmottant / Gompertz) is *reversible*: the σ–R
+    curve is retraced identically on expansion and compression, so it encloses
+    no area and dissipates no energy.  Real lipid monolayers instead **rupture /
+    shed** when over-stretched and only slowly re-form, so the effective tension
+    depends on loading history — an area-enclosing (dissipative) σ–R loop.
+
+    This model resolves that history with a shell-integrity state variable
+    ``phi`` ∈ [0, 1] on :class:`~jbubble.bubble.state.HystereticShellState`
+    (1 = intact, 0 = ruptured).  The effective surface tension interpolates
+    between the intact law and the bare/ruptured tension::
+
+        σ_eff(R, φ) = φ · σ_intact(R)  +  (1 − φ) · σ_rupture
+
+    so an intact shell (φ = 1) reproduces the wrapped law exactly, while a
+    ruptured shell (φ = 0) behaves like a bare bubble at σ_rupture.  The
+    integrity evolves as::
+
+        φ̇ = − k_rup · φ · relu(R/R0 − r_rup)   +   k_heal · (1 − φ)
+
+    The first term drops φ (irreversibly, since it ∝ φ) once the bubble expands
+    past ``r_rup·R0``; the second re-forms the monolayer at rate ``k_heal``.
+    Because the drop happens at large R and the recovery lags, the return stroke
+    sees a different σ than the outward stroke → a hysteresis loop whose enclosed
+    area is the per-cycle dissipated energy.  The loss is **amplitude-dependent**:
+    small cycles never cross ``r_rup`` and dissipate nothing; large cycles rupture
+    and dissipate strongly.  The φ dynamics are self-bounding in [0, 1] (the
+    rupture term ∝ φ, the healing term ∝ (1 − φ)), so no clamping is needed.
+
+    Limit: ``k_rup → 0`` (or expansion never reaching ``r_rup``) leaves φ ≡ 1 and
+    recovers the wrapped intact shell exactly.
+
+    Fields
+    ------
+    sigma : Property
+        Intact surface-tension law (e.g. ``GompertzSurfaceTension``).
+    kappa_s : Property
+        Shell surface-dilatational viscosity  [N s/m]  (inherited).
+    sigma_rupture : float
+        Bare / ruptured surface tension  [N/m]  (the φ = 0 asymptote).
+    k_rup : float or Property
+        Rupture rate  [1/s]  (per unit dimensionless over-expansion).
+    r_rup : float or Property
+        Expansion ratio R/R0 at which rupture sets in  (dimensionless).
+    k_heal : float or Property
+        Monolayer re-formation (healing) rate  [1/s].
+    """
+
+    sigma_rupture: float
+    k_rup: Property = eqx.field(converter=as_property)
+    r_rup: Property = eqx.field(converter=as_property)
+    k_heal: Property = eqx.field(converter=as_property)
+
+    def _phi(self, state: BubbleState) -> jax.Array:
+        # intact (φ=1) for a plain BubbleState (e.g. equilibrium seeding);
+        # the dynamic integrity for a HystereticShellState.
+        return getattr(state, "phi", jnp.ones_like(state.R))
+
+    def sigma_eff(self, state: BubbleState) -> jax.Array:
+        phi = self._phi(state)
+        return phi * self.sigma(state) + (1.0 - phi) * self.sigma_rupture
+
+    def p_laplace(self, state: BubbleState) -> jax.Array:
+        return 2.0 * self.sigma_eff(state) / state.R
+
+    def _dphi_dt(self, state: BubbleState) -> jax.Array:
+        # hard threshold: rupture driver is exactly zero below r_rup, so the
+        # resting shell (R = R0 < r_rup·R0) is a true fixed point at φ = 1.
+        over = jax.nn.relu(state.R / state.R0 - self.r_rup(state))
+        phi = state.phi  # ty: ignore[unresolved-attribute]
+        return -self.k_rup(state) * phi * over + self.k_heal(state) * (1.0 - phi)
+
+    def augment_initial_state(self, base: BubbleState) -> HystereticShellState:
+        return HystereticShellState(
+            R=base.R,
+            R_dot=base.R_dot,
+            R0=base.R0,
+            P_gas0=base.P_gas0,
+            phi=jnp.ones_like(base.R),
+        )
+
+    def d_state(self, state: BubbleState) -> BubbleState:
+        zero = jax.tree_util.tree_map(jnp.zeros_like, state)
+        return eqx.tree_at(
+            lambda s: s.phi,  # ty: ignore[unresolved-attribute]
+            zero,
+            self._dphi_dt(state),
+        )
 
 
 class ThickShell(ShellModel):

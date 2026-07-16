@@ -95,3 +95,224 @@ class TestVanDerWaalsGas:
         gas = VanDerWaalsGas(gamma=1.4, h_frac=0.2)
         grad = jax.grad(gas)(eq_state)
         assert float(grad.R) < 0
+
+
+# ── ThermalGas ──────────────────────────────────────────────────────────────
+from jbubble.bubble.gas import ThermalGas  # noqa: E402
+from jbubble.bubble.state import ThermalBubbleState  # noqa: E402
+
+T0 = 293.0
+
+
+def _thermal_state(R, R_dot=0.0, T=T0):
+    return ThermalBubbleState(
+        R=jnp.asarray(R),
+        R_dot=jnp.asarray(R_dot),
+        R0=jnp.asarray(R0),
+        P_gas0=jnp.asarray(P_GAS0),
+        T=jnp.asarray(T),
+        T0=jnp.asarray(T0),
+    )
+
+
+class TestThermalGas:
+    def test_equilibrium_returns_P_gas0(self):
+        gas = ThermalGas(gamma=1.4, thermal_time=1e-7, T_amb=T0)
+        s = _thermal_state(R0, T=T0)  # R=R0, T=T0
+        assert float(gas(s)) == pytest.approx(P_GAS0, rel=1e-10)
+
+    def test_isothermal_pressure(self):
+        """At T = T0 the law is the isothermal polytropic p = P0 (R0/R)^3."""
+        gas = ThermalGas(gamma=1.4, thermal_time=1e-7, T_amb=T0)
+        R = 1.3 * R0
+        s = _thermal_state(R, T=T0)
+        assert float(gas(s)) == pytest.approx(P_GAS0 * (R0 / R) ** 3, rel=1e-10)
+
+    def test_adiabatic_limit_matches_polytropic(self):
+        """With T set to the adiabatic value, p matches P0 (R0/R)^(3 gamma)."""
+        gamma = 1.4
+        gas = ThermalGas(gamma=gamma, thermal_time=1e9, T_amb=T0)
+        R = 1.3 * R0
+        T_adiab = T0 * (R0 / R) ** (3 * (gamma - 1))
+        s = _thermal_state(R, T=T_adiab)
+        assert float(gas(s)) == pytest.approx(
+            P_GAS0 * (R0 / R) ** (3 * gamma), rel=1e-8
+        )
+
+    def test_compression_heats_gas(self):
+        """Adiabatic term: compressing (R_dot < 0) drives dT/dt > 0."""
+        gas = ThermalGas(gamma=1.4, thermal_time=1e9, T_amb=T0)  # tau huge -> no relax
+        s = _thermal_state(R0, R_dot=-1.0, T=T0)
+        assert float(gas._dT_dt(s)) > 0.0
+
+    def test_relaxation_restores_T0(self):
+        """With R_dot = 0, a hot gas cools back toward T0 (dT/dt < 0)."""
+        gas = ThermalGas(gamma=1.4, thermal_time=1e-7, T_amb=T0)
+        s = _thermal_state(R0, R_dot=0.0, T=1.2 * T0)
+        assert float(gas._dT_dt(s)) < 0.0
+
+    def test_d_state_only_sets_T(self):
+        gas = ThermalGas(gamma=1.4, thermal_time=1e-7, T_amb=T0)
+        s = _thermal_state(1.1 * R0, R_dot=0.5, T=1.1 * T0)
+        d = gas.d_state(s)
+        assert isinstance(d, ThermalBubbleState)
+        assert float(d.R) == 0.0 and float(d.R_dot) == 0.0
+        assert float(d.R0) == 0.0 and float(d.P_gas0) == 0.0 and float(d.T0) == 0.0
+        assert float(d.T) == pytest.approx(float(gas._dT_dt(s)))
+
+    def test_augment_initial_state(self):
+        from jbubble.bubble.state import BubbleState
+
+        gas = ThermalGas(gamma=1.4, thermal_time=1e-7, T_amb=T0)
+        base = BubbleState(R=jnp.asarray(R0), R0=jnp.asarray(R0), P_gas0=jnp.asarray(P_GAS0))
+        s = gas.augment_initial_state(base)
+        assert isinstance(s, ThermalBubbleState)
+        assert float(s.T) == pytest.approx(T0) and float(s.T0) == pytest.approx(T0)
+
+    def test_jit_and_grad(self):
+        gas = ThermalGas(gamma=1.4, thermal_time=1e-7, T_amb=T0)
+        s = _thermal_state(1.2 * R0, T=1.05 * T0)
+        assert jnp.isfinite(jax.jit(gas)(s))
+        g = jax.grad(gas)(s)
+        assert float(g.R) < 0.0  # expansion lowers pressure
+        assert float(g.T) > 0.0  # higher T raises pressure
+
+
+class TestThermalDampingIntegration:
+    """End-to-end: the resolved temperature dissipates energy (thermal damping).
+
+    Integrates a µm-scale free decay through Keller-Miksis, which needs float64
+    (rtol ≈ 1e-8) to stay stable.  The pytest session runs float32 (a plugin
+    initialises jax before jbubble enables x64), so these are skipped there and
+    run in a proper f64 environment.
+    """
+
+    def _free_decay_amplitude_ratio(self, gas):
+        import diffrax
+        import equinox as eqx
+        from jbubble import SaveSpec, SolverConfig, run_simulation
+        from jbubble.bubble.eom import KellerMiksis
+        from jbubble.bubble.medium import NewtonianMedium
+        from jbubble.bubble.shell import NoShell
+        from jbubble.pulse.sampled import SampledPulse
+
+        r0 = 2e-6
+        eom = KellerMiksis(
+            gas=gas, shell=NoShell(sigma=0.0), medium=NewtonianMedium(mu=1e-4),
+            R0=r0, P_amb=101_325.0, rho_L=998.0, c_L=1500.0,
+        )
+        # start displaced 10% from equilibrium, then let it ring down freely
+        s0 = eqx.tree_at(lambda s: s.R, eom.initial_state(), jnp.asarray(1.1 * r0))
+        tmax = 6e-6
+        ts = jnp.linspace(0.0, tmax, 50)
+        pulse = SampledPulse(ts=ts, pressures=jnp.zeros_like(ts))
+        cfg = SolverConfig(
+            solver=diffrax.Dopri5(),
+            stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-11),
+            max_steps=1_000_000,
+        )
+        R = jnp.asarray(
+            run_simulation(
+                eom, pulse, config=cfg, t_max=tmax, state0=s0,
+                save_spec=SaveSpec(num_samples=1000),
+            ).radius
+        )
+        # ratio of late to early oscillation amplitude — smaller = more damped
+        early = jnp.max(jnp.abs(R[:170] - r0))
+        late = jnp.max(jnp.abs(R[-170:] - r0))
+        return float(late / early)
+
+    def test_thermal_gas_damps_ring_down(self):
+        """A resolved temperature at ωτ~1 dissipates energy that the reversible
+        polytropic gas cannot: the free ring-down decays far faster."""
+        if not jax.config.jax_enable_x64:
+            pytest.skip("µm-scale KM free decay needs float64")
+        thermal = self._free_decay_amplitude_ratio(
+            ThermalGas(gamma=1.4, thermal_time=1e-7)
+        )
+        polytropic = self._free_decay_amplitude_ratio(PolytropicGas(gamma=1.4))
+        assert thermal < 0.5 * polytropic  # strong, robust separation
+
+
+# ── DiffusiveGas ────────────────────────────────────────────────────────────
+from jbubble.bubble.gas import DiffusiveGas  # noqa: E402
+
+
+class TestDiffusiveGas:
+    def test_pressure_matches_polytropic(self, eq_state):
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e5)
+        assert float(gas(eq_state)) == pytest.approx(P_GAS0, rel=1e-10)
+        s = _make_state(1.3 * R0)
+        assert float(gas(s)) == pytest.approx(P_GAS0 * (R0 / (1.3 * R0)) ** (3 * 1.4), rel=1e-8)
+
+    def test_rest_does_not_diffuse(self):
+        """At R = R0 (no oscillation) there is no gas loss: Ṙ0 = 0."""
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e6)
+        d = gas.d_state(_make_state(R0))  # R == R0 -> s = 0
+        assert float(d.R0) == pytest.approx(0.0, abs=1e-12)
+
+    def test_oscillation_shrinks_R0(self):
+        """Any excursion from R0 drives R0 down (gas loss)."""
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e6)
+        for R in (1.3 * R0, 0.8 * R0):  # both expansion and compression lose gas
+            d = gas.d_state(_make_state(R))
+            assert float(d.R0) < 0.0
+
+    def test_d_state_sets_only_R0_by_default(self):
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e6)  # sigma_lap = 0
+        d = gas.d_state(_make_state(1.2 * R0))
+        assert float(d.R) == 0.0 and float(d.R_dot) == 0.0
+        assert float(d.P_gas0) == 0.0  # frozen when sigma_lap = 0
+        assert float(d.R0) < 0.0
+
+    def test_sigma_lap_tracks_P_gas0(self):
+        """With sigma_lap > 0, P_gas0 rises as R0 shrinks (Laplace)."""
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e6, sigma_lap=0.03)
+        d = gas.d_state(_make_state(1.2 * R0))
+        assert float(d.R0) < 0.0 and float(d.P_gas0) > 0.0
+
+    def test_k_diff_zero_freezes_R0(self):
+        gas = DiffusiveGas(gamma=1.4, k_diff=0.0)
+        d = gas.d_state(_make_state(1.3 * R0))
+        assert float(d.R0) == pytest.approx(0.0, abs=1e-12)
+
+    def test_jit_and_grad(self):
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e6)
+        s = _make_state(1.2 * R0)
+        assert jnp.isfinite(jax.jit(gas)(s))
+        assert jnp.isfinite(jax.grad(gas)(s).R)
+
+    def test_integration_bubble_shrinks(self):
+        """End-to-end: a driven DiffusiveGas bubble ends smaller than it began;
+        k_diff = 0 leaves R0 unchanged."""
+        if not jax.config.jax_enable_x64:
+            pytest.skip("driven µm KM integration needs float64")
+        import diffrax
+        from jbubble import SaveSpec, SolverConfig, run_simulation
+        from jbubble.bubble.eom import KellerMiksis
+        from jbubble.bubble.medium import NewtonianMedium
+        from jbubble.bubble.shell import NoShell
+        from jbubble.pulse import ToneBurst
+        from jbubble.pulse.shapes import Sine
+
+        def final_R0(k_diff):
+            eom = KellerMiksis(
+                gas=DiffusiveGas(gamma=1.07, k_diff=k_diff),
+                shell=NoShell(sigma=0.02), medium=NewtonianMedium(mu=1e-3),
+                R0=2e-6, P_amb=101_325.0, rho_L=998.0, c_L=1500.0,
+            )
+            pulse = ToneBurst(freq=1.5e6, pressure=50e3, shape=Sine(), cycle_num=10)
+            cfg = SolverConfig(
+                solver=diffrax.Dopri5(),
+                stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-11),
+                max_steps=2_000_000,
+            )
+            res = run_simulation(eom, pulse, config=cfg, t_max=12e-6,
+                                 save_spec=SaveSpec(num_samples=500))
+            return float(res.state.R0[-1])
+
+        # a modest rate shrinks R0 a little (too large a k_diff collapses R0 to 0
+        # via the s=(R-R0)/R0 feedback — the fit must keep k_diff small).
+        shrunk = final_R0(3e4)
+        assert 0.5 * 2e-6 < shrunk < 0.999 * 2e-6  # shrank, but did not collapse
+        assert final_R0(0.0) == pytest.approx(2e-6, rel=1e-9)  # frozen when off

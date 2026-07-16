@@ -194,3 +194,85 @@ class TestGompertzSurfaceTension:
         s = _make_state(1.0)
         result = jax.jit(st)(s)
         assert jnp.isfinite(result)
+
+
+# ── HystereticShell ─────────────────────────────────────────────────────────
+from jbubble.bubble.shell import HystereticShell  # noqa: E402
+from jbubble.bubble.state import HystereticShellState  # noqa: E402
+
+
+def _hyst_shell(k_rup=5e7, r_rup=1.03, k_heal=2e7):
+    return HystereticShell(
+        sigma=GompertzSurfaceTension(
+            R_buckle_ratio=0.99, chi=0.3, sigma_rupture=0.072, sharpness=3.3
+        ),
+        kappa_s=5e-9, sigma_rupture=0.072, k_rup=k_rup, r_rup=r_rup, k_heal=k_heal,
+    )
+
+
+def _hyst_state(R_ratio, R_dot=0.0, phi=1.0):
+    return HystereticShellState(
+        R=jnp.asarray(R_ratio * R0), R_dot=jnp.asarray(R_dot),
+        R0=jnp.asarray(R0), P_gas0=jnp.asarray(P_GAS0), phi=jnp.asarray(phi),
+    )
+
+
+class TestHystereticShell:
+    def test_intact_matches_wrapped_law(self):
+        """φ = 1 reproduces the wrapped intact surface tension exactly."""
+        sh = _hyst_shell()
+        s = _hyst_state(1.2, phi=1.0)
+        assert float(sh.sigma_eff(s)) == pytest.approx(float(sh.sigma(s)), rel=1e-10)
+
+    def test_ruptured_gives_rupture_tension(self):
+        """φ = 0 gives the bare/ruptured surface tension."""
+        sh = _hyst_shell()
+        s = _hyst_state(1.2, phi=0.0)
+        assert float(sh.sigma_eff(s)) == pytest.approx(0.072, rel=1e-10)
+
+    def test_overexpansion_drops_integrity(self):
+        """Expansion beyond r_rup·R0 drives φ down (φ̇ < 0 from an intact shell)."""
+        sh = _hyst_shell(r_rup=1.03)
+        s = _hyst_state(1.15, phi=1.0)  # well past r_rup
+        assert float(sh._dphi_dt(s)) < 0.0
+
+    def test_healing_restores_integrity(self):
+        """A partially ruptured shell at small R heals back (φ̇ > 0)."""
+        sh = _hyst_shell(r_rup=1.03)
+        s = _hyst_state(0.95, phi=0.5)  # compressed, below r_rup
+        assert float(sh._dphi_dt(s)) > 0.0
+
+    def test_phi_dynamics_self_bounded(self):
+        """φ̇ = 0 at the two integrity bounds under no forcing that pushes past them."""
+        sh = _hyst_shell(r_rup=1.03)
+        # at φ=1 and R below r_rup: rupture term 0, healing term 0 -> φ̇ = 0
+        s = _hyst_state(1.0, phi=1.0)
+        assert float(sh._dphi_dt(s)) == pytest.approx(0.0, abs=1e-6)
+
+    def test_d_state_only_sets_phi(self):
+        sh = _hyst_shell()
+        s = _hyst_state(1.1, R_dot=0.5, phi=0.8)
+        d = sh.d_state(s)
+        assert isinstance(d, HystereticShellState)
+        assert float(d.R) == 0.0 and float(d.R_dot) == 0.0 and float(d.R0) == 0.0
+        assert float(d.phi) == pytest.approx(float(sh._dphi_dt(s)))
+
+    def test_augment_initial_state(self):
+        sh = _hyst_shell()
+        base = BubbleState(R=jnp.asarray(R0), R0=jnp.asarray(R0), P_gas0=jnp.asarray(P_GAS0))
+        s = sh.augment_initial_state(base)
+        assert isinstance(s, HystereticShellState)
+        assert float(s.phi) == pytest.approx(1.0)
+
+    def test_k_rup_zero_never_ruptures(self):
+        """With k_rup = 0 the shell stays intact (φ̇ ≤ healing only)."""
+        sh = _hyst_shell(k_rup=0.0)
+        s = _hyst_state(1.3, phi=1.0)  # large expansion, but no rupture rate
+        assert float(sh._dphi_dt(s)) == pytest.approx(0.0, abs=1e-6)
+
+    def test_jit_and_grad(self):
+        sh = _hyst_shell()
+        s = _hyst_state(1.1, R_dot=0.3, phi=0.9)
+        assert jnp.isfinite(jax.jit(sh)(s))
+        g = jax.grad(lambda st: sh(st))(s)
+        assert jnp.isfinite(g.R)

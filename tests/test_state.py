@@ -84,3 +84,28 @@ class TestConfinedBubbleState:
         )
         assert float(s.R_dot) == 0.5
         assert float(s.P_gas0) == 1e5
+
+
+class TestThermalBubbleState:
+    def test_defaults(self):
+        from jbubble.bubble.state import ThermalBubbleState
+
+        s = ThermalBubbleState(R=jnp.asarray(2e-6))
+        assert float(s.T) == 0.0 and float(s.T0) == 0.0
+        assert float(s.R_dot) == 0.0
+
+    def test_is_pytree_with_temperature(self):
+        from jbubble.bubble.state import ThermalBubbleState
+
+        s = ThermalBubbleState(
+            R=jnp.asarray(2e-6), R0=jnp.asarray(2e-6),
+            T=jnp.asarray(293.0), T0=jnp.asarray(293.0),
+        )
+        leaves = jax.tree_util.tree_leaves(s)
+        assert len(leaves) == 6  # R, R_dot, R0, P_gas0, T, T0
+        assert all(isinstance(leaf, jax.Array) for leaf in leaves)
+
+    def test_subclass_of_bubble_state(self):
+        from jbubble.bubble.state import BubbleState, ThermalBubbleState
+
+        assert issubclass(ThermalBubbleState, BubbleState)
