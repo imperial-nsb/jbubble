@@ -52,6 +52,37 @@ class BubbleState(eqx.Module):
     )
 
 
+class ThermalBubbleState(BubbleState):
+    """Bubble state with a gas-temperature degree of freedom.
+
+    Extends :class:`BubbleState` with the (spatially lumped) gas temperature
+    ``T`` and its equilibrium value ``T0``.  Used by gas models that resolve
+    the gas thermodynamics in time — e.g. :class:`~jbubble.bubble.gas.ThermalGas`,
+    whose energy equation makes ``T`` a genuine dynamic variable and thereby
+    introduces *thermal damping* (irreversible heat exchange with the liquid).
+
+    ``T0`` is carried alongside ``R0``/``P_gas0`` as a frozen equilibrium
+    constant (dT0/dt = 0), so gas models can read it from the state without
+    extra plumbing, mirroring the existing equilibrium fields.
+
+    Fields
+    ------
+    T : jax.Array
+        Gas temperature  [K].
+    T0 : jax.Array
+        Equilibrium gas temperature  [K].  Frozen (dT0/dt = 0).
+    """
+
+    T: jax.Array = eqx.field(
+        default_factory=lambda: jnp.zeros(()),
+        kw_only=True,
+    )
+    T0: jax.Array = eqx.field(
+        default_factory=lambda: jnp.zeros(()),
+        kw_only=True,
+    )
+
+
 class ConfinedBubbleState(BubbleState):
     """State for a bubble confined in an elastic spherical vessel.
 

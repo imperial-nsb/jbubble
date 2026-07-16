@@ -24,6 +24,27 @@ from .state import BubbleState, ConfinedBubbleState
 StateType = TypeVar("StateType", bound=BubbleState)
 
 
+def _zeros_like_state(state: BubbleState) -> BubbleState:
+    """A derivative state of matching PyTree structure, all fields zero."""
+    return jax.tree_util.tree_map(jnp.zeros_like, state)
+
+
+def _tree_add(a: BubbleState, b: BubbleState) -> BubbleState:
+    """Leafwise sum of two matching state PyTrees."""
+    return jax.tree_util.tree_map(lambda x, y: x + y, a, b)
+
+
+def _tree_dot(a: BubbleState, b: BubbleState) -> jax.Array:
+    """Sum of leafwise products over two matching state PyTrees (a scalar).
+
+    With ``a`` = ∂f/∂state (a cotangent) and ``b`` = d(state)/dt, this is the
+    total time derivative df/dt = Σ_field ∂f/∂field · d(field)/dt — the chain
+    rule over the whole state, extra DOFs (temperature, …) included.
+    """
+    prods = jax.tree_util.tree_map(lambda x, y: jnp.sum(x * y), a, b)
+    return jax.tree_util.tree_reduce(lambda x, y: x + y, prods, jnp.zeros(()))
+
+
 class EquationOfMotion(eqx.Module, abc.ABC, Generic[StateType]):
     """Macroscopic equation of motion for bubble dynamics.
 
@@ -89,15 +110,18 @@ class EquationOfMotion(eqx.Module, abc.ABC, Generic[StateType]):
     def initial_state(self) -> BubbleState:
         """Default initial state: equilibrium radius, zero velocity.
 
-        Seeds ``R0`` and ``P_gas0`` (Laplace equilibrium) into the state.
-        Override for coupled systems with a larger state vector.
+        Seeds ``R0`` and ``P_gas0`` (Laplace equilibrium) into the state, then
+        lets the gas model extend it with any gas-owned DOFs (e.g. the gas
+        temperature for :class:`~jbubble.bubble.gas.ThermalGas`).  Override for
+        coupled systems with a larger state vector (see ``SphericalConfinement``).
         """
         R0 = jnp.asarray(self.R0)
         P_gas0 = (
             jnp.asarray(self.P_amb)
             + 2.0 * self.shell.sigma(BubbleState(R=R0, R0=R0)) / R0
         )
-        return BubbleState(R=R0, R0=R0, P_gas0=P_gas0)
+        base = BubbleState(R=R0, R0=R0, P_gas0=P_gas0)
+        return self.gas.augment_initial_state(base)
 
     @abc.abstractmethod
     def __call__(
@@ -223,31 +247,46 @@ class KellerMiksis(EquationOfMotion[BubbleState]):
         # -- boundary pressure and its partial derivatives (autodiff) ------
         p_L_val = self.p_L(state)
         tangent = jax.grad(self.p_L)(state)
-        dp_L_dR = tangent.R
         dp_L_dRdot = tangent.R_dot
+
+        # -- gas-owned state derivatives (e.g. dT/dt for ThermalGas) -------
+        gas_deriv = self.gas.d_state(state)
+
+        # -- known part of dp_L/dt (everything except the Rddot term) ------
+        #
+        # dp_L/dt = Σ_field  ∂p_L/∂field · d(field)/dt
+        #         = (∂p_L/∂R) Ṙ + (∂p_L/∂Ṙ) R̈ + (∂p_L/∂T) Ṫ + …
+        #           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   ^^^ absorbed
+        #                       known (numer)                     into denom
+        #
+        # The "known" derivative sets Ṙ in the R slot, leaves R̈'s slot (R_dot)
+        # zero, and carries the gas DOFs (Ṫ); the R̈ contribution is handled
+        # separately through dp_L_dRdot.  For a plain algebraic gas this reduces
+        # exactly to (∂p_L/∂R) Ṙ, so non-thermal results are unchanged.
+        d_known = eqx.tree_at(lambda s: s.R, _zeros_like_state(state), R_dot)
+        d_known = _tree_add(d_known, gas_deriv)
+        dp_L_dt_known = _tree_dot(tangent, d_known)
 
         # -- driving pressure and its time derivative ----------------------
         p_ac = p_ac_fn(t)
         dp_ac_dt = jax.grad(p_ac_fn)(t)
 
         # -- Keller-Miksis: collect Rddot on the LHS ----------------------
-        #
-        # dp_L/dt = (dp_L/dR) Rdot  +  (dp_L/dRdot) Rddot
-        #                ^^^^^^^^^^^^    ^^^^^^^^^^^^^^^^^^^^^^^
-        #                numer term       absorbed into denom
-        #
-        # denom * Rddot = numer
-
         denom = (1.0 - M) * R - (R / (self.rho_L * self.c_L)) * dp_L_dRdot
 
         numer = (
             (1.0 / self.rho_L) * (1.0 + M) * (p_L_val - self.P_amb - p_ac)
-            + (R / (self.rho_L * self.c_L)) * (dp_L_dR * R_dot - dp_ac_dt)
+            + (R / (self.rho_L * self.c_L)) * (dp_L_dt_known - dp_ac_dt)
             - 1.5 * (1.0 - M / 3.0) * R_dot**2
         )
 
         R_ddot = numer / denom
-        return BubbleState(R=R_dot, R_dot=R_ddot)
+
+        # assemble d(state)/dt with matching structure, then add gas DOFs
+        dstate = eqx.tree_at(
+            lambda s: (s.R, s.R_dot), _zeros_like_state(state), (R_dot, R_ddot)
+        )
+        return _tree_add(dstate, gas_deriv)
 
 
 class Gilmore(EquationOfMotion[BubbleState]):

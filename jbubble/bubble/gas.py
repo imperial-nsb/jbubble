@@ -14,9 +14,10 @@ import abc
 
 import equinox as eqx
 import jax
+import jax.numpy as jnp
 
 from .property import Property, as_property
-from .state import BubbleState
+from .state import BubbleState, ThermalBubbleState
 
 
 class GasModel(eqx.Module, abc.ABC):
@@ -47,6 +48,29 @@ class GasModel(eqx.Module, abc.ABC):
             Gas pressure.
         """
         ...
+
+    # ── optional multi-physics hooks (default: no extra state) ───────────────
+    # A gas model with its own dynamics (e.g. a resolved temperature) overrides
+    # these two methods; the EoM calls them generically so no EoM code needs to
+    # know which gas model is in use.  The defaults make a plain gas model add
+    # nothing, so existing behaviour is unchanged.
+
+    def augment_initial_state(self, base: BubbleState) -> BubbleState:
+        """Return the initial state, extended with any gas-owned DOFs.
+
+        Called by ``EquationOfMotion.initial_state``.  Default: pass through.
+        """
+        return base
+
+    def d_state(self, state: BubbleState) -> BubbleState:
+        """Gas-owned contribution to d(state)/dt.
+
+        Returns a state-shaped PyTree that is zero everywhere except the gas
+        model's own dynamic fields (e.g. dT/dt).  The EoM adds this into the
+        assembled derivative, so the gas dynamics ride alongside the wall
+        dynamics.  Default: all zeros (a purely algebraic gas law).
+        """
+        return jax.tree_util.tree_map(jnp.zeros_like, state)
 
 
 class PolytropicGas(GasModel):
@@ -90,3 +114,88 @@ class VanDerWaalsGas(GasModel):
         return state.P_gas0 * (
             (state.R0**3 - h**3) / (state.R**3 - h**3)
         ) ** self.gamma(state)
+
+
+class ThermalGas(GasModel):
+    """Lumped-thermal gas with an explicit temperature state (thermal damping).
+
+    A polytropic law is *reversible*: it stores no heat and so dissipates no
+    energy, leaving the free ring-down of a bubble under-damped.  Real bubbles
+    lose energy through heat conducted between the compressing gas and the
+    liquid.  This model resolves that by carrying the (spatially uniform) gas
+    temperature ``T`` as a dynamic state variable on
+    :class:`~jbubble.bubble.state.ThermalBubbleState`.
+
+    Ideal gas at uniform temperature, ``pV = N k_B T``, gives the pressure::
+
+        p_gas = P_gas0 · (R0 / R)^3 · (T / T0)
+
+    and the first law (``N C_v Ṫ = −p V̇ + Q̇``) with Newtonian heat exchange
+    toward the wall temperature ``T0`` gives the temperature evolution::
+
+        Ṫ = −3 (γ − 1) T Ṙ / R  −  (T − T0) / τ_th
+
+    The first term is reversible adiabatic heating/cooling; the second is the
+    irreversible relaxation that dissipates energy.  Limits:
+
+    * ``τ_th → ∞`` (no heat exchange): ``T = T0 (R0/R)^{3(γ−1)}`` so
+      ``p_gas = P_gas0 (R0/R)^{3γ}`` — recovers the **adiabatic** polytropic law.
+    * ``τ_th → 0`` (instant exchange): ``T → T0`` so
+      ``p_gas = P_gas0 (R0/R)^3`` — recovers the **isothermal** law (γ = 1).
+    * intermediate ``τ_th`` (``ω τ_th ~ 1``): maximal thermal damping.
+
+    Here ``γ`` is the true adiabatic ratio of specific heats of the gas (not an
+    effective polytropic exponent — the effective behaviour now emerges from the
+    dynamics), and ``τ_th`` the thermal relaxation time (≈ R0²/α for gas thermal
+    diffusivity α; left as a free parameter since it also absorbs the lumped
+    approximation).
+
+    Fields
+    ------
+    gamma : float or Property
+        Adiabatic ratio of specific heats  (dimensionless, > 1).
+    thermal_time : float or Property
+        Thermal relaxation time τ_th  [s].
+    T_amb : float
+        Equilibrium / ambient gas temperature T0  [K].  Default 293.0.
+    """
+
+    gamma: Property = eqx.field(converter=as_property)
+    thermal_time: Property = eqx.field(converter=as_property)
+    T_amb: float = 293.0
+
+    def __call__(self, state: BubbleState) -> jax.Array:
+        # p = P_gas0 (R0/R)^3 (T/T0); reads T, T0 from the thermal state.
+        return (
+            state.P_gas0
+            * (state.R0 / state.R) ** 3
+            * (state.T / state.T0)  # ty: ignore[unresolved-attribute]
+        )
+
+    def _dT_dt(self, state: BubbleState) -> jax.Array:
+        gamma = self.gamma(state)
+        tau = self.thermal_time(state)
+        T = state.T  # ty: ignore[unresolved-attribute]
+        T0 = state.T0  # ty: ignore[unresolved-attribute]
+        adiabatic = -3.0 * (gamma - 1.0) * T * state.R_dot / state.R
+        relaxation = -(T - T0) / tau
+        return adiabatic + relaxation
+
+    def augment_initial_state(self, base: BubbleState) -> ThermalBubbleState:
+        T0 = jnp.asarray(self.T_amb, dtype=base.R.dtype)
+        return ThermalBubbleState(
+            R=base.R,
+            R_dot=base.R_dot,
+            R0=base.R0,
+            P_gas0=base.P_gas0,
+            T=T0,
+            T0=T0,
+        )
+
+    def d_state(self, state: BubbleState) -> BubbleState:
+        zero = jax.tree_util.tree_map(jnp.zeros_like, state)
+        return eqx.tree_at(
+            lambda s: s.T,  # ty: ignore[unresolved-attribute]
+            zero,
+            self._dT_dt(state),
+        )
