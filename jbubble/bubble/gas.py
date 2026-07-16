@@ -116,6 +116,60 @@ class VanDerWaalsGas(GasModel):
         ) ** self.gamma(state)
 
 
+class DiffusiveGas(PolytropicGas):
+    """Polytropic gas that slowly loses gas to the liquid (gas diffusion).
+
+    A driven bubble exchanges gas with the surrounding liquid; under these
+    conditions the *net* flux is outward (dissolution / shedding), so the bubble
+    permanently shrinks — its equilibrium radius ``R0`` drifts down over the
+    pulse and the oscillation re-centres lower.  A standard model holds ``R0``
+    fixed and cannot reproduce that baseline drift.
+
+    This model makes ``R0`` a **slow state variable** (exactly as anticipated in
+    ``state.BubbleState``) driven by the oscillation activity::
+
+        Ṙ0 = − k_diff · s² · R0 ,    s = (R − R0) / R0
+
+    so only oscillating bubbles lose gas and larger oscillations lose it faster
+    (an amplitude-driven, monotone shrinkage; s² ≥ 0 ⇒ Ṙ0 ≤ 0).  The pressure
+    law is the usual polytropic ``P_gas0 (R0/R)^{3γ}`` evaluated at the current
+    (shrinking) ``R0``.  Because diffusion is slow compared with the oscillation,
+    this is the standard quasi-static treatment.
+
+    The equilibrium gas pressure ``P_gas0`` is tracked from the Laplace balance
+    ``P_gas0 = P_amb + 2 σ_lap / R0`` as ``R0`` moves::
+
+        Ṗ_gas0 = − (2 σ_lap / R0²) · Ṙ0
+
+    With the default ``sigma_lap = 0`` this term vanishes and ``P_gas0`` stays
+    frozen (the leading-order model — only the resting radius drifts); set it to
+    the rest surface tension for a self-consistent pressure.
+
+    No new state class is needed: ``R0`` and ``P_gas0`` are already carried by
+    :class:`~jbubble.bubble.state.BubbleState`; this model simply gives them a
+    non-zero, slow derivative.
+
+    Fields
+    ------
+    gamma : float or Property
+        Polytropic exponent  (inherited).
+    k_diff : float or Property
+        Gas-loss rate constant  [1/s]  (per unit squared strain).
+    sigma_lap : float
+        Surface tension used in the P_gas0 Laplace tracking  [N/m].  Default 0.
+    """
+
+    k_diff: Property = eqx.field(converter=as_property)
+    sigma_lap: float = 0.0
+
+    def d_state(self, state: BubbleState) -> BubbleState:
+        s = (state.R - state.R0) / state.R0
+        dR0 = -self.k_diff(state) * s * s * state.R0
+        dP0 = -2.0 * self.sigma_lap / state.R0**2 * dR0
+        zero = jax.tree_util.tree_map(jnp.zeros_like, state)
+        return eqx.tree_at(lambda st: (st.R0, st.P_gas0), zero, (dR0, dP0))
+
+
 class ThermalGas(GasModel):
     """Lumped-thermal gas with an explicit temperature state (thermal damping).
 

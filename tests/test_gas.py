@@ -232,3 +232,87 @@ class TestThermalDampingIntegration:
         )
         polytropic = self._free_decay_amplitude_ratio(PolytropicGas(gamma=1.4))
         assert thermal < 0.5 * polytropic  # strong, robust separation
+
+
+# ── DiffusiveGas ────────────────────────────────────────────────────────────
+from jbubble.bubble.gas import DiffusiveGas  # noqa: E402
+
+
+class TestDiffusiveGas:
+    def test_pressure_matches_polytropic(self, eq_state):
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e5)
+        assert float(gas(eq_state)) == pytest.approx(P_GAS0, rel=1e-10)
+        s = _make_state(1.3 * R0)
+        assert float(gas(s)) == pytest.approx(P_GAS0 * (R0 / (1.3 * R0)) ** (3 * 1.4), rel=1e-8)
+
+    def test_rest_does_not_diffuse(self):
+        """At R = R0 (no oscillation) there is no gas loss: Ṙ0 = 0."""
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e6)
+        d = gas.d_state(_make_state(R0))  # R == R0 -> s = 0
+        assert float(d.R0) == pytest.approx(0.0, abs=1e-12)
+
+    def test_oscillation_shrinks_R0(self):
+        """Any excursion from R0 drives R0 down (gas loss)."""
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e6)
+        for R in (1.3 * R0, 0.8 * R0):  # both expansion and compression lose gas
+            d = gas.d_state(_make_state(R))
+            assert float(d.R0) < 0.0
+
+    def test_d_state_sets_only_R0_by_default(self):
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e6)  # sigma_lap = 0
+        d = gas.d_state(_make_state(1.2 * R0))
+        assert float(d.R) == 0.0 and float(d.R_dot) == 0.0
+        assert float(d.P_gas0) == 0.0  # frozen when sigma_lap = 0
+        assert float(d.R0) < 0.0
+
+    def test_sigma_lap_tracks_P_gas0(self):
+        """With sigma_lap > 0, P_gas0 rises as R0 shrinks (Laplace)."""
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e6, sigma_lap=0.03)
+        d = gas.d_state(_make_state(1.2 * R0))
+        assert float(d.R0) < 0.0 and float(d.P_gas0) > 0.0
+
+    def test_k_diff_zero_freezes_R0(self):
+        gas = DiffusiveGas(gamma=1.4, k_diff=0.0)
+        d = gas.d_state(_make_state(1.3 * R0))
+        assert float(d.R0) == pytest.approx(0.0, abs=1e-12)
+
+    def test_jit_and_grad(self):
+        gas = DiffusiveGas(gamma=1.4, k_diff=1e6)
+        s = _make_state(1.2 * R0)
+        assert jnp.isfinite(jax.jit(gas)(s))
+        assert jnp.isfinite(jax.grad(gas)(s).R)
+
+    def test_integration_bubble_shrinks(self):
+        """End-to-end: a driven DiffusiveGas bubble ends smaller than it began;
+        k_diff = 0 leaves R0 unchanged."""
+        if not jax.config.jax_enable_x64:
+            pytest.skip("driven µm KM integration needs float64")
+        import diffrax
+        from jbubble import SaveSpec, SolverConfig, run_simulation
+        from jbubble.bubble.eom import KellerMiksis
+        from jbubble.bubble.medium import NewtonianMedium
+        from jbubble.bubble.shell import NoShell
+        from jbubble.pulse import ToneBurst
+        from jbubble.pulse.shapes import Sine
+
+        def final_R0(k_diff):
+            eom = KellerMiksis(
+                gas=DiffusiveGas(gamma=1.07, k_diff=k_diff),
+                shell=NoShell(sigma=0.02), medium=NewtonianMedium(mu=1e-3),
+                R0=2e-6, P_amb=101_325.0, rho_L=998.0, c_L=1500.0,
+            )
+            pulse = ToneBurst(freq=1.5e6, pressure=50e3, shape=Sine(), cycle_num=10)
+            cfg = SolverConfig(
+                solver=diffrax.Dopri5(),
+                stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-11),
+                max_steps=2_000_000,
+            )
+            res = run_simulation(eom, pulse, config=cfg, t_max=12e-6,
+                                 save_spec=SaveSpec(num_samples=500))
+            return float(res.state.R0[-1])
+
+        # a modest rate shrinks R0 a little (too large a k_diff collapses R0 to 0
+        # via the s=(R-R0)/R0 feedback — the fit must keep k_diff small).
+        shrunk = final_R0(3e4)
+        assert 0.5 * 2e-6 < shrunk < 0.999 * 2e-6  # shrank, but did not collapse
+        assert final_R0(0.0) == pytest.approx(2e-6, rel=1e-9)  # frozen when off
