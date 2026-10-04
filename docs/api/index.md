@@ -12,7 +12,7 @@ jbubble/
 ├── metrics.py            # mse_radius, mse_emission, …
 ├── fitting.py            # fit_parameters, FitResult
 ├── bubble/
-│   ├── state.py          # BubbleState, ConfinedBubbleState
+│   ├── state.py          # BubbleState
 │   ├── property.py       # Property, ConstantProperty, NeuralProperty, as_property
 │   ├── gas.py            # GasModel, PolytropicGas, VanDerWaalsGas
 │   ├── shell.py          # ShellModel, NoShell, LipidShell, ThickShell, surface tension Properties
@@ -44,7 +44,7 @@ from jbubble.bubble.shell import NoShell, LipidShell, ThickShell
 from jbubble.bubble.shell import GompertzSurfaceTension, MarmottantSurfaceTension
 from jbubble.bubble.medium import NewtonianMedium, KelvinVoigtMedium, NeoHookeanMedium, PowerLawMedium
 from jbubble.bubble.property import ConstantProperty, NeuralProperty
-from jbubble.bubble.state import BubbleState, ConfinedBubbleState
+from jbubble.bubble.state import BubbleState
 from jbubble.acoustics import IncompressibleMonopole, QuasiAcoustic
 from jbubble.pulse import ToneBurst, ChirpPulse, SampledPulse, NeuralPulse
 from jbubble.pulse import SoftRectangularEnvelope, HannEnvelope, TukeyEnvelope

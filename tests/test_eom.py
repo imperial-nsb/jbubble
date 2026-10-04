@@ -6,15 +6,13 @@ import pytest
 from jbubble.bubble.eom import (
     Gilmore,
     KellerMiksis,
-    LeightonTube,
     ModifiedRayleighPlesset,
     RayleighPlesset,
-    SphericalConfinement,
 )
 from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import NoShell
-from jbubble.bubble.state import BubbleState, ConfinedBubbleState
+from jbubble.bubble.state import BubbleState
 
 R0 = 2e-6
 P_AMB = 101325.0
@@ -174,63 +172,3 @@ class TestGilmore:
         s = eom.initial_state()
         result = eom(jnp.asarray(0.0), s, _zero_pulse)
         assert jnp.isfinite(result.R_dot)
-
-
-class TestLeightonTube:
-    def test_returns_bubble_state(self):
-        eom = LeightonTube(
-            **_common_args(), c_L=C_L, tube_radius=1e-3, tube_length=5e-2
-        )
-        s = eom.initial_state()
-        result = eom(jnp.asarray(0.0), s, _zero_pulse)
-        assert isinstance(result, BubbleState)
-
-    def test_equilibrium_nearly_zero_accel(self):
-        eom = LeightonTube(
-            **_common_args(), c_L=C_L, tube_radius=1e-3, tube_length=5e-2
-        )
-        s = eom.initial_state()
-        result = eom(jnp.asarray(0.0), s, _zero_pulse)
-        assert float(result.R_dot) == pytest.approx(0.0, abs=1e-2)
-
-
-class TestSphericalConfinement:
-    @pytest.fixture
-    def confined_eom(self):
-        return SphericalConfinement(
-            gas=PolytropicGas(gamma=1.4),
-            shell=NoShell(sigma=SIGMA),
-            medium=NewtonianMedium(mu=MU),
-            R0=R0,
-            P_amb=P_AMB,
-            rho_L=RHO_L,
-            c_L=C_L,
-            vessel_radius=50e-6,
-            vessel_rho=1050.0,
-            vessel_E=1e6,
-            vessel_nu=0.49,
-            vessel_d=1e-6,
-            tissue_rho=1050.0,
-            tissue_d=1e-3,
-        )
-
-    def test_initial_state_is_confined(self, confined_eom):
-        s = confined_eom.initial_state()
-        assert isinstance(s, ConfinedBubbleState)
-
-    def test_initial_state_vessel_radius(self, confined_eom):
-        s = confined_eom.initial_state()
-        assert float(s.a) == pytest.approx(50e-6, rel=1e-10)
-        assert float(s.a_dot) == pytest.approx(0.0, abs=1e-15)
-
-    def test_returns_confined_state(self, confined_eom):
-        s = confined_eom.initial_state()
-        result = confined_eom(jnp.asarray(0.0), s, _zero_pulse)
-        assert isinstance(result, ConfinedBubbleState)
-
-    def test_equilibrium_nearly_zero_accel(self, confined_eom):
-        s = confined_eom.initial_state()
-        result = confined_eom(jnp.asarray(0.0), s, _zero_pulse)
-        # Both R̈ and ä should be approximately zero at equilibrium
-        assert float(result.R_dot) == pytest.approx(0.0, abs=1.0)
-        assert float(result.a_dot) == pytest.approx(0.0, abs=1.0)

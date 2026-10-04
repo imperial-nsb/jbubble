@@ -56,7 +56,7 @@ ty check jbubble
 |------|---------|
 | `planning/context.md` | Authoritative project context — read first, update after changes |
 | `jbubble/bubble/eom.py` | Equations of motion (ODE right-hand sides) |
-| `jbubble/bubble/state.py` | BubbleState and ConfinedBubbleState |
+| `jbubble/bubble/state.py` | BubbleState |
 | `jbubble/bubble/property.py` | Property abstraction (`state → scalar`) |
 | `jbubble/bubble/gas.py` | Gas models |
 | `jbubble/bubble/shell.py` | Shell models and surface tension properties |

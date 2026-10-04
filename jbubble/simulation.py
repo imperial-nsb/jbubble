@@ -11,7 +11,7 @@ import jax
 from jax.typing import ArrayLike
 
 from .bubble.eom import EquationOfMotion
-from .bubble.state import BubbleState, ConfinedBubbleState
+from .bubble.state import BubbleState
 from .pulse import Pulse
 from .solver import SaveSpec, SolverConfig, solve_eom
 
@@ -31,8 +31,7 @@ class SimulationResult(eqx.Module):
         Time points [s].
     state : BubbleState, each field shape (N,)
         Full state trajectory.  ``state.R`` is the bubble radius,
-        ``state.R_dot`` the radial velocity.  For confined models
-        (``ConfinedBubbleState``) also carries ``state.a`` and ``state.a_dot``.
+        ``state.R_dot`` the radial velocity.
     state_dot : BubbleState, each field shape (N,)
         Time-derivative trajectory d(state)/dt returned by the EoM.
         ``state_dot.R_dot`` is the radial acceleration R̈(t).
@@ -64,21 +63,6 @@ class SimulationResult(eqx.Module):
     def radial_acceleration(self) -> jax.Array:
         """Bubble wall acceleration R̈(t) [m/s²], evaluated from the EoM RHS."""
         return self.state_dot.R_dot
-
-    @property
-    def has_vessel(self) -> bool:
-        """``True`` for confined-bubble models (``ConfinedBubbleState``)."""
-        return isinstance(self.state, ConfinedBubbleState)
-
-    @property
-    def vessel_radius(self) -> jax.Array | None:
-        """Vessel wall radius a(t) [m], or ``None`` for unconfined models."""
-        return self.state.a if self.has_vessel else None  # ty: ignore[unresolved-attribute]
-
-    @property
-    def vessel_velocity(self) -> jax.Array | None:
-        """Vessel wall velocity ȧ(t) [m/s], or ``None`` for unconfined models."""
-        return self.state.a_dot if self.has_vessel else None  # ty: ignore[unresolved-attribute]
 
 
 def run_simulation(

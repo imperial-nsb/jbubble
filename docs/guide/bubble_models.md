@@ -89,53 +89,6 @@ eom = Gilmore(
 )
 ```
 
-### Leighton tube
-
-!!! warning "Work in progress"
-    The confinement models (`LeightonTube` and `SphericalConfinement`) are
-    not yet validated against reference solutions. Treat their output as
-    indicative only. Known caveats: the Leighton geometry factor `beta` is
-    unverified, and `SphericalConfinement` assumes a Newtonian lumen liquid
-    (elastic / non-Newtonian medium contributions are ignored — see below).
-
-Rayleigh–Plesset modified for a bubble centred in a rigid cylindrical tube. The tube geometry adds an inertia correction and additional added-mass terms.
-
-$$
-R \ddot{R}\left(1 + \frac{R}{\Gamma}\beta\right)
-+ \frac{3}{2}\dot{R}^2\left(1 + \frac{4R}{3\Gamma}\beta\right)
-= \frac{1}{\rho}\left(p_{L,\text{damped}} - P_{\text{amb}} - p_{\text{ac}}\right)
-$$
-
-
-```python
-from jbubble.bubble.eom import LeightonTube
-eom = LeightonTube(
-    ..., c_L=1500.0,
-    tube_radius=1e-3,   # tube inner radius [m]
-    tube_length=5e-2,   # tube length [m]
-)
-```
-
-### Spherical confinement
-
-Coupled two-DOF model: bubble radius $R$ and vessel wall radius $a$. The vessel wall is modelled as a thin elastic shell; surrounding tissue contributes inertia. The $2\times2$ coupled system (liquid continuity + radial momentum) is solved via Cramer's rule. The lumen is assumed Newtonian, so only `medium.mu` is used — elastic / non-Newtonian medium terms are not included.
-
-```python
-from jbubble.bubble.eom import SphericalConfinement
-eom = SphericalConfinement(
-    ..., c_L=1500.0,
-    vessel_radius=50e-6,  # vessel inner radius [m]
-    vessel_rho=1050.0,    # wall material density [kg/m³]
-    vessel_E=1e6,         # Young's modulus [Pa]
-    vessel_nu=0.49,       # Poisson's ratio
-    vessel_d=1e-6,        # wall thickness [m]
-    tissue_rho=1050.0,
-    tissue_d=1e-3,
-)
-```
-
-`SphericalConfinement` integrates a `ConfinedBubbleState`, which carries both $R$ and $a$ as ODE variables.
-
 ---
 
 ## Gas models
@@ -303,5 +256,4 @@ medium = PowerLawMedium(mu=1e-3, n_exp=0.6)  # shear-thinning
 | Polymer UCA (PLGA/Optison) | `KellerMiksis` | `PolytropicGas` | `ThickShell` | `NewtonianMedium` |
 | Tissue-embedded bubble | `KellerMiksis` | `PolytropicGas` | `NoShell` | `NeoHookeanMedium` |
 | Shear-thinning blood | `KellerMiksis` | `PolytropicGas` | `LipidShell` | `PowerLawMedium` |
-| Confined vessel | `SphericalConfinement` | `PolytropicGas` | `LipidShell` | `NewtonianMedium` |
 | Gradient-based fitting | any | any | `GompertzSurfaceTension` | any |

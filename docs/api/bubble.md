@@ -8,8 +8,6 @@ The `jbubble.bubble` subpackage contains all bubble physics components: state re
 
 ::: jbubble.bubble.state.BubbleState
 
-::: jbubble.bubble.state.ConfinedBubbleState
-
 ---
 
 ## Properties
@@ -81,7 +79,3 @@ These are `Property` subclasses that encode a state-dependent surface tension la
 ::: jbubble.bubble.eom.KellerMiksis
 
 ::: jbubble.bubble.eom.Gilmore
-
-::: jbubble.bubble.eom.LeightonTube
-
-::: jbubble.bubble.eom.SphericalConfinement

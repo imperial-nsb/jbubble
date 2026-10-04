@@ -1,7 +1,6 @@
 """Bubble state PyTrees for ODE integration.
 
-``BubbleState`` is the standard state vector for a single unconfined bubble.
-``ConfinedBubbleState`` extends it with a vessel wall degree of freedom.
+``BubbleState`` is the standard state vector for a single bubble.
 
 Using Equinox modules as ODE states guarantees strict PyTree congruency
 with diffrax and enables painless multi-physics extensions (thermal
@@ -50,20 +49,3 @@ class BubbleState(eqx.Module):
         default_factory=lambda: jnp.zeros(()),
         kw_only=True,
     )
-
-
-class ConfinedBubbleState(BubbleState):
-    """State for a bubble confined in an elastic spherical vessel.
-
-    Extends ``BubbleState`` with the vessel wall radius and velocity.
-
-    Fields
-    ------
-    a : jax.Array
-        Vessel wall radius  [m].
-    a_dot : jax.Array
-        Vessel wall velocity  [m/s].
-    """
-
-    a: jax.Array
-    a_dot: jax.Array
