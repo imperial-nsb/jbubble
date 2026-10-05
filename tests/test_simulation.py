@@ -1,9 +1,11 @@
 """Tests for jbubble.simulation."""
 
+import warnings
+
 import jax
 import jax.numpy as jnp
 import pytest
-from jbubble import SaveSpec, run_simulation
+from jbubble import SaveSpec, SolverConfig, run_simulation
 from jbubble.bubble.state import BubbleState
 from jbubble.simulation import SimulationResult
 
@@ -81,6 +83,48 @@ class TestSimulationResultAccessors:
 
     def test_radial_acceleration(self, result):
         assert jnp.allclose(result.radial_acceleration, result.state_dot.R_dot)
+
+
+class TestConvergenceWarning:
+    """`run_simulation` warns about a failed solve only when it can see the flag."""
+
+    _TOO_FEW_STEPS = SolverConfig(max_steps=20)
+
+    def test_warns_when_called_eagerly(self, simple_eom, sine_pulse):
+        with pytest.warns(UserWarning, match="did not converge"):
+            result = run_simulation(
+                simple_eom,
+                sine_pulse,
+                save_spec=SaveSpec(50),
+                t_max=5e-6,
+                config=self._TOO_FEW_STEPS,
+            )
+        assert not bool(result.converged)
+        assert bool(jnp.isinf(result.radius[-1]))
+
+    def test_silent_and_callback_free_under_jit(self, simple_eom, sine_pulse):
+        def simulate(eom, pulse):
+            return run_simulation(
+                eom,
+                pulse,
+                save_spec=SaveSpec(50),
+                t_max=5e-6,
+                config=self._TOO_FEW_STEPS,
+            )
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = jax.jit(simulate)(simple_eom, sine_pulse)
+        assert not bool(result.converged)
+        # diffrax's own `eqx.error_if` adds a `pure_callback` that runs only if
+        # it raises; jbubble adds no `debug_callback`.
+        jaxpr = str(jax.make_jaxpr(simulate)(simple_eom, sine_pulse))
+        assert "debug_callback" not in jaxpr
+
+    def test_no_warning_when_converged(self, simple_eom, sine_pulse):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            run_simulation(simple_eom, sine_pulse, save_spec=SaveSpec(50), t_max=2e-6)
 
 
 class TestInitialState:

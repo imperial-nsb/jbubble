@@ -5,6 +5,7 @@ import jax
 import jax.numpy as jnp
 import pytest
 from jbubble.bubble.state import BubbleState
+from jbubble.simulation import run_simulation
 from jbubble.solver import SaveSpec, SolverConfig, solve_eom
 
 
@@ -157,3 +158,23 @@ class TestInitialStateFilling:
         assert float(P_gas0) == pytest.approx(
             float(simple_eom.initial_state().P_gas0), rel=1e-15
         )
+
+
+class TestNoHostCallbacks:
+    """jbubble adds no host callbacks to a traced solve.
+
+    The jaxpr does contain equinox's `pure_callback` error branch from inside
+    diffrax (`eqx.error_if`), which runs only if diffrax raises.
+    """
+
+    def test_solve_eom_jaxpr_has_no_debug_callback(self, simple_eom, sine_pulse):
+        jaxpr = jax.make_jaxpr(
+            lambda e, p: solve_eom(e, p, save_spec=SaveSpec(16), t_max=1e-6).ys.R
+        )(simple_eom, sine_pulse)
+        assert "debug_callback" not in str(jaxpr)
+
+    def test_run_simulation_jaxpr_has_no_debug_callback(self, simple_eom, sine_pulse):
+        jaxpr = jax.make_jaxpr(
+            lambda e, p: run_simulation(e, p, save_spec=SaveSpec(16), t_max=1e-6).radius
+        )(simple_eom, sine_pulse)
+        assert "debug_callback" not in str(jaxpr)
