@@ -324,3 +324,116 @@ class TestSummedUnderTracing:
             return (tone_early + other)(T_MID)
 
         assert jnp.isfinite(jax.grad(value)(jnp.asarray(10e3)))
+
+
+# A grid that covers both tone_early (0 to 5 µs) and tone_late (6 to 12 µs).
+TS_GRID = jnp.linspace(-1e-6, 20e-6, 4201)
+
+
+def _energy(pulse, lo, hi):
+    """Sum of p(t)^2 over the grid points in [lo, hi]."""
+    ts = TS_GRID
+    in_window = (ts >= lo) & (ts <= hi)
+    values = jax.vmap(pulse)(ts)
+    return float(jnp.sum(jnp.where(in_window, values**2, 0.0)))
+
+
+class TestActiveWindow:
+    """`t_start` and `t_stop` bound the active window of every pulse."""
+
+    def test_leaf_window(self, tone_late):
+        assert float(tone_late.t_start) == pytest.approx(6e-6, rel=1e-12)
+        assert float(tone_late.t_stop) == pytest.approx(12e-6, rel=1e-12)
+
+    def test_t_end_is_twice_the_duration_after_t_start(self, tone_late):
+        assert float(tone_late.t_end) == pytest.approx(18e-6, rel=1e-12)
+
+    @pytest.mark.parametrize(
+        "wrap",
+        [
+            lambda p: 0.5 * p,
+            lambda p: -p,
+            lambda p: p / 4.0,
+            lambda p: p + 1000.0,
+            lambda p: 1000.0 - p,
+            lambda p: 2.0 * (p + 1000.0),
+        ],
+        ids=["scaled", "neg", "div", "offset", "rsub", "nested"],
+    )
+    def test_wrappers_delegate_the_window(self, tone_late, wrap):
+        wrapped = wrap(tone_late)
+        assert float(wrapped.t_start) == float(tone_late.t_start)
+        assert float(wrapped.t_stop) == float(tone_late.t_stop)
+        assert float(wrapped.duration) == float(tone_late.duration)
+        assert float(wrapped.t_end) == float(tone_late.t_end)
+
+    def test_summed_window_spans_children(self, tone_early, tone_late):
+        summed = tone_early + 0.5 * tone_late
+        assert float(summed.t_start) == 0.0
+        assert float(summed.t_stop) == pytest.approx(12e-6, rel=1e-12)
+        assert float(summed.duration) == pytest.approx(12e-6, rel=1e-12)
+
+    def test_summed_with_own_initial_time(self, tone_early, tone_late):
+        summed = Summed(pulses=(tone_early, -tone_late), initial_time=2e-6)
+        assert float(summed.duration) == pytest.approx(10e-6, rel=1e-12)
+        assert float(summed.t_stop) == pytest.approx(12e-6, rel=1e-12)
+
+
+class TestDelayedChildInSum:
+    """A delayed child wrapped in Scaled or Offset survives a sum."""
+
+    @pytest.mark.parametrize(
+        ("combine", "expected"),
+        [
+            (lambda a, b: a + 0.5 * b, lambda b: 0.5 * b),
+            (lambda a, b: a - b, lambda b: -b),
+            (lambda a, b: a + (b + 0.0), lambda b: b),
+            (lambda a, b: a + b / 2.0, lambda b: b / 2.0),
+        ],
+        ids=["scaled", "difference", "offset", "divided"],
+    )
+    def test_delayed_child_keeps_its_energy(
+        self, tone_early, tone_late, combine, expected
+    ):
+        summed = combine(tone_early, tone_late)
+        want = _energy(expected(tone_late), 6.5e-6, 11.5e-6)
+        got = _energy(summed, 6.5e-6, 11.5e-6)
+        assert got / want == pytest.approx(1.0, abs=1e-3)
+
+    def test_run_simulation_matches_an_unwrapped_child(self, tone_early, tone_late):
+        louder = eqx.tree_at(lambda p: p.pressure, tone_late, 2.0 * tone_late.pressure)
+        eom, _ = free_bubble()
+        spec = SaveSpec(num_samples=256)
+        wrapped = run_simulation(eom, tone_early + 2.0 * tone_late, save_spec=spec)
+        direct = run_simulation(eom, tone_early + louder, save_spec=spec)
+        assert bool(wrapped.converged)
+        assert jnp.allclose(wrapped.radius, direct.radius, rtol=1e-9, atol=0.0)
+
+
+class TestSummedWithoutUserJit:
+    """A Summed pulse simulates without an outer jit and under vmap."""
+
+    def test_run_simulation(self, tone_early, tone_late):
+        eom, _ = free_bubble()
+        result = run_simulation(
+            eom, tone_early + tone_late, save_spec=SaveSpec(num_samples=128)
+        )
+        assert bool(result.converged)
+        assert bool(jnp.all(jnp.isfinite(result.radius)))
+
+    def test_vmap_over_child_frequency(self, tone_late):
+        eom, _ = free_bubble()
+
+        def peak(freq):
+            early = ToneBurst(freq=freq, pressure=50e3, shape=Sine(), cycle_num=5)
+            spec = SaveSpec(num_samples=64)
+            return run_simulation(eom, early + tone_late, save_spec=spec).radius.max()
+
+        peaks = jax.vmap(peak)(jnp.array([0.8e6, 1.0e6]))
+        assert bool(jnp.all(jnp.isfinite(peaks)))
+
+    def test_concrete_values_work_with_python_callers(self, tone_early, tone_late):
+        summed = tone_early + tone_late
+        assert f"{summed.duration * 1e6:.2f}" == "12.00"
+        assert int(summed.t_end / 1e-6) == 18
+        assert jnp.asarray(summed.t_end).dtype == jnp.float64

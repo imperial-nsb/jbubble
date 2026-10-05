@@ -26,18 +26,20 @@ class Pulse(eqx.Module, abc.ABC):
     automatically:
 
     $$
-    p(t) = s(t)\, w(t - t_0, T)
+    p(t) = s(t)\, w(t - t_\text{start}, T)
     $$
 
-    where $t_0$ is `initial_time` and $T$ is
-    [`duration`][jbubble.pulse.base.Pulse.duration].
+    where $T$ is [`duration`][jbubble.pulse.base.Pulse.duration] and
+    $t_\text{start}$ is [`t_start`][jbubble.pulse.base.Pulse.t_start],
+    which equals `initial_time` for most pulses. The active window runs
+    from `t_start` to [`t_stop`][jbubble.pulse.base.Pulse.t_stop].
 
     Operator overloads compose pulses:
 
     ```python
     combined = pulse_a + pulse_b  # Summed
     scaled = 0.5 * pulse_a  # Scaled
-    shifted = pulse_a + 1.0  # Offset
+    shifted = pulse_a + 1.0  # Offset: a constant pressure, not a delay
     windowed = combined.windowed(HannEnvelope())  # swaps the envelope
     ```
 
@@ -67,16 +69,32 @@ class Pulse(eqx.Module, abc.ABC):
         ...
 
     @property
+    def t_start(self) -> float | jax.Array:
+        """Absolute time [s] at which the active window starts.
+
+        The base implementation returns `initial_time`.
+        """
+        return self.initial_time
+
+    @property
+    def t_stop(self) -> float | jax.Array:
+        """Absolute time [s] at which the active window ends.
+
+        Equals `t_start + duration`.
+        """
+        return self.t_start + self.duration
+
+    @property
     def t_end(self) -> float | jax.Array:
         """Suggested simulation end time [s].
 
-        The base implementation returns `initial_time + 2 * duration`.
+        The base implementation returns `t_start + 2 * duration`.
         """
-        return self.initial_time + 2.0 * self.duration
+        return self.t_start + 2.0 * self.duration
 
     def __call__(self, t: jax.Array) -> jax.Array:
         """Evaluate the pressure [Pa] at time `t`, with the envelope applied."""
-        tau = t - self.initial_time
+        tau = t - self.t_start
         return self._evaluate(t) * self.envelope(tau, self.duration)
 
     def __add__(self, other: Pulse | float) -> Pulse:
@@ -157,11 +175,16 @@ class Pulse(eqx.Module, abc.ABC):
 
 
 class Scaled(Pulse):
-    """Amplitude-scaled version of another pulse.
+    r"""Amplitude-scaled version of another pulse.
 
-    `Scaled` is transparent: it delegates entirely to the child pulse's
-    `__call__`, which already applies the child's envelope, and multiplies
-    the result by `factor`. It applies no additional envelope, so
+    $$
+    p(t) = k\, p_\text{child}(t)
+    $$
+
+    where $k$ is `factor`. `Scaled` is transparent: it delegates to the
+    child pulse's `__call__`, which already applies the child's envelope,
+    and it takes its active window (`t_start`, `t_stop`, `duration`, and
+    `t_end`) from the child. It applies no envelope of its own, so
     `windowed` passes the new envelope down to the child pulse.
 
     Parameters
@@ -177,41 +200,60 @@ class Scaled(Pulse):
 
     @property
     def duration(self) -> float | jax.Array:
+        """Duration of the wrapped pulse [s]."""
         return self.pulse.duration
 
     @property
+    def t_start(self) -> float | jax.Array:
+        """Start of the wrapped pulse's active window [s]."""
+        return self.pulse.t_start
+
+    @property
+    def t_stop(self) -> float | jax.Array:
+        """End of the wrapped pulse's active window [s]."""
+        return self.pulse.t_stop
+
+    @property
     def t_end(self) -> float | jax.Array:
+        """Suggested simulation end time of the wrapped pulse [s]."""
         return self.pulse.t_end
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
         return self.factor * self.pulse(t)
 
     def __call__(self, t: jax.Array) -> jax.Array:
-        # Transparent — child's envelope is already applied via self.pulse(t).
+        # Transparent: self.pulse(t) already applies the child's envelope.
         return self._evaluate(t)
 
     def windowed(self, envelope: Envelope) -> Pulse:
-        # Scaled ignores its own envelope, so setting it here would be a silent
-        # no-op.  Push the window down to the child pulse, which actually
-        # applies envelopes, so ((a + b) * k).windowed(env) windows the sum.
+        # Scaled has no envelope of its own. Push the window down to the
+        # child, so ((a + b) * k).windowed(env) windows the sum.
         return eqx.tree_at(lambda p: p.pulse, self, self.pulse.windowed(envelope))
 
 
 class Offset(Pulse):
-    """Constant-offset version of another pulse.
+    r"""Constant-offset version of another pulse.
 
-    `Offset` is transparent: it delegates entirely to the child pulse's
-    `__call__`, which already applies the child's envelope, and adds a
-    constant offset. It applies no additional envelope, so `windowed`
-    passes the new envelope down to the child pulse and leaves the constant
-    offset unwindowed.
+    $$
+    p(t) = p_\text{child}(t) + c
+    $$
+
+    where $c$ is `offset`, a constant pressure added at all times. It
+    doesn't delay the pulse; to delay a pulse, set `initial_time` on it.
+
+    `Offset` is transparent: it delegates to the child pulse's `__call__`,
+    which already applies the child's envelope, and it takes its active
+    window (`t_start`, `t_stop`, `duration`, and `t_end`) from the child.
+    It applies no envelope of its own, so `windowed` passes the new
+    envelope down to the child pulse and leaves the constant offset
+    unwindowed.
 
     Parameters
     ----------
     pulse : Pulse
         The pulse to offset.
     offset : float
-        Additive constant offset.
+        Additive constant pressure [Pa].
     """
 
     pulse: Pulse
@@ -219,33 +261,53 @@ class Offset(Pulse):
 
     @property
     def duration(self) -> float | jax.Array:
+        """Duration of the wrapped pulse [s]."""
         return self.pulse.duration
 
     @property
+    def t_start(self) -> float | jax.Array:
+        """Start of the wrapped pulse's active window [s]."""
+        return self.pulse.t_start
+
+    @property
+    def t_stop(self) -> float | jax.Array:
+        """End of the wrapped pulse's active window [s]."""
+        return self.pulse.t_stop
+
+    @property
     def t_end(self) -> float | jax.Array:
+        """Suggested simulation end time of the wrapped pulse [s]."""
         return self.pulse.t_end
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
         return self.pulse(t) + self.offset
 
     def __call__(self, t: jax.Array) -> jax.Array:
-        # Transparent — child's envelope is already applied via self.pulse(t).
+        # Transparent: self.pulse(t) already applies the child's envelope.
         return self._evaluate(t)
 
     def windowed(self, envelope: Envelope) -> Pulse:
-        # Offset ignores its own envelope; push the window down to the child.
-        # The constant offset itself stays unwindowed.
+        # Offset has no envelope of its own; push the window down to the
+        # child. The constant offset itself stays unwindowed.
         return eqx.tree_at(lambda p: p.pulse, self, self.pulse.windowed(envelope))
 
 
 class Summed(Pulse):
-    """Additive superposition of multiple pulses.
+    r"""Additive superposition of multiple pulses.
 
-    `Summed` evaluates each child pulse with its own envelope, then sums
-    the results. It applies its own `envelope` on top. `Summed` inherits
-    that field from [`Pulse`][jbubble.pulse.base.Pulse], and it defaults to
+    $$
+    p(t) = w(t - t_0, T) \sum_i p_i(t)
+    $$
+
+    `Summed` evaluates each child pulse $p_i$ with its own envelope, sums
+    the results, and applies its own `envelope` $w$ on top. `Summed`
+    inherits that field from [`Pulse`][jbubble.pulse.base.Pulse], and it
+    defaults to
     [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope].
-    To window the combined signal, use `.windowed(HannEnvelope())`.
+    Its active window runs from its own `initial_time` $t_0$ to the latest
+    child [`t_stop`][jbubble.pulse.base.Pulse.t_stop], so
+    $T = \max_i t_{\text{stop},i} - t_0$. To window the combined signal,
+    use `.windowed(HannEnvelope())`.
 
     Parameters
     ----------
@@ -258,13 +320,12 @@ class Summed(Pulse):
 
     @property
     def duration(self) -> float | jax.Array:
-        # Span from self.initial_time to the latest child endpoint.  Uses
-        # jnp.max over stacked child endpoints (not Python max/float) so it
-        # stays valid under JAX tracing, so a Summed pulse can be simulated.
-        ends = jnp.stack(
-            [jnp.asarray(p.initial_time + p.duration) for p in self.pulses]
-        )
-        return jnp.max(ends) - jnp.asarray(self.initial_time)
+        # Span from t_start to the latest child t_stop. Scaled and Offset
+        # report their child's t_stop, so a delayed child that is wrapped
+        # in them still counts. jnp.max, rather than Python max or float,
+        # keeps this valid under JAX tracing.
+        stops = jnp.stack([jnp.asarray(p.t_stop) for p in self.pulses])
+        return jnp.max(stops) - jnp.asarray(self.t_start)
 
     @property
     def t_end(self) -> float | jax.Array:
