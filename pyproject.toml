@@ -69,7 +69,7 @@ Changelog = "https://github.com/imperial-nsb/jbubble/releases"
 # `uv sync` installs the `dev` group by default.
 # With pip >= 25.1, use `pip install -e ".[io,examples]" --group dev`.
 [dependency-groups]
-test = ["pytest>=8.3", "pytest-xdist>=3.6", "jbubble[io,examples]"]
+test = ["pytest>=8.3", "pytest-xdist>=3.6", "pytest-timeout>=2.3.1", "jbubble[io,examples]"]
 lint = ["ruff>=0.16.10", "ty==0.0.84"]
 dev = [{ include-group = "test" }, { include-group = "lint" }, "prek>=0.5"]
 # Today's MkDocs site. A later release moves the docs to Zensical.

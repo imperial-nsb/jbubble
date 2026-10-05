@@ -32,6 +32,8 @@ result = run_simulation(eom, pulse, config=SolverConfig.stiff())
 
 The Notes of `SolverConfig` explain how to tell whether a problem is stiff.
 
+`GridSweep` runs implicit solvers such as `Kvaerno5` on its worker threads, like explicit ones.
+
 To tighten the tolerances, pass them to the constructor you use, for example `SolverConfig.stiff(rtol=1e-8, atol=1e-12)`, or `SolverConfig(stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-12))`. If `result.converged` is `False` because the solve reached `max_steps`, raise `max_steps`, or switch to `SolverConfig.stiff()` if `Dopri5` needs thousands of steps per driving period.
 
 For gradients, keep the default adjoint, `diffrax.RecursiveCheckpointAdjoint()`, which differentiates the discretised solve exactly. Pass `adjoint=diffrax.ForwardMode()` to `run_simulation` or `solve_eom` for forward-mode Jacobians, for example in a Levenberg–Marquardt fit.
