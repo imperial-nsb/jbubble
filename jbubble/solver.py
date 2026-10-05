@@ -107,8 +107,9 @@ def solve_eom(
         with `PIDController(rtol=1e-6, atol=1e-9)`.
     adjoint : diffrax.AbstractAdjoint, optional
         Adjoint method for gradient computation. `None` uses the diffrax
-        default, `RecursiveCheckpointAdjoint()`. For gradient-based fitting
-        through an explicit solver, use `diffrax.BacksolveAdjoint()`.
+        default, `RecursiveCheckpointAdjoint()`, which suits gradient-based
+        fitting. diffrax advises against `BacksolveAdjoint`, whose
+        gradients are approximate.
     progress : bool
         Whether to show a text progress meter. Default: `False`.
 
