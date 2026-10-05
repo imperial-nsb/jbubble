@@ -17,9 +17,11 @@ build/
 # Hatchling honours this rule, which keeps the stale file out of local builds.
 jbubble/_version.py
 
-# Docs builds and tool caches
+# Docs builds and tool caches. scripts/build_examples.py writes the gallery to
+# docs/examples/ and caches executed notebooks under build/examples-cache/.
 site/
 .cache/
+docs/examples/
 
 # Testing
 .coverage
