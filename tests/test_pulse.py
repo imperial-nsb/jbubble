@@ -7,6 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 from jbubble import SaveSpec, SolverConfig, run_simulation
+from jbubble.bubble.eom import EquationOfMotion
 from jbubble.pulse import (
     ChirpPulse,
     HannEnvelope,
@@ -506,6 +507,30 @@ def _late_tone(t0, **kwargs):
     )
 
 
+# Fixed 2 ns steps resolve the preset bubble's natural period of about
+# 0.5 µs, so gradients through this solve match finite differences to about
+# four digits.
+_REFERENCE = SolverConfig(
+    stepsize_controller=diffrax.ConstantStepSize(), dt0=2e-9, max_steps=40_000
+)
+# At the default tolerances, the gradients in these tests differ from the
+# reference by up to about 1e-3.
+_GRAD_RTOL = 5e-3
+
+# The solver change that keeps gradients finite when a rejected trial step
+# leaves the physical domain also adds EquationOfMotion.is_admissible. Until
+# that change is merged, the marked test gives NaN; once it is, the marker
+# does nothing and you can delete it.
+_needs_guarded_solve = pytest.mark.xfail(
+    not hasattr(EquationOfMotion, "is_admissible"),
+    strict=True,
+    reason=(
+        "A rejected trial step leaves the physical domain, and the reverse pass "
+        "of the adaptive solve multiplies its NaN Jacobian by a zero cotangent."
+    ),
+)
+
+
 class TestSolverSeesDelayedPulses:
     """An adaptive solver can't step over a pulse that starts late.
 
@@ -553,35 +578,37 @@ class TestSolverSeesDelayedPulses:
         )
         assert _peak_ratio(_late_tone(25e-6), t_max=45e-6, config=config) > 1.5
 
-    def test_gradient_with_respect_to_the_delay_is_finite(self):
+    def test_gradient_with_respect_to_the_delay_matches_a_reference(self):
         eom, _ = free_bubble()
         spec = SaveSpec(num_samples=256)
 
-        def peak(t0):
+        def peak(t0, config=None):
             pulse = _late_tone(t0)
-            return run_simulation(eom, pulse, save_spec=spec, t_max=45e-6).radius.max()
+            result = run_simulation(
+                eom, pulse, save_spec=spec, t_max=45e-6, config=config
+            )
+            return result.radius.max()
 
         peaks = jax.vmap(peak)(jnp.array([25e-6, 30e-6]))
         assert bool(jnp.all(peaks > 1.5 * eom.R0))
-        assert bool(jnp.isfinite(jax.grad(peak)(jnp.asarray(25e-6))))
+        t0 = jnp.asarray(25e-6)
+        want = float(jax.grad(peak)(t0, _REFERENCE))
+        assert float(jax.grad(peak)(t0)) == pytest.approx(want, rel=_GRAD_RTOL)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "While the drive is exactly zero, the bubble sits exactly at rest, "
-            "and the reverse pass of the adaptive solve gives NaN. A guarded "
-            "vector field in solve_eom removes the NaN."
-        ),
-    )
-    def test_gradient_through_a_late_compact_window_is_finite(self):
+    @_needs_guarded_solve
+    def test_gradient_through_a_late_compact_window_matches_a_reference(self):
         eom, _ = free_bubble()
         spec = SaveSpec(num_samples=512)
 
-        def peak(amplitude):
+        def peak(amplitude, config=None):
             pulse = amplitude * _late_tone(2e-6, envelope=HannEnvelope())
-            return run_simulation(eom, pulse, save_spec=spec).radius.max()
+            return run_simulation(
+                eom, pulse, save_spec=spec, config=config
+            ).radius.max()
 
-        assert bool(jnp.isfinite(jax.grad(peak)(jnp.asarray(1.0))))
+        k = jnp.asarray(1.0)
+        want = float(jax.grad(peak)(k, _REFERENCE))
+        assert float(jax.grad(peak)(k)) == pytest.approx(want, rel=_GRAD_RTOL)
 
 
 class TestDelayedChildInSum:
