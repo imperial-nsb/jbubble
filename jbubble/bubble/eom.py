@@ -74,6 +74,12 @@ class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
     The ODE carries them as frozen constants, with zero time derivatives in
     the standard case.
 
+    [`state_scale`][jbubble.bubble.eom.EquationOfMotion.state_scale] gives
+    the magnitude of each state field, which
+    [`solve_eom`][jbubble.solver.solve_eom] uses to make the solver
+    tolerances dimensionless. Override it in a subclass that adds state
+    fields.
+
     Parameters
     ----------
     gas : GasModel
@@ -161,6 +167,59 @@ class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
         R_init = R0 if R is None else jnp.asarray(R)
         R_dot_init = jnp.zeros_like(R0) if R_dot is None else jnp.asarray(R_dot)
         return BubbleState(R=R_init, R_dot=R_dot_init, R0=R0, P_gas0=P_gas0)
+
+    def state_scale(self, state: StateType) -> StateType:
+        r"""Return the characteristic magnitude of each state field.
+
+        [`solve_eom`][jbubble.solver.solve_eom] integrates the dimensionless
+        state `state / state_scale(state)`, so the step-size controller's
+        `rtol` and `atol` mean the same thing for a 50 nm bubble as for a
+        50 µm one. The default scales are:
+
+        - `R` and `R0`: the equilibrium radius `state.R0` [m].
+        - `R_dot`: the velocity scale $\sqrt{P_\text{amb}/\rho_L}$
+          [m/s], about 10 m/s in water at atmospheric pressure. It's the
+          natural velocity of bubble dynamics: $R_0\omega_0 \approx
+          \sqrt{3\kappa P_\text{amb}/\rho_L}$ for the Minnaert frequency
+          $\omega_0$.
+        - `P_gas0`: its own value `state.P_gas0` [Pa], or `P_amb` if that
+          value isn't positive.
+        - Any other field of a `BubbleState` subclass: `1`, that is, SI
+          units.
+
+        Because `R0` and `P_gas0` are scaled by their own values, the solver
+        sees them exactly: `(x / x) * x == x` in floating point.
+
+        Override this method to give extra state fields a scale. The scale
+        must be positive and finite; the solver treats it as a constant.
+
+        Parameters
+        ----------
+        state : StateType
+            Initial state, with a positive `R0`.
+
+        Returns
+        -------
+        StateType
+            Scale for each field, with the same structure as `state`.
+        """
+        P_amb = jnp.asarray(self.P_amb)
+        velocity = jnp.sqrt(P_amb / jnp.asarray(self.rho_L))
+        R0 = jnp.asarray(state.R0)
+        P_gas0 = jnp.asarray(state.P_gas0)
+        pressure = jnp.where(P_gas0 > 0, P_gas0, P_amb)
+        ones = jax.tree_util.tree_map(jnp.ones_like, state)
+        values = (R0, velocity, R0, pressure)
+        return eqx.tree_at(
+            lambda s: (s.R, s.R_dot, s.R0, s.P_gas0),
+            ones,
+            tuple(
+                jnp.broadcast_to(v, jnp.shape(leaf)).astype(jnp.result_type(leaf))
+                for v, leaf in zip(
+                    values, (state.R, state.R_dot, state.R0, state.P_gas0), strict=True
+                )
+            ),
+        )
 
     @abc.abstractmethod
     def __call__(

@@ -18,29 +18,10 @@ from jbubble import solve_eom, SaveSpec, SolverConfig
 
 ## Solver choice and tolerances
 
-The default solver is `Dopri5` (an explicit 5th-order Runge–Kutta method) with a PID step-size controller at relative tolerance $10^{-6}$ and absolute tolerance $10^{-9}$, an initial step of 1 ns, and at most 10,000 steps. This is appropriate for most bubble dynamics simulations.
+The default, `SolverConfig()`, is `Dopri5` (an explicit fifth-order Runge–Kutta method) with a PID step-size controller at `rtol=1e-6` and `atol=1e-10`, an initial step of 1 ns, and at most 10,000 steps. It suits microbubbles in water, including inertial collapse.
 
-For stiff problems (for example, very small bubbles, extreme driving pressures, or large shear moduli in the medium), use an implicit solver such as `Kvaerno5`, and allow more steps if `result.converged` is `False`:
+The solver integrates a dimensionless state: the radius in units of $R_0$ and the wall velocity in units of $\sqrt{P_\text{amb}/\rho_L}$. So `atol=1e-10` means $10^{-10} R_0$ for a bubble of any size. In jbubble 0.1, `atol` applied in SI units.
 
-```python
-import diffrax
-from jbubble import SolverConfig
+To tighten the tolerances, pass your own controller, for example `SolverConfig(stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-12))`. If `result.converged` is `False` because the solve reached `max_steps`, raise `max_steps`.
 
-config = SolverConfig(
-    solver=diffrax.Kvaerno5(),
-    max_steps=50_000,
-)
-```
-
-`GridSweep` with `parallel=True` supports only explicit solvers, so set `parallel=False` when you sweep with an implicit solver.
-
-For gradient-based fitting, consider using the `RecursiveCheckpointAdjoint` to reduce memory usage during backpropagation:
-
-```python
-import diffrax
-
-result = fit_parameters(
-    ...,
-    adjoint=diffrax.RecursiveCheckpointAdjoint(),
-)
-```
+For gradients, keep the default adjoint, `diffrax.RecursiveCheckpointAdjoint()`, which differentiates the discretised solve exactly. Pass `adjoint=diffrax.ForwardMode()` to `run_simulation` or `solve_eom` for forward-mode Jacobians, for example in a Levenberg–Marquardt fit.
