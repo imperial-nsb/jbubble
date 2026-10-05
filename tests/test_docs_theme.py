@@ -86,6 +86,16 @@ def test_dark_scheme_uses_the_dark_palette():
     assert dark["--md-accent-fg-color--transparent"][:7] == colors[1]
 
 
+def test_gallery_thumbnails_fill_with_the_light_surface():
+    # The example figures use the light style, so the letterbox around a
+    # thumbnail that isn't 16:9 takes the light figure surface.
+    surface, _ = palette("light")
+    (rule,) = re.findall(
+        r"^\.md-typeset \.grid\.cards img\s*\{(.*?)\}", CSS.read_text(), re.M | re.S
+    )
+    assert re.findall(r"background-color:\s*(#[0-9a-f]{6});", rule) == [surface]
+
+
 def test_logo_uses_the_first_two_light_colours():
     _, colors = palette("light")
     fills = re.findall(r'fill="(#[0-9a-f]{6})"', LOGO.read_text())

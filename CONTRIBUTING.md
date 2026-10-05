@@ -192,7 +192,7 @@ To change the colours of jbubble figures, edit the style sheets in
 `jbubble/style/`, then regenerate the palette cards in `docs/assets/` with
 `uv run python scripts/make_palette_card.py`. The site theme in
 `docs/stylesheets/extra.css` and the logo in `docs/assets/images/logo.svg`
-repeat the first two colours of each style sheet and the dark surface, so
+repeat the first two colours of each style sheet and both surfaces, so
 update them too. `tests/test_docs_theme.py` checks that they match, and that
 links and the accent colour keep at least 4.5:1 contrast.
 

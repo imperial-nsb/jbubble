@@ -79,11 +79,17 @@
   padding: 0.2rem 0;
 }
 
-/* Example gallery (docs/examples/index.md): thumbnails of equal height. */
+/*
+ * Example gallery (docs/examples/index.md): thumbnails of equal height. A
+ * figure that isn't 16:9 is letterboxed, so fill the box with the light
+ * style's figure background (#ffffff). Then each thumbnail shows as one
+ * rounded panel of the same size in the dark scheme too.
+ */
 .md-typeset .grid.cards img {
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: contain;
+  background-color: #ffffff;
   border-radius: 0.2rem;
 }
 
