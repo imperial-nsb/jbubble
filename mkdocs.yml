@@ -121,6 +121,10 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
+  # docs/changelog.md includes the repository's CHANGELOG.md. The base path
+  # is the repository root, where Zensical runs.
+  - pymdownx.snippets:
+      base_path: ["."]
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
@@ -131,11 +135,14 @@ markdown_extensions:
 # gallery instead.
 nav:
   - Home: index.md
-  - Guide:
+  - Getting started:
     - Installation: guide/installation.md
     - Quickstart: guide/quickstart.md
+  - Guide:
     - Bubble models: guide/bubble_models.md
     - Pulse shapes: guide/pulse_shapes.md
+    - Solvers and stiffness: guide/solvers.md
+    - Parameter sweeps: guide/sweeps.md
     - Fitting: guide/fitting.md
     - JAX tips: guide/jax_tips.md
   - Examples: examples/index.md
@@ -150,3 +157,5 @@ nav:
     - metrics: api/metrics.md
     - fitting: api/fitting.md
     - utils: api/utils.md
+  - Citing: citing.md
+  - Changelog: changelog.md

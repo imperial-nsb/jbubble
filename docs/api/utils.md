@@ -28,6 +28,8 @@ from jbubble.utils.presets import free_bubble, lipid_bubble, thick_shell_bubble
 Batched Cartesian-product parameter sweeps. `GridSweep` runs chunks of the grid
 in parallel on worker threads, one per CPU core by default (up to 31 per CPU
 device), and returns NumPy arrays in grid order.
+The guide [Parameter sweeps](../guide/sweeps.md) explains how to choose
+workers and a batch size, and how to keep sweeps reproducible.
 
 ```python
 from jbubble.utils.gridsweep import GridSweep

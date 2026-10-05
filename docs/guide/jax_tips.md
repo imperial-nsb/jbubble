@@ -1,168 +1,147 @@
-# JAX tips: JIT, vmap, grad, and fitting
+# JAX tips
 
-jbubble is built on JAX, which means every simulation is JIT-compilable, batchable over parameters, and differentiable. This page covers the key workflows.
+jbubble models are [Equinox](https://docs.kidger.site/equinox/) modules, and
+a simulation is a pure function of them. This page collects what you need to
+know to compile, batch, differentiate, and debug simulations with JAX.
 
----
+Every code block on this page runs as written, in order.
 
-## JIT compilation
+## Models are PyTrees
 
-Wrap `run_simulation` (or `solve_eom`) with `jax.jit` to compile the entire solver graph once and execute it efficiently:
-
-```python
-import jax
-from jbubble import run_simulation, SaveSpec
-
-simulate = jax.jit(run_simulation)
-
-# First call: compilation (slow)
-result = simulate(eom, pulse, save_spec=SaveSpec(1000), t_max=10e-6)
-
-# Subsequent calls with the same argument shapes: fast
-result2 = simulate(eom2, pulse, save_spec=SaveSpec(1000), t_max=10e-6)
-```
-
-!!! warning "Traced and static values"
-    `jax.jit` traces every leaf of its arguments, including Python floats, so changing a value doesn't trigger recompilation. Equinox's filtered transformations, such as `eqx.filter_jit` and `eqx.filter_grad`, treat Python floats inside a module as static instead: changing one triggers recompilation, and no gradient flows to it. To differentiate with respect to a value, pass it as a JAX array, or as a `Parameter` to `fit_parameters`.
-
----
-
-## Batched parameter sweeps with vmap
-
-Use `jax.vmap` to run thousands of simulations simultaneously with different parameters. `GridSweep` automates the Cartesian-product case:
-
-```python
-import jax.numpy as jnp
-from jbubble.utils.gridsweep import GridSweep
-from jbubble import run_simulation, SaveSpec
-from jbubble.bubble.eom import KellerMiksis
-from jbubble.bubble.gas import PolytropicGas
-from jbubble.bubble.shell import NoShell
-from jbubble.bubble.medium import NewtonianMedium
-from jbubble.pulse import ToneBurst
-from jbubble.pulse.shapes import Sine
-
-
-def simulate_bubble(R0, pressure):
-    eom = KellerMiksis(
-        gas=PolytropicGas(gamma=1.4),
-        shell=NoShell(sigma=0.072),
-        medium=NewtonianMedium(mu=1e-3),
-        R0=R0,
-        P_amb=101325,
-        rho_L=998,
-        c_L=1500,
-    )
-    pulse = ToneBurst(freq=1e6, pressure=pressure, shape=Sine(), cycle_num=5)
-    result = run_simulation(eom, pulse, save_spec=SaveSpec(500), t_max=10e-6)
-    return result.radius.max() / R0  # peak expansion ratio
-
-
-sweep = GridSweep(
-    fn=simulate_bubble,
-    search_space={
-        "R0": jnp.linspace(1e-6, 5e-6, 10),
-        "pressure": jnp.array([50e3, 100e3, 200e3, 400e3]),
-    },
-    batch_size=256,
-)
-
-# Full sweep: shape (10, 4) — one scalar output per parameter combination
-peak_expansion = sweep.run()
-```
-
-`GridSweep` internally applies `jax.vmap` over batches of parameter combinations and handles reshaping back to the grid shape.
-
-For a fully manual sweep over a single parameter axis:
+An equation of motion, with its gas, shell, and medium, is a PyTree: a
+nested structure whose leaves are the numbers of the model. JAX
+transformations act on those leaves. Modules are immutable, so to change a
+value, build a new model, or use `eqx.tree_at`:
 
 ```python
 import equinox as eqx
+import jax
+import jax.numpy as jnp
 
-R0_values = jnp.linspace(1e-6, 5e-6, 20)
+from jbubble import run_simulation
+from jbubble.utils.presets import lipid_bubble
 
-
-def make_eom(R0):
-    return KellerMiksis(
-        gas=PolytropicGas(gamma=1.4),
-        shell=NoShell(sigma=0.072),
-        medium=NewtonianMedium(mu=1e-3),
-        R0=R0,
-        P_amb=101325,
-        rho_L=998,
-        c_L=1500,
-    )
-
-
-# Build a batched EoM by stacking along a leading axis
-batched_eom = jax.vmap(make_eom)(R0_values)
-
-# vmap run_simulation over the batched EoM
-batched_simulate = jax.vmap(
-    lambda eom: run_simulation(eom, pulse, save_spec=SaveSpec(500), t_max=10e-6)
-)
-results = jax.jit(batched_simulate)(batched_eom)
-# results.radius has shape (20, 500)
+eom, pulse = lipid_bubble()
+stiffer = eqx.tree_at(lambda m: m.shell.kappa_s.val, eom, 1.5e-8)
+print(eom.shell.kappa_s, "->", stiffer.shell.kappa_s)
 ```
 
----
+Coefficients such as `kappa_s` are
+[`Property`][jbubble.bubble.property.Property] objects; a constant one keeps
+its number in `val`. `eqx.tree_at` bypasses the constructor, so pass the
+leaf, as here, or a whole `Property`.
+
+## Precision
+
+Importing jbubble turns on JAX's 64-bit mode for the whole process, because
+the radius and the wall velocity of a collapsing bubble span many orders of
+magnitude. Arrays that you create with `jax.numpy` afterwards are `float64`
+by default. Don't turn the mode off: single precision isn't accurate enough
+for the solver tolerances.
+
+## Compile with `jax.jit`
+
+`jax.jit(run_simulation)` compiles the whole simulation, solver and
+post-processing, into one program. JAX compiles again only when the
+structure of the arguments changes:
+
+| Change | Compiles again? |
+|---|---|
+| A number in the model or pulse, such as `R0`, `kappa_s`, or `pressure` | No |
+| The class of a part, such as `NoShell` instead of `LipidShell` | Yes |
+| `SaveSpec(num_samples=...)` or `SolverConfig(max_steps=...)` | Yes: these are static |
+| The solver or the step-size controller class | Yes |
+
+Without `jax.jit`, `run_simulation` still compiles the solver, but it treats
+Python floats in the model as constants, so a new value compiles again. To
+time a compiled function, call it once to compile, and call
+`block_until_ready()` on the output, because JAX dispatches work
+asynchronously.
+
+Equinox's `eqx.filter_jit` and `eqx.filter_grad` treat a Python float inside
+a module as static: a new value compiles again, and no gradient flows to it.
+To differentiate a model with respect to all of its numbers, convert them to
+arrays first, as in the next section.
+
+## Differentiate a whole model
+
+`jax.grad` differentiates with respect to a float, an array, or any PyTree
+of them. To get the sensitivity of a result to every parameter of a model at
+once, convert the model's numbers to arrays and use `eqx.filter_grad`, which
+returns a model-shaped PyTree of derivatives. The following code computes
+the relative sensitivity, $\partial \ln y / \partial \ln p$, of the peak
+radius to each parameter of the lipid preset. Gradients through a lipid
+shell need tighter tolerances than the default; see
+[Gradients and adjoints](solvers.md#gradients-and-adjoints):
+
+```{.python continuation}
+import diffrax
+
+from jbubble import SolverConfig
+
+precise = SolverConfig(stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-12))
+model = jax.tree.map(jnp.asarray, eom)  # Python floats -> arrays
+
+
+def peak_ratio(m):
+    return run_simulation(m, pulse, config=precise).radius.max() / m.R0
+
+
+value, grads = eqx.filter_value_and_grad(peak_ratio)(model)
+for name, get in [
+    ("R0", lambda m: m.R0),
+    ("chi", lambda m: m.shell.sigma.chi.val),
+    ("kappa_s", lambda m: m.shell.kappa_s.val),
+    ("gamma", lambda m: m.gas.gamma.val),
+    ("mu", lambda m: m.medium.mu.val),
+]:
+    print(f"{name:8s} {get(grads) * get(model) / value:+.4f}")
+```
+
+To compute such sensitivities for a batch of bubbles, wrap the gradient in
+`jax.vmap`; the example
+[Gradients and optimisation](../examples/09_gradients_and_optimisation.md)
+shows how, with a finite-difference check.
+
+## Batch with `jax.vmap`
+
+`jax.vmap` maps a function over a leading axis of its inputs. The simplest
+pattern builds the model inside the function from the swept values, as
+[Parameter sweeps](sweeps.md) shows. You can also map over a batch of models:
+`jax.vmap(make_model)(values)` returns one model whose leaves carry the batch
+axis, and `jax.vmap(simulate)` accepts it directly:
+
+```{.python continuation}
+def simulate(m):
+    return run_simulation(m, pulse).radius.max() / m.R0
+
+
+kappas = jnp.array([2.5e-9, 5e-9, 7.5e-9, 1e-8])  # [N s/m]
+batch = jax.vmap(lambda k: eqx.tree_at(lambda m: m.shell.kappa_s.val, model, k))(kappas)
+print(jax.jit(jax.vmap(simulate))(batch))
+```
+
+For grids of parameters, use [`GridSweep`][jbubble.utils.gridsweep.GridSweep],
+which also runs chunks of the grid in parallel.
+
+## Debug a simulation
+
+- **The solve failed.** Check `result.converged`. Under `jax.jit` and
+  `jax.vmap`, `run_simulation` can't warn; see
+  [Check that a solve converged](solvers.md#check-that-a-solve-converged).
+- **A gradient is NaN or very large.** Check that the solve converged, then
+  check whether the problem is stiff; see
+  [When stiffness matters](solvers.md#when-stiffness-matters).
+- **You want to see a traced value.** Use `jax.debug.print("{x}", x=x)`
+  inside a compiled function; `print` shows only the tracer.
+- **You want to find the first NaN.** Run
+  `jax.config.update("jax_debug_nans", True)` before the simulation; JAX then
+  raises at the operation that produced it.
 
 ## Fit parameters to data
 
-[`fit_parameters`][jbubble.fitting.fit_parameters] differentiates a loss through the ODE solve and minimises it with an optax optimiser. Wrap each physical value in [`Parameter`][jbubble.fitting.Parameter], so that one learning rate suits values of any magnitude and bounds hold. In the following example, `make_eom(kappa_s)` builds the equation of motion, `pulse` is the drive, and `measured_radius` is the measured radius trace [m]:
-
-```python
-import optax
-from jbubble import fit_parameters
-from jbubble.fitting import Parameter
-from jbubble.metrics import normalised_mse_radius
-
-fit = fit_parameters(
-    make_model=lambda p: (make_eom(p["kappa_s"]), pulse),
-    params0={"kappa_s": Parameter(1e-9, lower=0.0)},  # initial guess [N s/m]
-    loss_fn=lambda result: normalised_mse_radius(result.radius, measured_radius, 2e-6),
-    optimizer=optax.adam(0.05),  # about 5 % per step
-)
-print(fit.params["kappa_s"])
-```
-
-To fit several recordings at once, learn a neural constitutive law, handle failed solves, choose solver settings, or estimate uncertainties, see [Fit model parameters to data](fitting.md).
-
----
-
-## Computing gradients manually
-
-For custom gradient computations (e.g. sensitivity analysis), use `jax.grad` directly:
-
-```python
-def peak_expansion(kappa_s):
-    eom = make_eom(kappa_s)
-    result = run_simulation(eom, pulse, save_spec=SaveSpec(500), t_max=10e-6)
-    return result.radius.max() / eom.R0
-
-
-grad_fn = jax.grad(peak_expansion)
-sensitivity = grad_fn(2.4e-9)  # d(peak expansion) / d(kappa_s) at kappa_s = 2.4 nN·s/m
-print("Sensitivity:", sensitivity)
-```
-
----
-
-## HDF5 export for large sweeps
-
-Save sweep outputs to HDF5 for post-processing:
-
-```python
-from jbubble.utils.io import export_hdf5, load_hdf5
-import jax.numpy as jnp
-
-export_hdf5(
-    "sweep_results.h5",
-    metadata={"description": "R0-pressure sweep", "freq": 1e6},
-    R0_values=jnp.linspace(1e-6, 5e-6, 10),
-    pressure_values=jnp.array([50e3, 100e3, 200e3, 400e3]),
-    peak_expansion=peak_expansion,
-)
-
-arrays, meta = load_hdf5("sweep_results.h5")
-print(meta["description"])
-print(arrays["peak_expansion"].shape)  # (10, 4)
-```
+[`fit_parameters`][jbubble.fitting.fit_parameters] combines these pieces: it
+compiles the simulation, differentiates a loss through it, and steps an
+[optax](https://optax.readthedocs.io) optimiser, with bounds, several
+recordings at once, and retries for failed solves. See
+[Fit model parameters to data](fitting.md).
