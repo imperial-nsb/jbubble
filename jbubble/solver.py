@@ -110,12 +110,12 @@ class SolverConfig(eqx.Module):
     **Choosing tolerances.** At the defaults, a microbubble driven at
     100 kPa has radius errors of $10^{-6}$ to $10^{-5} R_0$ and relative
     gradient errors of $10^{-5}$ to $10^{-3}$. The kink in a Marmottant
-    surface-tension law is the hardest case, with errors up to about
-    $10^{-3} R_0$ and $10^{-2}$. Through an inertial collapse
-    ($R_\text{max}/R_0 \approx 4$), both errors are about $10^{-3}$ to
-    $10^{-2}$. `rtol=1e-8, atol=1e-12` makes them 100 to 1000 times smaller
-    for about twice as many steps. Looser tolerances can make gradients
-    through a collapse wrong by more than 100 %.
+    surface-tension law is the hardest case, with radius errors up to about
+    $10^{-3} R_0$ and gradient errors of a few times $10^{-2}$. Through an
+    inertial collapse ($R_\text{max}/R_0 \approx 4$), both errors are about
+    $10^{-3}$ to $10^{-2}$. `rtol=1e-8, atol=1e-12` makes them 100 to 1000
+    times smaller for two to three times as many steps. Looser tolerances
+    can make gradients through a collapse wrong by more than 100 %.
 
     `rtol` sets the accuracy of most solves. `atol` matters where a scaled
     state component is far below 1: the wall velocity of a small or weakly
@@ -145,7 +145,9 @@ class SolverConfig(eqx.Module):
     On a stiff problem, `Dopri5` steps at the edge of its stability region:
     it needs hundreds to thousands of steps per driving period, and
     although the radius stays accurate, at the default tolerances the
-    gradient through the solve can be wrong by orders of magnitude. Use
+    gradient through the solve can be wrong by orders of magnitude, or NaN,
+    even when the solve reports `converged = True`: a 20 nm lipid bubble
+    driven at 5 MHz gives a NaN gradient. Use
     [`stiff`][jbubble.solver.SolverConfig.stiff] there.
 
     **Long integrations.** `Dopri5` needs about 60 to 100 steps, accepted
@@ -234,13 +236,15 @@ class SolverConfig(eqx.Module):
         -----
         On a stiff problem, `Kvaerno5` takes 5 to 50 times fewer steps than
         `Dopri5`, or converges where `Dopri5` reaches `max_steps`, and its
-        gradients are accurate: for 10 to 150 nm lipid bubbles at the
-        default tolerances, the gradient with respect to the shell viscosity
-        has a relative error of about $10^{-5}$ or less. On a problem that
-        isn't stiff, it takes about as many steps as
-        `Dopri5`, with similar errors, but runs 10 to 20 times longer. It
-        also compiles more slowly: about 2 to 6 s for a solve, against
-        about 1 s or less for `Dopri5`.
+        gradients are accurate. For 20 to 150 nm lipid bubbles at the
+        default tolerances, the gradient of a loss on the deviation
+        $R/R_0 - 1$ with respect to the shell viscosity has a relative error
+        of about $10^{-5}$ to $10^{-4}$. A loss dominated by the mean radius,
+        such as one on $R/R_0$, has larger errors: about $10^{-3}$ at 20 nm
+        and $10^{-2}$ at 10 nm. On a problem that isn't stiff, it takes
+        about as many steps as `Dopri5`, with similar errors, but runs 5 to
+        10 times longer. It also compiles more slowly: about 2 to 6 s for a
+        solve, against about 1 s or less for `Dopri5`.
 
         To change the tolerances, call `stiff` again with new `rtol` and
         `atol`, rather than replacing `stepsize_controller`, so that the
