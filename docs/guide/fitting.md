@@ -12,7 +12,10 @@ Every code block on this page runs as written, in order.
 ## Fit one parameter
 
 The following example estimates the shell viscosity `kappa_s` of a
-lipid-coated bubble from one radius trace:
+lipid-coated bubble from one radius trace. The shell's surface tension
+follows
+[`SmoothMarmottantSurfaceTension`][jbubble.bubble.shell.SmoothMarmottantSurfaceTension],
+the Marmottant law with rounded corners, which keeps gradients smooth:
 
 ```python
 import jax.numpy as jnp
@@ -22,7 +25,7 @@ from jbubble import SaveSpec, fit_parameters, run_simulation
 from jbubble.bubble.eom import KellerMiksis
 from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium
-from jbubble.bubble.shell import GompertzSurfaceTension, LipidShell
+from jbubble.bubble.shell import LipidShell, SmoothMarmottantSurfaceTension
 from jbubble.fitting import Parameter
 from jbubble.metrics import normalised_mse_radius
 from jbubble.pulse import ToneBurst
@@ -34,9 +37,11 @@ T_MAX = 8e-6  # [s]
 
 
 def make_eom(kappa_s, chi=0.5):
-    sigma = GompertzSurfaceTension(R_buckle_ratio=0.98, chi=chi, sigma_rupture=0.072)
+    sigma = SmoothMarmottantSurfaceTension(
+        R_buckle_ratio=0.98, chi=chi, sigma_rupture=0.072
+    )
     return KellerMiksis(
-        gas=PolytropicGas(gamma=1.07),
+        gas=PolytropicGas(gamma=1.095),
         shell=LipidShell(sigma=sigma, kappa_s=kappa_s),
         medium=NewtonianMedium(mu=1e-3),
         R0=R0,
@@ -274,30 +279,20 @@ fit = fit_parameters(
 ## Learn a constitutive law with a neural network
 
 `params0` can be any Equinox module. The following
-[`Property`][jbubble.bubble.property.Property] learns the surface tension
-$\sigma(R)$ with a small network, bounded to $(0, \sigma_\text{max})$ by a
-sigmoid. `fit_parameters` fits the network weights. `sigma_max` is a static
-field, so it stays fixed:
+[`NeuralProperty`][jbubble.bubble.property.NeuralProperty] learns the surface
+tension $\sigma(R/R_0)$ with a small network. Its final activation bounds the
+output to $(0, 0.072)$ N/m, and `fit_parameters` fits the network weights:
 
 ```{.python continuation}
 import equinox as eqx
 import jax
 
-from jbubble.bubble.property import Property
-
-
-class BoundedNeuralSigma(Property):
-    net: eqx.nn.MLP
-    sigma_max: float = eqx.field(default=0.072, static=True)  # [N/m]
-
-    def __call__(self, state):
-        x = jnp.array([state.R / state.R0])
-        return self.sigma_max * jax.nn.sigmoid(self.net(x)[0])
+from jbubble.bubble.property import NeuralProperty
 
 
 def make_neural_model(sigma, condition):
     eom = KellerMiksis(
-        gas=PolytropicGas(gamma=1.07),
+        gas=PolytropicGas(gamma=1.095),
         shell=LipidShell(sigma=sigma, kappa_s=3e-9),
         medium=NewtonianMedium(mu=1e-3),
         R0=R0,
@@ -308,20 +303,30 @@ def make_neural_model(sigma, condition):
     return eom, make_pulse(condition["pressure"])
 
 
-sigma0 = BoundedNeuralSigma(net=eqx.nn.MLP(1, 1, 8, 2, key=jax.random.PRNGKey(0)))
+net = eqx.nn.MLP(
+    in_size=1,
+    out_size=1,
+    width_size=8,
+    depth=2,
+    final_activation=lambda x: 0.072 * jax.nn.sigmoid(x),  # (0, 0.072) N/m
+    key=jax.random.PRNGKey(0),
+)
 fit = fit_parameters(
     make_neural_model,
-    sigma0,
+    NeuralProperty(net=net),
     conditions=conditions,
     loss_fn=loss_fn,
     optimizer=optax.adam(1e-2),
-    n_steps=20,  # use thousands of steps in practice
+    n_steps=20,  # use about a thousand steps in practice
     save_spec=SAVE_SPEC,
     t_max=T_MAX,
     log_every=0,
 )
-learned_sigma = fit.params  # a BoundedNeuralSigma with fitted weights
+learned_sigma = fit.params  # a NeuralProperty with fitted weights
 ```
+
+The example [Learn a shell law](../examples/11_learn_shell_law.md) runs this
+recipe to convergence and compares the learned law with the true one.
 
 ## Monitor and stop a fit
 
@@ -375,9 +380,11 @@ does the following:
   accepted parameters, with `fit.stopped_early` set to `True`.
 
 Frequent rejections mean that the learning rate is too large or that a
-parameter needs bounds. For example, `GompertzSurfaceTension` is defined only
-for `chi * ((1 / R_buckle_ratio)**2 - 1) < sigma_rupture`, so bound `chi`
-with `Parameter(..., upper=...)` when you fit it.
+parameter needs bounds. For example, the shell elasticity `chi` must be
+positive, so fit it as `Parameter(..., lower=0.0)`.
+[`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension] also
+needs `chi * ((1 / R_buckle_ratio)**2 - 1) < sigma_rupture`, so with that law,
+bound `chi` from above too.
 
 If the loss keeps falling toward a region where the solver fails, the fit
 stops at the edge of that region. That's the expected result, not a bug:
@@ -392,11 +399,11 @@ so the model that you fit is the model that you simulate.
 | Setting | When to use it |
 |---|---|
 | `SolverConfig()` (default): `Dopri5`, `rtol=1e-6`, `atol=1e-10` on the scaled state | Most fits. |
+| `SolverConfig(stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-12))` | Final fits of lipid shells. At the defaults, gradients through the corners of the surface tension law can be about 10 % off; these tolerances make them accurate to about $10^{-5}$, for two to three times as many steps. See [Solvers and stiffness](solvers.md#gradients-and-adjoints). |
 | `SolverConfig(stepsize_controller=diffrax.PIDController(rtol=1e-4, atol=1e-8))` | Quick exploratory fits to noisy data. Each step is faster, but gradients can be a few percent off. |
-| `SolverConfig.stiff()` | Stiff dynamics, for example a nanobubble or a very stiff shell, where `Dopri5` takes many tiny steps. |
+| `SolverConfig.stiff()` | Stiff dynamics, for example a nanobubble or a sub-micron bubble in a viscous liquid, where `Dopri5` takes many tiny steps. See [When stiffness matters](solvers.md#when-stiffness-matters). |
 | `adjoint=diffrax.RecursiveCheckpointAdjoint()` (default) | Gradient-based fits. Gives the exact gradient of the computed solution. |
 | `adjoint=diffrax.ForwardMode()` | Forward-mode Jacobians with few parameters, for example Levenberg-Marquardt. |
-| `adjoint=diffrax.BacksolveAdjoint()` | Only when memory runs out on very long integrations. Its gradients are approximate. |
 
 ## Use a least-squares solver
 
