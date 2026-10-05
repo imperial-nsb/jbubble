@@ -21,7 +21,7 @@ from jbubble.pulse import (
     Summed,
     ToneBurst,
 )
-from jbubble.pulse.chirp import ExponentialSweep
+from jbubble.pulse.chirp import ExponentialSweep, LinearSweep
 from jbubble.pulse.shapes import Sine
 from jbubble.utils.presets import free_bubble
 
@@ -85,6 +85,47 @@ class TestChirpPulse:
         )
         t = jnp.asarray(5e-6)
         assert jnp.isfinite(pulse(t))
+
+    @pytest.mark.parametrize("ratio", [1.0, 1.0 + 1e-9, 1.0 + 1e-5])
+    def test_exponential_sweep_near_equal_frequencies(self, ratio):
+        # At f1 = f0, both sweeps are a constant tone, and their gradients
+        # with respect to freq_end agree to first order in ln(f1 / f0).
+        f0, T = 1e6, 5e-6
+        taus = jnp.linspace(0.0, T, 7)
+
+        def phase(sweep, f1):
+            return jax.vmap(lambda tau: sweep(tau, f0, f1, T))(taus)
+
+        f1 = f0 * ratio
+        exp_phase = phase(ExponentialSweep(), f1)
+        lin_phase = phase(LinearSweep(), f1)
+        np.testing.assert_allclose(exp_phase, lin_phase, rtol=1e-9, atol=1e-12)
+        exp_grad = jax.jacfwd(lambda f: phase(ExponentialSweep(), f))(f1)
+        lin_grad = jax.jacfwd(lambda f: phase(LinearSweep(), f))(f1)
+        np.testing.assert_allclose(exp_grad, lin_grad, rtol=1e-4, atol=1e-20)
+        rev_grad = jax.grad(lambda f: phase(ExponentialSweep(), f).sum())(f1)
+        assert np.isfinite(float(rev_grad))
+
+    def test_exponential_sweep_matches_closed_form(self):
+        f0, f1, T = 0.5e6, 2e6, 10e-6
+        tau = jnp.linspace(0.0, T, 11)
+        r = f1 / f0
+        expected = 2 * np.pi * f0 * T * (r ** (tau / T) - 1) / np.log(r)
+        got = jax.vmap(lambda t: ExponentialSweep()(t, f0, f1, T))(tau)
+        np.testing.assert_allclose(got, expected, rtol=1e-12)
+
+    def test_equal_frequency_exponential_chirp_simulates(self):
+        pulse = ChirpPulse(
+            freq_start=1e6,
+            freq_end=1e6,
+            pressure=1e5,
+            sweep_duration=5e-6,
+            sweep=ExponentialSweep(),
+        )
+        assert np.isfinite(float(pulse(jnp.asarray(2e-6))))
+        eom, _ = free_bubble()
+        result = run_simulation(eom, pulse, save_spec=SaveSpec(64))
+        assert bool(result.converged)
 
     def test_evaluates_within_sweep(self):
         pulse = ChirpPulse(

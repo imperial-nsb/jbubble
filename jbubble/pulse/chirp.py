@@ -72,7 +72,9 @@ class ExponentialSweep(ChirpSweep):
     $$
 
     where $f_0$ is `freq_start`, $f_1$ is `freq_end`, and $T$ is the sweep
-    duration.
+    duration. When $f_1 = f_0$, the phase is its limit as $r \to 1$,
+    $\Phi(\tau) = 2\pi f_0 \tau$, a constant tone, and the gradient with
+    respect to either frequency stays finite.
     """
 
     def __call__(
@@ -87,10 +89,20 @@ class ExponentialSweep(ChirpSweep):
             jnp.asarray(freq_end),
             jnp.asarray(duration),
         )
-        ratio = f1 / f0
-        return (
-            2.0 * jnp.pi * f0 * T * (jnp.power(ratio, tau / T) - 1.0) / jnp.log(ratio)
+        x = tau / T
+        log_r = jnp.log(f1 / f0)
+        # (r^x - 1) / ln r = expm1(x ln r) / ln r, which is 0/0 at r = 1. Near
+        # r = 1, its Taylor series in ln r replaces it; the double `where`
+        # keeps the unused branch, and so the gradient, finite.
+        near_one = jnp.abs(log_r) < 1e-4
+        safe = jnp.where(near_one, 1.0, log_r)
+        y = x * log_r
+        growth = jnp.where(
+            near_one,
+            x * (1.0 + y / 2.0 + y**2 / 6.0),
+            jnp.expm1(x * safe) / safe,
         )
+        return 2.0 * jnp.pi * f0 * T * growth
 
 
 class ChirpPulse(Pulse):
