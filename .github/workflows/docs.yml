@@ -14,6 +14,7 @@ on:
       - "scripts/build_examples.py"
       - "scripts/griffe_extensions.py"
       - "tests/test_build_examples.py"
+      - "tests/test_griffe_extensions.py"
       - "mkdocs.yml"
       - "README.md"
       - "pyproject.toml"
@@ -30,6 +31,7 @@ on:
       - "scripts/build_examples.py"
       - "scripts/griffe_extensions.py"
       - "tests/test_build_examples.py"
+      - "tests/test_griffe_extensions.py"
       - "mkdocs.yml"
       - "README.md"
       - "pyproject.toml"
@@ -75,8 +77,8 @@ jobs:
           JAX_PLATFORMS: cpu
         run: uv run --no-sync python scripts/build_examples.py --jobs 2 --source-ref "$GITHUB_SHA"
 
-      - name: Test the gallery script
-        run: uv run --no-sync pytest tests/test_build_examples.py
+      - name: Test the gallery script and the griffe extensions
+        run: uv run --no-sync pytest tests/test_build_examples.py tests/test_griffe_extensions.py
 
       - name: Run the code blocks in the README and the guides
         env:
