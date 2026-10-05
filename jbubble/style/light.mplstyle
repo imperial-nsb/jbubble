@@ -1,0 +1,87 @@
+# jbubble figure style, light theme.
+# Load it with plt.style.use("jbubble.style.light"). The jbubble.style
+# docstring describes the palette and how to use it.
+#
+# Neutrals: surface ffffff, ink 1f2328, secondary ink 59636e, axis rule c8d1da,
+# grid e6eaef, acoustic drive trace 8c959f.
+
+# Categorical slots C0-C7: azure, coral, teal, plum, green, violet, amber,
+# crimson. Amber is below 3:1 contrast on white, so label it directly.
+axes.prop_cycle: cycler("color", ["0d77ca", "e35a2d", "129483", "9f1169", "438f31", "7447c8", "da9516", "af2938"])
+image.cmap: Blues
+
+# Figure: solid background, compact layout, sharp saved files.
+figure.facecolor: ffffff
+figure.edgecolor: ffffff
+figure.dpi: 110
+figure.titlesize: 12
+figure.titleweight: bold
+figure.constrained_layout.use: True
+savefig.dpi: 200
+savefig.bbox: tight
+savefig.pad_inches: 0.08
+
+# Typography.
+font.family: sans-serif
+font.sans-serif: DejaVu Sans, Arial, Helvetica, sans-serif
+font.size: 10
+mathtext.fontset: dejavusans
+text.color: 1f2328
+axes.formatter.use_mathtext: True
+
+# Axes: no top or right spines, a hairline grid behind the data.
+axes.facecolor: ffffff
+axes.edgecolor: c8d1da
+axes.linewidth: 0.8
+axes.labelcolor: 1f2328
+axes.labelsize: 10
+axes.titlesize: 11
+axes.titleweight: bold
+axes.titlelocation: left
+axes.titlepad: 8
+axes.spines.top: False
+axes.spines.right: False
+axes.grid: True
+axes.axisbelow: True
+grid.color: e6eaef
+grid.linewidth: 0.8
+grid.linestyle: -
+
+# Ticks: short marks in the rule colour, labels in secondary ink.
+xtick.color: c8d1da
+ytick.color: c8d1da
+xtick.labelcolor: 59636e
+ytick.labelcolor: 59636e
+xtick.labelsize: 9
+ytick.labelsize: 9
+xtick.major.size: 3
+ytick.major.size: 3
+xtick.minor.size: 1.5
+ytick.minor.size: 1.5
+xtick.major.width: 0.8
+ytick.major.width: 0.8
+xtick.major.pad: 4
+ytick.major.pad: 4
+
+# Marks: 1.8 pt lines with round ends. Markers keep Matplotlib's edge colour,
+# so hollow markers (markerfacecolor="none") stay visible.
+lines.linewidth: 1.8
+lines.solid_capstyle: round
+lines.solid_joinstyle: round
+lines.markersize: 6
+
+# Outlines of unfilled patches (such as a bubble drawn with fill=False) and
+# box plots use the ink colour, so they stay visible on either background.
+patch.edgecolor: 1f2328
+boxplot.boxprops.color: 1f2328
+boxplot.whiskerprops.color: 1f2328
+boxplot.capprops.color: 1f2328
+boxplot.flierprops.color: 1f2328
+boxplot.flierprops.markeredgecolor: 1f2328
+
+# Legend: no frame, ink-coloured labels.
+legend.frameon: False
+legend.fontsize: 9
+legend.labelcolor: 1f2328
+legend.title_fontsize: 9
+legend.handlelength: 1.6
