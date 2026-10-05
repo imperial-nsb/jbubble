@@ -270,11 +270,17 @@ class PowerLawMedium(MediumModel):
     \approx 2 \times 10^5$ s⁻¹), so it changes the viscous pressure only
     near the instants where $\dot{R}$ reverses. For a 2 µm bubble in a
     shear-thinning liquid ($n = 0.7$) at 100 kPa, the radius differs from
-    the $\varepsilon \to 0$ solution by less than $10^{-7} R_0$. A much
-    smaller $\varepsilon$ (for example the `1e-6` of jbubble 0.1) leaves
-    a near-singular derivative at $\dot{R} = 0$, on which tight-tolerance
-    solves fail at 300 kPa. If you lower $\varepsilon$, check that your
-    solve still converges.
+    the $\varepsilon \to 0$ solution by less than $10^{-7} R_0$.
+
+    $\varepsilon$ also sets the viscosity at zero shear rate,
+    $K\varepsilon^{\,n-1}$, which plays the part of the finite zero-shear
+    viscosity of a real shear-thinning liquid. A smaller $\varepsilon$
+    raises it when $n < 1$, so the right-hand side changes faster where
+    $\dot{R}$ reverses and the solver takes more steps there. The smooth
+    floor keeps the right-hand side differentiable for any
+    $\varepsilon > 0$. jbubble 0.1 instead floored the shear rate with a
+    `max`, whose kink at the floor made tight-tolerance solves at 300 kPa
+    fail.
 
     The earlier jbubble convention used the wall velocity gradient
     $2|\dot{R}|/R$ as the shear rate, which overestimates the viscous
