@@ -178,12 +178,27 @@ class TestLipidBubble:
 
 class TestThickShellBubble:
     def test_default_params(self):
+        # Hoff et al. (2000): G_s 10.6-12.9 MPa, mu_s 0.39-0.49 Pa s, shell
+        # thickness 5% of the radius, air. Qin & Ferrara (2010), Table 1:
+        # 11.7 MPa, 0.45 Pa s, sigma_1 = 0.04 N/m.
         eom, pulse = thick_shell_bubble()
+        assert isinstance(eom, KellerMiksis)
         assert isinstance(eom.shell, ThickShell)
+        assert _val(eom.shell.G_s) == 11.7e6
+        assert _val(eom.shell.mu_s) == 0.45
+        assert _val(eom.shell.sigma) == 0.04
+        assert _val(eom.gas.gamma) == 1.4
+
+    @pytest.mark.parametrize("R0", [1e-6, 2e-6, 3e-6])
+    def test_default_thickness_is_five_percent_of_R0(self, R0):
+        eom, _ = thick_shell_bubble(R0=R0)
+        assert _val(eom.shell.d_s) == pytest.approx(0.05 * R0, rel=1e-12)
 
     def test_custom_params(self):
         eom, _ = thick_shell_bubble(R0=3e-6, d_s=20e-9, G_s=15e6)
         assert float(eom.R0) == pytest.approx(3e-6, rel=1e-10)
+        assert _val(eom.shell.d_s) == 20e-9
+        assert _val(eom.shell.G_s) == 15e6
 
     def test_simulation_runs(self):
         preset = thick_shell_bubble()
@@ -194,3 +209,12 @@ class TestThickShellBubble:
             t_max=5e-6,
         )
         assert bool(result.converged)
+
+    def test_response_matches_the_docstring(self):
+        # The thick_shell_bubble docstring quotes these values.
+        f0, quality = _linear_response(thick_shell_bubble()[0])
+        assert f0 == pytest.approx(6.9e6, rel=0.01)
+        assert quality == pytest.approx(0.6, abs=0.05)
+        f0_free, _ = _linear_response(free_bubble()[0])
+        assert f0_free == pytest.approx(2.0e6, rel=0.03)
+        assert _peak_expansion(*thick_shell_bubble()) == pytest.approx(0.01, rel=0.5)

@@ -2,8 +2,8 @@
 
 The factory functions in this module assemble ready-to-run `(eom, pulse)`
 pairs for the most common microbubble simulation use cases. Each function
-exposes the parameters that vary most in practice and uses physically
-reasonable defaults for everything else.
+exposes the parameters that vary most in practice and takes its defaults
+from one cited source, which its docstring names.
 
 The available presets are:
 
@@ -15,8 +15,8 @@ The available presets are:
   SonoVue parameters of Gümmer et al. (2021). Representative of clinical
   ultrasound contrast agents (UCAs) such as SonoVue.
 - [`thick_shell_bubble`][jbubble.utils.presets.thick_shell_bubble]: a
-  thick viscoelastic polymer shell (Church 1995 model). Representative of
-  polymer-shelled agents such as Optison.
+  viscoelastic shell of finite thickness (the Church 1995 model) with the
+  polymer-shell parameters of Hoff et al. (2000).
 
 All three presets share the same liquid: water at about 20 °C, with
 properties from the NIST Chemistry WebBook.
@@ -300,9 +300,9 @@ def thick_shell_bubble(
     pressure: float = 100e3,
     cycle_num: int = 5,
     *,
-    d_s: float = 15e-9,
-    G_s: float = 10e6,
-    mu_s: float = 0.5,
+    d_s: float | None = None,
+    G_s: float = 11.7e6,
+    mu_s: float = 0.45,
     sigma: float = 0.04,
     gamma: float = 1.4,
     mu: float = 1e-3,
@@ -310,12 +310,22 @@ def thick_shell_bubble(
     rho_L: float = 998.0,
     c_L: float = 1500.0,
 ) -> BubblePreset:
-    """Polymer thick-shell bubble: the Church (1995) model.
+    """Polymer-shelled bubble: the Church (1995) thick-shell model.
 
-    Models a thick viscoelastic shell with elastic and viscous
-    contributions. Representative of polymer-shelled agents such as
-    Optison (albumin), or experimental poly(lactic-co-glycolic acid) (PLGA)
-    microbubbles.
+    Models a gas bubble inside a viscoelastic solid shell of finite
+    thickness, with [`ThickShell`][jbubble.bubble.shell.ThickShell]. The
+    defaults describe the air-filled, polymer-shelled agent that Hoff et
+    al. (2000) characterised, whose stiff shell dominates the bubble's
+    response and damps it heavily. With the defaults, the linear resonance
+    is about 6.9 MHz, against about 2.0 MHz for
+    [`free_bubble`][jbubble.utils.presets.free_bubble], and the quality
+    factor is about 0.6. The bubble therefore oscillates far less than
+    [`lipid_bubble`][jbubble.utils.presets.lipid_bubble] at the same drive:
+    its peak expansion at 100 kPa and 1 MHz is about 1%.
+
+    Protein-shelled agents, such as Albunex and Optison, have an albumin
+    shell. For those, Qin and Ferrara (2010, Tables 1 and 2) use
+    `G_s=88.8e6`, `mu_s=1.77`, and `d_s=15e-9` at `R0=1.5e-6`.
 
     Physics: [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis] +
     [`PolytropicGas`][jbubble.bubble.gas.PolytropicGas] +
@@ -326,33 +336,43 @@ def thick_shell_bubble(
     Parameters
     ----------
     R0 : float
-        Equilibrium radius [m]. Default: `2e-6` (2 µm).
+        Equilibrium (outer) radius [m]. Default: `2e-6` (2 µm).
     freq : float
         Driving frequency [Hz]. Default: `1e6` (1 MHz).
     pressure : float
         Peak acoustic pressure amplitude [Pa]. Default: `100e3` (100 kPa).
     cycle_num : int
         Number of tone-burst cycles. Default: `5`.
-    d_s : float
-        Shell thickness [m]. Default: `15e-9` (15 nm).
+    d_s : float or None
+        Shell thickness at `R0` [m]. Default: `None`, which uses
+        `0.05 * R0`, the thickness-to-radius ratio of Hoff et al.
     G_s : float
-        Shell shear modulus [Pa]. Default: `10e6` (10 MPa, a stiff polymer
-        shell).
+        Shell shear modulus [Pa]. Default: `11.7e6` (11.7 MPa), within the
+        10.6-12.9 MPa that Hoff et al. estimate. Qin and Ferrara (2010,
+        Table 1) use the same value for a polymer shell.
     mu_s : float
-        Shell viscosity [Pa·s]. Default: `0.5`.
+        Shell shear viscosity [Pa s]. Default: `0.45`, within the
+        0.39-0.49 Pa s that Hoff et al. estimate. Qin and Ferrara (2010,
+        Table 1) use the same value for a polymer shell.
     sigma : float
-        Surface tension [N/m]. Default: `0.04` (reduced by the polymer
-        coating).
+        Surface tension [N/m]. Default: `0.04`, the gas-shell interfacial
+        tension in Qin and Ferrara (2010, Table 1).
     gamma : float
-        Polytropic exponent. Default: `1.4`.
+        Polytropic exponent. Default: `1.4`, the adiabatic exponent of air,
+        the gas in the Hoff et al. agent.
     mu : float
-        Liquid dynamic viscosity [Pa·s]. Default: `1e-3` (water).
+        Liquid dynamic viscosity [Pa s]. Default: `1e-3` (water at 20 °C:
+        1.0016e-3 Pa s, NIST).
     P_amb : float
-        Ambient pressure [Pa]. Default: `101325.0` (1 atm).
+        Ambient pressure [Pa]. Default: `101325.0` (one standard
+        atmosphere).
     rho_L : float
-        Liquid density [kg/m³]. Default: `998.0` (water).
+        Liquid density [kg/m³]. Default: `998.0` (water at 20 °C:
+        998.2 kg/m³, NIST).
     c_L : float
-        Speed of sound in the liquid [m/s]. Default: `1500.0` (water).
+        Speed of sound in the liquid [m/s]. Default: `1500.0`, the round
+        value that ultrasound modelling commonly uses for water (NIST gives
+        1482 m/s at 20 °C and 1497 m/s at 25 °C).
 
     Returns
     -------
@@ -362,8 +382,25 @@ def thick_shell_bubble(
 
     References
     ----------
-    Church, J. Acoust. Soc. Am. 97 (1995) 1510–1521.
+    Church, C. C. (1995). The effects of an elastic solid surface layer on
+    the radial pulsations of gas bubbles. *J. Acoust. Soc. Am.* 97(3),
+    1510-1521. [doi:10.1121/1.412091](https://doi.org/10.1121/1.412091)
+
+    Hoff, L., Sontum, P. C., & Hovem, J. M. (2000). Oscillations of
+    polymeric microbubbles: Effect of the encapsulating shell. *J. Acoust.
+    Soc. Am.* 107(4), 2272-2280.
+    [doi:10.1121/1.428557](https://doi.org/10.1121/1.428557)
+
+    Qin, S., & Ferrara, K. W. (2010). A model for the dynamics of
+    ultrasound contrast agents in vivo. *J. Acoust. Soc. Am.* 128(3),
+    1511-1521. [doi:10.1121/1.3409476](https://doi.org/10.1121/1.3409476)
+
+    NIST Chemistry WebBook, NIST Standard Reference Database 69,
+    Thermophysical Properties of Fluid Systems: water at 0.101325 MPa.
+    [doi:10.18434/T4D303](https://doi.org/10.18434/T4D303)
     """
+    if d_s is None:
+        d_s = 0.05 * R0
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=gamma),
         shell=ThickShell(sigma=sigma, d_s=d_s, G_s=G_s, mu_s=mu_s),
