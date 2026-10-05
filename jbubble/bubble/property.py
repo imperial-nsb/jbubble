@@ -7,7 +7,8 @@ to a scalar array. This abstraction covers:
 - [`ConstantProperty`][jbubble.bubble.property.ConstantProperty]: a fixed
   value (the common case).
 - State-dependent laws such as
-  [`MarmottantSurfaceTension`][jbubble.bubble.shell.MarmottantSurfaceTension]
+  [`MarmottantSurfaceTension`][jbubble.bubble.shell.MarmottantSurfaceTension],
+  [`SmoothMarmottantSurfaceTension`][jbubble.bubble.shell.SmoothMarmottantSurfaceTension],
   and [`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension],
   defined in `jbubble.bubble.shell`.
 - [`NeuralProperty`][jbubble.bubble.property.NeuralProperty]: a neural

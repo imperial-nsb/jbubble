@@ -7,9 +7,10 @@ up there:
 - jax>=0.8.2 with lineax<=0.0.8 raised ``TracerBoolConversionError`` inside
   Kvaerno solvers (lineax#187, fixed in lineax 0.1.0).
 - diffrax 0.7.1 with optimistix 0.1.0 rejected every Kvaerno step.
-- diffrax 0.7.2 with optimistix 0.1.0 takes about six times more Kvaerno steps
-  than before (fixed on diffrax main by diffrax#754, unreleased at the time of
-  writing).
+- diffrax 0.7.2 with optimistix 0.1.0 takes about four times more Kvaerno5
+  steps on the lipid_bubble preset than diffrax 0.7.1 with optimistix 0.0.11
+  (3,003 vs 827). diffrax#754 fixes it on diffrax main, unreleased at the time
+  of writing.
 """
 
 from importlib.metadata import version
@@ -58,7 +59,7 @@ def test_implicit_solver_matches_explicit_under_jit_and_grad(solver):
 
 
 # diffrax 0.7.2 requires optimistix>=0.1.0, and together they make Kvaerno5
-# take about six times more steps than Dopri5 on this preset (4,311 vs 684).
+# take about four times more steps than Dopri5 on this preset (3,003 vs 767).
 # diffrax PR #754 fixes it on main, but no release contains it yet. The marker
 # only covers diffrax 0.7.2 and older, so the CI jobs that test the newest
 # releases run this as a normal test once a fixed diffrax ships; then raise the

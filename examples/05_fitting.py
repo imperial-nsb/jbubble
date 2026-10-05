@@ -18,8 +18,8 @@ from jbubble.bubble.eom import EquationOfMotion, ModifiedRayleighPlesset
 from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import (
-    GompertzSurfaceTension,
     LipidShell,
+    SmoothMarmottantSurfaceTension,
 )
 from jbubble.pulse import ToneBurst
 from jbubble.pulse.shapes import Sine
@@ -32,7 +32,7 @@ R0 = 2e-6  # [m]
 # This builds an EquationOfMotion from the parameter we want to fit (chi).
 def make_eom(params: dict) -> EquationOfMotion:
     # Marmottant shell elasticity (chi) is what we will estimate.
-    sigma = GompertzSurfaceTension(
+    sigma = SmoothMarmottantSurfaceTension(
         R_buckle_ratio=0.98,
         chi=params["chi"],
         sigma_rupture=0.072,

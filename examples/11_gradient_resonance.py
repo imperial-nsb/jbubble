@@ -69,13 +69,16 @@ def params_to_physical(params):
     )
 
 
-def soft_max(x, beta=1e6):
-    """Smooth differentiable approximation of max via log-sum-exp.
+def soft_max(x, beta=1e3):
+    """Smooth differentiable approximation of max via log-mean-exp.
 
     Avoids the argmax discontinuity of ``jnp.max``, which causes gradient
     spikes whenever the peak-radius timestep jumps between ODE output points.
-    ``beta`` controls sharpness; at 1e6 / (typical radius ~µm) the error
-    relative to the true max is negligible.
+    The result lies between the mean and the max of ``x``, and it tracks the
+    max only when ``beta * x`` varies by much more than 1 across the samples.
+    Pass a dimensionless ``x``, such as ``R / R0``. The result is at most
+    ``log(len(x)) / beta`` below the max, about 0.005 for 200 samples at the
+    default ``beta``.
     """
     return (jax.nn.logsumexp(beta * x) - jnp.log(x.shape[0])) / beta
 
@@ -118,7 +121,7 @@ def expansion_ratio_sweep(freq, R0):
     """Return max expansion ratio for (freq, R0).  vmappable."""
     eom, pulse = make_model(physical_to_params(freq, R0))
     result = run_simulation(eom, pulse, save_spec=SAVE_SPEC)
-    return soft_max(result.radius) / R0
+    return soft_max(result.radius / R0)
 
 
 # ============================================================================
@@ -145,7 +148,7 @@ def find_resonance(init_freq, init_r0, n_steps, learning_rate):
     # Add initial state before optimization
     eom, pulse = make_model(physical_to_params(init_freq, init_r0))
     init_result = run_simulation(eom, pulse, save_spec=SAVE_SPEC)
-    init_expansion = float(soft_max(init_result.radius) / init_result.state.R0[0])
+    init_expansion = float(soft_max(init_result.radius / init_result.state.R0[0]))
     freq_hist.append(init_freq)
     r0_hist.append(init_r0)
     expansion_hist.append(init_expansion)
@@ -164,7 +167,7 @@ def find_resonance(init_freq, init_r0, n_steps, learning_rate):
         make_model=make_model,
         params0=physical_to_params(init_freq, init_r0),
         save_spec=SAVE_SPEC,
-        loss_fn=lambda result: -soft_max(result.radius) / result.state.R0[0],
+        loss_fn=lambda result: -soft_max(result.radius / result.state.R0[0]),
         optimizer=optax.adam(learning_rate),
         n_steps=n_steps,
         step_callback=callback,
