@@ -96,6 +96,10 @@ docs = [
     "pytest>=8.3",
     "pytest-markdown-docs>=0.9",
 ]
+# scripts/make_readme_assets.py: render the README animations and images.
+# imageio-ffmpeg bundles an ffmpeg binary that encodes the GIFs. Install with
+# `uv sync --group assets`.
+assets = ["matplotlib>=3.9", "imageio-ffmpeg>=0.6"]
 
 [tool.hatch.version]
 source = "vcs"

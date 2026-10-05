@@ -1,0 +1,98 @@
+{
+  "generator": "scripts/make_readme_assets.py",
+  "budget": {
+    "max_bytes": 2500000,
+    "width_px": 1600,
+    "max_seconds": 8.0
+  },
+  "assets": {
+    "emission-spectrum-dark.png": {
+      "bytes": 537808,
+      "width": 1600,
+      "height": 720,
+      "frames": 1,
+      "duration_s": 0.0,
+      "input_hash": "8783ba2cbb607d588d052f4dd7787cd2388bda1577e85b56fcaa6384dcdb1ed6",
+      "jbubble_version": "0.1.1.post1.dev190",
+      "git_sha": "29c8942c22bb3df4e9817509e5a978badcb6af17",
+      "quick": false
+    },
+    "emission-spectrum-light.png": {
+      "bytes": 520902,
+      "width": 1600,
+      "height": 720,
+      "frames": 1,
+      "duration_s": 0.0,
+      "input_hash": "8783ba2cbb607d588d052f4dd7787cd2388bda1577e85b56fcaa6384dcdb1ed6",
+      "jbubble_version": "0.1.1.post1.dev190",
+      "git_sha": "29c8942c22bb3df4e9817509e5a978badcb6af17",
+      "quick": false
+    },
+    "gradient-climb-dark.gif": {
+      "bytes": 589401,
+      "width": 1600,
+      "height": 680,
+      "frames": 57,
+      "duration_s": 7.13,
+      "input_hash": "8783ba2cbb607d588d052f4dd7787cd2388bda1577e85b56fcaa6384dcdb1ed6",
+      "jbubble_version": "0.1.1.post1.dev190",
+      "git_sha": "29c8942c22bb3df4e9817509e5a978badcb6af17",
+      "quick": false
+    },
+    "gradient-climb-light.gif": {
+      "bytes": 637814,
+      "width": 1600,
+      "height": 680,
+      "frames": 57,
+      "duration_s": 7.13,
+      "input_hash": "8783ba2cbb607d588d052f4dd7787cd2388bda1577e85b56fcaa6384dcdb1ed6",
+      "jbubble_version": "0.1.1.post1.dev190",
+      "git_sha": "29c8942c22bb3df4e9817509e5a978badcb6af17",
+      "quick": false
+    },
+    "hero-bubble-dark.gif": {
+      "bytes": 1129410,
+      "width": 1600,
+      "height": 660,
+      "frames": 150,
+      "duration_s": 7.5,
+      "input_hash": "8783ba2cbb607d588d052f4dd7787cd2388bda1577e85b56fcaa6384dcdb1ed6",
+      "jbubble_version": "0.1.1.post1.dev190",
+      "git_sha": "29c8942c22bb3df4e9817509e5a978badcb6af17",
+      "quick": false
+    },
+    "hero-bubble-light.gif": {
+      "bytes": 1152026,
+      "width": 1600,
+      "height": 660,
+      "frames": 150,
+      "duration_s": 7.5,
+      "input_hash": "8783ba2cbb607d588d052f4dd7787cd2388bda1577e85b56fcaa6384dcdb1ed6",
+      "jbubble_version": "0.1.1.post1.dev190",
+      "git_sha": "29c8942c22bb3df4e9817509e5a978badcb6af17",
+      "quick": false
+    },
+    "neural-sigma-dark.gif": {
+      "bytes": 724337,
+      "width": 1600,
+      "height": 680,
+      "frames": 55,
+      "duration_s": 6.88,
+      "input_hash": "8783ba2cbb607d588d052f4dd7787cd2388bda1577e85b56fcaa6384dcdb1ed6",
+      "jbubble_version": "0.1.1.post1.dev190",
+      "git_sha": "29c8942c22bb3df4e9817509e5a978badcb6af17",
+      "quick": false
+    },
+    "neural-sigma-light.gif": {
+      "bytes": 740823,
+      "width": 1600,
+      "height": 680,
+      "frames": 55,
+      "duration_s": 6.88,
+      "input_hash": "8783ba2cbb607d588d052f4dd7787cd2388bda1577e85b56fcaa6384dcdb1ed6",
+      "jbubble_version": "0.1.1.post1.dev190",
+      "git_sha": "29c8942c22bb3df4e9817509e5a978badcb6af17",
+      "quick": false
+    }
+  }
+}
