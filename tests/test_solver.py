@@ -7,6 +7,7 @@ import jax.numpy as jnp
 import jax.tree_util as jtu
 import jbubble.solver as solver_module
 import numpy as np
+import optimistix as optx
 import pytest
 from jbubble.bubble.eom import Gilmore, KellerMiksis
 from jbubble.bubble.gas import PolytropicGas, VanDerWaalsGas
@@ -164,6 +165,31 @@ class TestSolverConfig:
         assert isinstance(config.solver, diffrax.Kvaerno5)
         assert config.dt0 == 1e-10
         assert config.max_steps == 50_000
+
+    def test_stiff_uses_kvaerno5_with_chord_root_finder(self):
+        config = SolverConfig.stiff()
+        assert isinstance(config.solver, diffrax.Kvaerno5)
+        root_finder = config.solver.root_finder
+        assert isinstance(root_finder, optx.Chord)
+        assert (root_finder.rtol, root_finder.atol) == (1e-6, 1e-6)
+        assert root_finder.norm is optx.rms_norm
+        assert config.stepsize_controller.rtol == 1e-6
+        assert config.stepsize_controller.atol == 1e-10
+        assert config.max_steps == 100_000
+
+    def test_stiff_passes_tolerances_to_controller_and_newton(self):
+        config = SolverConfig.stiff(rtol=1e-8, atol=1e-5, dt0=1e-10, max_steps=7)
+        assert config.stepsize_controller.rtol == 1e-8
+        assert config.stepsize_controller.atol == 1e-5
+        assert config.solver.root_finder.rtol == 1e-8
+        assert config.solver.root_finder.atol == 1e-5
+        assert config.dt0 == 1e-10
+        assert config.max_steps == 7
+
+    def test_stiff_floors_the_newton_atol(self):
+        config = SolverConfig.stiff(atol=1e-12)
+        assert config.stepsize_controller.atol == 1e-12
+        assert config.solver.root_finder.atol == 1e-6
 
 
 class TestSolveEom:
@@ -565,6 +591,30 @@ class TestGuardedVectorField:
         assert bool(jnp.array_equal(guarded.ys.R_dot, plain.ys.R_dot))
         for key in ("num_steps", "num_accepted_steps", "num_rejected_steps"):
             assert int(guarded.stats[key]) == int(plain.stats[key])
+
+    @pytest.mark.parametrize(
+        ("make_eom", "p", "pulse", "t_max"),
+        [
+            (_lipid_bubble, 7.2e-9, _tone(400e3), 10e-6),
+            (_tissue_bubble, 1e6, _tone(1e6), 6e-6),
+            (lambda k: _lipid_bubble(k, R0=50e-9), 7.5e-9, _tone(freq=5e6), 2e-6),
+            (lambda mu: _free_bubble(mu, R0=0.3e-6), 0.05, _tone(freq=2e6), 5e-6),
+        ],
+        ids=["lipid-400k", "tissue-1MPa", "lipid-50nm", "viscous-300nm"],
+    )
+    def test_implicit_solution_agrees_to_tolerance(
+        self, monkeypatch, make_eom, p, pulse, t_max
+    ):
+        """With Kvaerno5, the guard can change how XLA rounds the Newton
+        iterations, and the controller then picks different steps. The
+        solutions still agree to within the solver's own error, about
+        1e-8 R0 for the 50 nm bubble, but not always bit for bit."""
+        guarded, plain = self._guarded_and_plain(
+            monkeypatch, make_eom, p, pulse, SolverConfig.stiff(), t_max
+        )
+        assert diffrax.is_successful(plain.result)
+        R0 = float(guarded.ys.R0[0])
+        assert float(jnp.max(jnp.abs(guarded.ys.R - plain.ys.R))) < 1e-7 * R0
 
     def test_guard_fixes_nan_gradient_and_keeps_the_forward_pass(self, monkeypatch):
         """Rejected trial steps reach R <= 0. Without the guard the gradient is

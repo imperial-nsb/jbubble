@@ -29,6 +29,7 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
+import optimistix as optx
 from jax.typing import ArrayLike
 
 from .bubble.eom import EquationOfMotion
@@ -70,13 +71,21 @@ class SaveSpec(eqx.Module):
 _DEFAULT_RTOL = 1e-6
 _DEFAULT_ATOL = 1e-10
 _DEFAULT_MAX_STEPS = 100_000
+# The smallest absolute tolerance of the Newton iterations in
+# SolverConfig.stiff. Kvaerno5 solves for the stage derivatives of the scaled
+# state, and optimistix.Chord compares the Newton residual with atol alone,
+# in units of the scaled state per second. Roundoff in a nanobubble's
+# right-hand side keeps that residual above about 1e-8, so a smaller floor
+# stalls 10 to 40 nm bubbles; 1e-6 converges for all of them.
+_NEWTON_ATOL_FLOOR = 1e-6
 
 
 class SolverConfig(eqx.Module):
     r"""Numerical integration settings for [`solve_eom`][jbubble.solver.solve_eom].
 
     The defaults suit microbubbles in water: an explicit fifth-order
-    Runge-Kutta method (`diffrax.Dopri5`) with an adaptive step size.
+    Runge-Kutta method (`diffrax.Dopri5`) with an adaptive step size. For
+    stiff problems, use [`SolverConfig.stiff`][jbubble.solver.SolverConfig.stiff].
 
     Parameters
     ----------
@@ -117,6 +126,28 @@ class SolverConfig(eqx.Module):
     radius tolerance: through an inertial collapse, 0.1's gradients could be
     off by 50 % or more.
 
+    **Stiffness.** A bubble is stiff when its fastest relaxation rate is
+    much larger than the driving angular frequency $\omega$. For a viscous
+    liquid and a lipid shell of dilatational viscosity $\kappa_s$, that rate
+    is about
+
+    $$
+    \lambda = \frac{4\mu + 4\kappa_s/R_0}{\rho_L R_0^2},
+    $$
+
+    divided by $1 + (4\mu + 4\kappa_s/R_0)/(\rho_L c_L R_0)$ for
+    Keller-Miksis. The problem is stiff when $\lambda/\omega \gtrsim 100$.
+    For example, a lipid shell with $\kappa_s = 7.5 \times 10^{-9}$ kg/s
+    driven at 5 MHz gives $\lambda/\omega \approx 850$ at 50 nm, 320 at
+    100 nm, and 150 at 150 nm, and a 300 nm bubble in a 0.05 Pa s liquid at
+    2 MHz gives 120. A 2 µm lipid-coated microbubble at 1 MHz gives 0.8.
+
+    On a stiff problem, `Dopri5` steps at the edge of its stability region:
+    it needs hundreds to thousands of steps per driving period, and
+    although the radius stays accurate, at the default tolerances the
+    gradient through the solve can be wrong by orders of magnitude. Use
+    [`stiff`][jbubble.solver.SolverConfig.stiff] there.
+
     **Long integrations.** `Dopri5` needs about 60 to 100 steps, accepted
     and rejected, per driving period for a microbubble in water, so
     `max_steps=100_000` covers about a thousand periods. Raise it for
@@ -132,6 +163,110 @@ class SolverConfig(eqx.Module):
     )
     dt0: float = 1e-9
     max_steps: int = eqx.field(default=_DEFAULT_MAX_STEPS, static=True)
+
+    @classmethod
+    def stiff(
+        cls,
+        *,
+        rtol: float = _DEFAULT_RTOL,
+        atol: float = _DEFAULT_ATOL,
+        dt0: float = 1e-9,
+        max_steps: int = _DEFAULT_MAX_STEPS,
+    ) -> SolverConfig:
+        r"""Return settings for stiff problems: an implicit `Kvaerno5` solver.
+
+        Use this configuration for nanobubbles, sub-micron bubbles in
+        viscous liquids, and other stiff problems (see the Notes of
+        [`SolverConfig`][jbubble.solver.SolverConfig]). It returns
+
+        ```python
+        SolverConfig(
+            solver=diffrax.Kvaerno5(
+                root_finder=optimistix.Chord(
+                    rtol=rtol, atol=max(atol, 1e-6), norm=optimistix.rms_norm
+                )
+            ),
+            stepsize_controller=diffrax.PIDController(rtol=rtol, atol=atol),
+            dt0=dt0,
+            max_steps=max_steps,
+        )
+        ```
+
+        Two choices make the implicit solver reliable:
+
+        - **The `Chord` root finder.** `Kvaerno5`'s default root finder,
+          `diffrax.VeryChord`, reports a Newton iteration that converges
+          slowly as diverged in diffrax 0.7.2 with optimistix 0.1.0, so the
+          solver rejects many steps: on a moderately stiff or a non-stiff
+          problem it takes 6 to 13 times more steps than with `Chord`.
+          [Diffrax pull request 754](https://github.com/patrick-kidger/diffrax/pull/754)
+          fixes this, but no release contains it yet.
+        - **A floor on the Newton tolerance.** `Kvaerno5` solves for the
+          derivative of the scaled state at each stage, and `Chord` compares
+          the residual of those equations, in units of the scaled state per
+          second, with its absolute tolerance alone. A nanobubble's
+          right-hand side is a sum of large terms that cancel, so roundoff
+          keeps that residual above about `1e-8`. With a smaller
+          tolerance, the solver rejects most steps of a 10 to 40 nm bubble
+          and stops at `max_steps`. The Newton iterations therefore use an
+          absolute tolerance of at least `1e-6`.
+
+        Parameters
+        ----------
+        rtol : float
+            Relative tolerance of the step-size controller and of the Newton
+            iterations. Default: `1e-6`.
+        atol : float
+            Absolute tolerance of the step-size controller, on the scaled
+            state (see [`SolverConfig`][jbubble.solver.SolverConfig]).
+            Default: `1e-10`. The Newton iterations use `max(atol, 1e-6)`.
+        dt0 : float
+            Initial step size [s]. Default: `1e-9`.
+        max_steps : int
+            Maximum number of solver steps. Default: `100_000`.
+
+        Returns
+        -------
+        SolverConfig
+            Implicit-solver settings.
+
+        Notes
+        -----
+        On a stiff problem, `Kvaerno5` takes 5 to 50 times fewer steps than
+        `Dopri5`, or converges where `Dopri5` reaches `max_steps`, and its
+        gradients are accurate: for 10 to 150 nm lipid bubbles at the
+        default tolerances, the gradient with respect to the shell viscosity
+        has a relative error of about $10^{-5}$ or less. On a problem that
+        isn't stiff, it takes about as many steps as
+        `Dopri5`, with similar errors, but runs 10 to 20 times longer. It
+        also compiles more slowly: about 2 to 6 s for a solve, against
+        about 1 s or less for `Dopri5`.
+
+        To change the tolerances, call `stiff` again with new `rtol` and
+        `atol`, rather than replacing `stepsize_controller`, so that the
+        Newton tolerances follow.
+
+        `jax.jit`, `jax.vmap`, and `jax.grad` work with this configuration.
+        `jax.pmap` doesn't: with diffrax 0.7.2, an implicit solve under
+        `jax.pmap` raises `ValueError: pytree does not match out_structure`.
+
+        Examples
+        --------
+        ```python
+        from jbubble import SolverConfig, run_simulation
+
+        result = run_simulation(eom, pulse, config=SolverConfig.stiff())
+        ```
+        """
+        root_finder = optx.Chord(
+            rtol=rtol, atol=max(atol, _NEWTON_ATOL_FLOOR), norm=optx.rms_norm
+        )
+        return cls(
+            solver=diffrax.Kvaerno5(root_finder=root_finder),
+            stepsize_controller=diffrax.PIDController(rtol=rtol, atol=atol),
+            dt0=dt0,
+            max_steps=max_steps,
+        )
 
 
 def _is_admissible(eom: EquationOfMotion, state: Any) -> jax.Array:

@@ -22,6 +22,16 @@ The default, `SolverConfig()`, is `Dopri5` (an explicit fifth-order Runge–Kutt
 
 The solver integrates a dimensionless state: the radius in units of $R_0$ and the wall velocity in units of $\sqrt{P_\text{amb}/\rho_L}$. So `atol=1e-10` means $10^{-10} R_0$ for a bubble of any size. In jbubble 0.1, `atol` applied in SI units.
 
-To tighten the tolerances, pass your own controller, for example `SolverConfig(stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-12))`. If `result.converged` is `False` because the solve reached `max_steps`, raise `max_steps`.
+For stiff problems, such as lipid-coated nanobubbles or sub-micron bubbles in viscous liquids, use the implicit configuration:
+
+```python
+from jbubble import SolverConfig, run_simulation
+
+result = run_simulation(eom, pulse, config=SolverConfig.stiff())
+```
+
+The Notes of `SolverConfig` explain how to tell whether a problem is stiff.
+
+To tighten the tolerances, pass them to the constructor you use, for example `SolverConfig.stiff(rtol=1e-8, atol=1e-12)`, or `SolverConfig(stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-12))`. If `result.converged` is `False` because the solve reached `max_steps`, raise `max_steps`, or switch to `SolverConfig.stiff()` if `Dopri5` needs thousands of steps per driving period.
 
 For gradients, keep the default adjoint, `diffrax.RecursiveCheckpointAdjoint()`, which differentiates the discretised solve exactly. Pass `adjoint=diffrax.ForwardMode()` to `run_simulation` or `solve_eom` for forward-mode Jacobians, for example in a Levenberg–Marquardt fit.

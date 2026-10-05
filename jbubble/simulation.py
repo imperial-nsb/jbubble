@@ -189,7 +189,8 @@ def run_simulation(
             "ODE solver did not converge, so the trajectory is incomplete: "
             "samples after the failure are inf. Check `result.converged`. "
             "If the solver reached `max_steps`, raise "
-            "`SolverConfig(max_steps=...)`.",
+            "`SolverConfig(max_steps=...)`, or use `SolverConfig.stiff()` for "
+            "a stiff problem.",
             UserWarning,
             stacklevel=2,
         )
