@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: >-
+  If you use jbubble in your research, cite it with the metadata in this file.
+  jbubble was first presented at the 2026 IEEE International Ultrasonics
+  Symposium (IUS).
+type: software
+title: "jbubble: differentiable microbubble dynamics in JAX"
+abstract: >-
+  jbubble is a JAX library for simulating and fitting the radial dynamics of
+  acoustically driven microbubbles, such as ultrasound contrast agents. It
+  composes equations of motion (Rayleigh-Plesset, modified Rayleigh-Plesset,
+  Keller-Miksis, and Gilmore) with gas, shell, surface tension, and medium
+  models, and with driving pulses that range from tone bursts to measured or
+  neural waveforms. Every model is a PyTree, so simulations compile with
+  jax.jit, batch with jax.vmap and a parallel grid sweep, and differentiate
+  with jax.grad through an adaptive ODE solver. jbubble uses these gradients
+  to fit model parameters and neural shell laws to measured radius curves or
+  acoustic emissions, and computes the pressure that a bubble radiates.
+# Other contributors are listed once the maintainer confirms them.
+authors:
+  - given-names: Callum Rhys
+    family-names: Tilbury
+    affiliation: Imperial College London
+version: 0.2.0
+license: MIT
+repository-code: "https://github.com/imperial-nsb/jbubble"
+url: "https://imperial-nsb.github.io/jbubble/"
+keywords:
+  - jax
+  - microbubbles
+  - ultrasound
+  - contrast agents
+  - cavitation
+  - differentiable simulation
+  - acoustic emission
+  - parameter estimation
