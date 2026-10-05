@@ -72,11 +72,16 @@ pip doesn't read `uv.lock`, so it installs the newest versions that
 
 jbubble 0.1 built with setuptools-scm, which wrote `jbubble/_version.py` into
 the source tree. jbubble now reads its version from the package metadata, so
-delete the leftover file:
+delete the leftover files:
 
 ```bash
-rm -f jbubble/_version.py
+rm -rf jbubble/_version.py jbubble.egg-info
 ```
+
+If you installed jbubble 0.1 with `pip install -e .`, this command also
+removes the `jbubble.egg-info/` directory. If you keep that directory,
+`jbubble.__version__` reports the old version when you run Python from the
+repository root.
 
 jbubble now needs Python 3.12 or later. If your environment runs an older
 Python, create a new one with `uv sync` or with the
