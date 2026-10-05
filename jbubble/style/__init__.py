@@ -41,3 +41,6 @@ Draw the acoustic drive in the neutral grey `#8c959f` (light) or `#6e7681`
 The style sheets are cosmetic. Their colours and sizes can change in any
 release and aren't covered by jbubble's versioning policy.
 """
+
+# The styles are package data; the package has no Python names.
+__all__: list[str] = []

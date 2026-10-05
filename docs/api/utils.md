@@ -1,6 +1,7 @@
 # utils
 
-Utility modules: quick-start presets, batched parameter sweeps, and HDF5 I/O.
+Utility modules: quick-start presets, batched parameter sweeps, HDF5 I/O, and
+Matplotlib styles for figures.
 
 ---
 
@@ -95,3 +96,15 @@ arrays, meta = load_hdf5("results.h5")
 print(meta["description"])  # "sweep"
 print(arrays["peak_expansion"].shape)  # (20, 4)
 ```
+
+---
+
+## Figure styles
+
+Matplotlib style sheets in a light and a dark theme, with the colours of the
+jbubble docs and figures.
+
+![The jbubble figure palette in the light theme: eight colour swatches, four damped radius curves, a grey drive trace, and the Blues colour map](../assets/palette-light.png#only-light)
+![The jbubble figure palette in the dark theme: eight colour swatches, four damped radius curves, a grey drive trace, and the reversed Blues colour map](../assets/palette-dark.png#only-dark)
+
+::: jbubble.style
