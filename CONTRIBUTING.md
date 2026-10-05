@@ -113,6 +113,71 @@ CI runs the full suite on Python 3.12 with the oldest versions that
 `pyproject.toml` allows and with `uv.lock`, and on Python 3.13 and 3.14 with
 the newest releases.
 
+### Build the docs
+
+[Zensical](https://zensical.org/) builds the documentation site from
+`docs/` and `mkdocs.yml`. The example gallery comes from the scripts in
+`examples/`.
+
+1. Install the docs tools:
+
+   ```bash
+   uv sync --group docs
+   ```
+
+2. Run the examples, and write the gallery and the notebooks to
+   `docs/examples/`:
+
+   ```bash
+   uv run python scripts/build_examples.py
+   ```
+
+   The first run executes every example and takes a few minutes. The script
+   caches the executed notebooks in `build/examples-cache/`, so later runs
+   only re-execute an example when the example, the jbubble source, or
+   `uv.lock` changes. To write the pages without running anything new, add
+   `--no-execute`; pages without a cached notebook then show code but no
+   output.
+
+3. Preview the site at <http://localhost:8000>. The preview rebuilds when
+   you save a file in `docs/`.
+
+   ```bash
+   uv run zensical serve
+   ```
+
+4. Before you open a pull request, build the site the same way as CI:
+
+   ```bash
+   uv run zensical build --clean --strict
+   ```
+
+   With `--strict`, the build fails on broken links and cross-references.
+   It still passes when griffe warns about a docstring, so check the output
+   for lines that start with `griffe:`. Keep `--clean`: a cached build
+   doesn't repeat the warnings.
+
+Each example is a [jupytext](https://jupytext.readthedocs.io/) percent-format
+script: start each code cell with `# %%` and each Markdown cell with
+`# %% [markdown]`, and create, draw, and show each figure within one cell. The
+gallery script rejects a script without cells and an example that shows no
+figure.
+
+CI also runs the code blocks in `README.md` and `docs/guide/`. To run them
+yourself, use this command:
+
+```bash
+uv run pytest --markdown-docs --markdown-docs-syntax=superfences README.md docs/guide
+```
+
+To skip a block that can't run on its own, open it with
+```` ```{.python notest} ````. To run a block in the namespace of the block
+before it, open it with ```` ```{.python continuation} ````.
+
+To change the colours of jbubble figures, edit the style sheets in
+`jbubble/style/`, then regenerate the palette cards in `docs/assets/` with
+`uv run python scripts/make_palette_card.py`.
+
 ### Change dependencies
 
 To add or change a dependency, edit `pyproject.toml`, run `uv lock`, and commit
