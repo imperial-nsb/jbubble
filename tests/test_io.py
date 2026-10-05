@@ -77,3 +77,56 @@ class TestHdf5RoundTrip:
         export_hdf5(path, x=np.array([1.0, 2.0, 3.0]))
         arrays, _ = load_hdf5(path)
         np.testing.assert_allclose(arrays["x"], [1.0, 2.0, 3.0])
+
+
+class TestMetadataTypes:
+    def test_numpy_and_jax_scalars_round_trip(self, tmp_path):
+        path = tmp_path / "test.h5"
+        meta = {
+            "f32": np.float32(0.5),
+            "f64": np.float64(2e-6),
+            "i64": np.int64(7),
+            "flag": np.bool_(True),
+            "jax_scalar": jnp.asarray(1e6),
+            "jax_int": jnp.asarray(3),
+        }
+        export_hdf5(path, metadata=meta, x=jnp.array([1.0]))
+        _, loaded = load_hdf5(path)
+
+        assert loaded == {
+            "f32": 0.5,
+            "f64": 2e-6,
+            "i64": 7,
+            "flag": True,
+            "jax_scalar": 1e6,
+            "jax_int": 3,
+        }
+        assert isinstance(loaded["i64"], int)
+
+    def test_arrays_become_lists(self, tmp_path):
+        path = tmp_path / "test.h5"
+        export_hdf5(
+            path,
+            metadata={"distances": jnp.array([1e-3, 1e-2]), "grid": np.eye(2)},
+            x=jnp.array([1.0]),
+        )
+        _, loaded = load_hdf5(path)
+        assert loaded["distances"] == [1e-3, 1e-2]
+        assert loaded["grid"] == [[1.0, 0.0], [0.0, 1.0]]
+
+    def test_unserialisable_metadata_leaves_existing_file_untouched(self, tmp_path):
+        path = tmp_path / "test.h5"
+        export_hdf5(path, metadata={"run": 1}, x=jnp.array([1.0]))
+
+        with pytest.raises(TypeError, match="not JSON serializable"):
+            export_hdf5(path, metadata={"bad": object()}, y=jnp.array([2.0]))
+
+        arrays, metadata = load_hdf5(path)
+        assert set(arrays) == {"x"}
+        assert metadata == {"run": 1}
+
+    def test_unserialisable_metadata_creates_no_file(self, tmp_path):
+        path = tmp_path / "new.h5"
+        with pytest.raises(TypeError):
+            export_hdf5(path, metadata={"bad": {1, 2}}, x=jnp.array([1.0]))
+        assert not path.exists()
