@@ -656,7 +656,12 @@ class TestGuardedVectorField:
 
 
 class TestGradients:
-    """Finite gradients through strong collapses at the default tolerances."""
+    """Finite gradients through strong collapses at the default tolerances.
+
+    These are regression tests for the defaults, not for the guard: at these
+    tolerances no rejected stage leaves the admissible domain.
+    `TestGuardedVectorField` covers the guard with looser tolerances.
+    """
 
     def test_keller_miksis_marmottant_400kpa(self):
         loss = _radius_loss(_lipid_bubble, _tone(400e3))
