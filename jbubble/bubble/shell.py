@@ -407,108 +407,134 @@ class SmoothMarmottantSurfaceTension(Property):
 
 
 class GompertzSurfaceTension(Property):
-    r"""Smooth Gompertz surface tension law.
+    r"""Marmottant-Gompertz surface tension law (Gümmer et al. 2021).
 
-    A later release redesigns this class, so its parameters and defaults
-    may change.
-
-    A differentiable Gompertz function approximates the piecewise
-    Marmottant surface tension, which keeps automatic differentiation
-    robust:
+    A Gompertz function replaces the corners of the piecewise Marmottant
+    law with a smooth curve that takes the same inputs (Gümmer, Schenke,
+    and Denner 2021, Eqs. 11 and 13-15):
 
     $$
-    \sigma(R) = a \exp\left[-b \exp\left(c\left(1 - \frac{R}{R_b}\right)\right)\right]
+    \sigma(R) = \sigma_r \exp\left[-b
+        \exp\left(c\left(1 - \frac{R}{R_b}\right)\right)\right],
     $$
-
-    where $R_b$ is `R_buckle_ratio * state.R0`. The code derives the
-    Gompertz parameters from $\chi$ (`chi`), $\sigma_r$ (`sigma_rupture`),
-    and the dimensionless `sharpness` factor $s$:
 
     $$
     \begin{aligned}
-    a &= \sigma_r, \\
-    c &= s \, \frac{2\chi}{\sigma_r} \sqrt{1 + \frac{\sigma_r}{2\chi}}, \\
-    b &= -\ln\left(\frac{\sigma_0}{\sigma_r}\right)
-        \exp\left[-c\left(1 - \frac{R_0}{R_b}\right)\right],
+    R_b &= r_b R_0,
     \qquad
-    \sigma_0 = \chi\left[\left(\frac{R_0}{R_b}\right)^2 - 1\right].
+    \sigma_0 = \chi\left[\left(\frac{R_0}{R_b}\right)^2 - 1\right], \\
+    b &= -\ln\left(\frac{\sigma_0}{\sigma_r}\right)
+        \exp\left[-c\left(1 - \frac{R_0}{R_b}\right)\right], \\
+    c &= \frac{2\chi e}{\sigma_r}\sqrt{1 + \frac{\sigma_r}{2\chi}},
     \end{aligned}
     $$
 
-    So $\sigma(R_0) = \sigma_0$ matches the Marmottant elastic regime, and
-    $\sigma \to \sigma_r$ as $R \to \infty$. The model reads $R_0$ from
-    the state, so it stays consistent when $R_0$ evolves, for example
-    through rectified diffusion.
+    where $r_b$ is `R_buckle_ratio`, $\chi$ is `chi`, and $\sigma_r$ is
+    `sigma_rupture` (the paper's $\sigma_c$). The coefficient $b$ pins
+    $\sigma(R_0) = \sigma_0$, the Marmottant elastic value. The
+    coefficient $c$ makes the maximum slope of the curve,
+    $c\,\sigma_r/(e R_b)$ where $\sigma = \sigma_r/e$, equal to the
+    Marmottant slope at $R = R_b\sqrt{1 + \sigma_r/(2\chi)}$. The paper
+    takes $\sigma_0$ as its input; `R_buckle_ratio` carries the same
+    information, with $r_b = (1 + \sigma_0/\chi)^{-1/2}$ (Eq. 11).
 
-    The `sharpness` factor sets the steepness of the transition through
-    $c$. Scaling $c$ leaves both anchors fixed: the code re-solves $b$ so
-    that $\sigma(R_0)$ stays the same, and $\sigma \to \sigma_r$ as
-    $R \to \infty$ regardless.
+    The class evaluates the algebraically identical form
+
+    $$
+    \sigma(R) = \sigma_r \exp\left[\ln\left(\frac{\sigma_0}{\sigma_r}\right)
+        \exp\left(\frac{c\,(R_0 - R)}{R_b}\right)\right],
+    $$
+
+    and caps the inner exponent at 50, so a deep compression gives
+    $\sigma = 0$ with a finite gradient instead of an overflow.
+
+    Use this law to reproduce Gümmer et al. (2021). For gradient-based
+    fitting, use
+    [`SmoothMarmottantSurfaceTension`][jbubble.bubble.shell.SmoothMarmottantSurfaceTension],
+    which converges to the Marmottant law. The Notes explain why.
 
     Parameters
     ----------
-    R_buckle_ratio : float
-        Buckling radius as a fraction of `R0` (dimensionless).
-    chi : float
+    R_buckle_ratio : float or jax.Array
+        Buckling radius as a fraction of `R0` (dimensionless). Must lie
+        strictly between 0 and 1.
+    chi : float or Property
         Shell elasticity [N/m].
-    sigma_rupture : float
+    sigma_rupture : float or Property
         Asymptotic (ruptured) surface tension [N/m].
-    sharpness : float
-        Dimensionless multiplier on the transition rate $c$.
-        Default: `1.0`.
 
     Raises
     ------
     ValueError
-        If $\sigma_0 \ge \sigma_r$ at construction, that is, the bubble
-        starts in the ruptured regime. If you construct the model inside
-        `jax.jit`, JAX raises it as `jax.errors.JaxRuntimeError`, a
-        `RuntimeError` subclass.
+        If the law is ill-posed: it needs $\chi > 0$ and
+        $0 < \sigma_0 < \sigma_r$, so `R_buckle_ratio` must lie strictly
+        between 0 and 1. The constructor checks concrete values only. It
+        skips the check when a parameter is a JAX tracer, for example
+        inside `jax.jit` or `jax.grad`, or when `chi` or `sigma_rupture` is
+        a state-dependent [`Property`][jbubble.bubble.property.Property],
+        so keep such values in range yourself.
 
     Notes
     -----
-    The Gompertz fit requires the initial surface tension at $R_0$ to lie
-    strictly below the rupture threshold:
+    The curve is anchored at $R_0$, not at the Marmottant transitions, so
+    no value of $c$ makes it converge to the Marmottant law: as $c$ grows,
+    the curve tends to a step at $R_0$. Its elasticity at $R_0$ matches
+    the Marmottant value only approximately, when $\sigma_0$ is near
+    $\sigma_r/e$, and it falls towards zero as $\sigma_0$ approaches 0 or
+    $\sigma_r$. With `R_buckle_ratio` fixed, $\sigma_0$ grows in
+    proportion to $\chi$, so the mismatch changes as you vary $\chi$.
+    Fitted to radius curves from the Marmottant law, this law's $\chi$
+    comes out biased by about 6% at `R_buckle_ratio = 0.98` and by up to
+    about 47% at `R_buckle_ratio = 0.995`.
 
-    $$
-    \chi\left[\left(\frac{1}{r_b}\right)^2 - 1\right] < \sigma_r,
-    \qquad r_b = \mathtt{R\_buckle\_ratio}.
-    $$
+    The [`as_property`][jbubble.bubble.property.as_property] converter
+    stores `chi` and `sigma_rupture` as
+    [`Property`][jbubble.bubble.property.Property] instances.
 
-    A common mistake is to set `R_buckle_ratio` too small, for example
-    `0.9`, which inflates $\sigma(R_0)$ above `sigma_rupture`. Values
-    around 0.95 to 0.99 are typical.
+    References
+    ----------
+    Gümmer, J., Schenke, S., & Denner, F. (2021). Modelling lipid-coated
+    microbubbles in focused ultrasound applications at subresonance
+    frequencies. *Ultrasound Med. Biol.* 47(10), 2958-2979.
+    [doi:10.1016/j.ultrasmedbio.2021.06.012](https://doi.org/10.1016/j.ultrasmedbio.2021.06.012)
     """
 
-    R_buckle_ratio: float
-    chi: float
-    sigma_rupture: float
-    sharpness: float = 1.0
+    R_buckle_ratio: ArrayLike
+    chi: Property = eqx.field(converter=as_property)
+    sigma_rupture: Property = eqx.field(converter=as_property)
 
-    def __post_init__(self) -> None:
-        sigma_at_R0 = self.chi * ((1.0 / self.R_buckle_ratio) ** 2 - 1.0)
-
-        def _check(s_at_r0, s_rupture):
-            if s_at_r0 >= s_rupture:
-                raise ValueError(
-                    f"GompertzSurfaceTension: sigma(R0) = {s_at_r0:.4g} N/m "
-                    f">= sigma_rupture = {s_rupture:.4g} N/m.  "
-                    f"The bubble starts in the ruptured regime and the Gompertz "
-                    f"fit is ill-posed.  Increase R_buckle_ratio (try 0.98) or "
-                    f"decrease chi."
-                )
-
-        jax.debug.callback(_check, sigma_at_R0, self.sigma_rupture)
+    def __check_init__(self) -> None:
+        ratio = _concrete_value(self.R_buckle_ratio)
+        chi = _concrete_value(self.chi)
+        sigma_r = _concrete_value(self.sigma_rupture)
+        if ratio is None or chi is None or sigma_r is None:
+            return
+        with np.errstate(divide="ignore", invalid="ignore"):
+            sigma_0 = chi * ((1.0 / ratio) ** 2 - 1.0)
+        well_posed = (ratio > 0.0) & (chi > 0.0) & (sigma_0 > 0.0) & (sigma_0 < sigma_r)
+        if not np.all(well_posed):
+            raise ValueError(
+                "GompertzSurfaceTension is ill-posed: the surface tension at R0, "
+                "sigma_0 = chi * ((1 / R_buckle_ratio)**2 - 1) = "
+                f"{_format_values(sigma_0)} N/m, must lie strictly between 0 and "
+                f"sigma_rupture = {_format_values(sigma_r)} N/m, with chi > 0. "
+                "Use 0 < R_buckle_ratio < 1 with "
+                "chi * ((1 / R_buckle_ratio)**2 - 1) < sigma_rupture, or use "
+                "SmoothMarmottantSurfaceTension, which has no such constraint."
+            )
 
     def __call__(self, state: BubbleState) -> jax.Array:
         R, R0 = state.R, state.R0
-        R_buckle = self.R_buckle_ratio * R0
-        chi = self.chi
-        a = self.sigma_rupture
-        c = self.sharpness * (2.0 * chi / a) * jnp.sqrt(1.0 + a / (2.0 * chi))
-        sigma_R0 = chi * ((R0 / R_buckle) ** 2 - 1.0)
-        b = -jnp.log(sigma_R0 / a) / jnp.exp(c * (1.0 - R0 / R_buckle))
-        return a * jnp.exp(-b * jnp.exp(c * (1.0 - R / R_buckle)))
+        R_b = self.R_buckle_ratio * R0
+        chi = self.chi(state)
+        sigma_r = self.sigma_rupture(state)
+        c = (2.0 * jnp.e * chi / sigma_r) * jnp.sqrt(1.0 + sigma_r / (2.0 * chi))
+        # ln(sigma_0 / sigma_r), negative for a well-posed law.
+        log_q = jnp.log(chi * ((R0 / R_b) ** 2 - 1.0) / sigma_r)
+        # Past an exponent of 50, sigma is zero in float64. The cap keeps exp()
+        # and its gradient finite under deep compression.
+        expo = jnp.minimum(c * (R0 - R) / R_b, 50.0)
+        return sigma_r * jnp.exp(log_q * jnp.exp(expo))
 
 
 def _concrete_value(x: object) -> np.ndarray | None:

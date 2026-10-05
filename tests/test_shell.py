@@ -408,13 +408,16 @@ class TestGompertzSurfaceTension:
     def test_well_posed_creates_successfully(self):
         st = GompertzSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
         assert st.R_buckle_ratio == 0.98
+        assert isinstance(st.chi, ConstantProperty)
+        assert isinstance(st.sigma_rupture, ConstantProperty)
 
-    def test_sigma_at_R0_matches_elastic_regime(self):
-        st = GompertzSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
-        s = _make_state(1.0)
-        # Should approximate chi * ((1/0.98)^2 - 1)
-        expected = 0.55 * ((1.0 / 0.98) ** 2 - 1.0)
-        assert float(st(s)) == pytest.approx(expected, rel=1e-4)
+    def test_sharpness_is_not_a_parameter(self):
+        # The published law has no sharpness factor; jbubble 0.1's sharpness s
+        # equals the published c scaled by s / e.
+        with pytest.raises(TypeError):
+            GompertzSurfaceTension(
+                R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072, sharpness=1.0
+            )
 
     def test_asymptotes_to_sigma_rupture(self):
         st = GompertzSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
@@ -423,19 +426,9 @@ class TestGompertzSurfaceTension:
 
     def test_smooth_monotonic(self):
         st = GompertzSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
-        R0_arr = jnp.asarray(R0)
-        P_gas0_arr = jnp.asarray(P_GAS0)
-        ratios = jnp.linspace(0.95, 1.5, 200)
-        Rs = ratios * R0
-
-        def eval_sigma(R_val):
-            s = BubbleState(R=R_val, R0=R0_arr, P_gas0=P_gas0_arr)
-            return st(s)
-
-        values = jax.vmap(eval_sigma)(Rs)
-        diffs = jnp.diff(values)
-        # Should be monotonically increasing in the elastic→ruptured transition
-        assert jnp.all(diffs >= -1e-10)
+        values = _sigma_curve(st, np.linspace(0.5, 3.0, 2001))
+        assert bool(jnp.all(jnp.diff(values) >= 0.0))
+        assert bool(jnp.all(values >= 0.0)) and bool(jnp.all(values <= 0.072))
 
     def test_differentiable(self):
         st = GompertzSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
@@ -449,3 +442,128 @@ class TestGompertzSurfaceTension:
         s = _make_state(1.0)
         result = jax.jit(st)(s)
         assert jnp.isfinite(result)
+
+
+class TestGompertzSurfaceTensionPublished:
+    """Checks against Gümmer, Schenke & Denner (2021), Eqs. 11 and 13-15."""
+
+    @pytest.mark.parametrize("chi", [0.1, 0.5, 1.0])
+    def test_max_slope_matches_marmottant_at_half_rupture(self, chi):
+        # Eq. 15: the maximum Gompertz slope equals the Marmottant slope at
+        # R_b sqrt(1 + sigma_r / (2 chi)).
+        ratio = 0.995
+        st = GompertzSurfaceTension(
+            R_buckle_ratio=ratio, chi=chi, sigma_rupture=SIGMA_R
+        )
+        x = np.linspace(0.9, 2.0, 200_001)
+        slope = _dsigma_dx(st, x, ratio * R0)
+        expected = 2.0 * chi * math.sqrt(1.0 + SIGMA_R / (2.0 * chi))
+        assert float(jnp.max(slope)) == pytest.approx(expected, rel=1e-6)
+
+    def test_inflection_at_sigma_r_over_e(self):
+        st = GompertzSurfaceTension(R_buckle_ratio=0.98, chi=0.5, sigma_rupture=SIGMA_R)
+        x = np.linspace(0.9, 1.3, 400_001)
+        slope = _dsigma_dx(st, x, 0.98 * R0)
+        sigma = _sigma_curve(st, x)
+        assert float(sigma[jnp.argmax(slope)]) == pytest.approx(
+            SIGMA_R / math.e, rel=1e-4
+        )
+
+    def test_paper_figure_1_parameters(self):
+        # sigma_0 = 0.020, sigma_c = 0.072, chi = 0.5 (Gümmer et al. 2021, Fig. 1).
+        ratio = 1.0 / math.sqrt(1.0 + 0.020 / 0.5)  # Eq. 11
+        st = GompertzSurfaceTension(
+            R_buckle_ratio=ratio, chi=0.5, sigma_rupture=SIGMA_R
+        )
+        assert float(_sigma_curve(st, [1.0])[0]) == pytest.approx(0.020, rel=1e-12)
+        c = (2 * 0.5 * math.e / SIGMA_R) * math.sqrt(1 + SIGMA_R / (2 * 0.5))
+        assert c == pytest.approx(39.09, abs=0.01)
+        # Eqs. 13 and 14, written literally.
+        R_b = ratio * R0
+        b = -math.log(0.020 / SIGMA_R) / math.exp(c * (1.0 - R0 / R_b))
+        for x in (0.95, 1.02, 1.2):
+            expected = SIGMA_R * math.exp(-b * math.exp(c * (1.0 - x * R0 / R_b)))
+            assert float(_sigma_curve(st, [x])[0]) == pytest.approx(expected, rel=1e-12)
+
+    @pytest.mark.parametrize(
+        "chi,ratio", [(0.05, 0.9), (0.55, 0.98), (1.7, 0.98), (2.0, 0.995)]
+    )
+    def test_sigma_at_R0_is_marmottant_value(self, chi, ratio):
+        st = GompertzSurfaceTension(
+            R_buckle_ratio=ratio, chi=chi, sigma_rupture=SIGMA_R
+        )
+        expected = chi * ((1.0 / ratio) ** 2 - 1.0)
+        assert float(_sigma_curve(st, [1.0])[0]) == pytest.approx(expected, rel=1e-12)
+
+    @pytest.mark.parametrize(
+        "ratio,chi",
+        [(0.85, 0.55), (1.0, 0.55), (1.02, 0.55), (0.0, 0.55), (-0.98, 0.55)],
+    )
+    def test_ill_posed_raises(self, ratio, chi):
+        with pytest.raises(ValueError, match="strictly between"):
+            GompertzSurfaceTension(R_buckle_ratio=ratio, chi=chi, sigma_rupture=SIGMA_R)
+
+    def test_negative_chi_raises(self):
+        # chi < 0 with R_buckle_ratio > 1 gives 0 < sigma_0 < sigma_r, but the
+        # law is meaningless.
+        with pytest.raises(ValueError, match="ill-posed"):
+            GompertzSurfaceTension(R_buckle_ratio=1.02, chi=-0.5, sigma_rupture=SIGMA_R)
+
+    def test_batched_parameters_are_checked(self):
+        GompertzSurfaceTension(
+            R_buckle_ratio=0.98, chi=jnp.asarray([0.3, 0.55]), sigma_rupture=SIGMA_R
+        )
+        with pytest.raises(ValueError, match="ill-posed"):
+            GompertzSurfaceTension(
+                R_buckle_ratio=jnp.asarray([0.98, 0.85]),
+                chi=0.55,
+                sigma_rupture=SIGMA_R,
+            )
+
+    def test_concrete_values_are_checked_inside_jit(self):
+        # Python floats closed over by a jitted function are concrete, so the
+        # check still runs, at trace time.
+        def sigma(R):
+            st = GompertzSurfaceTension(
+                R_buckle_ratio=0.85, chi=0.55, sigma_rupture=SIGMA_R
+            )
+            return st(BubbleState(R=R, R0=jnp.asarray(R0)))
+
+        with pytest.raises(ValueError, match="ill-posed"):
+            jax.jit(sigma)(jnp.asarray(R0))
+
+    def test_traced_values_skip_the_check_without_a_callback(self):
+        def sigma(chi, sigma_r, ratio):
+            st = GompertzSurfaceTension(
+                R_buckle_ratio=ratio, chi=chi, sigma_rupture=sigma_r
+            )
+            return st(_make_state(1.01))
+
+        expected = float(sigma(0.55, SIGMA_R, 0.98))
+        assert float(jax.jit(sigma)(0.55, SIGMA_R, 0.98)) == pytest.approx(
+            expected, rel=1e-12
+        )
+        assert not _has_callback(sigma, 0.55, SIGMA_R, 0.98)
+        assert np.isfinite(float(jax.grad(sigma)(0.55, SIGMA_R, 0.98)))
+
+    def test_state_dependent_property_skips_the_check(self):
+        class Shifted(Property):
+            def __call__(self, state):
+                return 0.55 + 0.0 * state.R
+
+        st = GompertzSurfaceTension(
+            R_buckle_ratio=0.98, chi=Shifted(), sigma_rupture=SIGMA_R
+        )
+        ref = GompertzSurfaceTension(
+            R_buckle_ratio=0.98, chi=0.55, sigma_rupture=SIGMA_R
+        )
+        assert float(st(_make_state(1.01))) == pytest.approx(
+            float(ref(_make_state(1.01))), rel=1e-12
+        )
+
+    def test_gradients_finite_under_deep_compression(self):
+        st = GompertzSurfaceTension(
+            R_buckle_ratio=0.995, chi=2.0, sigma_rupture=SIGMA_R
+        )
+        x = np.linspace(0.01, 10.0, 2001)
+        assert bool(jnp.all(jnp.isfinite(_dsigma_dx(st, x, 0.995 * R0))))
