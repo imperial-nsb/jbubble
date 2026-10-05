@@ -316,10 +316,11 @@ def thick_shell_bubble(
     thickness, with [`ThickShell`][jbubble.bubble.shell.ThickShell]. The
     defaults describe the air-filled, polymer-shelled agent that Hoff et
     al. (2000) characterised, whose stiff shell dominates the bubble's
-    response and damps it heavily. With the defaults, the linear resonance
-    is about 6.9 MHz, against about 2.0 MHz for
+    response and damps it heavily. With the defaults, the undamped natural
+    frequency is about 6.9 MHz, against about 2.0 MHz for
     [`free_bubble`][jbubble.utils.presets.free_bubble], and the quality
-    factor is about 0.6. The bubble therefore oscillates far less than
+    factor is about 0.6. Damping this heavy leaves the linear response
+    without a resonance peak. The bubble therefore oscillates far less than
     [`lipid_bubble`][jbubble.utils.presets.lipid_bubble] at the same drive:
     its peak expansion at 100 kPa and 1 MHz is about 1%.
 
