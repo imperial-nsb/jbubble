@@ -11,16 +11,17 @@ import sys
 
 import pytest
 
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+SCRIPT_PATH = ROOT / "scripts" / "build_examples.py"
+if not SCRIPT_PATH.exists():  # the sdist ships tests/ but not scripts/
+    pytest.skip("needs scripts/ from a repository checkout", allow_module_level=True)
 pytest.importorskip("jupytext")
 pytest.importorskip("nbclient")
 
 import jupytext  # noqa: E402
 import nbformat  # noqa: E402
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-_spec = importlib.util.spec_from_file_location(
-    "build_examples", ROOT / "scripts" / "build_examples.py"
-)
+_spec = importlib.util.spec_from_file_location("build_examples", SCRIPT_PATH)
 assert _spec is not None and _spec.loader is not None
 build_examples = importlib.util.module_from_spec(_spec)
 sys.modules["build_examples"] = build_examples

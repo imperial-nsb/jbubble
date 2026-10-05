@@ -13,8 +13,13 @@ import pkgutil
 import re
 
 import jbubble
+import pytest
 
 DOCS_API = pathlib.Path(__file__).resolve().parents[1] / "docs" / "api"
+# The sdist ships tests/ but not docs/.
+pytestmark = pytest.mark.skipif(
+    not DOCS_API.is_dir(), reason="needs docs/api/ from a repository checkout"
+)
 # Optional dependencies. A module that needs a missing one is skipped.
 OPTIONAL = {"h5py", "matplotlib"}
 
