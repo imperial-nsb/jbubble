@@ -109,9 +109,7 @@ class Pulse(eqx.Module, abc.ABC):
     def __add__(self, other: Pulse | ArrayLike) -> Pulse:
         """Add another pulse or a constant offset: `pulse_a + pulse_b` or `pulse + 1.0`."""
         if isinstance(other, Pulse):
-            left = self.pulses if isinstance(self, Summed) else (self,)
-            right = other.pulses if isinstance(other, Summed) else (other,)
-            return Summed(pulses=left + right)
+            return Summed(pulses=_summands(self) + _summands(other))
         offset = _operand(other)
         if offset is None:
             return NotImplemented
@@ -188,7 +186,31 @@ class Pulse(eqx.Module, abc.ABC):
         return self.__truediv__(factor)
 
     def windowed(self, envelope: Envelope) -> Pulse:
-        """Return a copy of this pulse with `envelope` replacing the current one."""
+        """Return a copy of this pulse with `envelope` as its window.
+
+        What the new envelope applies to depends on the kind of pulse:
+
+        - A leaf pulse, such as
+          [`ToneBurst`][jbubble.pulse.tone_burst.ToneBurst], replaces its
+          own envelope.
+        - [`Summed`][jbubble.pulse.base.Summed] replaces its own envelope,
+          which multiplies the sum on top of each child's envelope.
+        - [`Scaled`][jbubble.pulse.base.Scaled] and
+          [`Offset`][jbubble.pulse.base.Offset] have no envelope of their
+          own, so they pass `envelope` to the wrapped pulse. The constant of
+          an `Offset` stays outside the window:
+          `(pulse + c).windowed(env)` equals `pulse.windowed(env) + c`.
+
+        Parameters
+        ----------
+        envelope : Envelope
+            The new window.
+
+        Returns
+        -------
+        Pulse
+            A pulse of the same type as this one.
+        """
         return eqx.tree_at(
             lambda p: p.envelope,
             self,
@@ -353,6 +375,10 @@ class Summed(Pulse):
     $T = \max_i t_{\text{stop},i} - t_0$. To window the combined signal,
     use `.windowed(HannEnvelope())`.
 
+    `pulse_a + pulse_b` flattens nested sums into one `Summed`, unless a
+    nested sum has its own `initial_time` or envelope, such as a windowed
+    sum. That sum stays a single child, so it keeps its window.
+
     Parameters
     ----------
     pulses : tuple[Pulse, ...]
@@ -443,6 +469,21 @@ def _default_initial_time(pulse: Pulse) -> bool | None:
 
 def _default_envelope(pulse: Pulse) -> bool | None:
     return _equals(pulse.envelope, SoftRectangularEnvelope())
+
+
+def _summands(pulse: Pulse) -> tuple[Pulse, ...]:
+    """Return the pulses that `pulse` contributes to a flattened sum.
+
+    A `Summed` with a non-default `initial_time` or envelope stays whole,
+    so adding to a windowed sum keeps its window.
+    """
+    if (
+        isinstance(pulse, Summed)
+        and _default_initial_time(pulse) is True
+        and _default_envelope(pulse) is True
+    ):
+        return pulse.pulses
+    return (pulse,)
 
 
 def _check_transparent(pulse: Scaled | Offset) -> None:

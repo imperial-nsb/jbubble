@@ -11,6 +11,7 @@ from jbubble.pulse import (
     HannEnvelope,
     NeuralPulse,
     Offset,
+    RectangularEnvelope,
     SampledPulse,
     Scaled,
     SoftRectangularEnvelope,
@@ -570,6 +571,36 @@ class TestOperands:
     def test_non_scalar_arrays_raise_value_error(self, tone_early, operation):
         with pytest.raises(ValueError, match="scalar"):
             operation(tone_early)
+
+
+class TestWindowedSemantics:
+    """`windowed` replaces a leaf's envelope and multiplies on top of a sum."""
+
+    def test_leaf_replaces_its_envelope(self, tone_early):
+        windowed = tone_early.windowed(RectangularEnvelope())
+        raw = tone_early._evaluate(T_EDGE)
+        assert float(windowed(T_EDGE)) == float(raw)
+
+    def test_summed_multiplies_on_top_of_children(self, tone_early, tone_late):
+        summed = tone_early + tone_late
+        windowed = summed.windowed(HannEnvelope())
+        hann = HannEnvelope()(T_EDGE, summed.duration)
+        want = hann * (tone_early(T_EDGE) + tone_late(T_EDGE))
+        assert float(windowed(T_EDGE)) == pytest.approx(float(want), rel=1e-12)
+
+    def test_adding_to_a_windowed_sum_keeps_its_window(self, tone_early, tone_late):
+        # At 1.5 µs the Hann window over 12 µs is about 0.15, while the outer
+        # sum's soft-rectangular envelope is 1 to within 1e-5.
+        t = jnp.asarray(1.5e-6)
+        windowed = (tone_early + tone_late).windowed(HannEnvelope())
+        silent = ToneBurst(freq=3e6, pressure=0.0, shape=Sine(), cycle_num=15)
+        for combined in (windowed + silent, silent + windowed):
+            assert float(combined(t)) == pytest.approx(float(windowed(t)), rel=1e-4)
+
+    def test_plain_sums_still_flatten(self, tone_early, tone_late):
+        silent = ToneBurst(freq=3e6, pressure=0.0, shape=Sine(), cycle_num=15)
+        combined = (tone_early + tone_late) + (silent + tone_early)
+        assert len(combined.pulses) == 4
 
 
 class TestSummedWithoutUserJit:

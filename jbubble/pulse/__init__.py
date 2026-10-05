@@ -20,7 +20,8 @@ Composition:
 - [`Scaled`][jbubble.pulse.base.Scaled]: amplitude scaling.
 - [`Summed`][jbubble.pulse.base.Summed]: additive superposition.
 - [`Offset`][jbubble.pulse.base.Offset]: constant offset.
-- `pulse.windowed(envelope)`: applies an envelope to any pulse.
+- [`pulse.windowed(envelope)`][jbubble.pulse.base.Pulse.windowed]: swaps
+  in a new envelope; its docstring explains how sums and wrappers treat it.
 
 Examples
 --------
