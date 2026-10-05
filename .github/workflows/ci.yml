@@ -103,7 +103,7 @@ jobs:
         with:
           python-version: "3.15"
           cache-suffix: next
-      - run: uv sync --upgrade --no-default-groups --prerelease if-necessary-or-explicit
+      - run: uv sync --upgrade --no-default-groups
       - run: uv pip install pytest pytest-xdist
       - run: uv run --no-sync pytest -n auto
 
