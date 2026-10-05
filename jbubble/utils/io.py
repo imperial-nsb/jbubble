@@ -1,8 +1,11 @@
 """Lightweight HDF5 export for simulation data.
 
-Saves arrays and flat metadata into a single ``.h5`` file.
-Designed for downstream consumption (ML training, plotting, analysis)
-rather than round-tripping Equinox module trees.
+Saves arrays and flat metadata into a single `.h5` file, for downstream
+use such as machine-learning training, plotting, and analysis rather than
+round-tripping Equinox module trees.
+
+This module needs the optional `h5py` dependency. To install it, run
+`pip install 'jbubble[io]'`.
 """
 
 from __future__ import annotations
@@ -34,29 +37,29 @@ def export_hdf5(
     Parameters
     ----------
     path : str or Path
-        Output ``.h5`` file path.
+        Output `.h5` file path. An existing file is overwritten.
     metadata : dict, optional
-        JSON-serialisable metadata stored as an attribute on the root group.
+        JSON-serialisable metadata, stored as an attribute on the root group.
     **arrays
-        Keyword arguments are saved as datasets.  Values are converted to
-        NumPy arrays via ``np.asarray``.
+        Each keyword argument becomes a dataset. `np.asarray` converts the
+        values to NumPy arrays.
 
     Examples
     --------
-    ::
+    ```python
+    result = run_simulation(eom, pulse, ...)
+    p_em = jax.vmap(lambda r: emission(result, r))(distances)
 
-        result = run_simulation(eom, pulse, ...)
-        p_em = jax.vmap(lambda r: emission(result, r))(distances)
-
-        export_hdf5(
-            "training_data.h5",
-            ts=result.ts,
-            R=result.state.R,
-            R_dot=result.state.R_dot,
-            p_emission=p_em,
-            distances=distances,
-            metadata={"R0": 2e-6, "freq": 1e6},
-        )
+    export_hdf5(
+        "training_data.h5",
+        ts=result.ts,
+        R=result.state.R,
+        R_dot=result.state.R_dot,
+        p_emission=p_em,
+        distances=distances,
+        metadata={"R0": 2e-6, "freq": 1e6},
+    )
+    ```
     """
     path = Path(path)
 
@@ -69,19 +72,19 @@ def export_hdf5(
 
 
 def load_hdf5(path: str | Path) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
-    """Load arrays and metadata from an HDF5 file written by :func:`export_hdf5`.
+    """Load arrays and metadata from an HDF5 file that [`export_hdf5`][jbubble.utils.io.export_hdf5] wrote.
 
     Parameters
     ----------
     path : str or Path
-        Path to the ``.h5`` file.
+        Path to the `.h5` file.
 
     Returns
     -------
     arrays : dict[str, np.ndarray]
         All datasets in the file, keyed by name.
     metadata : dict
-        The metadata dict, or ``{}`` if none was stored.
+        The metadata dict, or `{}` if the file stores none.
     """
     path = Path(path)
 

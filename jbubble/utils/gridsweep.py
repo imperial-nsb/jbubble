@@ -1,39 +1,52 @@
-"""
-gridsweep — memory-efficient batched generator over a Cartesian product of
-named parameter axes.
+"""Memory-efficient batched sweeps over a Cartesian product of parameter axes.
 
-Two public entry points:
+[`GridSweep`][jbubble.utils.gridsweep.GridSweep] has two public entry
+points:
 
-    run()     – run the full sweep; returns a grid-shaped PyTree
-                  shape (*grid_shape, *leaf_shape)
-    batches() – lazy iterator yielding ``(params, outputs)`` one vmapped batch
-                  at a time so memory stays O(batch_size)
+- [`run`][jbubble.utils.gridsweep.GridSweep.run] runs the full sweep and
+  returns a grid-shaped PyTree with leaves of shape
+  `(*grid_shape, *leaf_shape)`.
+- [`batches`][jbubble.utils.gridsweep.GridSweep.batches] is a lazy
+  iterator that yields `(params, outputs)` one vmapped batch at a time,
+  so memory stays O(`batch_size`).
 
-What you do with each batch is entirely up to the caller — stream to disk,
-accumulate statistics, track a running argmin, build a dataset, …
-
-Usage
------
-::
-
-    from jbubble.utils import GridSweep
-    import jax.numpy as jnp
-
-    gs = GridSweep(run_simulation, {"R0": radii, "p0": pressures})
-
-    # full sweep → grid-shaped PyTree
-    grid = gs.run()   # shape (*grid_shape, ...)
-
-    # or stream batch-by-batch
-    for params, outputs in gs.batches():
-        process(params, outputs)
+You decide what to do with each batch: stream it to disk, accumulate
+statistics, track a running argmin, or build a dataset.
 
 Notes
 -----
-* ``fn`` is called via ``jax.vmap`` (single device) or ``jax.pmap`` of a
-  ``jax.vmap`` (many devices); it must be JAX-compatible.  See ``parallel``.
-* Grid order is row-major (last axis varies fastest), matching
-  ``numpy.unravel_index`` conventions.
+- `GridSweep` calls `fn` through `jax.vmap` (single device) or through
+  `jax.pmap` of a `jax.vmap` (many devices), so `fn` must be
+  JAX-compatible. See the `parallel` parameter.
+- Grid order is row-major (the last axis varies fastest), matching the
+  `numpy.unravel_index` conventions.
+
+Examples
+--------
+```python
+import jax.numpy as jnp
+
+from jbubble import run_simulation
+from jbubble.utils import GridSweep
+from jbubble.utils.presets import free_bubble
+
+
+def peak_ratio(R0, pressure):
+    eom, pulse = free_bubble(R0=R0, pressure=pressure)
+    return run_simulation(eom, pulse).radius.max() / R0
+
+
+radii = jnp.linspace(1e-6, 5e-6, 20)
+pressures = jnp.array([50e3, 100e3, 200e3])
+gs = GridSweep(peak_ratio, {"R0": radii, "pressure": pressures})
+
+# full sweep: grid-shaped PyTree
+grid = gs.run()  # shape (20, 3)
+
+# or stream batch by batch
+for params, outputs in gs.batches():
+    process(params, outputs)
+```
 """
 
 from __future__ import annotations
@@ -56,29 +69,32 @@ class GridSweep:
 
     Parameters
     ----------
-    fn :
-        ``fn(**params) → PyTree``
-        Called with scalar keyword args (one per axis name); must be
-        JAX-vmappable and jit-able.
-    search_space :
-        ``{param_name: 1-D array of values}``
-        The Cartesian product of all axes is swept.
-    batch_size :
-        Number of grid points evaluated per call.
-    progress :
-        Show a ``tqdm`` progress bar during iteration.
-    parallel :
-        If ``True``, evaluate each batch with a ``jax.pmap`` of a ``jax.vmap``:
-        ``vmap`` fans the batch out within each device and ``pmap`` fans it
-        across all local devices.  Default ``True``.
+    fn : callable
+        `fn(**params) -> PyTree`. `GridSweep` calls it with scalar keyword
+        arguments, one per axis name, so it must be JAX-vmappable and
+        jit-able.
+    search_space : dict[str, jax.Array]
+        `{param_name: 1-D array of values}`. The sweep covers the
+        Cartesian product of all axes, in alphabetical order of the names.
+    batch_size : int
+        Number of grid points evaluated per call. Default: `512`.
+    progress : bool
+        Whether to show a `tqdm` progress bar during iteration.
+        Default: `True`.
+    parallel : bool
+        If `True`, evaluate each batch with a `jax.pmap` of a `jax.vmap`:
+        `vmap` fans the batch out within each device, and `pmap` fans it
+        across all local devices. Default: `True`.
 
-        Only works with explicit ODE solvers (``Dopri5``, ``Tsit5``, …);
-        whereas implicit solvers (``Kvaerno5`, etc.), are currently not supported
-        — leave ``parallel=False`` when sweeping a stiff, implicit-solver simulation.
+        Parallel mode works only with explicit ODE solvers, such as
+        `Dopri5` and `Tsit5`. It doesn't support implicit solvers, such as
+        `Kvaerno5`, so set `parallel=False` when you sweep a stiff,
+        implicit-solver simulation.
 
-        On CPU, JAX exposes a single device by default, so set
-        ``XLA_FLAGS="--xla_force_host_platform_device_count=N"`` *before*
-        importing JAX to expose ``N`` cores as devices for ``pmap`` to use.
+        On CPU, JAX exposes a single device by default. To expose `N` cores
+        as devices for `pmap`, set
+        `XLA_FLAGS="--xla_force_host_platform_device_count=N"` *before* you
+        import JAX.
     """
 
     def __init__(
@@ -109,11 +125,11 @@ class GridSweep:
             self._eval_batch = jax.jit(jax.vmap(lambda p: self.fn(**p)))
 
     def _eval_pmap(self, params: dict) -> PyTree:
-        """Evaluate a batch by sharding it across local devices with ``pmap``.
+        """Evaluate a batch by sharding it across local devices with `pmap`.
 
-        The batch is padded up to a whole multiple of the device count so it
-        reshapes to ``(n_devices, per_device)``; the padding is trimmed from
-        the result, so the output is identical to the ``vmap`` path.
+        Pads the batch up to a whole multiple of the device count, so it
+        reshapes to `(n_devices, per_device)`, and trims the padding from
+        the result, so the output is identical to the `vmap` path.
         """
         D = self._n_devices
         n = int(next(iter(params.values())).shape[0])
@@ -132,7 +148,7 @@ class GridSweep:
 
     @property
     def grid_shape(self) -> tuple[int, ...]:
-        """Shape of the full parameter grid (one int per axis)."""
+        """Shape of the full parameter grid, one int per axis."""
         return tuple(self._sizes)
 
     @property
@@ -142,18 +158,19 @@ class GridSweep:
 
     @property
     def axes(self) -> dict[str, jnp.ndarray]:
-        """Parameter axes in sweep order."""
+        """Parameter axes in sweep order (alphabetical by name)."""
         return dict(zip(self._keys, self._axes, strict=True))
 
     def batches(self):
-        """Lazy iterator over the grid.
+        """Iterate lazily over the grid, one batch at a time.
 
         Yields
         ------
-        params : dict[str, jnp.ndarray]
-            Batch of parameter vectors, one per grid point in the batch.
+        params : dict[str, jax.Array]
+            Batch of parameter vectors, one entry per grid point in the
+            batch.
         outputs : PyTree
-            Corresponding vmapped outputs from ``fn``.
+            Corresponding vmapped outputs from `fn`.
         """
         n_batches = math.ceil(self._N / self.batch_size)
         bar = (
@@ -176,9 +193,10 @@ class GridSweep:
         Returns
         -------
         PyTree
-            Each leaf has shape ``(*grid_shape, *leaf_shape)``, where
-            ``grid_shape`` corresponds to the axes in ``search_space``
-            (sorted alphabetically, row-major — last axis varies fastest).
+            Each leaf has shape `(*grid_shape, *leaf_shape)`, where
+            `grid_shape` follows the axes in `search_space`, sorted
+            alphabetically and in row-major order (the last axis varies
+            fastest).
         """
         chunks = [outputs for _, outputs in self.batches()]
         flat = jax.tree.map(lambda *xs: jnp.concatenate(xs, axis=0), *chunks)

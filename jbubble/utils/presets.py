@@ -1,32 +1,33 @@
 """Preset bubble configurations for common simulation scenarios.
 
-Provides factory functions that assemble ready-to-run ``(eom, pulse)`` pairs
-for the most common microbubble simulation use cases.  Each function exposes
-the parameters that vary most in practice and uses physically reasonable
-defaults for everything else.
+The factory functions in this module assemble ready-to-run `(eom, pulse)`
+pairs for the most common microbubble simulation use cases. Each function
+exposes the parameters that vary most in practice and uses physically
+reasonable defaults for everything else.
 
-Quick-start example::
+The available presets are:
 
-    from jbubble import run_simulation
-    from jbubble.utils.presets import free_bubble
-    import jax
+- [`free_bubble`][jbubble.utils.presets.free_bubble]: an uncoated
+  polytropic gas bubble in a Newtonian liquid. The simplest case, and a
+  good starting point for sensitivity studies.
+- [`lipid_bubble`][jbubble.utils.presets.lipid_bubble]: a thin lipid
+  monolayer shell with smooth Gompertz surface tension. Representative of
+  clinical ultrasound contrast agents (UCAs) such as SonoVue or Definity.
+- [`thick_shell_bubble`][jbubble.utils.presets.thick_shell_bubble]: a
+  thick viscoelastic polymer shell (Church 1995 model). Representative of
+  polymer-shelled agents such as Optison.
 
-    eom, pulse = free_bubble(R0=3e-6, pressure=200e3)
-    result = jax.jit(run_simulation)(eom, pulse)
+Examples
+--------
+```python
+import jax
 
-Available presets
------------------
-free_bubble
-    Uncoated polytropic gas bubble in a Newtonian liquid.
-    Simplest case — good starting point for sensitivity studies.
+from jbubble import run_simulation
+from jbubble.utils.presets import free_bubble
 
-lipid_bubble
-    Thin lipid monolayer shell with smooth Gompertz surface tension.
-    Representative of clinical UCAs such as SonoVue or Definity.
-
-thick_shell_bubble
-    Thick viscoelastic polymer shell (Church 1995 model).
-    Representative of polymer-shelled agents such as Optison.
+eom, pulse = free_bubble(R0=3e-6, pressure=200e3)
+result = jax.jit(run_simulation)(eom, pulse)
+```
 """
 
 from __future__ import annotations
@@ -45,16 +46,27 @@ __all__ = ["BubblePreset", "free_bubble", "lipid_bubble", "thick_shell_bubble"]
 
 
 class BubblePreset(NamedTuple):
-    """Assembled (EoM, pulse) pair returned by preset factory functions.
+    """Assembled `(eom, pulse)` pair that the preset factory functions return.
 
-    Can be unpacked directly::
+    You can unpack it directly:
 
-        eom, pulse = free_bubble()
+    ```python
+    eom, pulse = free_bubble()
+    ```
 
-    or accessed by name::
+    Or you can access the fields by name:
 
-        preset = free_bubble()
-        result = run_simulation(preset.eom, preset.pulse)
+    ```python
+    preset = free_bubble()
+    result = run_simulation(preset.eom, preset.pulse)
+    ```
+
+    Attributes
+    ----------
+    eom : EquationOfMotion
+        Assembled equation of motion.
+    pulse : Pulse
+        Driving pulse.
     """
 
     eom: EquationOfMotion
@@ -76,11 +88,15 @@ def free_bubble(
 ) -> BubblePreset:
     """Uncoated gas bubble in a Newtonian liquid (Keller-Miksis).
 
-    The simplest physically meaningful preset: a polytropic gas bubble
-    with Laplace surface tension only — no shell coating.  Suitable for
-    free cavitation bubbles and as a baseline before adding a shell.
+    The simplest physically meaningful preset: a polytropic gas bubble with
+    Laplace surface tension only and no shell coating. Suitable for free
+    cavitation bubbles, and as a baseline before you add a shell.
 
-    Physics: Keller-Miksis EoM + PolytropicGas + NoShell + NewtonianMedium.
+    Physics: [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis] +
+    [`PolytropicGas`][jbubble.bubble.gas.PolytropicGas] +
+    [`NoShell`][jbubble.bubble.shell.NoShell] +
+    [`NewtonianMedium`][jbubble.bubble.medium.NewtonianMedium], driven by
+    a sine [`ToneBurst`][jbubble.pulse.tone_burst.ToneBurst].
 
     Parameters
     ----------
@@ -108,7 +124,7 @@ def free_bubble(
     Returns
     -------
     BubblePreset
-        ``(eom, pulse)`` ready for :func:`~jbubble.run_simulation`.
+        `(eom, pulse)` pair, ready for [`run_simulation`][jbubble.simulation.run_simulation].
     """
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=gamma),
@@ -139,15 +155,19 @@ def lipid_bubble(
     rho_L: float = 998.0,
     c_L: float = 1500.0,
 ) -> BubblePreset:
-    """Lipid-shelled ultrasound contrast agent — Marmottant (2005) model.
+    """Lipid-shelled ultrasound contrast agent: the Marmottant (2005) model.
 
-    Models a thin lipid monolayer with surface-dilatational viscosity and a
-    smooth Gompertz surface tension law (preferred over the piecewise
-    Marmottant law for gradient-based parameter fitting).  Representative
-    of clinical agents such as SonoVue and Definity.
+    Models a thin lipid monolayer with surface-dilatational viscosity. For
+    gradient-based parameter fitting, it uses a smooth Gompertz surface
+    tension law in place of the piecewise Marmottant law. Representative of
+    clinical agents such as SonoVue and Definity.
 
-    Physics: Keller-Miksis EoM + PolytropicGas
-             + LipidShell(GompertzSurfaceTension) + NewtonianMedium.
+    Physics: [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis] +
+    [`PolytropicGas`][jbubble.bubble.gas.PolytropicGas] +
+    [`LipidShell`][jbubble.bubble.shell.LipidShell] with
+    [`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension] +
+    [`NewtonianMedium`][jbubble.bubble.medium.NewtonianMedium], driven by
+    a sine [`ToneBurst`][jbubble.pulse.tone_burst.ToneBurst].
 
     Parameters
     ----------
@@ -167,10 +187,9 @@ def lipid_bubble(
     sigma_rupture : float
         Asymptotic (ruptured) surface tension [N/m].  Default: 0.072 (water).
     R_buckle_ratio : float
-        Buckling radius as fraction of R0.  Default: 0.98 — gives an
-        initial surface tension ``sigma(R0) ≈ 0.023 N/m``, well below
-        ``sigma_rupture``, which is required for the Gompertz model to
-        be well-posed.
+        Buckling radius as a fraction of `R0`. Default: `0.98`, which gives
+        an initial surface tension `sigma(R0) ≈ 0.023` N/m, well below
+        `sigma_rupture`, as the Gompertz model needs to be well-posed.
     gamma : float
         Polytropic exponent.  Default: 1.4.
     mu : float
@@ -185,7 +204,7 @@ def lipid_bubble(
     Returns
     -------
     BubblePreset
-        ``(eom, pulse)`` ready for :func:`~jbubble.run_simulation`.
+        `(eom, pulse)` pair, ready for [`run_simulation`][jbubble.simulation.run_simulation].
 
     References
     ----------
@@ -228,13 +247,18 @@ def thick_shell_bubble(
     rho_L: float = 998.0,
     c_L: float = 1500.0,
 ) -> BubblePreset:
-    """Polymer thick-shell bubble — Church (1995) model.
+    """Polymer thick-shell bubble: the Church (1995) model.
 
-    Models a thick viscoelastic shell with elastic and viscous contributions.
-    Representative of polymer-shelled agents such as Optison (albumin),
-    or experimental PLGA microbubbles.
+    Models a thick viscoelastic shell with elastic and viscous
+    contributions. Representative of polymer-shelled agents such as
+    Optison (albumin), or experimental poly(lactic-co-glycolic acid) (PLGA)
+    microbubbles.
 
-    Physics: Keller-Miksis EoM + PolytropicGas + ThickShell + NewtonianMedium.
+    Physics: [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis] +
+    [`PolytropicGas`][jbubble.bubble.gas.PolytropicGas] +
+    [`ThickShell`][jbubble.bubble.shell.ThickShell] +
+    [`NewtonianMedium`][jbubble.bubble.medium.NewtonianMedium], driven by
+    a sine [`ToneBurst`][jbubble.pulse.tone_burst.ToneBurst].
 
     Parameters
     ----------
@@ -268,7 +292,7 @@ def thick_shell_bubble(
     Returns
     -------
     BubblePreset
-        ``(eom, pulse)`` ready for :func:`~jbubble.run_simulation`.
+        `(eom, pulse)` pair, ready for [`run_simulation`][jbubble.simulation.run_simulation].
 
     References
     ----------
