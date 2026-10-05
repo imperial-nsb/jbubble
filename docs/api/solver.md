@@ -18,6 +18,8 @@ from jbubble import solve_eom, SaveSpec, SolverConfig
 
 ## Solver choice and tolerances
 
+For a longer explanation, with examples, see the guide [Solvers and stiffness](../guide/solvers.md).
+
 The default, `SolverConfig()`, is `Dopri5` (an explicit fifth-order Runge–Kutta method) with a PID step-size controller at `rtol=1e-6` and `atol=1e-10`, an initial step of 1 ns, and at most 100,000 steps. It suits microbubbles in water, including inertial collapse.
 
 The solver integrates a dimensionless state: the radius in units of $R_0$ and the wall velocity in units of $\sqrt{P_\text{amb}/\rho_L}$. So `atol=1e-10` means $10^{-10} R_0$ for a bubble of any size. In jbubble 0.1, `atol` applied in SI units.
