@@ -39,12 +39,13 @@ $$R\ddot{R} + \frac{3}{2}\dot{R}^2 = \frac{1}{\rho_L}\left(p_L - P_\infty - p_{a
 
 ```python
 from jbubble.bubble.eom import RayleighPlesset
+
 eom = RayleighPlesset(gas=..., shell=..., medium=..., R0=2e-6, P_amb=101325, rho_L=998)
 ```
 
 ### Modified Rayleigh–Plesset
 
-Adds a first-order compressibility correction to the RP equation via the acoustic radiation damping term $\frac{R}{c_L}\dot{p}_\text{gas}$. It is simply the Keller-Miksis equation without the $$O(\dot R/c)$$ prefactor terms. Suitable for low driving pressures and for instances where $$M = \dot R/ c\ll 1$$. 
+Adds a first-order compressibility correction to the RP equation via the acoustic radiation damping term $\frac{R}{c_L}\dot{p}_\text{gas}$. It is simply the Keller-Miksis equation without the $$O(\dot R/c)$$ prefactor terms. Suitable for low driving pressures and for instances where $$M = \dot R/ c\ll 1$$.
 
 
 $$(1 - M)\, R \ddot{R} + \frac{3}{2}\left(1 - \frac{M}{3}\right)\dot{R}^2
@@ -53,6 +54,7 @@ $$(1 - M)\, R \ddot{R} + \frac{3}{2}\left(1 - \frac{M}{3}\right)\dot{R}^2
 
 ```python
 from jbubble.bubble.eom import ModifiedRayleighPlesset
+
 eom = ModifiedRayleighPlesset(..., c_L=1500.0)
 ```
 
@@ -66,6 +68,7 @@ The time derivative of $p_L$ is obtained via `jax.grad` applied through the enti
 
 ```python
 from jbubble.bubble.eom import KellerMiksis
+
 eom = KellerMiksis(..., c_L=1500.0)
 ```
 
@@ -82,10 +85,11 @@ $$
 
 ```python
 from jbubble.bubble.eom import Gilmore
+
 eom = Gilmore(
     ...,
-    n_tait=7.0,       # Tait exponent (water default)
-    B_tait=304.9e6,   # Tait constant [Pa] (water default)
+    n_tait=7.0,  # Tait exponent (water default)
+    B_tait=304.9e6,  # Tait constant [Pa] (water default)
 )
 ```
 
@@ -99,13 +103,14 @@ The most common gas model. Assumes a polytropic process:
 
 $$p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0}{R}\right)^{3\gamma}$$.
 
-In an isothermal process, heat transfer is fast compared bubble oscillations and $\gamma = 1$ for all gases. 
+In an isothermal process, heat transfer is fast compared bubble oscillations and $\gamma = 1$ for all gases.
 
-In an adiabatic process, heat transfer is slow compared to bubble oscillations. The adiabatic index for SF6, which is commonly used as the gaseous core of lipid-coated microbubbles, is $$approx 1.095$$. 
+In an adiabatic process, heat transfer is slow compared to bubble oscillations. The adiabatic index for SF6, which is commonly used as the gaseous core of lipid-coated microbubbles, is $$approx 1.095$$.
 
 
 ```python
 from jbubble.bubble.gas import PolytropicGas
+
 gas = PolytropicGas(gamma=1.095)
 ```
 
@@ -119,6 +124,7 @@ $$p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0^3 - h^3}{R^3 - h^3}\right)^\ga
 
 ```python
 from jbubble.bubble.gas import VanDerWaalsGas
+
 gas = VanDerWaalsGas(gamma=1.4, h_frac=0.2)
 ```
 
@@ -128,16 +134,17 @@ gas = VanDerWaalsGas(gamma=1.4, h_frac=0.2)
 
 ### NoShell
 
-No coating — bare bubble in a liquid. The bubble's surface contributes to the interfacial stresses through the Laplace pressure ($2\sigma/R$), whereby $\sigma$ is the constant surface tension of the surrounding liquid. 
+No coating — bare bubble in a liquid. The bubble's surface contributes to the interfacial stresses through the Laplace pressure ($2\sigma/R$), whereby $\sigma$ is the constant surface tension of the surrounding liquid.
 
 ```python
 from jbubble.bubble.shell import NoShell
+
 shell = NoShell(sigma=0.072)  # water–air surface tension [N/m]
 ```
 
 ### LipidShell
 
-The effects of a thin lipid monolayer is captured by a radius-dependent surface tension law, specifically the piecewise Marmottant model or its differentiable form, the Marmottant-Gompertz law. The lipid coating contributes to the interfacial stresses through 
+The effects of a thin lipid monolayer is captured by a radius-dependent surface tension law, specifically the piecewise Marmottant model or its differentiable form, the Marmottant-Gompertz law. The lipid coating contributes to the interfacial stresses through
 
 - the Laplace pressure  ($2\sigma(R)/R$)
 - the lipid's surface dilatational viscosity, which adds the viscous stress term $p_\text{viscous} = \frac{4\kappa_s \dot{R}}{R^2}$
@@ -152,7 +159,7 @@ from jbubble.bubble.shell import GompertzSurfaceTension
 
 sigma = GompertzSurfaceTension(
     R_buckle_ratio=0.98,  # buckling radius as fraction of R0
-    chi=0.55,             # shell elasticity [N/m]
+    chi=0.55,  # shell elasticity [N/m]
     sigma_rupture=0.072,  # post-rupture value [N/m]
 )
 shell = LipidShell(sigma=sigma, kappa_s=2.4e-9)  # kappa_s [N·s/m]
@@ -170,11 +177,12 @@ $$p_\text{viscous} = \frac{4\mu_s d_s \dot{R}}{R^2}$$
 
 ```python
 from jbubble.bubble.shell import ThickShell
+
 shell = ThickShell(
-    sigma=0.04,    # surface tension [N/m]
-    d_s=15e-9,     # shell thickness [m]
-    G_s=10e6,      # shear modulus [Pa]
-    mu_s=0.5,      # shell viscosity [Pa·s]
+    sigma=0.04,  # surface tension [N/m]
+    d_s=15e-9,  # shell thickness [m]
+    G_s=10e6,  # shear modulus [Pa]
+    mu_s=0.5,  # shell viscosity [Pa·s]
 )
 ```
 
@@ -183,14 +191,15 @@ shell = ThickShell(
 ## Medium models
 
 
-### NewtonianMedium 
+### NewtonianMedium
 
-Dynamic viscosity $\mu$ is constant and independent of fluid flow. Contributes to the interfacial stresses through 
+Dynamic viscosity $\mu$ is constant and independent of fluid flow. Contributes to the interfacial stresses through
 
 $$p_\text{viscous} = \frac{4\mu \dot{R}}{R}$$
 
 ```python
 from jbubble.bubble.medium import NewtonianMedium
+
 medium = NewtonianMedium(mu=1e-3)  # [Pa·s]
 ```
 
@@ -205,6 +214,7 @@ Valid only for small strains ($|R - R_0| \ll R_0$). Prefer `NeoHookeanMedium` fo
 
 ```python
 from jbubble.bubble.medium import KelvinVoigtMedium
+
 medium = KelvinVoigtMedium(mu=1e-3, G=1e3)
 ```
 
@@ -224,6 +234,7 @@ Key properties:
 
 ```python
 from jbubble.bubble.medium import NeoHookeanMedium
+
 medium = NeoHookeanMedium(mu=1e-3, G=1e3)
 ```
 
@@ -241,6 +252,7 @@ The $1/n$ prefactor arises from integrating the spatially varying viscosity fiel
 
 ```python
 from jbubble.bubble.medium import PowerLawMedium
+
 medium = PowerLawMedium(mu=1e-3, n_exp=0.6)  # shear-thinning
 ```
 

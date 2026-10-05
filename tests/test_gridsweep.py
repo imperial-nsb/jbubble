@@ -114,10 +114,12 @@ class TestGridSweep:
         # trim); on a single device it must give exactly the vmap result.
         # Grid size (15) is deliberately not a multiple of the device count.
         ss = {"x": jnp.arange(5.0), "y": jnp.arange(3.0)}
-        serial = GridSweep(lambda x, y: x * y + 1.0, ss, batch_size=4,
-                           progress=False, parallel=False).run()
-        parallel = GridSweep(lambda x, y: x * y + 1.0, ss, batch_size=4,
-                             progress=False, parallel=True).run()
+        serial = GridSweep(
+            lambda x, y: x * y + 1.0, ss, batch_size=4, progress=False, parallel=False
+        ).run()
+        parallel = GridSweep(
+            lambda x, y: x * y + 1.0, ss, batch_size=4, progress=False, parallel=True
+        ).run()
         assert parallel.shape == serial.shape == (5, 3)
         assert bool(jnp.allclose(parallel, serial))
 
@@ -126,7 +128,9 @@ class TestGridSweep:
         gs = GridSweep(
             fn=lambda x, y: {"s": x + y, "p": x * y},
             search_space={"x": jnp.arange(4.0), "y": jnp.arange(3.0)},
-            batch_size=5, progress=False, parallel=True,
+            batch_size=5,
+            progress=False,
+            parallel=True,
         )
         out = gs.run()
         assert out["s"].shape == (4, 3)

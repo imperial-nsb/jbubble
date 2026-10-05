@@ -40,26 +40,29 @@ from jbubble.utils.gridsweep import GridSweep
 from jbubble import run_simulation, SaveSpec
 from jbubble.utils.presets import free_bubble
 
+
 def peak_ratio(R0, pressure):
     preset = free_bubble(R0=R0, pressure=pressure)
     result = run_simulation(
-        preset.eom, preset.pulse,
+        preset.eom,
+        preset.pulse,
         save_spec=SaveSpec(500),
         t_max=10e-6,
     )
     return result.radius.max() / R0
 
+
 sweep = GridSweep(
     fn=peak_ratio,
     search_space={
-        "R0":       jnp.linspace(1e-6, 5e-6, 20),
+        "R0": jnp.linspace(1e-6, 5e-6, 20),
         "pressure": jnp.array([50e3, 100e3, 200e3, 400e3]),
     },
     batch_size=256,
 )
 
-grid = sweep.run()         # shape (20, 4)
-print(sweep.grid_shape)    # (20, 4)
+grid = sweep.run()  # shape (20, 4)
+print(sweep.grid_shape)  # (20, 4)
 print(sweep.total_points)  # 80
 ```
 
@@ -89,6 +92,6 @@ export_hdf5(
 )
 
 arrays, meta = load_hdf5("results.h5")
-print(meta["description"])          # "sweep"
+print(meta["description"])  # "sweep"
 print(arrays["peak_expansion"].shape)  # (20, 4)
 ```

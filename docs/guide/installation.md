@@ -44,8 +44,10 @@ import jax
 
 preset = free_bubble()
 from jbubble import run_simulation, SaveSpec
+
 result = jax.jit(run_simulation)(
-    preset.eom, preset.pulse,
+    preset.eom,
+    preset.pulse,
     save_spec=SaveSpec(num_samples=500),
     t_max=10e-6,
 )

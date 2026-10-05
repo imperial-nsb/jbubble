@@ -41,16 +41,21 @@ from jbubble.bubble.medium import NewtonianMedium
 from jbubble.pulse import ToneBurst
 from jbubble.pulse.shapes import Sine
 
+
 def simulate_bubble(R0, pressure):
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=1.4),
         shell=NoShell(sigma=0.072),
         medium=NewtonianMedium(mu=1e-3),
-        R0=R0, P_amb=101325, rho_L=998, c_L=1500,
+        R0=R0,
+        P_amb=101325,
+        rho_L=998,
+        c_L=1500,
     )
     pulse = ToneBurst(freq=1e6, pressure=pressure, shape=Sine(), cycle_num=5)
     result = run_simulation(eom, pulse, save_spec=SaveSpec(500), t_max=10e-6)
     return result.radius.max() / R0  # peak expansion ratio
+
 
 sweep = GridSweep(
     fn=simulate_bubble,
@@ -74,13 +79,18 @@ import equinox as eqx
 
 R0_values = jnp.linspace(1e-6, 5e-6, 20)
 
+
 def make_eom(R0):
     return KellerMiksis(
         gas=PolytropicGas(gamma=1.4),
         shell=NoShell(sigma=0.072),
         medium=NewtonianMedium(mu=1e-3),
-        R0=R0, P_amb=101325, rho_L=998, c_L=1500,
+        R0=R0,
+        P_amb=101325,
+        rho_L=998,
+        c_L=1500,
     )
+
 
 # Build a batched EoM by stacking along a leading axis
 batched_eom = jax.vmap(make_eom)(R0_values)
@@ -118,22 +128,29 @@ R0_true = 2e-6
 
 pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
 
+
 def make_model(kappa_s):
     sigma = GompertzSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=1.4),
         shell=LipidShell(sigma=sigma, kappa_s=kappa_s),
         medium=NewtonianMedium(mu=1e-3),
-        R0=R0_true, P_amb=101325, rho_L=998, c_L=1500,
+        R0=R0_true,
+        P_amb=101325,
+        rho_L=998,
+        c_L=1500,
     )
     return eom, pulse
 
+
 fit_result = fit_parameters(
     make_model=make_model,
-    params0=1e-9,          # initial guess for kappa_s [N·s/m]
+    params0=1e-9,  # initial guess for kappa_s [N·s/m]
     save_spec=SaveSpec(500),
     t_max=10e-6,
-    loss_fn=lambda result: normalised_mse_radius(result.radius, measured_radius, R0_true),
+    loss_fn=lambda result: normalised_mse_radius(
+        result.radius, measured_radius, R0_true
+    ),
     optimizer=optax.adam(1e-10),
     n_steps=200,
     log_every=25,
@@ -182,8 +199,8 @@ from jbubble.acoustics import IncompressibleMonopole
 from jbubble.metrics import normalised_mse_emission
 
 emission = IncompressibleMonopole(rho_L=998.0)
-measured_p = ...    # measured hydrophone waveform [Pa]
-r = 10e-3           # hydrophone distance [m]
+measured_p = ...  # measured hydrophone waveform [Pa]
+r = 10e-3  # hydrophone distance [m]
 
 fit_result = fit_parameters(
     make_model=make_model,
@@ -205,8 +222,10 @@ Pass a `step_callback` to inspect parameters and loss outside JIT at each step:
 ```python
 history = []
 
+
 def callback(step, params, loss):
     history.append({"step": step, "kappa_s": float(params), "loss": float(loss)})
+
 
 fit_result = fit_parameters(..., step_callback=callback)
 ```
@@ -224,8 +243,9 @@ def peak_expansion(kappa_s):
     result = run_simulation(eom, pulse, save_spec=SaveSpec(500), t_max=10e-6)
     return result.radius.max() / eom.R0
 
+
 grad_fn = jax.grad(peak_expansion)
-sensitivity = grad_fn(2.4e-9)   # d(peak expansion) / d(kappa_s) at kappa_s = 2.4 nN·s/m
+sensitivity = grad_fn(2.4e-9)  # d(peak expansion) / d(kappa_s) at kappa_s = 2.4 nN·s/m
 print("Sensitivity:", sensitivity)
 ```
 

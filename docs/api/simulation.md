@@ -22,16 +22,16 @@ from jbubble import run_simulation, SaveSpec
 result = jax.jit(run_simulation)(eom, pulse, save_spec=SaveSpec(1000), t_max=10e-6)
 
 # Convenience properties
-ts  = result.ts                  # shape (N,) — time axis [s]
-R   = result.radius              # shape (N,) — bubble radius [m]
-Rd  = result.radial_velocity     # shape (N,) — wall velocity [m/s]
-Rdd = result.radial_acceleration # shape (N,) — wall acceleration [m/s²]
-pac = result.driving_pressure    # shape (N,) — acoustic pressure [Pa]
+ts = result.ts  # shape (N,) — time axis [s]
+R = result.radius  # shape (N,) — bubble radius [m]
+Rd = result.radial_velocity  # shape (N,) — wall velocity [m/s]
+Rdd = result.radial_acceleration  # shape (N,) — wall acceleration [m/s²]
+pac = result.driving_pressure  # shape (N,) — acoustic pressure [Pa]
 
 # Full state and derivatives
-state     = result.state         # BubbleState with shape-(N,) arrays
-state_dot = result.state_dot     # BubbleState time derivatives
+state = result.state  # BubbleState with shape-(N,) arrays
+state_dot = result.state_dot  # BubbleState time derivatives
 
 # Solver diagnostics
-ok = result.converged            # bool — False if ODE hit max_steps
+ok = result.converged  # bool — False if ODE hit max_steps
 ```

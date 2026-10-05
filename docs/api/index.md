@@ -35,14 +35,26 @@ Only top-level orchestration functions are re-exported from the package root:
 
 ```python
 # Top-level imports
-from jbubble import run_simulation, fit_parameters, SaveSpec, SolverConfig, solve_eom, FitResult
+from jbubble import (
+    run_simulation,
+    fit_parameters,
+    SaveSpec,
+    SolverConfig,
+    solve_eom,
+    FitResult,
+)
 
 # Subpackage imports (required for all model classes)
 from jbubble.bubble.eom import KellerMiksis, RayleighPlesset, Gilmore
 from jbubble.bubble.gas import PolytropicGas, VanDerWaalsGas
 from jbubble.bubble.shell import NoShell, LipidShell, ThickShell
 from jbubble.bubble.shell import GompertzSurfaceTension, MarmottantSurfaceTension
-from jbubble.bubble.medium import NewtonianMedium, KelvinVoigtMedium, NeoHookeanMedium, PowerLawMedium
+from jbubble.bubble.medium import (
+    NewtonianMedium,
+    KelvinVoigtMedium,
+    NeoHookeanMedium,
+    PowerLawMedium,
+)
 from jbubble.bubble.property import ConstantProperty, NeuralProperty
 from jbubble.bubble.state import BubbleState
 from jbubble.acoustics import IncompressibleMonopole, QuasiAcoustic

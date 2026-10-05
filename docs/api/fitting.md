@@ -55,6 +55,7 @@ import matplotlib.pyplot as plt
 losses = []
 params_history = []
 
+
 def callback(step, params, loss):
     losses.append(float(loss))
     params_history.append(params)
@@ -64,6 +65,7 @@ def callback(step, params, loss):
         plt.xlabel("Step")
         plt.ylabel("Loss")
         plt.pause(0.01)
+
 
 fit_result = fit_parameters(..., step_callback=callback)
 ```

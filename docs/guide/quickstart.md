@@ -18,12 +18,12 @@ from jbubble.bubble.medium import NewtonianMedium
 
 eom = KellerMiksis(
     gas=PolytropicGas(gamma=1.4),
-    shell=NoShell(sigma=0.072),       # water surface tension [N/m]
+    shell=NoShell(sigma=0.072),  # water surface tension [N/m]
     medium=NewtonianMedium(mu=1e-3),  # water viscosity [Pa·s]
-    R0=2e-6,       # equilibrium radius [m]
+    R0=2e-6,  # equilibrium radius [m]
     P_amb=101325,  # ambient pressure [Pa]
-    rho_L=998.0,   # liquid density [kg/m³]
-    c_L=1500.0,    # speed of sound [m/s]
+    rho_L=998.0,  # liquid density [kg/m³]
+    c_L=1500.0,  # speed of sound [m/s]
 )
 ```
 
@@ -36,10 +36,10 @@ from jbubble.pulse import ToneBurst
 from jbubble.pulse.shapes import Sine
 
 pulse = ToneBurst(
-    freq=1e6,       # centre frequency [Hz]
-    pressure=100e3, # peak pressure [Pa]
-    shape=Sine(),   # sinusoidal carrier
-    cycle_num=5,    # number of cycles
+    freq=1e6,  # centre frequency [Hz]
+    pressure=100e3,  # peak pressure [Pa]
+    shape=Sine(),  # sinusoidal carrier
+    cycle_num=5,  # number of cycles
 )
 ```
 
@@ -52,7 +52,8 @@ import jax
 from jbubble import run_simulation, SaveSpec
 
 result = jax.jit(run_simulation)(
-    eom, pulse,
+    eom,
+    pulse,
     save_spec=SaveSpec(num_samples=1000),
     t_max=10e-6,  # simulate 10 µs
 )
@@ -68,10 +69,12 @@ Wrapping with `jax.jit` compiles the entire solver graph. The first call pays a 
 import matplotlib.pyplot as plt
 
 # Check the solver converged
-assert result.converged, "ODE did not converge — increase max_steps or loosen tolerances"
+assert result.converged, (
+    "ODE did not converge — increase max_steps or loosen tolerances"
+)
 
 # Time axis
-ts = result.ts * 1e6          # convert to µs
+ts = result.ts * 1e6  # convert to µs
 
 # Radius normalised by R0
 R_norm = result.radius / eom.R0
@@ -105,7 +108,8 @@ preset = lipid_bubble(R0=1.5e-6, freq=2.5e6, pressure=50e3)
 preset = thick_shell_bubble(R0=2e-6, freq=1e6, pressure=150e3)
 
 result = jax.jit(run_simulation)(
-    preset.eom, preset.pulse,
+    preset.eom,
+    preset.pulse,
     save_spec=SaveSpec(num_samples=1000),
     t_max=10e-6,
 )

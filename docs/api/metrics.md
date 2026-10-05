@@ -45,9 +45,11 @@ Any differentiable function of `SimulationResult` fields works as a `loss_fn`. F
 ```python
 import jax.numpy as jnp
 
+
 def psd_loss(result, target_psd):
     fft_r = jnp.abs(jnp.fft.rfft(result.radius)) ** 2
     return jnp.mean((fft_r - target_psd) ** 2)
+
 
 fit_result = fit_parameters(
     ...,

@@ -65,7 +65,8 @@ from jbubble.utils.presets import lipid_bubble
 eom, pulse = lipid_bubble(R0=2e-6, freq=1e6, pressure=100e3)
 
 result = jax.jit(run_simulation)(
-    eom, pulse,
+    eom,
+    pulse,
     save_spec=SaveSpec(num_samples=1000),
     t_max=10e-6,
 )
@@ -90,12 +91,16 @@ eom = KellerMiksis(
     gas=PolytropicGas(gamma=1.4),
     shell=NoShell(sigma=0.072),
     medium=NewtonianMedium(mu=1e-3),
-    R0=2e-6, P_amb=101325.0, rho_L=998.0, c_L=1500.0,
+    R0=2e-6,
+    P_amb=101325.0,
+    rho_L=998.0,
+    c_L=1500.0,
 )
 pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
 
 result = jax.jit(run_simulation)(
-    eom, pulse,
+    eom,
+    pulse,
     save_spec=SaveSpec(num_samples=1000),
     t_max=10e-6,
 )

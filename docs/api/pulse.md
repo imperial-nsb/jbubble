@@ -5,7 +5,7 @@ The `jbubble.pulse` module provides composable, differentiable acoustic driving 
 All pulses are Equinox modules and implement the interface:
 
 ```python
-pressure = pulse(t)   # scalar time → scalar pressure [Pa]
+pressure = pulse(t)  # scalar time → scalar pressure [Pa]
 ```
 
 ---

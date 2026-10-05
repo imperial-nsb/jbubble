@@ -8,7 +8,7 @@ Emission models are **not** `Property` subclasses (they depend on the full traje
 from jbubble.acoustics import IncompressibleMonopole
 
 emission = IncompressibleMonopole(rho_L=998.0)
-p_rad = emission(result, r=1e-2)   # pressure [Pa] at 1 cm, shape (num_samples,)
+p_rad = emission(result, r=1e-2)  # pressure [Pa] at 1 cm, shape (num_samples,)
 ```
 
 For multiple field-point distances, use `jax.vmap`:

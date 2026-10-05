@@ -13,10 +13,10 @@ from jbubble.pulse import ToneBurst
 from jbubble.pulse.shapes import Sine
 
 pulse = ToneBurst(
-    freq=1e6,        # centre frequency [Hz]
+    freq=1e6,  # centre frequency [Hz]
     pressure=100e3,  # peak pressure amplitude [Pa]
-    shape=Sine(),    # carrier waveform
-    cycle_num=5,     # number of complete cycles
+    shape=Sine(),  # carrier waveform
+    cycle_num=5,  # number of complete cycles
     # Optional:
     # phase=0.0      # initial carrier phase [rad]
     # envelope=SoftRectangularEnvelope()
@@ -49,9 +49,11 @@ pulse = ToneBurst(freq=1e6, pressure=200e3, shape=Square())
 
 # Monopolar rectangular pulse (99% duty)
 pulse = ToneBurst(
-    freq=1e6, pressure=200e3,
-    shape=Rectangular(duty=0.01, high_level=0.0, low_level=-1.0,
-                      phase_offset=1.98 * jnp.pi),
+    freq=1e6,
+    pressure=200e3,
+    shape=Rectangular(
+        duty=0.01, high_level=0.0, low_level=-1.0, phase_offset=1.98 * jnp.pi
+    ),
 )
 ```
 
@@ -71,12 +73,18 @@ from jbubble.pulse import ToneBurst, HannEnvelope, TukeyEnvelope
 from jbubble.pulse.shapes import Sine
 
 # Hann-windowed tone burst
-pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5,
-                  envelope=HannEnvelope())
+pulse = ToneBurst(
+    freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5, envelope=HannEnvelope()
+)
 
 # 10% taper on each side, flat in the middle
-pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=20,
-                  envelope=TukeyEnvelope(alpha=0.1))
+pulse = ToneBurst(
+    freq=1e6,
+    pressure=100e3,
+    shape=Sine(),
+    cycle_num=20,
+    envelope=TukeyEnvelope(alpha=0.1),
+)
 ```
 
 ---
@@ -89,10 +97,10 @@ A frequency-swept pulse. Useful for broadband excitation and some therapeutic pr
 from jbubble.pulse import ChirpPulse
 
 pulse = ChirpPulse(
-    freq_start=0.5e6,   # start frequency [Hz]
-    freq_end=2.0e6,     # end frequency [Hz]
-    pressure=100e3,     # peak amplitude [Pa]
-    duration=20e-6,     # pulse duration [s]
+    freq_start=0.5e6,  # start frequency [Hz]
+    freq_end=2.0e6,  # end frequency [Hz]
+    pressure=100e3,  # peak amplitude [Pa]
+    duration=20e-6,  # pulse duration [s]
     # mode="linear" or "exponential"
 )
 ```
@@ -107,8 +115,8 @@ Wraps a discrete pressure waveform, interpolating at query times. Useful when th
 import jax.numpy as jnp
 from jbubble.pulse import SampledPulse
 
-ts = jnp.linspace(0, 10e-6, 1000)   # time axis [s]
-ps = measured_waveform               # pressure values [Pa], shape (1000,)
+ts = jnp.linspace(0, 10e-6, 1000)  # time axis [s]
+ps = measured_waveform  # pressure values [Pa], shape (1000,)
 
 pulse = SampledPulse(ts=ts, ps=ps)
 ```
