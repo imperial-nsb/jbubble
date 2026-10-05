@@ -337,7 +337,9 @@ class TestMarmottantSurfaceTension:
             s = _make_state(ratio)
             assert float(wrapped(s)) == float(plain(s))
 
-    @pytest.mark.parametrize("x", [0.97, 1.005, 1.03, 1.2])
+    # x = 1.041 lies between the rupture radius from chi(state), 1.0398 R0,
+    # and the one from chi(R0), 1.0422 R0.
+    @pytest.mark.parametrize("x", [0.97, 1.005, 1.03, 1.041, 1.2])
     def test_state_dependent_chi_matches_the_closed_form(self, x):
         # chi(state) sets both the elastic branch and the rupture radius.
         st = MarmottantSurfaceTension(
@@ -761,6 +763,21 @@ class TestGompertzSurfaceTensionPublished:
         assert float(st(_make_state(1.01))) == pytest.approx(
             float(ref(_make_state(1.01))), rel=1e-12
         )
+
+    @pytest.mark.parametrize("x", [0.95, 1.02, 1.2])
+    def test_state_dependent_chi_matches_the_closed_form(self, x):
+        # chi(state) sets b, c, and sigma_0 in Eqs. 13-15 at the current state.
+        st = GompertzSurfaceTension(
+            R_buckle_ratio=0.98,
+            chi=RadiusScaledChi(chi0=0.55),
+            sigma_rupture=ConstantProperty(SIGMA_R),
+        )
+        chi = 0.55 * x
+        c = (2 * chi * math.e / SIGMA_R) * math.sqrt(1 + SIGMA_R / (2 * chi))
+        sigma_0 = chi * ((1.0 / 0.98) ** 2 - 1.0)
+        b = -math.log(sigma_0 / SIGMA_R) / math.exp(c * (1.0 - 1.0 / 0.98))
+        expected = SIGMA_R * math.exp(-b * math.exp(c * (1.0 - x / 0.98)))
+        assert float(st(_make_state(x))) == pytest.approx(expected, rel=1e-9, abs=0.0)
 
     @pytest.mark.parametrize(
         "chi,ratio,x",
