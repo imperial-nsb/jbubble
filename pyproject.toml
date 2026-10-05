@@ -69,12 +69,30 @@ Changelog = "https://github.com/imperial-nsb/jbubble/releases"
 test = ["pytest>=8.3", "pytest-xdist>=3.6", "jbubble[io,examples]"]
 lint = ["ruff>=0.16.10", "ty==0.0.84"]
 dev = [{ include-group = "test" }, { include-group = "lint" }, "prek>=0.5"]
-# Today's MkDocs site. A later release moves the docs to Zensical.
+# The documentation site (Zensical), the example gallery, and the tests that
+# run the code samples in the docs. Install with `uv sync --group docs`.
 docs = [
-    "mkdocs>=1.6",
-    "mkdocs-material>=9.5",
-    "mkdocstrings[python]>=0.25",
-    "pymdown-extensions>=10.0",
+    # The examples run with the same extras that users install.
+    "jbubble[io,examples]",
+    "zensical>=0.0.67", # raise to >=0.1 after the 0.1.0 release
+    "mkdocstrings[python]>=1.0.6",
+    "mkdocstrings-python>=2.0.9",
+    # Imported by scripts/griffe_extensions.py.
+    "griffelib>=2.0",
+    # mkdocstrings and mkdocs-autorefs import MkDocs 1.x without capping it.
+    # MkDocs 2.0 has no plugin API, so the cap keeps the API pages building.
+    "mkdocs>=1.6,<2",
+    # Formats the signatures that `separate_signature` renders.
+    "ruff>=0.16.10",
+    # scripts/build_examples.py: run the percent-format examples as notebooks.
+    "jupytext>=1.19",
+    "nbclient>=0.11",
+    "nbformat>=5.11",
+    "ipykernel>=7.0",
+    "matplotlib>=3.10",
+    # Run the code blocks in README.md and docs/guide/.
+    "pytest>=8.3",
+    "pytest-markdown-docs>=0.9",
 ]
 
 [tool.hatch.version]
