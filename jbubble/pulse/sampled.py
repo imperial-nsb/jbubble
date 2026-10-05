@@ -7,6 +7,8 @@ import jax.numpy as jnp
 
 from .base import Pulse
 
+__all__ = ["SampledPulse"]
+
 
 class SampledPulse(Pulse):
     """Acoustic pulse defined by an array of pressure samples.

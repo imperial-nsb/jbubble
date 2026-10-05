@@ -10,6 +10,8 @@ import jax.numpy as jnp
 
 from .envelope import Envelope, SoftRectangularEnvelope
 
+__all__ = ["Pulse", "Scaled", "Offset", "Summed"]
+
 
 class Pulse(eqx.Module, abc.ABC):
     """Abstract acoustic driving pulse.

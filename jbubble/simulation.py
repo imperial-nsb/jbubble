@@ -15,6 +15,8 @@ from .bubble.state import BubbleState
 from .pulse import Pulse
 from .solver import SaveSpec, SolverConfig, solve_eom
 
+__all__ = ["SimulationResult", "run_simulation"]
+
 
 class SimulationResult(eqx.Module):
     """Output of :func:`run_simulation`.

@@ -41,6 +41,8 @@ from ..pulse.base import Pulse
 from ..pulse.shapes import Sine
 from ..pulse.tone_burst import ToneBurst
 
+__all__ = ["BubblePreset", "free_bubble", "lipid_bubble", "thick_shell_bubble"]
+
 
 class BubblePreset(NamedTuple):
     """Assembled (EoM, pulse) pair returned by preset factory functions.

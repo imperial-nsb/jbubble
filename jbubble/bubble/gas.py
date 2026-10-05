@@ -18,6 +18,8 @@ import jax
 from .property import Property, as_property
 from .state import BubbleState
 
+__all__ = ["GasModel", "PolytropicGas", "VanDerWaalsGas"]
+
 
 class GasModel(eqx.Module, abc.ABC):
     """Internal gas pressure model.

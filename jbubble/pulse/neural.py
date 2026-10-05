@@ -12,6 +12,8 @@ from jax.typing import ArrayLike
 
 from .base import Pulse
 
+__all__ = ["NeuralPulse"]
+
 
 class NeuralPulse(Pulse):
     """Acoustic pulse parameterised by a neural network.

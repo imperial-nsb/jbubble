@@ -12,6 +12,8 @@ from jax.typing import ArrayLike
 from .base import Pulse
 from .shapes import PulseShape, Sine
 
+__all__ = ["ChirpSweep", "LinearSweep", "ExponentialSweep", "ChirpPulse"]
+
 
 class ChirpSweep(eqx.Module):
     """Abstract phase law for a frequency sweep.

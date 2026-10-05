@@ -16,6 +16,15 @@ import jax.numpy as jnp
 from .property import Property, as_property
 from .state import BubbleState
 
+__all__ = [
+    "ShellModel",
+    "NoShell",
+    "LipidShell",
+    "ThickShell",
+    "MarmottantSurfaceTension",
+    "GompertzSurfaceTension",
+]
+
 
 class ShellModel(eqx.Module, abc.ABC):
     """Bubble shell / coating model.

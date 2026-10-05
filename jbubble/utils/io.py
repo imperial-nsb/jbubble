@@ -20,6 +20,8 @@ except ImportError as err:  # h5py is an optional dependency
         "jbubble.utils.io needs h5py. Install it with: pip install 'jbubble[io]'"
     ) from err
 
+__all__ = ["export_hdf5", "load_hdf5"]
+
 
 def export_hdf5(
     path: str | Path,

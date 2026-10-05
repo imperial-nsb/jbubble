@@ -9,6 +9,14 @@ import jax
 import jax.numpy as jnp
 from jax.typing import ArrayLike
 
+__all__ = [
+    "Envelope",
+    "RectangularEnvelope",
+    "HannEnvelope",
+    "SoftRectangularEnvelope",
+    "TukeyEnvelope",
+]
+
 
 class Envelope(eqx.Module, abc.ABC):
     """Window function mapping relative time *tau* to a scale in [0, 1].

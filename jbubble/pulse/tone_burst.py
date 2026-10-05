@@ -9,6 +9,8 @@ from jax.typing import ArrayLike
 from .base import Pulse
 from .shapes import PulseShape
 
+__all__ = ["ToneBurst"]
+
 
 class ToneBurst(Pulse):
     """Tone burst: carrier waveform × envelope × pressure amplitude.

@@ -12,3 +12,5 @@ Import from specific submodules:
   from jbubble.bubble.shell    import LipidShell, MarmottantSurfaceTension
   from jbubble.bubble.medium   import NewtonianMedium, KelvinVoigtMedium
 """
+
+__all__: list[str] = []

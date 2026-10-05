@@ -9,6 +9,22 @@ import jax
 import jax.numpy as jnp
 from jax.typing import ArrayLike
 
+__all__ = [
+    "PulseShape",
+    "FourierPulseShape",
+    "Sine",
+    "Sawtooth",
+    "InvertedSawtooth",
+    "Triangle",
+    "Quadratic",
+    "NegativeQuadratic",
+    "Square",
+    "TimeDomainSquare",
+    "TimeDomainSawtooth",
+    "TimeDomainTriangle",
+    "Rectangular",
+]
+
 NUM_FOURIER_TERMS = 10
 
 

@@ -13,6 +13,8 @@ from jax.typing import ArrayLike
 from .bubble.eom import EquationOfMotion
 from .pulse import Pulse
 
+__all__ = ["SaveSpec", "SolverConfig", "solve_eom"]
+
 
 class SaveSpec(eqx.Module):
     """Specification for ODE output sampling.

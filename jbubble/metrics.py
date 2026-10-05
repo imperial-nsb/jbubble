@@ -23,6 +23,15 @@ import jax
 import jax.numpy as jnp
 from jax.typing import ArrayLike
 
+__all__ = [
+    "mse_radius",
+    "normalised_mse_radius",
+    "peak_expansion",
+    "peak_expansion_error",
+    "mse_emission",
+    "normalised_mse_emission",
+]
+
 
 def mse_radius(r_sim: jax.Array, r_target: jax.Array) -> jax.Array:
     """Mean squared error between simulated and target radii [m²].

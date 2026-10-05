@@ -18,6 +18,8 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
+__all__ = ["BubbleState"]
+
 
 class BubbleState(eqx.Module):
     """Standard bubble state.

@@ -21,6 +21,14 @@ from .medium import MediumModel
 from .shell import ShellModel
 from .state import BubbleState
 
+__all__ = [
+    "EquationOfMotion",
+    "RayleighPlesset",
+    "ModifiedRayleighPlesset",
+    "KellerMiksis",
+    "Gilmore",
+]
+
 
 class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
     """Macroscopic equation of motion for bubble dynamics.

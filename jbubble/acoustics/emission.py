@@ -23,6 +23,8 @@ from jax.typing import ArrayLike
 
 from ..simulation import SimulationResult
 
+__all__ = ["EmissionModel", "IncompressibleMonopole", "QuasiAcoustic"]
+
 
 class EmissionModel(eqx.Module, abc.ABC):
     """Acoustic emission model: bubble trajectory → radiated pressure.

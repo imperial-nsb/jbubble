@@ -27,6 +27,8 @@ from jax.typing import ArrayLike
 
 from .state import BubbleState
 
+__all__ = ["Property", "ConstantProperty", "NeuralProperty", "as_property"]
+
 
 class Property(eqx.Module, abc.ABC):
     """Abstract base for state-dependent (or constant) bubble properties.

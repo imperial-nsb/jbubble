@@ -20,6 +20,8 @@ from .solver import SaveSpec, SolverConfig, solve_eom
 
 PyTree = Any  # any JAX-compatible pytree (scalar, array, dict, eqx.Module, …)
 
+__all__ = ["FitResult", "fit_parameters"]
+
 
 def _format_params(params: PyTree) -> str:
     """Format a params pytree for logging — scalars shown as values, arrays as shapes."""

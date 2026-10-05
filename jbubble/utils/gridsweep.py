@@ -48,6 +48,8 @@ from tqdm import tqdm
 
 PyTree = Any
 
+__all__ = ["GridSweep"]
+
 
 class GridSweep:
     """Batched Cartesian-product sweep over named parameter axes.

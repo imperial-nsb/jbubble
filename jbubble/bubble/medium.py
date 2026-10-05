@@ -15,6 +15,14 @@ import jax.numpy as jnp
 from .property import Property, as_property
 from .state import BubbleState
 
+__all__ = [
+    "MediumModel",
+    "NewtonianMedium",
+    "KelvinVoigtMedium",
+    "NeoHookeanMedium",
+    "PowerLawMedium",
+]
+
 
 class MediumModel(eqx.Module, abc.ABC):
     """Surrounding medium (fluid / tissue) model.
