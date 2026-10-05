@@ -1,5 +1,7 @@
 name: Deploy documentation
 
+# GitHub Pages serves the gh-pages branch, which `mkdocs gh-deploy` updates.
+
 on:
   push:
     branches: [main]
@@ -7,29 +9,52 @@ on:
       - "docs/**"
       - "mkdocs.yml"
       - "jbubble/**"
-
-  # Allow manual trigger
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "jbubble/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/docs.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  build:
+    name: Build docs
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - run: uv sync --locked --no-default-groups --group docs
+      - run: uv run --no-sync mkdocs build
+
   deploy:
     name: Build and deploy docs
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-
     permissions:
-      contents: write  # required for gh-pages push
-
+      contents: write # `mkdocs gh-deploy` pushes to the gh-pages branch
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0  # full history for git-revision-date plugin
-
-      - uses: actions/setup-python@v5
+          fetch-depth: 0 # gh-deploy needs the gh-pages branch history
+          persist-credentials: true # zizmor: ignore[artipacked] gh-deploy pushes with these credentials
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          python-version: "3.11"
-
-      - name: Install package with docs extras
-        run: pip install -e ".[docs]"
-
-      - name: Deploy to GitHub Pages
-        run: mkdocs gh-deploy --force
+          enable-cache: false # no shared cache in a job that can write to the repo
+      - run: uv sync --locked --no-default-groups --group docs
+      - run: uv run --no-sync mkdocs gh-deploy --force
