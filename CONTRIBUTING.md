@@ -283,6 +283,22 @@ If you're adding a new model (gas, shell, medium, EoM), follow the existing patt
 5. CI runs the linters, the type checker, the tests, and a build check. All
    checks must pass.
 
+## Release a version
+
+Maintainers release from `main`. In the release commit, where `YYYY-MM-DD` is
+the release date:
+
+1. In [`CHANGELOG.md`](CHANGELOG.md), replace `Unreleased` in the new
+   version's heading with the date, as in `## [0.2.0] - YYYY-MM-DD`.
+2. At the end of `CHANGELOG.md`, change the version's compare link from
+   `...HEAD` to the new tag, as in `v0.1.1...v0.2.0`.
+3. In [`CITATION.cff`](CITATION.cff), check `version` and add
+   `date-released: YYYY-MM-DD`.
+
+Then tag the commit, as in `git tag v0.2.0`, and push the tag. The release
+workflow tests the tag, uploads the package to PyPI, and then publishes the
+documentation.
+
 ## Reporting bugs and requesting features
 
 Open an issue on [GitHub](https://github.com/imperial-nsb/jbubble/issues). For
