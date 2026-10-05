@@ -11,7 +11,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax.typing import ArrayLike
 
-from .envelope import Envelope, SoftRectangularEnvelope
+from .envelope import Envelope, NoEnvelope, SoftRectangularEnvelope
 
 __all__ = ["Pulse", "Scaled", "Offset", "Summed"]
 
@@ -54,7 +54,9 @@ class Pulse(eqx.Module, abc.ABC):
         Time at which the pulse starts [s]. Keyword-only. Default: `0.0`.
     envelope : Envelope
         Window applied to the raw signal. Keyword-only. Default:
-        [`SoftRectangularEnvelope()`][jbubble.pulse.envelope.SoftRectangularEnvelope].
+        [`SoftRectangularEnvelope()`][jbubble.pulse.envelope.SoftRectangularEnvelope],
+        except for [`Summed`][jbubble.pulse.base.Summed], whose default is
+        [`NoEnvelope()`][jbubble.pulse.envelope.NoEnvelope].
     """
 
     initial_time: float = eqx.field(default=0.0, kw_only=True)
@@ -194,7 +196,8 @@ class Pulse(eqx.Module, abc.ABC):
           [`ToneBurst`][jbubble.pulse.tone_burst.ToneBurst], replaces its
           own envelope.
         - [`Summed`][jbubble.pulse.base.Summed] replaces its own envelope,
-          which multiplies the sum on top of each child's envelope.
+          which multiplies the sum on top of each child's envelope. A sum
+          has no window of its own until you call `windowed` on it.
         - [`Scaled`][jbubble.pulse.base.Scaled] and
           [`Offset`][jbubble.pulse.base.Offset] have no envelope of their
           own, so they pass `envelope` to the wrapped pulse. The constant of
@@ -362,43 +365,56 @@ class Summed(Pulse):
     r"""Additive superposition of multiple pulses.
 
     $$
-    p(t) = w(t - t_0, T) \sum_i p_i(t)
+    p(t) = w(t - t_\text{start}, T) \sum_i p_i(t)
     $$
 
     `Summed` evaluates each child pulse $p_i$ with its own envelope, sums
-    the results, and applies its own `envelope` $w$ on top. `Summed`
-    inherits that field from [`Pulse`][jbubble.pulse.base.Pulse], and it
-    defaults to
-    [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope].
-    Its active window runs from its own `initial_time` $t_0$ to the latest
-    child [`t_stop`][jbubble.pulse.base.Pulse.t_stop], so
-    $T = \max_i t_{\text{stop},i} - t_0$. To window the combined signal,
-    use `.windowed(HannEnvelope())`.
+    the results, and multiplies the sum by its own `envelope` $w$. That
+    envelope defaults to [`NoEnvelope`][jbubble.pulse.envelope.NoEnvelope],
+    which is 1 at all times, so by default $p(t) = \sum_i p_i(t)$ exactly
+    and every child keeps its full signal, however late it starts. To
+    window the combined signal, call `.windowed(envelope)`, for example
+    `(pulse_a + pulse_b).windowed(HannEnvelope())`.
 
-    `pulse_a + pulse_b` flattens nested sums into one `Summed`, unless a
-    nested sum has its own `initial_time` or envelope, such as a windowed
-    sum. That sum stays a single child, so it keeps its window.
+    The window starts at the sum's own `initial_time` $t_0$ and ends at
+    the latest child [`t_stop`][jbubble.pulse.base.Pulse.t_stop], so
+    $t_\text{start} = t_0$ and $T = \max_i t_{\text{stop},i} - t_0$.
+
+    `pulse_a + pulse_b` flattens nested sums into one `Summed`, except a
+    windowed sum, whose envelope isn't `NoEnvelope`. That sum stays a
+    single child, so it keeps its window. The rule depends only on the
+    envelope's type, so a sum flattens the same way under `jax.jit` and
+    outside it. Flattening keeps every child but drops a nested sum's own
+    `initial_time`, which matters only for a window that you apply later.
 
     Parameters
     ----------
     pulses : tuple[Pulse, ...]
         Pulses to sum. Must be a tuple, not a list, for Equinox PyTree
         compatibility.
+    envelope : Envelope
+        Window applied to the sum. Keyword-only. Default:
+        [`NoEnvelope()`][jbubble.pulse.envelope.NoEnvelope].
     """
 
     pulses: tuple[Pulse, ...]
+    envelope: Envelope = eqx.field(default_factory=NoEnvelope, kw_only=True)
 
     @property
     def duration(self) -> float | jax.Array:
-        # Span from t_start to the latest child t_stop. Scaled and Offset
-        # report their child's t_stop, so a delayed child that is wrapped
-        # in them still counts. jnp.max, rather than Python max or float,
-        # keeps this valid under JAX tracing.
+        """Time [s] from `t_start` to the latest child `t_stop`.
+
+        `Scaled` and `Offset` report their child's `t_stop`, so a delayed
+        child that is wrapped in them still counts.
+        """
+        # jnp.max, rather than Python max or float, keeps this valid under
+        # JAX tracing.
         stops = jnp.stack([jnp.asarray(p.t_stop) for p in self.pulses])
         return jnp.max(stops) - jnp.asarray(self.t_start)
 
     @property
     def t_end(self) -> float | jax.Array:
+        """Suggested simulation end time [s]: the latest child `t_end`."""
         return jnp.max(jnp.stack([jnp.asarray(p.t_end) for p in self.pulses]))
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
@@ -474,14 +490,11 @@ def _default_envelope(pulse: Pulse) -> bool | None:
 def _summands(pulse: Pulse) -> tuple[Pulse, ...]:
     """Return the pulses that `pulse` contributes to a flattened sum.
 
-    A `Summed` with a non-default `initial_time` or envelope stays whole,
-    so adding to a windowed sum keeps its window.
+    A windowed `Summed`, whose envelope isn't `NoEnvelope`, stays whole, so
+    adding to it keeps its window. The test reads only the PyTree
+    structure, never a leaf value, so tracing can't change it.
     """
-    if (
-        isinstance(pulse, Summed)
-        and _default_initial_time(pulse) is True
-        and _default_envelope(pulse) is True
-    ):
+    if type(pulse) is Summed and type(pulse.envelope) is NoEnvelope:
         return pulse.pulses
     return (pulse,)
 

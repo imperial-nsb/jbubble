@@ -10,6 +10,7 @@ from jbubble.pulse import (
     ChirpPulse,
     HannEnvelope,
     NeuralPulse,
+    NoEnvelope,
     Offset,
     RectangularEnvelope,
     SampledPulse,
@@ -589,18 +590,88 @@ class TestWindowedSemantics:
         assert float(windowed(T_EDGE)) == pytest.approx(float(want), rel=1e-12)
 
     def test_adding_to_a_windowed_sum_keeps_its_window(self, tone_early, tone_late):
-        # At 1.5 µs the Hann window over 12 µs is about 0.15, while the outer
-        # sum's soft-rectangular envelope is 1 to within 1e-5.
-        t = jnp.asarray(1.5e-6)
         windowed = (tone_early + tone_late).windowed(HannEnvelope())
         silent = ToneBurst(freq=3e6, pressure=0.0, shape=Sine(), cycle_num=15)
         for combined in (windowed + silent, silent + windowed):
-            assert float(combined(t)) == pytest.approx(float(windowed(t)), rel=1e-4)
+            assert len(combined.pulses) == 2
+            got = float(combined(T_EDGE))
+            assert got == pytest.approx(float(windowed(T_EDGE)), rel=1e-12)
 
     def test_plain_sums_still_flatten(self, tone_early, tone_late):
         silent = ToneBurst(freq=3e6, pressure=0.0, shape=Sine(), cycle_num=15)
         combined = (tone_early + tone_late) + (silent + tone_early)
         assert len(combined.pulses) == 4
+
+
+class TestTransparentSum:
+    """A sum has no window of its own unless you window it."""
+
+    def test_default_envelope_is_no_envelope(self, tone_early, tone_late):
+        assert isinstance((tone_early + tone_late).envelope, NoEnvelope)
+        assert isinstance(Summed(pulses=(tone_early,)).envelope, NoEnvelope)
+
+    def test_sum_equals_the_sum_of_its_children(self, tone_early, tone_late):
+        got = jax.vmap(tone_early + tone_late)(TS_GRID)
+        want = jax.vmap(tone_early)(TS_GRID) + jax.vmap(tone_late)(TS_GRID)
+        assert float(jnp.max(jnp.abs(got - want))) <= 1e-9
+
+    @pytest.mark.parametrize("delay", [10e-6, 100e-6, 1e-3])
+    def test_late_child_keeps_all_its_energy(self, tone_early, delay):
+        late = ToneBurst(
+            freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5, initial_time=delay
+        )
+        ts = jnp.linspace(delay, delay + 5e-6, 5001)
+        got = jax.vmap(tone_early + late)(ts)
+        want = jax.vmap(lambda t: tone_early(t) + late(t))(ts)
+        assert float(jnp.sum(got**2) / jnp.sum(want**2)) == pytest.approx(1.0, abs=1e-9)
+
+    @pytest.mark.parametrize(
+        "combine",
+        [lambda p: p - p, lambda p: (p + p) - 2.0 * p, lambda p: 2.0 * p - (p + p)],
+        ids=["p-p", "(p+p)-2p", "2p-(p+p)"],
+    )
+    def test_a_sum_minus_itself_is_zero(self, tone_early, tone_late, combine):
+        residual = jax.vmap(combine(tone_early + tone_late))(TS_GRID)
+        assert float(jnp.max(jnp.abs(residual))) <= 1e-9
+
+    def test_jit_and_eager_build_the_same_sum(self, tone_early, tone_late):
+        later = ToneBurst(
+            freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5, initial_time=15e-6
+        )
+        eager = (tone_early + tone_late) + later
+        jitted = jax.jit(lambda s, p: s + p)(tone_early + tone_late, later)
+        assert len(eager.pulses) == len(jitted.pulses) == 3
+        got = jax.vmap(jitted)(TS_GRID)
+        assert jnp.allclose(got, jax.vmap(eager)(TS_GRID), rtol=0.0, atol=1e-9)
+
+    def test_windowed_sum_stays_whole_under_jit(self, tone_early, tone_late):
+        windowed = (tone_early + tone_late).windowed(HannEnvelope())
+        silent = ToneBurst(freq=3e6, pressure=0.0, shape=Sine(), cycle_num=15)
+        jitted = jax.jit(lambda w, p: w + p)(windowed, silent)
+        assert len(jitted.pulses) == 2
+        assert float(jitted(T_EDGE)) == pytest.approx(
+            float(windowed(T_EDGE)), rel=1e-12
+        )
+
+    def test_no_envelope_removes_a_window(self, tone_early, tone_late):
+        summed = tone_early + tone_late
+        restored = summed.windowed(HannEnvelope()).windowed(NoEnvelope())
+        assert float(restored(T_EDGE)) == float(summed(T_EDGE))
+
+    def test_peak_of_a_pulse_pair_does_not_depend_on_spacing(self, tone_early):
+        # The second pulse of a pair drives the bubble from rest, so its peak
+        # response is the same whether it starts 30 µs or 200 µs later.
+        eom, _ = free_bubble()
+        spec = SaveSpec(num_samples=4001)
+        peaks = []
+        for delay in (30e-6, 200e-6):
+            late = ToneBurst(
+                freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5, initial_time=delay
+            )
+            result = run_simulation(eom, tone_early + 0.8 * late, save_spec=spec)
+            after = result.ts >= delay
+            peaks.append(float(jnp.max(jnp.where(after, result.radius, 0.0))))
+        assert peaks[1] == pytest.approx(peaks[0], rel=1e-3)
 
 
 class TestSampledPulseWindow:

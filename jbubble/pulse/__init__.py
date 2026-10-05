@@ -40,6 +40,7 @@ from .chirp import ChirpPulse
 from .envelope import (
     Envelope,
     HannEnvelope,
+    NoEnvelope,
     RectangularEnvelope,
     SoftRectangularEnvelope,
     TukeyEnvelope,
@@ -53,6 +54,7 @@ __all__ = [
     "Pulse",
     # Envelopes
     "Envelope",
+    "NoEnvelope",
     "RectangularEnvelope",
     "SoftRectangularEnvelope",
     "HannEnvelope",
