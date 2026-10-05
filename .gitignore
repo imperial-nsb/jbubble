@@ -3,19 +3,19 @@
 *.ipynb_checkpoints
 *.pytest_cache
 *.vscode
-*.egg-info
 *__pycache__
 **/*.pyc
-.venv
-site/*
-build/*
 .ruff_cache
 
-# poetry
-poetry.lock
+# Python packaging and environments
+.venv/
+dist/
+build/
+*.egg-info/
 
-# setuptools-scm generated version file
-jbubble/_version.py
+# Docs builds and tool caches
+site/
+.cache/
 
 # Testing
 .coverage

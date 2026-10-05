@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import abc
 from collections.abc import Callable
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 import equinox as eqx
 import jax
@@ -21,10 +21,8 @@ from .medium import MediumModel
 from .shell import ShellModel
 from .state import BubbleState
 
-StateType = TypeVar("StateType", bound=BubbleState)
 
-
-class EquationOfMotion(eqx.Module, abc.ABC, Generic[StateType]):
+class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
     """Macroscopic equation of motion for bubble dynamics.
 
     Assembles a ``GasModel``, ``ShellModel``, and ``MediumModel`` into a
