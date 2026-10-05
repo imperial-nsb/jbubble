@@ -98,12 +98,18 @@ class ChirpPulse(Pulse):
 
     The `shape` field sets the carrier waveform (default: sine); the
     `sweep` field sets how the instantaneous frequency varies with time
-    (default: linear). Both are `eqx.Module` leaves, so swapping either
-    keeps the same computational graph and doesn't force a re-trace.
+    (default: linear). Both are `eqx.Module` fields, so you can swap either
+    without changing `ChirpPulse`. A different shape or sweep class
+    changes the PyTree structure, so `jax.jit` traces the pulse again.
 
-    The pulse evaluates the shape at the accumulated phase $\Phi(\tau)$,
-    with $\tau = t - t_0$, so any
-    [`PulseShape`][jbubble.pulse.shapes.PulseShape] works as a carrier.
+    The pulse calls the shape as `shape(t, 0.0, -phi, t)`, where `phi` is
+    the accumulated phase $\Phi(\tau)$ and $\tau = t - t_0$, so the phase
+    $x$ that [`PulseShape`][jbubble.pulse.shapes.PulseShape] defines
+    equals $\Phi(\tau)$. Any shape that depends on time only through $x$
+    works as a carrier. [`Triangle`][jbubble.pulse.shapes.Triangle]
+    doesn't, because it divides by `freq`, which is 0 here; use
+    [`TimeDomainTriangle`][jbubble.pulse.shapes.TimeDomainTriangle]
+    instead.
 
     Parameters
     ----------
