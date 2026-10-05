@@ -79,9 +79,9 @@ def fit_parameters(
         `params -> (EquationOfMotion, Pulse)`. Must be JAX-traceable.
     params0 : PyTree
         Initial parameter values: any JAX-compatible pytree, such as a
-        scalar array, a dict, a tuple, or an `eqx.Module`. Only JAX-array
-        leaves are optimised; Python `int` and `float` leaves stay fixed,
-        so wrap each value to fit in `jnp.asarray`.
+        scalar array, a dict, a tuple, or an `eqx.Module`. The optimiser
+        updates only JAX-array leaves; Python `int` and `float` leaves stay
+        fixed, so wrap each value to fit in `jnp.asarray`.
     save_spec : SaveSpec
         Output sampling specification.
     t_max : float, optional

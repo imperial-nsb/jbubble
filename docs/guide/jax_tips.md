@@ -163,7 +163,7 @@ print("Final loss:", fit_result.loss_history[-1])
 
 ### Fitting multiple parameters jointly
 
-`params0` can be any JAX-compatible PyTree. The `make_model` factory receives the same structure. Only JAX-array leaves are optimised; Python `int` and `float` leaves stay fixed, so wrap each value to fit in `jnp.asarray`:
+`params0` can be any JAX-compatible PyTree. The `make_model` factory receives the same structure. The optimiser updates only JAX-array leaves; Python `int` and `float` leaves stay fixed, so wrap each value to fit in `jnp.asarray`:
 
 ```python
 import jax.numpy as jnp
