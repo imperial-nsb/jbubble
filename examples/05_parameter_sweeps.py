@@ -4,8 +4,8 @@
 # Run thousands of bubbles at once. `jax.vmap` simulates a row of bubbles of
 # different sizes in one call, and `GridSweep` maps the response over a grid
 # of radius, frequency, and pressure on every CPU core. The map is checked
-# against linear resonance theory, streamed batch by batch into an HDF5 file,
-# and drawn from that file.
+# against linear resonance theory, collected batch by batch, saved to an HDF5
+# file, and drawn from that file.
 #
 # The HDF5 section needs the `io` extra: `pip install "jbubble[io]"`.
 
@@ -178,7 +178,7 @@ print(
 )
 
 # %% [markdown]
-# ## Stream to HDF5, then load
+# ## Collect batches, save to HDF5, then load
 #
 # `GridSweep.run` returns the whole grid at once. For a sweep too large for
 # memory, iterate over `GridSweep.batches` instead: each batch holds the

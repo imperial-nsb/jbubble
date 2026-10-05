@@ -42,9 +42,9 @@ print(f"Peak radius: {result.radius.max() * 1e6:.2f} µm from R0 = 2 µm")
 # The result holds the sample times `result.ts`, the radius `result.radius`,
 # the wall velocity `result.radial_velocity`, and the pressure that drives
 # the bubble, `result.driving_pressure`. By default, `run_simulation` records
-# 1024 samples from the start of the pulse to `pulse.t_end`, which is twice
-# the pulse duration later, so you also see the bubble ring down after the
-# drive stops.
+# 1024 samples from $t = 0$ to `pulse.t_end`, which is twice the pulse
+# duration after the pulse starts, so you also see the bubble ring down after
+# the drive stops.
 #
 # Plot the drive above the radius, which you divide by the equilibrium
 # radius $R_0$. The radius doesn't follow the drive like a sine wave. A 2 µm
