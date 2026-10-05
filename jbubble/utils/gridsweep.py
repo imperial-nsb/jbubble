@@ -15,9 +15,10 @@ statistics, track a running argmin, or build a dataset.
 
 Notes
 -----
-- `GridSweep` calls `fn` through `jax.vmap` (single device) or through
-  `jax.pmap` of a `jax.vmap` (many devices), so `fn` must be
-  JAX-compatible. See the `parallel` parameter.
+- `GridSweep` calls `fn` through `jax.pmap` of a `jax.vmap` when
+  `parallel=True` (the default, even on one device) and through
+  `jax.jit(jax.vmap(...))` otherwise, so `fn` must be JAX-compatible.
+  See the `parallel` parameter.
 - Grid order is row-major (the last axis varies fastest), matching the
   `numpy.unravel_index` conventions.
 
@@ -169,8 +170,8 @@ class GridSweep:
         Yields
         ------
         params : dict[str, jax.Array]
-            Batch of parameter vectors, one entry per grid point in the
-            batch.
+            Batch of parameter values: one array per axis name, with one
+            value per grid point in the batch.
         outputs : PyTree
             Corresponding vmapped outputs from `fn`.
         """
