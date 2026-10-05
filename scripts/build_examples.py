@@ -6,8 +6,8 @@ For each script, this tool:
 
 1. Converts the script to a notebook and executes it in a scratch directory,
    unless the cache already holds an executed copy with the same key. The key
-   covers the script, the jbubble version, the files in the jbubble package,
-   and `uv.lock`.
+   covers the script, the jbubble version, the kernelspec, the files in the
+   jbubble package, and `uv.lock`.
 2. Writes a page with the code, the printed output, and the figures to
    `docs/examples/NN_name.md`, plus a gallery of thumbnails to
    `docs/examples/index.md`. Each page ends with links to the previous and
@@ -105,6 +105,7 @@ def cache_key(script: pathlib.Path, settings: Settings) -> str:
     h = hashlib.sha256()
     h.update(script.read_bytes())
     h.update(settings.version.encode())
+    h.update(json.dumps(kernel_spec(), sort_keys=True).encode())
     lock = ROOT / "uv.lock"
     if lock.exists():
         h.update(lock.read_bytes())
@@ -115,22 +116,35 @@ def cache_key(script: pathlib.Path, settings: Settings) -> str:
     return h.hexdigest()[:16]
 
 
-def register_kernel(directory: pathlib.Path) -> None:
-    """Point a private kernelspec at this interpreter.
+def kernel_spec() -> dict:
+    """Return a kernelspec that runs this interpreter.
 
     Without it, a user-level `python3` kernelspec could run the examples in
     another environment. The spec also forces Matplotlib's inline backend: an
     inherited `MPLBACKEND=Agg` would otherwise drop every figure silently.
+    The backend draws each figure at twice its display size (the "retina"
+    format), so figures stay sharp on high-density screens.
     """
-    spec = directory / "kernels" / KERNEL
-    spec.mkdir(parents=True)
-    kernel = {
-        "argv": [sys.executable, "-m", "ipykernel_launcher", "-f", "{connection_file}"],
+    return {
+        "argv": [
+            sys.executable,
+            "-m",
+            "ipykernel_launcher",
+            "-f",
+            "{connection_file}",
+            "--InlineBackend.figure_formats=retina",
+        ],
         "display_name": KERNEL,
         "language": "python",
         "env": {"MPLBACKEND": "module://matplotlib_inline.backend_inline"},
     }
-    (spec / "kernel.json").write_text(json.dumps(kernel))
+
+
+def register_kernel(directory: pathlib.Path) -> None:
+    """Register the private kernelspec from `kernel_spec` in `directory`."""
+    spec = directory / "kernels" / KERNEL
+    spec.mkdir(parents=True)
+    (spec / "kernel.json").write_text(json.dumps(kernel_spec()))
     os.environ["JUPYTER_PATH"] = os.pathsep.join(
         [str(directory), *filter(None, [os.environ.get("JUPYTER_PATH")])]
     )
@@ -254,7 +268,7 @@ def to_markdown(
                     data.encode() if mime == "image/svg+xml" else base64.b64decode(data)
                 )
                 (media / fname).write_bytes(payload)
-                parts.append(f"![{heading}](media/{fname})")
+                parts.append(f"![{heading}](media/{fname}){image_size(out, mime)}")
                 # The first PNG is the thumbnail, unless a later cell is tagged
                 # "thumbnail" (in the script: `# %% tags=["thumbnail"]`).
                 tagged = "thumbnail" in cell.metadata.get("tags", [])
@@ -263,6 +277,18 @@ def to_markdown(
             elif out.output_type == "error":
                 raise ExampleError(f"{name}: {out.ename}: {out.evalue}")
     return "\n\n".join(p for p in parts if p) + "\n", thumb
+
+
+def image_size(out: nbformat.NotebookNode, mime: str) -> str:
+    """Return the display size of an image output as Markdown attributes.
+
+    A retina figure's PNG has twice the pixels of its display size, which
+    the output's metadata records. Without the attributes, the page would
+    show the figure at twice its size, up to the width of the page.
+    """
+    size = out.get("metadata", {}).get(mime, {})
+    attrs = [f'{key}="{size[key]}"' for key in ("width", "height") if key in size]
+    return "{ " + " ".join(attrs) + " }" if attrs else ""
 
 
 def link_bar(name: str, script: pathlib.Path, settings: Settings) -> str:

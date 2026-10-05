@@ -107,6 +107,12 @@ def test_cache_key_covers_the_script_package_version_and_lock(tmp_path, monkeypa
     (package / "core.py").write_text("x = 1\n")
     script.write_text(SCRIPT + "\n# %%\nprint(1)\n")
     assert build_examples.cache_key(script, base) != key
+    script.write_text(SCRIPT)
+    assert build_examples.cache_key(script, base) == key
+    spec = build_examples.kernel_spec()
+    spec["argv"] = spec["argv"][:-1]  # without the retina figure format
+    monkeypatch.setattr(build_examples, "kernel_spec", lambda: spec)
+    assert build_examples.cache_key(script, base) != key
 
 
 def test_scripts_without_cells_are_refused(tmp_path):
@@ -133,7 +139,11 @@ def test_page_shows_code_output_and_figures(tmp_path):
     nb = jupytext.reads(SCRIPT, fmt="py:percent")
     nb.cells[1].outputs = [nbformat.v4.new_output("stream", text="hello\n")]
     nb.cells[2].outputs = [
-        nbformat.v4.new_output("display_data", data={"image/png": PNG}),
+        nbformat.v4.new_output(
+            "display_data",
+            data={"image/png": PNG},
+            metadata={"image/png": {"width": 389, "height": 196}},
+        ),
         nbformat.v4.new_output(
             "execute_result", data={"text/plain": "42"}, execution_count=1
         ),
@@ -147,7 +157,9 @@ def test_page_shows_code_output_and_figures(tmp_path):
     assert "```python\nimport matplotlib.pyplot as plt\n```" in page
     assert "```{ .text .jb-output }\nhello\n```" in page
     assert "```{ .text .jb-output }\n42\n```" in page
-    assert "![A small example](media/01_small_1.png)" in page
+    # A retina figure shows at the display size in its metadata.
+    image = '![A small example](media/01_small_1.png){ width="389" height="196" }'
+    assert image in page
     assert thumb == "01_small_1.png"
     assert (media / thumb).read_bytes().startswith(b"\x89PNG")
 
@@ -206,8 +218,13 @@ def test_build_executes_examples_and_writes_the_gallery(tmp_path, monkeypatch):
         ]
     )
     assert code == 0
-    assert (out / "media" / "01_small_1.png").exists()
     page = (out / "01_small.md").read_text()
+    # The figure has at least twice the pixels of its display size, so it
+    # stays sharp on high-density screens.
+    png = (out / "media" / "01_small_1.png").read_bytes()
+    pixels = int.from_bytes(png[16:20], "big")  # the width in the IHDR chunk
+    (width,) = re.findall(r'!\[.*\]\(media/01_small_1\.png\)\{ width="(\d+)"', page)
+    assert pixels >= 2 * int(width)
     assert (
         "https://colab.research.google.com/github/imperial-nsb/jbubble/blob/"
         "gh-pages/examples/notebooks/01_small.ipynb"
