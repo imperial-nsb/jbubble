@@ -5,9 +5,13 @@ mkdocs.yml loads this file through the mkdocstrings `extensions` option.
 
 from __future__ import annotations
 
+import ast
 import collections
+import dataclasses
+import functools
 import importlib
 import inspect
+import types
 from typing import Any
 
 import griffe
@@ -93,6 +97,93 @@ class NamedTupleFields(griffe.Extension):
         if isinstance(node, griffe.ObjectNode) and type(node.obj) is _TUPLEGETTER:
             attr.value = None
             attr.docstring = None
+
+
+class FactoryDefaults(griffe.Extension):
+    """Show the default that a dataclass field's factory makes.
+
+    With `force_inspection: true`, griffe reads each class signature from
+    `inspect.signature`, which shows the default of a field with a
+    `default_factory` as `<factory>`, as in `envelope: Envelope = <factory>`.
+    That hides the default, and it isn't valid Python, so ruff can't format
+    the signature, which then stays on one long line. This extension replaces
+    `<factory>` with code that makes the default:
+
+    - A class, such as `default_factory=Sine`, becomes a call, `Sine()`, that
+      links to the class.
+    - A lambda, such as `default_factory=lambda: jnp.zeros(())`, becomes its
+      body, `jnp.zeros(())`.
+    - Another named callable, such as a function `make_default`, becomes a
+      call, `make_default()`.
+    - Anything else becomes `...`.
+    """
+
+    def on_class_members(
+        self,
+        *,
+        node: Any,
+        cls: griffe.Class,
+        **kwargs: Any,
+    ) -> None:
+        if not isinstance(node, griffe.ObjectNode):
+            return
+        if not dataclasses.is_dataclass(node.obj):
+            return
+        init = cls.members.get("__init__")
+        if not isinstance(init, griffe.Function):
+            return
+        factories = {
+            field.name: field.default_factory
+            for field in dataclasses.fields(node.obj)
+            if field.default_factory is not dataclasses.MISSING
+        }
+        for parameter in init.parameters:
+            if parameter.name in factories and str(parameter.default) == "<factory>":
+                parameter.default = factory_default(factories[parameter.name])
+
+
+def factory_default(factory: Any) -> str | griffe.Expr:
+    """Return code that makes the default of a `default_factory`."""
+    if isinstance(factory, type):
+        return griffe.ExprCall(base_name(factory), [])
+    name = getattr(factory, "__qualname__", "")
+    if name.endswith("<lambda>"):
+        return lambda_body(factory) or "..."
+    if name.isidentifier():
+        return f"{name}()"
+    return "..."
+
+
+def lambda_body(function: Any) -> str | None:
+    """Return the source of a lambda's body, or `None` if it's ambiguous."""
+    module = inspect.getmodule(function)
+    if module is None:
+        return None
+    tree, source = parsed_source(module)
+    if tree is None:
+        return None
+    line = function.__code__.co_firstlineno
+    lambdas = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Lambda) and node.lineno == line
+    ]
+    if len(lambdas) != 1:  # several lambdas on one line
+        return None
+    body = ast.get_source_segment(source, lambdas[0].body)
+    if body is None or "\n" in body:
+        return ast.unparse(lambdas[0].body)
+    return body
+
+
+@functools.cache
+def parsed_source(module: types.ModuleType) -> tuple[ast.Module | None, str]:
+    """Parse a module's source once."""
+    try:
+        source = inspect.getsource(module)
+    except (OSError, TypeError):
+        return None, ""
+    return ast.parse(source), source
 
 
 def base_name(base: type) -> griffe.ExprName:

@@ -29,8 +29,13 @@ SOURCE = '''\
 from typing import NamedTuple
 
 import equinox as eqx
+import jax.numpy as jnp
 
 from jbubble.bubble.property import Property
+
+
+def unit():
+    return 1.0
 
 
 class Model(eqx.Module):
@@ -55,6 +60,17 @@ class Preset(NamedTuple):
 
     model: Model
     scale: float
+
+
+class Pulse(eqx.Module):
+    """A pulse with factory defaults."""
+
+    model: Model = eqx.field(default_factory=Model)
+    offset: object = eqx.field(
+        default_factory=lambda: jnp.zeros(()),
+    )
+    scale: float = eqx.field(default_factory=unit)
+    gain: float = 2.0
 '''
 
 
@@ -113,3 +129,29 @@ def test_named_tuple_fields_lose_the_descriptor_value_and_docstring(load):
     for field in ("model", "scale"):
         assert package[f"Preset.{field}"].value is None
         assert package[f"Preset.{field}"].docstring is None
+
+
+def test_factory_defaults_show_the_code_that_makes_them(load):
+    def defaults(package):
+        params = package["Pulse"].parameters
+        return {p.name: p.default for p in params if p.name != "self"}
+
+    plain = defaults(load())
+    assert [str(value) for value in plain.values()] == ["<factory>"] * 3 + ["2.0"]
+    fixed = defaults(load(griffe_extensions.FactoryDefaults))
+    assert {name: str(value) for name, value in fixed.items()} == {
+        "model": "Model()",
+        "offset": "jnp.zeros(())",
+        "scale": "unit()",
+        "gain": "2.0",
+    }
+    # A class becomes a call that links to the class.
+    assert isinstance(fixed["model"], griffe.ExprCall)
+    assert fixed["model"].function.canonical_path == "griffe_ext_sample.Model"
+
+
+def test_ambiguous_lambdas_default_to_an_ellipsis():
+    # Two lambdas on one line: the extension can't tell which one is the factory.
+    first, second = (lambda: 1), (lambda: 2)
+    assert griffe_extensions.factory_default(first) == "..."
+    assert griffe_extensions.factory_default(second) == "..."
