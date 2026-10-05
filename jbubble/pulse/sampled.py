@@ -1,4 +1,4 @@
-"""Sampled pulse — arbitrary waveform from discrete data points."""
+"""Sampled pulse: an arbitrary waveform from discrete data points."""
 
 from __future__ import annotations
 
@@ -13,15 +13,16 @@ __all__ = ["SampledPulse"]
 class SampledPulse(Pulse):
     """Acoustic pulse defined by an array of pressure samples.
 
-    Evaluates the pressure at arbitrary times via piecewise-linear
-    interpolation (``jnp.interp``).  The inherited ``envelope`` (default
-    ``RectangularEnvelope``) gates the signal to
-    ``[initial_time, initial_time + duration]``.
+    Evaluates the pressure at arbitrary times with piecewise-linear
+    interpolation (`jnp.interp`). The inherited `envelope`, by default
+    [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope],
+    gates the signal to `[initial_time, initial_time + duration]`, where
+    `duration` is `ts[-1] - ts[0]`.
 
     Parameters
     ----------
     ts : jax.Array, shape (N,)
-        Sample time points [s].  Must be monotonically increasing.
+        Sample time points [s]. Must be monotonically increasing.
     pressures : jax.Array, shape (N,)
         Pressure values [Pa] at each sample time.
 
@@ -32,7 +33,7 @@ class SampledPulse(Pulse):
     >>> ts = jnp.linspace(0, 10e-6, 1000)
     >>> pressures = 200e3 * jnp.sin(2 * jnp.pi * 1e6 * ts)
     >>> pulse = SampledPulse(ts=ts, pressures=pressures)
-    >>> pulse.duration  # 10 µs
+    >>> float(pulse.duration)  # 10 µs
     1e-05
     """
 
@@ -50,7 +51,7 @@ class SampledPulse(Pulse):
     def from_uniform(
         pressures: jax.Array, dt: float, initial_time: float = 0.0
     ) -> SampledPulse:
-        """Create a ``SampledPulse`` from uniformly-spaced samples.
+        """Create a `SampledPulse` from uniformly spaced samples.
 
         Parameters
         ----------
@@ -59,7 +60,13 @@ class SampledPulse(Pulse):
         dt : float
             Time step between samples [s].
         initial_time : float
-            Time of the first sample [s].  Default: 0.
+            Time of the first sample [s]. Default: `0.0`.
+
+        Returns
+        -------
+        SampledPulse
+            Pulse with `ts = initial_time + dt * arange(N)` and
+            `initial_time` set to the time of the first sample.
         """
         ts = initial_time + jnp.arange(pressures.shape[0]) * dt
         return SampledPulse(ts=ts, pressures=pressures, initial_time=initial_time)

@@ -1,4 +1,4 @@
-"""Parametric tone-burst pulse — fixed frequency, shape, and envelope."""
+"""Parametric tone-burst pulse with a fixed frequency, shape, and envelope."""
 
 from __future__ import annotations
 
@@ -13,14 +13,26 @@ __all__ = ["ToneBurst"]
 
 
 class ToneBurst(Pulse):
-    """Tone burst: carrier waveform × envelope × pressure amplitude.
+    r"""Tone burst: carrier waveform × envelope × pressure amplitude.
 
-    A ``ToneBurst`` is the standard parametric pulse used in most ultrasound
-    simulations.  It combines a periodic :class:`PulseShape` (e.g. ``Sine``)
-    with an :class:`Envelope` (e.g. ``HannEnvelope``) and a peak pressure.
+    A `ToneBurst` is the standard parametric pulse in most ultrasound
+    simulations. It combines a periodic
+    [`PulseShape`][jbubble.pulse.shapes.PulseShape], such as
+    [`Sine`][jbubble.pulse.shapes.Sine], with an
+    [`Envelope`][jbubble.pulse.envelope.Envelope], such as
+    [`HannEnvelope`][jbubble.pulse.envelope.HannEnvelope], and a peak
+    pressure:
 
-    The ``initial_time`` and ``envelope`` fields are inherited from
-    :class:`Pulse` and can be set as keyword arguments.
+    $$
+    p(t) = P\, s(t - t_0; f, \phi)\, w(t - t_0, T), \qquad T = \frac{N}{f},
+    $$
+
+    where $P$ is `pressure`, $s$ is `shape`, $f$ is `freq`, $\phi$ is
+    `phase`, $w$ is `envelope`, $t_0$ is `initial_time`, and $N$ is
+    `cycle_num`.
+
+    `ToneBurst` inherits the `initial_time` and `envelope` fields from
+    [`Pulse`][jbubble.pulse.base.Pulse]; set them as keyword arguments.
 
     Parameters
     ----------
@@ -29,11 +41,11 @@ class ToneBurst(Pulse):
     pressure : float
         Peak pressure amplitude [Pa].
     shape : PulseShape
-        Waveform shape (``Sine``, ``Sawtooth``, …).
+        Waveform shape, such as `Sine` or `Sawtooth`.
     phase : float
-        Carrier phase offset [rad].  Default: 0.
+        Carrier phase offset [rad]. Default: `0.0`.
     cycle_num : float
-        Number of carrier cycles in the burst.  Default: 4.
+        Number of carrier cycles in the burst. Default: `4.0`.
 
     Examples
     --------
@@ -41,7 +53,7 @@ class ToneBurst(Pulse):
     >>> from jbubble.pulse import ToneBurst
     >>> from jbubble.pulse.shapes import Sine
     >>> pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
-    >>> float(pulse(jnp.array(0.0))) < 0.5  # sigmoid is ~0.5 at t=0
+    >>> float(pulse(jnp.array(0.0))) < 0.5  # the soft envelope is ~0.5 at t=0
     True
     """
 

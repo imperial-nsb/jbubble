@@ -14,21 +14,40 @@ __all__ = ["Pulse", "Scaled", "Offset", "Summed"]
 
 
 class Pulse(eqx.Module, abc.ABC):
-    """Abstract acoustic driving pulse.
+    r"""Abstract acoustic driving pulse.
 
-    Every ``Pulse`` is callable: ``pulse(t)`` returns the instantaneous
-    pressure [Pa] at time ``t``.  Implementations must be JAX-differentiable
-    so that equations of motion (e.g. Keller–Miksis) can compute
-    ``jax.grad(pulse)(t)``.
+    Every `Pulse` is callable: `pulse(t)` returns the instantaneous
+    pressure [Pa] at time `t`. Implementations must be JAX-differentiable,
+    so that equations of motion such as Keller-Miksis can compute
+    `jax.grad(pulse)(t)`.
 
-    Subclasses implement :meth:`_evaluate` (the raw, un-enveloped signal).
-    The base :meth:`__call__` applies the :attr:`envelope` automatically.
+    Subclasses implement `_evaluate`, the raw signal $s(t)$ before the
+    envelope. The base `__call__` applies the `envelope` $w$
+    automatically:
 
-    Operator overloads for composition::
+    $$
+    p(t) = s(t)\, w(t - t_0, T)
+    $$
 
-        combined = pulse_a + pulse_b          # → Summed
-        scaled   = 0.5 * pulse_a              # → Scaled
-        windowed = combined.windowed(HannEnvelope())  # swap envelope
+    where $t_0$ is `initial_time` and $T$ is
+    [`duration`][jbubble.pulse.base.Pulse.duration].
+
+    Operator overloads compose pulses:
+
+    ```python
+    combined = pulse_a + pulse_b  # Summed
+    scaled = 0.5 * pulse_a  # Scaled
+    shifted = pulse_a + 1.0  # Offset
+    windowed = combined.windowed(HannEnvelope())  # swaps the envelope
+    ```
+
+    Parameters
+    ----------
+    initial_time : float
+        Time at which the pulse starts [s]. Keyword-only. Default: `0.0`.
+    envelope : Envelope
+        Window applied to the raw signal. Keyword-only. Default:
+        [`SoftRectangularEnvelope()`][jbubble.pulse.envelope.SoftRectangularEnvelope].
     """
 
     initial_time: float = eqx.field(default=0.0, kw_only=True)
@@ -38,30 +57,30 @@ class Pulse(eqx.Module, abc.ABC):
 
     @abc.abstractmethod
     def _evaluate(self, t: jax.Array) -> jax.Array:
-        """Raw signal value at time *t*, before envelope application."""
+        """Return the raw signal value at time `t`, before the envelope."""
         ...
 
     @property
     @abc.abstractmethod
     def duration(self) -> float | jax.Array:
-        """Active pulse duration [s] (excluding any leading silence)."""
+        """Active pulse duration [s], excluding any leading silence."""
         ...
 
     @property
     def t_end(self) -> float | jax.Array:
         """Suggested simulation end time [s].
 
-        Default: ``initial_time + 2 × duration``.
+        The base implementation returns `initial_time + 2 * duration`.
         """
         return self.initial_time + 2.0 * self.duration
 
     def __call__(self, t: jax.Array) -> jax.Array:
-        """Evaluate pressure at time *t* [Pa], with envelope applied."""
+        """Evaluate the pressure [Pa] at time `t`, with the envelope applied."""
         tau = t - self.initial_time
         return self._evaluate(t) * self.envelope(tau, self.duration)
 
     def __add__(self, other: Pulse | float) -> Pulse:
-        """Add another pulse or constant offset: pulse_a + pulse_b or pulse + 1.0"""
+        """Add another pulse or a constant offset: `pulse_a + pulse_b` or `pulse + 1.0`."""
         if isinstance(other, (int, float)):
             return Offset(pulse=self, offset=float(other))
         left = self.pulses if isinstance(self, Summed) else (self,)
@@ -69,7 +88,7 @@ class Pulse(eqx.Module, abc.ABC):
         return Summed(pulses=left + right)
 
     def __radd__(self, other: Pulse | float) -> Pulse:
-        """Right addition: other + self.  If *other* is a Pulse, delegate to its __add__."""
+        """Right addition, `other + self`. If `other` is a `Pulse`, delegate to its `__add__`."""
         if isinstance(other, (int, float)):
             return Offset(pulse=self, offset=float(other))
         if isinstance(other, Pulse):
@@ -77,29 +96,29 @@ class Pulse(eqx.Module, abc.ABC):
         return NotImplemented
 
     def __mul__(self, factor: float) -> Scaled:
-        """Scale the pulse by a factor: pulse * factor"""
+        """Scale the pulse by a factor: `pulse * factor`."""
         return Scaled(pulse=self, factor=float(factor))
 
     def __rmul__(self, factor: float) -> Scaled:
-        """Right multiplication: factor * pulse"""
+        """Right multiplication: `factor * pulse`."""
         return Scaled(pulse=self, factor=float(factor))
 
     def __neg__(self) -> Scaled:
-        """Negate the pulse (flip polarity): -pulse"""
+        """Negate the pulse (flip its polarity): `-pulse`."""
         return Scaled(pulse=self, factor=-1.0)
 
     def __pos__(self) -> Pulse:
-        """Unary plus (identity): +pulse"""
+        """Unary plus (identity): `+pulse`."""
         return self
 
     def __sub__(self, other: Pulse | float) -> Pulse:
-        """Subtract another pulse or constant offset: pulse_a - pulse_b or pulse - 1.0"""
+        """Subtract another pulse or a constant offset: `pulse_a - pulse_b` or `pulse - 1.0`."""
         if isinstance(other, (int, float)):
             return Offset(pulse=self, offset=-float(other))
         return self + (-other)
 
     def __rsub__(self, other: Pulse | float) -> Pulse:
-        """Right subtraction: other - self"""
+        """Right subtraction: `other - self`."""
         if isinstance(other, (int, float)):
             # other - self = (-self) + other
             return Offset(pulse=(-self), offset=float(other))
@@ -108,27 +127,27 @@ class Pulse(eqx.Module, abc.ABC):
         return NotImplemented
 
     def __truediv__(self, factor: float) -> Scaled:
-        """Divide pulse by a factor: pulse / 2.0"""
+        """Divide the pulse by a factor: `pulse / 2.0`."""
         return Scaled(pulse=self, factor=1.0 / float(factor))
 
     def __iadd__(self, other: Pulse | float):
-        """In-place addition: pulse += other or pulse += 1.0"""
+        """In-place addition: `pulse += other` or `pulse += 1.0`."""
         return self + other
 
     def __isub__(self, other: Pulse | float):
-        """In-place subtraction: pulse -= other or pulse -= 1.0"""
+        """In-place subtraction: `pulse -= other` or `pulse -= 1.0`."""
         return self - other
 
     def __imul__(self, factor: float):
-        """In-place multiplication: pulse *= factor"""
+        """In-place multiplication: `pulse *= factor`."""
         return Scaled(pulse=self, factor=float(factor))
 
     def __itruediv__(self, factor: float):
-        """In-place division: pulse /= factor"""
+        """In-place division: `pulse /= factor`."""
         return Scaled(pulse=self, factor=1.0 / float(factor))
 
     def windowed(self, envelope: Envelope) -> Pulse:
-        """Return a copy of this pulse with *envelope* replacing the current one."""
+        """Return a copy of this pulse with `envelope` replacing the current one."""
         return eqx.tree_at(
             lambda p: p.envelope,
             self,
@@ -140,9 +159,10 @@ class Pulse(eqx.Module, abc.ABC):
 class Scaled(Pulse):
     """Amplitude-scaled version of another pulse.
 
-    ``Scaled`` is transparent: it delegates entirely to the child pulse's
-    ``__call__`` (which already applies the child's envelope) and simply
-    multiplies by *factor*.  No additional envelope is applied.
+    `Scaled` is transparent: it delegates entirely to the child pulse's
+    `__call__`, which already applies the child's envelope, and multiplies
+    the result by `factor`. It applies no additional envelope, so
+    `windowed` passes the new envelope down to the child pulse.
 
     Parameters
     ----------
@@ -180,9 +200,11 @@ class Scaled(Pulse):
 class Offset(Pulse):
     """Constant-offset version of another pulse.
 
-    ``Offset`` is transparent: it delegates entirely to the child pulse's
-    ``__call__`` (which already applies the child's envelope) and simply
-    adds a constant offset. No additional envelope is applied.
+    `Offset` is transparent: it delegates entirely to the child pulse's
+    `__call__`, which already applies the child's envelope, and adds a
+    constant offset. It applies no additional envelope, so `windowed`
+    passes the new envelope down to the child pulse and leaves the constant
+    offset unwindowed.
 
     Parameters
     ----------
@@ -219,16 +241,17 @@ class Offset(Pulse):
 class Summed(Pulse):
     """Additive superposition of multiple pulses.
 
-    Each child pulse is evaluated with its own envelope, then the results
-    are summed.  The ``Summed`` pulse's own :attr:`envelope` (inherited
-    from :class:`Pulse`, default ``RectangularEnvelope``) is applied on
-    top — use ``.windowed(HannEnvelope())`` to window the combined signal.
+    `Summed` evaluates each child pulse with its own envelope, then sums
+    the results. It applies its own `envelope` on top: the field is
+    inherited from [`Pulse`][jbubble.pulse.base.Pulse], and its default is
+    [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope].
+    To window the combined signal, use `.windowed(HannEnvelope())`.
 
     Parameters
     ----------
     pulses : tuple[Pulse, ...]
-        Pulses to sum.  Must be a tuple (not a list) for Equinox
-        PyTree compatibility.
+        Pulses to sum. Must be a tuple, not a list, for Equinox PyTree
+        compatibility.
     """
 
     pulses: tuple[Pulse, ...]

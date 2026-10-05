@@ -18,26 +18,26 @@ __all__ = ["NeuralPulse"]
 class NeuralPulse(Pulse):
     """Acoustic pulse parameterised by a neural network.
 
-    The network maps normalised time ``t / duration`` to instantaneous
-    pressure, scaled by ``pressure_scale``.  Because the entire pulse is an
-    Equinox module, its parameters participate in JAX transformations
-    (``jit``, ``grad``, ``vmap``) — making it straightforward to optimise
-    the driving waveform via gradient descent.
+    The network maps the normalised time `t / pulse_duration` to the
+    instantaneous pressure, scaled by `pressure_scale`. Because the entire
+    pulse is an Equinox module, its parameters take part in JAX
+    transformations (`jit`, `grad`, `vmap`), so you can optimise the
+    driving waveform with gradient descent.
 
-    The ``initial_time`` and ``envelope`` fields are inherited from
-    :class:`Pulse` and can be set as keyword arguments.
+    `NeuralPulse` inherits the `initial_time` and `envelope` fields from
+    [`Pulse`][jbubble.pulse.base.Pulse]; set them as keyword arguments.
 
     Parameters
     ----------
     net : eqx.Module
-        Any callable Equinox module (e.g. ``eqx.nn.MLP``) mapping a
-        scalar (or 1-element array) to a scalar output.
+        Any callable Equinox module, such as `eqx.nn.MLP`, that maps a
+        1-element array to a scalar or 1-element output.
     pulse_duration : float
-        Nominal pulse duration [s] — used for time normalisation and
-        the :attr:`duration` property.
+        Nominal pulse duration [s], used for time normalisation and the
+        `duration` property.
     pressure_scale : float
         Multiplicative scaling applied to the network output [Pa].
-        Default: 1.0.
+        Default: `1.0`.
 
     Examples
     --------
