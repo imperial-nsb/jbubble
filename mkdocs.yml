@@ -20,6 +20,12 @@ plugins:
         python:
           options:
             docstring_style: numpy
+            # Static analysis can't see the `__init__` that Equinox generates
+            # for an `eqx.Module`, so every field in a class's `Parameters`
+            # section would raise a false "does not appear in the function
+            # signature" warning.
+            docstring_options:
+              warn_unknown_params: false
             show_source: true
             show_root_heading: true
             merge_init_into_class: true
