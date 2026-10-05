@@ -128,13 +128,14 @@ r = 1e-2  # 1 cm from the bubble centre
 p_rad = emission(result, r)  # shape (num_samples,) [Pa]
 ```
 
-For retarded-time corrections:
+To include the acoustic travel time $r/c_L$, use `QuasiAcoustic` and plot the pressure against its arrival times:
 
 ```python
 from jbubble.acoustics import QuasiAcoustic
 
 emission = QuasiAcoustic(rho_L=998.0, c_L=1500.0)
 p_rad = emission(result, r)
+t_obs = emission.observer_time(result, r)  # result.ts + r / c_L
 ```
 
 ## Next steps
