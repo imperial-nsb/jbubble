@@ -66,7 +66,7 @@ The envelope gates the carrier over the active window. The default for `ToneBurs
 | `RectangularEnvelope` | Hard on/off step. **Avoid for fitting** — non-differentiable edges. |
 | `SoftRectangularEnvelope` | Sigmoid on and off transitions. $C^\infty$, near-rectangular. **Preferred.** |
 | `HannEnvelope` | Cosine-squared window. Smooth, tapered edges. |
-| `TukeyEnvelope(alpha)` | Hann-tapered at both ends, flat in the middle. `alpha` controls taper fraction. |
+| `TukeyEnvelope(alpha)` | Hann-tapered at both ends, flat in the middle. `alpha` is the fraction of the window inside the tapers. |
 
 ```python
 from jbubble.pulse import ToneBurst, HannEnvelope, TukeyEnvelope
@@ -77,7 +77,7 @@ pulse = ToneBurst(
     freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5, envelope=HannEnvelope()
 )
 
-# 10% taper on each side, flat in the middle
+# 10% of the window in the tapers (5% at each end), flat in the middle
 pulse = ToneBurst(
     freq=1e6,
     pressure=100e3,
@@ -100,10 +100,13 @@ pulse = ChirpPulse(
     freq_start=0.5e6,  # start frequency [Hz]
     freq_end=2.0e6,  # end frequency [Hz]
     pressure=100e3,  # peak amplitude [Pa]
-    duration=20e-6,  # pulse duration [s]
-    # mode="linear" or "exponential"
+    sweep_duration=20e-6,  # sweep duration [s]
+    # Optional:
+    # sweep=LinearSweep()  # or ExponentialSweep() for a geometric sweep
 )
 ```
+
+Import `LinearSweep` and `ExponentialSweep` from `jbubble.pulse.chirp`.
 
 ---
 
@@ -118,7 +121,7 @@ from jbubble.pulse import SampledPulse
 ts = jnp.linspace(0, 10e-6, 1000)  # time axis [s]
 ps = measured_waveform  # pressure values [Pa], shape (1000,)
 
-pulse = SampledPulse(ts=ts, ps=ps)
+pulse = SampledPulse(ts=ts, pressures=ps)
 ```
 
 The interpolation is performed with `jnp.interp` (linear, clamped to boundary values outside the range), so it is differentiable through the sampled pressures.
