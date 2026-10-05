@@ -379,8 +379,40 @@ class TestActiveWindow:
 
     def test_summed_with_own_initial_time(self, tone_early, tone_late):
         summed = Summed(pulses=(tone_early, -tone_late), initial_time=2e-6)
+        assert float(summed.t_start) == pytest.approx(2e-6, rel=1e-12)
         assert float(summed.duration) == pytest.approx(10e-6, rel=1e-12)
         assert float(summed.t_stop) == pytest.approx(12e-6, rel=1e-12)
+
+    def test_summed_starts_at_its_earliest_child(self, tone_late):
+        later = ToneBurst(
+            freq=1e6, pressure=50e3, shape=Sine(), cycle_num=4, initial_time=8e-6
+        )
+        summed = later + 0.5 * tone_late
+        assert float(summed.t_start) == pytest.approx(6e-6, rel=1e-12)
+        assert float(summed.t_stop) == pytest.approx(12e-6, rel=1e-12)
+        assert float(summed.duration) == pytest.approx(6e-6, rel=1e-12)
+        assert float(summed.t_end) == pytest.approx(18e-6, rel=1e-12)
+
+    def test_summed_window_starts_no_earlier_than_initial_time(self, tone_late):
+        early = ToneBurst(
+            freq=1e6, pressure=50e3, shape=Sine(), cycle_num=4, initial_time=-1e-6
+        )
+        assert float((early + tone_late).t_start) == 0.0
+
+    def test_summed_start_under_jit(self, tone_late):
+        t_start = jax.jit(lambda s: s.t_start)(tone_late + 2.0 * tone_late)
+        assert float(t_start) == pytest.approx(6e-6, rel=1e-12)
+
+    def test_windowing_a_late_sum_covers_its_children(self, tone_late):
+        other = ToneBurst(
+            freq=1e6, pressure=50e3, shape=Sine(), cycle_num=6, initial_time=6e-6
+        )
+        windowed = (tone_late + other).windowed(HannEnvelope())
+        ts = jnp.linspace(6e-6, 12e-6, 601)
+        hann = jax.vmap(lambda t: HannEnvelope()(t - 6e-6, 6e-6))(ts)
+        want = hann * (jax.vmap(tone_late)(ts) + jax.vmap(other)(ts))
+        got = jax.vmap(windowed)(ts)
+        assert jnp.allclose(got, want, rtol=1e-12, atol=1e-9)
 
 
 class TestDelayedChildInSum:

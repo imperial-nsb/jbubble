@@ -376,9 +376,20 @@ class Summed(Pulse):
     window the combined signal, call `.windowed(envelope)`, for example
     `(pulse_a + pulse_b).windowed(HannEnvelope())`.
 
-    The window starts at the sum's own `initial_time` $t_0$ and ends at
-    the latest child [`t_stop`][jbubble.pulse.base.Pulse.t_stop], so
-    $t_\text{start} = t_0$ and $T = \max_i t_{\text{stop},i} - t_0$.
+    The active window runs from the earliest child
+    [`t_start`][jbubble.pulse.base.Pulse.t_start] to the latest child
+    [`t_stop`][jbubble.pulse.base.Pulse.t_stop], so a window that you apply
+    covers the children wherever they start:
+
+    $$
+    t_\text{start} = \max\bigl(t_0,\ \min_i t_{\text{start},i}\bigr),
+    \qquad
+    T = \max_i t_{\text{stop},i} - t_\text{start},
+    $$
+
+    where $t_0$ is the sum's own `initial_time`. The window never starts
+    before $t_0$, so to start it later than the earliest child, set
+    `initial_time`.
 
     `pulse_a + pulse_b` flattens nested sums into one `Summed`, except a
     windowed sum, whose envelope isn't `NoEnvelope`. That sum stays a
@@ -399,6 +410,16 @@ class Summed(Pulse):
 
     pulses: tuple[Pulse, ...]
     envelope: Envelope = eqx.field(default_factory=NoEnvelope, kw_only=True)
+
+    @property
+    def t_start(self) -> float | jax.Array:
+        """Start of the active window [s].
+
+        Equals the earliest child `t_start`, but no earlier than
+        `initial_time`.
+        """
+        starts = jnp.stack([jnp.asarray(p.t_start) for p in self.pulses])
+        return jnp.maximum(jnp.asarray(self.initial_time), jnp.min(starts))
 
     @property
     def duration(self) -> float | jax.Array:
