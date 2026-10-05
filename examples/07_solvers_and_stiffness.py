@@ -104,7 +104,7 @@ radii = (
     if QUICK
     else [2e-6, 1e-6, 500e-9, 300e-9, 200e-9, 150e-9, 100e-9, 70e-9, 50e-9, 30e-9]
 )
-repeats = 1 if QUICK else 3
+repeats = 1 if QUICK else 5
 solvers = {
     "Dopri5 (default)": jax.jit(partial(solve, config=default)),
     "stiff()": jax.jit(partial(solve, config=stiff)),
@@ -124,9 +124,11 @@ for R0, ratio in zip(radii, ratios, strict=True):
         cells.append(f"{int(n):12d} {times[name][-1]:5.1f}")
     print(f"{R0 * 1e9:8.0f} {ratio:7.1f} | {cells[0]} | {cells[1]}")
 
+# The crossover: the smallest ratio from which stiff() wins at every larger one.
 faster = np.array(times["stiff()"]) < np.array(times["Dopri5 (default)"])
-if faster.any():
-    print(f"stiff() is faster from λ/ω ≈ {ratios[np.argmax(faster)]:.0f}")
+wins_from = next((i for i in range(len(faster)) if faster[i:].all()), None)
+if wins_from is not None:
+    print(f"stiff() is faster from λ/ω ≈ {ratios[wins_from]:.0f} on this machine")
 
 # %% tags=["thumbnail"]
 fig, (ax_steps, ax_time) = plt.subplots(
@@ -167,8 +169,9 @@ plt.show()
 # implicit `Kvaerno5` solver takes a few hundred steps at any size, but each
 # step solves a nonlinear system, so it's several times slower per step, and
 # it compiles in seconds instead of under one. It wins the race only for the
-# stiffest bubbles, from $\lambda/\omega$ of about 150 to 300 on a laptop
-# CPU; the exact crossover depends on the machine.
+# stiffest bubbles. The printed crossover depends on the machine and on what
+# else it's running; it typically falls between $\lambda/\omega$ of about 80
+# and 350.
 #
 # ## A stiff member slows the whole batch
 #
