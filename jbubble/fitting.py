@@ -72,9 +72,14 @@ class Parameter(eqx.Module):
         Upper bound. `value` must be less than it. A scalar, like `lower`.
     scale : float, optional
         Typical magnitude of $x$ (no bounds) or of its distance from the
-        bound (one bound). Required when `value` is zero and there are no
-        bounds, for example `Parameter(0.0, scale=1e-7)` for a trigger
-        delay [s]. Ignored with two bounds.
+        bound (one bound). Required when `value` is zero, there are no
+        bounds, and the parameter isn't fixed, for example
+        `Parameter(0.0, scale=1e-7)` for a trigger delay [s]. Ignored with
+        two bounds. `scale` is a static field, so `Parameter`s with
+        different scales have different pytree structures, and a compiled
+        function compiles again for each one. By default, it comes from
+        `value`: to reuse a compiled function for several initial values,
+        pass the same `scale` to each.
     fixed : bool
         Whether to hold $x$ at `value`. Use this to switch a parameter off
         without editing `make_model`, or to hold a value inside an Equinox
@@ -92,8 +97,8 @@ class Parameter(eqx.Module):
     ------
     ValueError
         If `value` isn't finite, lies outside the bounds, or is zero
-        without bounds or `scale`, or if `lower >= upper` or `scale` isn't
-        positive and finite.
+        without bounds, `scale`, or `fixed`, or if `lower >= upper` or
+        `scale` isn't positive and finite.
 
     Examples
     --------
@@ -151,7 +156,9 @@ class Parameter(eqx.Module):
             self.scale = float(jnp.exp(jnp.mean(jnp.log(hi - v))))
         else:
             magnitude = float(jnp.max(jnp.abs(v)))
-            if magnitude == 0.0:
+            if magnitude == 0.0 and self.fixed:
+                magnitude = 1.0  # a fixed parameter never uses its scale
+            elif magnitude == 0.0:
                 raise ValueError(
                     "Parameter: can't infer a scale for a value of zero. Pass "
                     "scale=<typical magnitude>, for example Parameter(0.0, scale=1e-7)."
@@ -251,9 +258,10 @@ def _canonicalise(params0: PyTree) -> PyTree:
 def _held_floats(spec: PyTree) -> list[str]:
     """Name the Python floats inside Equinox modules that you set.
 
-    A float that equals its field's default, such as a pulse's
+    A float field that equals its default, such as a pulse's
     `initial_time=0.0`, is left out: you didn't choose it, so you're
-    unlikely to expect it to be fitted.
+    unlikely to expect it to be fitted. A float inside a dict, list, or
+    tuple field has no default to compare with, so it's always named.
     """
     names: list[str] = []
 
@@ -270,7 +278,10 @@ def _held_floats(spec: PyTree) -> list[str]:
                     names.append(_path_name(where))
                 continue
             for sub, leaf in jtu.tree_leaves_with_path(value, is_leaf=_is_module):
-                visit((*where, *sub), leaf)
+                if isinstance(leaf, float):
+                    names.append(_path_name((*where, *sub)))
+                else:
+                    visit((*where, *sub), leaf)
 
     for path, leaf in jtu.tree_leaves_with_path(spec, is_leaf=_is_module):
         visit(path, leaf)
@@ -340,6 +351,9 @@ def _stack(conditions: Sequence[PyTree]) -> PyTree | None:
 
     Conditions stack when they have the same pytree structure, at least one
     leaf, and every leaf is numeric with the same shape in every condition.
+    A Python bool is a configuration flag, not data: stacking would turn it
+    into a traced array that `make_model` can't use in an `if`, so a bool
+    keeps the conditions sequential, where it stays a Python value.
     """
     if len(conditions) < 2:
         return None
@@ -350,7 +364,8 @@ def _stack(conditions: Sequence[PyTree]) -> PyTree | None:
     columns = []
     for column in zip(*(leaves for leaves, _ in flat), strict=True):
         if not all(
-            eqx.is_array_like(x) and not isinstance(x, (str, bytes)) for x in column
+            eqx.is_array_like(x) and not isinstance(x, (str, bytes, bool))
+            for x in column
         ):
             return None
         arrays = [jnp.asarray(x) for x in column]
@@ -549,7 +564,12 @@ def fit_parameters(
         `fit_parameters` passes it to `make_model` and `loss_fn`. All
         conditions share `params`. Conditions with the same structure and
         leaf shapes run in parallel under `jax.vmap`; others run one after
-        another.
+        another. In parallel, each number in a condition, including a
+        Python int, reaches `make_model` and `loss_fn` as a traced array:
+        use it in `jnp.where` or `jax.lax.cond`, not in an `if` or as a
+        slice bound. A condition that holds a Python bool or a string runs
+        one after another, so these stay Python values that you can use as
+        flags.
     save_spec : SaveSpec, optional
         Output sampling. `None` uses [`SaveSpec()`][jbubble.solver.SaveSpec].
     t_max : float, optional
@@ -733,11 +753,21 @@ def fit_parameters(
                 problems.append(f"{where}the loss is {loss_i}")
         if not problems and not bool(grads_finite):
             problems.append("the gradient is not finite")
+        if not all(converged.tolist()):
+            hint = (
+                "Check params0 and the driving pressure, raise "
+                "SolverConfig.max_steps, or tighten the solver tolerances."
+            )
+        else:
+            hint = (
+                "The solve converged, so check that loss_fn returns a finite "
+                "value with a finite gradient at params0."
+            )
         raise RuntimeError(
             "fit_parameters: can't start at params0, because "
             + "; ".join(problems)
-            + ". Check params0 and the driving pressure, raise SolverConfig.max_steps, "
-            "or tighten the solver tolerances."
+            + ". "
+            + hint
         )
 
     def physical(tr: PyTree) -> PyTree:

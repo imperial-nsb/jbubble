@@ -197,6 +197,13 @@ compile time grows with the number of conditions. To keep many such
 recordings in parallel, pad them to a common length and pass a mask in each
 condition.
 
+When the conditions run in parallel, each number in a condition, including a
+Python int, reaches `make_model` and `loss_fn` as a traced array. Use it in
+`jnp.where` or `jax.lax.cond`, not in an `if` or as a slice bound. A
+condition that holds a Python bool or a string runs one after another, so
+you can use these as configuration flags, for example
+`if condition["with_shell"]:`.
+
 To fit a value per recording, such as each bubble's equilibrium radius, use
 an array `Parameter` and an index in each condition:
 `Parameter(jnp.full(3, 2e-6), lower=0.0)` in `params0`, `"index": i` in each
@@ -500,7 +507,11 @@ check that `value` is finite, before you apply an update.
 Build each `Parameter` outside `jax.jit` and `jax.vmap`, because its
 constructor checks the value and bounds on concrete numbers. To start several
 fits from different guesses, build one `params` per guess and call the
-compiled `train_step` on each.
+compiled `train_step` on each. Give every guess the same explicit `scale`,
+for example `Parameter(guess, lower=0.0, scale=1e-9)`. `scale` is a static
+field, and by default it comes from the initial value, so guesses with
+different default scales have different pytree structures. They don't match
+the `static` that `train_step` closes over, and `eqx.combine` raises.
 
 ## Migrate from jbubble 0.1
 

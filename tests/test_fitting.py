@@ -18,7 +18,14 @@ from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.property import NeuralProperty
 from jbubble.bubble.shell import NoShell
-from jbubble.fitting import FitResult, Parameter, fit_parameters, unwrap
+from jbubble.fitting import (
+    FitResult,
+    Parameter,
+    _held_floats,
+    _stack,
+    fit_parameters,
+    unwrap,
+)
 from jbubble.metrics import normalised_mse_radius
 from jbubble.pulse import NeuralPulse, ToneBurst
 from jbubble.pulse.shapes import Sine
@@ -98,6 +105,8 @@ class TestParameter:
                 jnp.array([1e-6, 2e-6, 4e-6]),
             ),
             (Parameter(2e-6, fixed=True), 2e-6),
+            (Parameter(0.0, fixed=True), 0.0),  # no scale needed
+            (Parameter(jnp.zeros(3), fixed=True), jnp.zeros(3)),
         ],
     )
     def test_value_round_trip(self, parameter, value):
@@ -231,6 +240,10 @@ class TestWhatGetsFitted:
             fit = _fit(target, params0=params0, make_model=_learned_model, n_steps=1)
         expected = 0.072 if sigma is None else 0.07
         assert float(fit.params.sigma) == pytest.approx(expected, rel=1e-12)
+
+    def test_float_in_container_field_of_module_is_named(self):
+        params0 = _Learned(mu=Parameter(2e-3, lower=0.0), sigma={"k": 2.5})
+        assert _held_floats(params0) == ["sigma.k"]
 
     def test_weakly_typed_array_compiles_once(self, target):
         traces = []
@@ -396,6 +409,10 @@ class TestFailures:
         with pytest.raises(RuntimeError, match="did not converge"):
             _fit(target, config=SolverConfig(max_steps=5))
 
+    def test_non_finite_loss_at_params0_points_at_loss_fn(self, target):
+        with pytest.raises(RuntimeError, match="the loss is nan.*check that loss_fn"):
+            _fit(target, loss_fn=lambda r: jnp.log(-jnp.mean(r.radius)))
+
     def test_failure_at_params0_names_the_condition(self, target):
         with pytest.raises(
             RuntimeError, match="condition 1: the ODE solve did not converge"
@@ -498,6 +515,23 @@ class TestConditions:
         assert jnp.allclose(
             batched.params["mu"], sequential.params["mu"], rtol=1e-9, atol=0
         )
+
+    def test_python_bool_keeps_conditions_sequential(self, two_pressures):
+        conditions = [dict(c, viscous=i == 0) for i, c in enumerate(two_pressures)]
+        assert _stack(two_pressures) is not None
+        assert _stack(conditions) is None
+        fit = fit_parameters(
+            lambda p, c: (_eom(p["mu"] if c["viscous"] else 1e-3), _pulse()),
+            {"mu": 2e-3},
+            conditions=conditions,
+            loss_fn=lambda r, c: normalised_mse_radius(r.radius, c["radius"], R0),
+            optimizer=optax.adam(0.05),
+            n_steps=1,
+            save_spec=SAVE,
+            t_max=T_MAX,
+            log_every=0,
+        )
+        assert len(fit.result) == 2
 
     def test_conditions_with_different_lengths(self):
         frames = [jnp.linspace(0.5e-6, 2.5e-6, n) for n in (20, 35)]

@@ -34,9 +34,9 @@ the following:
 3. Accepts the first candidate that succeeds. Its loss goes into
    `loss_history`, and its gradient drives the next step.
 
-If every halved update fails, the fit warns and returns the last accepted
-parameters. Nothing raises from inside a compiled function, so a failed solve
-never ends a fit.
+If every halved update fails, the fit warns, stops, and returns the last
+accepted parameters. A failed solve during the fit never raises. Only a
+failure at `params0` raises `RuntimeError`, before the first step.
 
 ## What gets fitted
 
