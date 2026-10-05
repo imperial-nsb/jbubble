@@ -5,12 +5,27 @@ import jax.numpy as jnp
 import pytest
 from jbubble.pulse.envelope import (
     HannEnvelope,
+    NoEnvelope,
     RectangularEnvelope,
     SoftRectangularEnvelope,
     TukeyEnvelope,
 )
 
 DURATION = 5e-6
+
+
+class TestNoEnvelope:
+    def test_one_everywhere(self):
+        env = NoEnvelope()
+        taus = jnp.array([-1e-3, -1e-6, 0.0, 2.5e-6, DURATION, 1e-3])
+        assert jnp.array_equal(
+            jax.vmap(lambda tau: env(tau, DURATION))(taus), jnp.ones(6)
+        )
+
+    def test_zero_derivative(self):
+        env = NoEnvelope()
+        grad = jax.grad(lambda tau: env(tau, DURATION))(jnp.asarray(1e-6))
+        assert float(grad) == 0.0
 
 
 class TestRectangularEnvelope:

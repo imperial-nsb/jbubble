@@ -11,6 +11,7 @@ from jax.typing import ArrayLike
 
 __all__ = [
     "Envelope",
+    "NoEnvelope",
     "RectangularEnvelope",
     "HannEnvelope",
     "SoftRectangularEnvelope",
@@ -22,13 +23,29 @@ class Envelope(eqx.Module, abc.ABC):
     """Window function that maps relative time `tau` to a scale in [0, 1].
 
     A pulse calls it as `envelope(tau, duration)`, where
-    `tau = t - initial_time`. It returns 0 outside [0, `duration`], except
-    for [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope],
-    whose sigmoid tails decay smoothly outside the window.
+    `tau = t - t_start` and `t_start` is the pulse's
+    [`t_start`][jbubble.pulse.base.Pulse.t_start]. It returns 0 outside
+    [0, `duration`], except for two envelopes:
+    [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope],
+    whose sigmoid tails decay smoothly outside the window, and
+    [`NoEnvelope`][jbubble.pulse.envelope.NoEnvelope], which is 1 at all
+    times.
     """
 
     @abc.abstractmethod
     def __call__(self, tau: jax.Array, duration: ArrayLike) -> jax.Array: ...
+
+
+class NoEnvelope(Envelope):
+    """Identity window: 1 at all times, so the signal passes unchanged.
+
+    It is the default envelope of [`Summed`][jbubble.pulse.base.Summed],
+    whose children already apply their own envelopes. To remove the
+    window of a windowed sum, call `pulse.windowed(NoEnvelope())`.
+    """
+
+    def __call__(self, tau: jax.Array, duration: ArrayLike) -> jax.Array:
+        return jnp.ones_like(tau)
 
 
 class RectangularEnvelope(Envelope):

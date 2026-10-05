@@ -50,6 +50,8 @@ A sweep law sets how the instantaneous frequency of a `ChirpPulse` changes over 
 
 ::: jbubble.pulse.envelope.Envelope
 
+::: jbubble.pulse.envelope.NoEnvelope
+
 ::: jbubble.pulse.envelope.RectangularEnvelope
 
 ::: jbubble.pulse.envelope.SoftRectangularEnvelope

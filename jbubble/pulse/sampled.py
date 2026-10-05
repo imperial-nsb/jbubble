@@ -4,44 +4,90 @@ from __future__ import annotations
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 
-from .base import Pulse
+from .base import Pulse, _concrete
 
 __all__ = ["SampledPulse"]
 
 
 class SampledPulse(Pulse):
-    """Acoustic pulse defined by an array of pressure samples.
+    r"""Acoustic pulse defined by an array of pressure samples.
 
     Evaluates the pressure at arbitrary times with piecewise-linear
-    interpolation (`jnp.interp`). The inherited `envelope`, by default
+    interpolation (`jnp.interp`), which holds the first and last sample
+    values outside `ts`:
+
+    $$
+    p(t) = \operatorname{interp}(t;\ t_s, p_s)\,
+    w\bigl(t - t_s[0],\ t_s[N-1] - t_s[0]\bigr)
+    $$
+
+    where $t_s$ is `ts`, $p_s$ is `pressures`, and $w$ is `envelope`.
+
+    The sample times are absolute, so the active window runs from the
+    first sample to the last: [`t_start`][jbubble.pulse.base.Pulse.t_start]
+    is `ts[0]`, and `duration` is `ts[-1] - ts[0]`. To delay the waveform,
+    shift `ts`. The `initial_time` field doesn't move the window; leave it
+    at its default, or set it to `ts[0]` as
+    [`from_uniform`][jbubble.pulse.sampled.SampledPulse.from_uniform] does.
+
+    The inherited `envelope`, by default
     [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope],
-    gates the signal to `[initial_time, initial_time + duration]`, where
-    `duration` is `ts[-1] - ts[0]`.
+    gates the signal to that window. Its sigmoid ramps are centred on the
+    window edges, so it halves the first and last samples. To keep them at
+    full value, pass a
+    [`RectangularEnvelope`][jbubble.pulse.envelope.RectangularEnvelope] as
+    `envelope`.
 
     Parameters
     ----------
     ts : jax.Array, shape (N,)
-        Sample time points [s]. Must be monotonically increasing.
+        Absolute sample times [s]. Must be monotonically increasing.
     pressures : jax.Array, shape (N,)
         Pressure values [Pa] at each sample time.
+
+    Raises
+    ------
+    ValueError
+        If `initial_time` is neither `0.0` nor `ts[0]`. The check runs only
+        when both values are concrete, not traced.
 
     Examples
     --------
     >>> import jax.numpy as jnp
     >>> from jbubble.pulse import SampledPulse
-    >>> ts = jnp.linspace(0, 10e-6, 1000)
+    >>> ts = jnp.linspace(5e-6, 15e-6, 1000)
     >>> pressures = 200e3 * jnp.sin(2 * jnp.pi * 1e6 * ts)
     >>> pulse = SampledPulse(ts=ts, pressures=pressures)
-    >>> float(pulse.duration)  # 10 µs
-    1e-05
+    >>> print(f"{pulse.t_start * 1e6:.1f} µs to {pulse.t_stop * 1e6:.1f} µs")
+    5.0 µs to 15.0 µs
     """
 
     ts: jax.Array
     pressures: jax.Array
 
+    def __check_init__(self) -> None:
+        initial_time = _concrete(self.initial_time)
+        ts = _concrete(self.ts)
+        if initial_time is None or ts is None or ts.size == 0:
+            return
+        start, first = float(initial_time), float(ts[0])
+        if start != 0.0 and not np.isclose(start, first, rtol=1e-6, atol=0.0):
+            raise ValueError(
+                "SampledPulse starts at its first sample time, ts[0] = "
+                f"{first!r} s, so initial_time must be 0.0 or ts[0]; got "
+                f"{start!r} s. To delay the waveform, shift ts instead."
+            )
+
+    @property
+    def t_start(self) -> jax.Array:
+        """First sample time, `ts[0]` [s], where the active window starts."""
+        return self.ts[0]
+
     @property
     def duration(self) -> jax.Array:
+        """Time from the first sample to the last, `ts[-1] - ts[0]` [s]."""
         return self.ts[-1] - self.ts[0]
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
