@@ -96,10 +96,14 @@ class Entry:
 
 
 def default_pip_spec(version: str, repo: str, ref: str) -> str:
-    """Pin a released version; install anything else from git at `ref`."""
+    """Pin a released version; install anything else from git at `ref`.
+
+    The `io` extra installs h5py, which the parameter sweep example needs
+    outside Colab.
+    """
     if RELEASE.fullmatch(version):
-        return f"jbubble[examples]=={version}"
-    return f"jbubble[examples] @ git+https://github.com/{repo}@{ref}"
+        return f"jbubble[examples,io]=={version}"
+    return f"jbubble[examples,io] @ git+https://github.com/{repo}@{ref}"
 
 
 def cache_key(script: pathlib.Path, settings: Settings) -> str:
@@ -487,7 +491,7 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     )
     p.add_argument(
         "--pip-spec",
-        help="requirement for the install cell (default: jbubble[examples]==VERSION "
+        help="requirement for the install cell (default: jbubble[examples,io]==VERSION "
         "for a release, otherwise a git URL at --source-ref)",
     )
     return p.parse_args(argv)

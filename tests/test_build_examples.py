@@ -73,14 +73,14 @@ def settings(tmp_path, **overrides):
 @pytest.mark.parametrize("version", ["0.2.0", "0.2.0rc1", "1.0.0.post1"])
 def test_released_versions_are_pinned(version):
     spec = build_examples.default_pip_spec(version, "imperial-nsb/jbubble", "abc123")
-    assert spec == f"jbubble[examples]=={version}"
+    assert spec == f"jbubble[examples,io]=={version}"
 
 
 @pytest.mark.parametrize("version", ["0.2.0.post1.dev3", "0.0.0+unknown"])
 def test_unreleased_versions_install_from_git(version):
     spec = build_examples.default_pip_spec(version, "imperial-nsb/jbubble", "abc123")
     assert spec == (
-        "jbubble[examples] @ git+https://github.com/imperial-nsb/jbubble@abc123"
+        "jbubble[examples,io] @ git+https://github.com/imperial-nsb/jbubble@abc123"
     )
 
 
