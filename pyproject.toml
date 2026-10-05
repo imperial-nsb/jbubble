@@ -63,7 +63,7 @@ Homepage = "https://github.com/imperial-nsb/jbubble"
 Documentation = "https://imperial-nsb.github.io/jbubble/"
 Source = "https://github.com/imperial-nsb/jbubble"
 Issues = "https://github.com/imperial-nsb/jbubble/issues"
-Changelog = "https://github.com/imperial-nsb/jbubble/releases"
+Changelog = "https://github.com/imperial-nsb/jbubble/blob/main/CHANGELOG.md"
 
 # PEP 735 groups: local development only, never published.
 # `uv sync` installs the `dev` group by default.
