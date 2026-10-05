@@ -48,7 +48,11 @@ from jbubble import (
 from jbubble.bubble.eom import KellerMiksis, RayleighPlesset, Gilmore
 from jbubble.bubble.gas import PolytropicGas, VanDerWaalsGas
 from jbubble.bubble.shell import NoShell, LipidShell, ThickShell
-from jbubble.bubble.shell import GompertzSurfaceTension, MarmottantSurfaceTension
+from jbubble.bubble.shell import (
+    GompertzSurfaceTension,
+    MarmottantSurfaceTension,
+    SmoothMarmottantSurfaceTension,
+)
 from jbubble.bubble.medium import (
     NewtonianMedium,
     KelvinVoigtMedium,
