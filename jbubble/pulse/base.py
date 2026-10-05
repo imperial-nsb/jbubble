@@ -48,6 +48,9 @@ class Pulse(eqx.Module, abc.ABC):
     windowed = combined.windowed(HannEnvelope())  # swaps the envelope
     ```
 
+    To differentiate with respect to an offset that is zero, read the
+    notes on [`Offset`][jbubble.pulse.base.Offset] first.
+
     Parameters
     ----------
     initial_time : float
@@ -367,6 +370,35 @@ class Offset(Pulse):
         If you set `initial_time` or `envelope` to anything other than the
         default, because `Offset` would ignore it. Traced values aren't
         checked.
+
+    Notes
+    -----
+    A gradient with respect to `offset` can be wrong, by orders of
+    magnitude or as NaN, when `offset` is zero or close to zero and the
+    pulse starts after a silent lead-in. The bubble then sits exactly at
+    rest until the pulse starts, so an adaptive step-size controller sees
+    no error and takes steps several times longer than the bubble's
+    natural period. The solution stays accurate, but its derivative with
+    respect to `offset` is unstable at those steps. To fit an offset that
+    starts at zero, cap the step size at about a tenth of the natural
+    period, or less, and pass the configuration to
+    [`run_simulation`][jbubble.simulation.run_simulation]:
+
+    ```python
+    import diffrax
+    from jbubble import SolverConfig
+
+    default = SolverConfig().stepsize_controller
+    config = SolverConfig(
+        stepsize_controller=diffrax.PIDController(
+            rtol=default.rtol, atol=default.atol, dtmax=5e-8
+        )
+    )
+    ```
+
+    Here `dtmax=5e-8` [s] is a tenth of the 0.5 µs natural period of a
+    2 µm air bubble in water. Smaller bubbles have shorter periods and
+    need a smaller cap.
     """
 
     pulse: Pulse

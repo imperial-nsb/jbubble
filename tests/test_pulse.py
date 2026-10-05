@@ -662,6 +662,20 @@ class TestOffsetGradientAfterALeadIn:
         got = _offset_peak_gradient(20e-6, HannEnvelope(), 10.0)
         assert got == pytest.approx(want, rel=_GRAD_RTOL)
 
+    def test_a_step_size_cap_recovers_the_gradient_at_zero_offset(self):
+        # The workaround in the Offset docstring: cap the step at about a
+        # tenth of the natural period.
+        default = SolverConfig().stepsize_controller
+        capped = SolverConfig(
+            stepsize_controller=diffrax.PIDController(
+                rtol=default.rtol, atol=default.atol, dtmax=5e-8
+            )
+        )
+        envelope = SoftRectangularEnvelope()
+        want = _offset_peak_gradient(20e-6, envelope, 0.0, _REFERENCE)
+        got = _offset_peak_gradient(20e-6, envelope, 0.0, capped)
+        assert got == pytest.approx(want, rel=1e-2)
+
 
 class TestDelayedChildInSum:
     """A delayed child wrapped in Scaled or Offset survives a sum."""
