@@ -1,7 +1,7 @@
 # Contributing to jbubble
 
-Thank you for your interest in contributing to jbubble! This guide will help
-you get set up and familiar with our development workflow.
+Thank you for your interest in contributing to jbubble. This guide explains how
+to set up a development environment, run the checks, and submit a pull request.
 
 ## Set up a development environment
 
@@ -27,8 +27,18 @@ environment. To install uv, follow the
    This command creates `.venv/` with the Python version in `.python-version`
    (3.13). It installs jbubble in editable mode with the `io` and `examples`
    extras, plus the `dev` dependency group: pytest, ruff, ty, and prek. All
-   versions come from `uv.lock`. To use another supported Python version, run
-   `uv sync --python 3.12`, for example.
+   versions come from `uv.lock`.
+
+   To use another supported Python version, set `UV_PYTHON` for your shell
+   session before you run any `uv` command, and then create the environment:
+
+   ```bash
+   export UV_PYTHON=3.12
+   uv sync
+   ```
+
+   Don't rely on `uv sync --python 3.12` alone: the next `uv run` reads
+   `.python-version` and recreates `.venv/` with Python 3.13.
 
 4. Install the Git hooks, which run ruff and other checks on each commit:
 
@@ -44,13 +54,14 @@ environment. To install uv, follow the
 
 ### Use conda instead of uv
 
-If your workflow depends on conda, create an environment and install jbubble
-with pip. The `--group` option needs pip 25.1 or later.
+If your workflow depends on conda, create an environment, install jbubble with
+pip, and install the Git hooks. The `--group` option needs pip 25.1 or later.
 
 ```bash
 conda create -n jbubble python=3.13 pip
 conda activate jbubble
 pip install -e ".[io,examples]" --group dev
+prek install
 ```
 
 pip doesn't read `uv.lock`, so it installs the newest versions that
@@ -93,9 +104,9 @@ uv run pytest
 
 To run the tests in parallel, add `-n auto`.
 
-CI also runs the full suite on Python 3.12, 3.13, and 3.14, both with the
-newest dependency releases and with the oldest versions that `pyproject.toml`
-allows.
+CI runs the full suite on Python 3.12 with the oldest versions that
+`pyproject.toml` allows and with `uv.lock`, and on Python 3.13 and 3.14 with
+the newest releases.
 
 ### Change dependencies
 
