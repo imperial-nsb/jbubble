@@ -4,13 +4,20 @@ Instructions for AI coding agents working on jbubble.
 
 ## Environment
 
-Use the `bubbles` conda environment:
+Use uv. `uv sync` creates `.venv/` from `uv.lock` with Python 3.13, the `io`
+and `examples` extras, and the `dev` dependency group. Prefix every Python
+command, test run, and example with `uv run`:
 
 ```bash
-conda activate bubbles
+uv sync
+uv run python examples/01_basic_simulation.py
 ```
 
-Run this before any Python commands, tests, or examples.
+Don't use the old `bubbles` conda environment: it runs Python 3.11, and jbubble
+needs Python 3.12 or later.
+
+After you change dependencies in `pyproject.toml`, run `uv lock` and commit
+`uv.lock` with the change.
 
 ## Coding conventions
 
@@ -36,25 +43,27 @@ Run this before any Python commands, tests, or examples.
 
 ```bash
 # Fast suite (excludes slow fitting/integration tests)
-pytest tests/ -m "not slow"
+uv run pytest -m "not slow"
 
 # Full suite
-pytest tests/
+uv run pytest
 ```
 
 ## Linting and formatting
 
 ```bash
-ruff check .
-ruff format --check .
-ty check jbubble
+uv run ruff check .
+uv run ruff format --check .
+uv run ty check jbubble
+
+# All pre-commit hooks, as CI runs them
+uv run prek run --all-files
 ```
 
 ## Key files
 
 | Path | Purpose |
 |------|---------|
-| `planning/context.md` | Authoritative project context — read first, update after changes |
 | `jbubble/bubble/eom.py` | Equations of motion (ODE right-hand sides) |
 | `jbubble/bubble/state.py` | BubbleState |
 | `jbubble/bubble/property.py` | Property abstraction (`state → scalar`) |

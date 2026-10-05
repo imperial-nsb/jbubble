@@ -3,44 +3,92 @@
 Thank you for your interest in contributing to jbubble! This guide will help
 you get set up and familiar with our development workflow.
 
-## Getting started
+## Set up a development environment
+
+jbubble uses [uv](https://docs.astral.sh/uv/) to manage its development
+environment. To install uv, follow the
+[uv installation guide](https://docs.astral.sh/uv/getting-started/installation/).
 
 1. Fork the repository on [GitHub](https://github.com/imperial-nsb/jbubble).
 
-2. Clone your fork and install in development mode:
+2. Clone your fork, replacing `<your-username>` with your GitHub username:
 
    ```bash
    git clone https://github.com/<your-username>/jbubble.git
    cd jbubble
-   pip install -e ".[dev]"
    ```
 
-3. Create a branch for your changes:
+3. Create the environment:
+
+   ```bash
+   uv sync
+   ```
+
+   This command creates `.venv/` with the Python version in `.python-version`
+   (3.13). It installs jbubble in editable mode with the `io` and `examples`
+   extras, plus the `dev` dependency group: pytest, ruff, ty, and prek. All
+   versions come from `uv.lock`. To use another supported Python version, run
+   `uv sync --python 3.12`, for example.
+
+4. Install the Git hooks, which run ruff and other checks on each commit:
+
+   ```bash
+   uv run prek install
+   ```
+
+5. Create a branch for your changes:
 
    ```bash
    git checkout -b my-feature
    ```
 
-## Development workflow
+### Use conda instead of uv
 
-### Running checks
-
-Before submitting a pull request, make sure all checks pass:
+If your workflow depends on conda, create an environment and install jbubble
+with pip. The `--group` option needs pip 25.1 or later.
 
 ```bash
-# Linting and formatting
-ruff check .
-ruff format --check .
+conda create -n jbubble python=3.13 pip
+conda activate jbubble
+pip install -e ".[io,examples]" --group dev
+```
+
+pip doesn't read `uv.lock`, so it installs the newest versions that
+`pyproject.toml` allows. To run the checks in the next section, leave out the
+`uv run` prefix.
+
+## Development workflow
+
+### Run the checks
+
+Before you open a pull request, make sure all checks pass:
+
+```bash
+# Linting, formatting, and file checks (the same hooks as on commit)
+uv run prek run --all-files
 
 # Type checking
-ty check jbubble
+uv run ty check jbubble
 
 # Tests (fast suite)
-pytest tests/ -m "not slow"
+uv run pytest -m "not slow"
 
 # Full test suite (includes fitting and integration tests)
-pytest tests/
+uv run pytest
 ```
+
+To run the tests in parallel, add `-n auto`.
+
+CI also runs the full suite on Python 3.12, 3.13, and 3.14, both with the
+newest dependency releases and with the oldest versions that `pyproject.toml`
+allows.
+
+### Change dependencies
+
+To add or change a dependency, edit `pyproject.toml`, run `uv lock`, and commit
+`uv.lock` with your change. The `uv-lock` hook fails if `uv.lock` is out of
+date. The lower bounds in `pyproject.toml` are the oldest versions that CI
+tests, so raise one only when jbubble needs a newer release.
 
 ### Code style
 
@@ -68,7 +116,8 @@ If you're adding a new model (gas, shell, medium, EoM), follow the existing patt
 1. Push your branch to your fork.
 2. Open a pull request against `main` on [imperial-nsb/jbubble](https://github.com/imperial-nsb/jbubble).
 3. Describe what your change does and why. Link to any relevant issues.
-4. CI will run lint, type checking, and tests automatically. All checks must pass.
+4. CI runs the linters, the type checker, the tests, and a build check. All
+   checks must pass.
 
 ## Reporting bugs and requesting features
 
