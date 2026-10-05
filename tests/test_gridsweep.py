@@ -1,19 +1,22 @@
 """Tests for jbubble.utils.gridsweep.
 
-Tests that need several JAX devices run in a child process that sets
-`JAX_NUM_CPU_DEVICES`, and the child asserts the device count, so they never
-skip silently. Every test also carries a pytest-timeout limit with the
-`thread` method, which dumps the stacks and stops the run when a test hangs.
-The default `signal` method can't stop a deadlocked worker thread: its
-exception reaches the main thread, which then waits for that worker forever
-when it shuts down the thread pool.
+Tests that need several JAX devices, or that could deadlock XLA, run in a
+child process that sets `JAX_NUM_CPU_DEVICES`. The child asserts the device
+count, so these tests never skip silently, and the parent kills a child that
+hangs. Every test also carries a pytest-timeout limit with the `thread`
+method, which dumps the stacks and stops the run when a test hangs. The
+default `signal` method can't stop a deadlocked worker thread: its exception
+reaches the main thread, which then waits for that worker forever when it
+shuts down the thread pool.
 """
 
 import collections
+import math
 import os
 import subprocess
 import sys
 import threading
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 
 import diffrax
@@ -34,6 +37,7 @@ pytestmark = pytest.mark.timeout(300, method="thread")
 
 SS = {"x": jnp.arange(5.0), "y": jnp.arange(3.0)}  # 15 points: not a power of 2
 THREAD_PREFIX = "jbubble-gridsweep"
+MAX_PER_CPU_DEVICE = 31  # XLA runs at most 32 computations per CPU device
 
 # Tests of the CPU defaults: on a GPU or TPU host, `workers=None` and
 # `devices=None` follow the accelerators instead.
@@ -462,6 +466,87 @@ def test_default_device_on_cpu_is_the_first_local_device(monkeypatch):
     assert gs.devices == jax.local_devices()[:1]
 
 
+# ── at most 31 chunks per CPU device ────────────────────────────────────────
+
+# XLA's CPU client runs at most 32 computations at a time per device. A host
+# callback that runs a JAX operation needs a free slot, so 32 chunks waiting
+# in such callbacks would deadlock. The child-process tests below check that
+# the sweep finishes; these check the limit itself.
+
+
+@cpu_only
+def test_default_workers_stop_at_31_per_cpu_device(monkeypatch):
+    monkeypatch.setattr(os, "process_cpu_count", lambda: 64, raising=False)
+    ss = {"x": jnp.arange(1000.0), "y": jnp.zeros(1)}
+    assert GridSweep(_toy, ss, devices=1).workers == MAX_PER_CPU_DEVICE
+    # devices=None uses one CPU device per 31 workers, as far as they go.
+    gs = GridSweep(_toy, ss)
+    n_local = jax.local_device_count()
+    assert gs.workers == min(64, MAX_PER_CPU_DEVICE * n_local)
+    assert (
+        gs.devices == jax.local_devices()[: math.ceil(gs.workers / MAX_PER_CPU_DEVICE)]
+    )
+
+
+@cpu_only
+def test_explicit_workers_above_31_per_cpu_device_warn_and_stop_at_31():
+    ss = {"x": jnp.arange(1000.0), "y": jnp.zeros(1)}
+    with pytest.warns(UserWarning, match="at most 31 chunks at a time") as record:
+        gs = GridSweep(_toy, ss, devices=1, workers=64)
+    assert "devices=3" in str(record[0].message)
+    assert record[0].filename == __file__
+    assert gs.workers == MAX_PER_CPU_DEVICE
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert GridSweep(_toy, ss, devices=1, workers=31).workers == 31
+
+
+@cpu_only
+def test_at_most_31_chunks_run_at_once_on_a_cpu_device(monkeypatch):
+    monkeypatch.setattr(os, "process_cpu_count", lambda: 64, raising=False)
+    gs = GridSweep(
+        _toy,
+        {"x": jnp.arange(4.0 * MAX_PER_CPU_DEVICE), "y": jnp.arange(2.0)},
+        progress=False,
+        devices=1,
+    )
+    assert gs.workers == MAX_PER_CPU_DEVICE
+    peak = _peak_chunks_per_device(gs)
+    # Every worker was busy at once, and no more than that.
+    assert peak == {gs.devices[0]: MAX_PER_CPU_DEVICE}
+
+
+def _peak_chunks_per_device(gs: GridSweep) -> dict[jax.Device, int]:
+    """Run `gs` and return the peak number of chunks running on each device.
+
+    Each chunk waits until every worker runs a chunk, so the peak reaches
+    the number of tokens that the sweep hands out.
+    """
+    lock = threading.Lock()
+    running: collections.Counter = collections.Counter()
+    peak: collections.Counter = collections.Counter()
+    all_busy = threading.Event()
+    run_chunk = gs._run_chunk
+
+    def spy(c, device):
+        with lock:
+            running[device] += 1
+            peak[device] = max(peak[device], running[device])
+            if running.total() >= gs.workers:
+                all_busy.set()
+        try:
+            all_busy.wait(timeout=30)
+            return run_chunk(c, device)
+        finally:
+            with lock:
+                running[device] -= 1
+
+    gs._run_chunk = spy
+    gs.run()
+    assert all_busy.is_set()
+    return dict(peak)
+
+
 # ── validation ──────────────────────────────────────────────────────────────
 
 
@@ -670,17 +755,82 @@ def _check_devices_bitwise_equal_serial(n_devices: int) -> None:
         np.testing.assert_array_equal(a[k], b[k])
 
 
+def _check_host_callback_with_jax_op_finishes(n_devices: int) -> None:
+    # Regression: with 32 or more chunks on one CPU device, every computation
+    # slot belonged to a chunk waiting in this callback, and the JAX
+    # operation inside the callback waited for a free slot forever.
+    _assert_device_count(n_devices)
+
+    def check(v):
+        if v < 0:  # compares a jax.Array, so it runs a JAX computation
+            raise ValueError("negative")
+
+    def fn(x):
+        jax.debug.callback(check, x)
+        return 2 * x
+
+    # Four points per worker, so every worker runs a chunk at the limit.
+    x = jnp.arange(4.0 * MAX_PER_CPU_DEVICE * n_devices)
+    # A machine with 64 cores per device: the default stops at 31 per device.
+    os.process_cpu_count = lambda: 64 * n_devices
+    gs = GridSweep(fn, {"x": x}, batch_size=x.size, progress=False)
+    np.testing.assert_array_equal(gs.run(), 2 * np.asarray(x))
+    assert len(gs.devices) == n_devices
+    assert gs.workers == MAX_PER_CPU_DEVICE * n_devices
+
+    # An explicit worker count above the limit warns and stops at it.
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        gs = GridSweep(
+            fn,
+            {"x": x},
+            batch_size=x.size,
+            progress=False,
+            devices=n_devices,
+            workers=64 * n_devices,
+        )
+    np.testing.assert_array_equal(gs.run(), 2 * np.asarray(x))
+    assert any("at most" in str(w.message) for w in record)
+    assert gs.workers == MAX_PER_CPU_DEVICE * n_devices
+
+
+def _check_cpu_devices_follow_workers(n_devices: int) -> None:
+    _assert_device_count(n_devices)
+    local = jax.local_devices()
+    ss = {"x": jnp.arange(8.0 * MAX_PER_CPU_DEVICE * n_devices)}
+    # Up to 31 workers share the default CPU device.
+    os.process_cpu_count = lambda: MAX_PER_CPU_DEVICE
+    assert GridSweep(_toy_1d, ss).devices == local[:1]
+    # Above 31 workers, devices=None adds one CPU device per 31 workers.
+    os.process_cpu_count = lambda: MAX_PER_CPU_DEVICE + 1
+    assert GridSweep(_toy_1d, ss).devices == local[:2]
+    os.process_cpu_count = lambda: 1000
+    gs = GridSweep(_toy_1d, ss, progress=False)
+    assert gs.devices == local
+    assert gs.workers == MAX_PER_CPU_DEVICE * n_devices
+    # Every device runs its share of the workers at once, and no more.
+    peak = _peak_chunks_per_device(gs)
+    assert peak == dict.fromkeys(local, MAX_PER_CPU_DEVICE)
+
+
+def _toy_1d(x):
+    return x**2
+
+
 @pytest.mark.parametrize(
-    "check",
+    ("check", "n_devices"),
     [
-        "_check_grid_on_several_devices",
-        "_check_implicit_solver_on_several_devices",
-        "_check_devices_bitwise_equal_serial",
+        ("_check_grid_on_several_devices", N_CHILD_DEVICES),
+        ("_check_implicit_solver_on_several_devices", N_CHILD_DEVICES),
+        ("_check_devices_bitwise_equal_serial", N_CHILD_DEVICES),
+        ("_check_host_callback_with_jax_op_finishes", 1),
+        ("_check_host_callback_with_jax_op_finishes", N_CHILD_DEVICES),
+        ("_check_cpu_devices_follow_workers", N_CHILD_DEVICES),
     ],
 )
-def test_several_cpu_devices(check):
+def test_in_child_process(check, n_devices):
     env = dict(os.environ)
-    env["JAX_NUM_CPU_DEVICES"] = str(N_CHILD_DEVICES)
+    env["JAX_NUM_CPU_DEVICES"] = str(n_devices)
     env["JAX_PLATFORMS"] = "cpu"
     # A device count in XLA_FLAGS would conflict with JAX_NUM_CPU_DEVICES.
     env["XLA_FLAGS"] = " ".join(
@@ -688,15 +838,22 @@ def test_several_cpu_devices(check):
         for flag in env.get("XLA_FLAGS", "").split()
         if "xla_force_host_platform_device_count" not in flag
     )
-    code = f"import runpy; runpy.run_path({__file__!r})[{check!r}]({N_CHILD_DEVICES})"
-    proc = subprocess.run(
-        [sys.executable, "-c", code],
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=280,
+    # On a hang, the child dumps its stacks and exits before the parent's
+    # timeout kills it.
+    code = (
+        "import faulthandler, runpy; faulthandler.dump_traceback_later(240, exit=True); "
+        f"runpy.run_path({__file__!r})[{check!r}]({n_devices})"
     )
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-c", code],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=270,
+        )
+    except subprocess.TimeoutExpired as err:
+        pytest.fail(f"{check} hung with {n_devices} CPU device(s):\n{err.stderr}")
     assert proc.returncode == 0, (
-        f"{check} failed with {N_CHILD_DEVICES} CPU devices:\n"
-        f"{proc.stdout}\n{proc.stderr}"
+        f"{check} failed with {n_devices} CPU device(s):\n{proc.stdout}\n{proc.stderr}"
     )

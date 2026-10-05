@@ -17,8 +17,8 @@ Notes
 -----
 - `GridSweep` traces `fn` once, compiles `jax.vmap(fn)` ahead of time for
   each device it uses, and evaluates fixed-size chunks of the grid
-  concurrently from a pool of worker threads. On CPU, every worker shares
-  the default CPU device, so you don't set `JAX_NUM_CPU_DEVICES` or
+  concurrently from a pool of worker threads. On CPU, up to 31 workers
+  share the default CPU device, so you don't set `JAX_NUM_CPU_DEVICES` or
   `XLA_FLAGS` to run in parallel.
 - `fn` must be JAX-compatible: `GridSweep` calls it through `jax.jit` and
   `jax.vmap`.
@@ -60,6 +60,7 @@ import math
 import operator
 import os
 import queue
+import warnings
 from collections import deque
 from collections.abc import Callable, Generator, Mapping, Sequence
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -78,6 +79,16 @@ __all__ = ["GridSweep"]
 # Prefix of the worker thread names, so you can tell them apart in a debugger
 # or a thread dump.
 _THREAD_NAME_PREFIX = "jbubble-gridsweep"
+
+# XLA's CPU client runs at most 32 computations at a time on each CPU device
+# (`max_inflight_computations_per_device = 32` in openxla/xla
+# xla/pjrt/plugin/xla_cpu/cpu_client_options.h), and JAX has no option to
+# change it. Further computations wait for a free slot. A host callback inside
+# `fn` that runs a JAX operation needs a slot of its own, so if all 32 slots
+# belonged to chunks waiting in such a callback, the sweep would deadlock.
+# Running at most 31 chunks per CPU device leaves one slot free; more than 32
+# would add no parallelism anyway.
+_MAX_CHUNKS_PER_CPU_DEVICE = 31
 
 
 def _available_cores() -> int:
@@ -101,13 +112,14 @@ def _available_cores() -> int:
 
 
 def _resolve_devices(devices: int | Sequence[jax.Device] | None) -> list[jax.Device]:
-    """Turn the `devices` argument into a list of distinct JAX devices."""
+    """Turn the `devices` argument into a list of distinct JAX devices.
+
+    `None` gives every local device. On CPU, `_resolve_devices_and_workers`
+    then keeps only as many as the workers need.
+    """
     local = jax.local_devices()
     if devices is None:
-        # Extra virtual CPU devices share the same cores, so they would only
-        # add compiles: on CPU, worker threads give the parallelism. Each
-        # accelerator brings its own hardware.
-        return local[:1] if local[0].platform == "cpu" else list(local)
+        return list(local)
     if isinstance(devices, bool):
         raise TypeError("devices must be None, an int, or a sequence of devices.")
     if isinstance(devices, int | np.integer):
@@ -127,6 +139,72 @@ def _resolve_devices(devices: int | Sequence[jax.Device] | None) -> list[jax.Dev
     if len(set(resolved)) != len(resolved):
         raise ValueError("devices must not contain the same device twice.")
     return resolved
+
+
+def _resolve_devices_and_workers(
+    devices: int | Sequence[jax.Device] | None, workers: int | None
+) -> tuple[list[jax.Device], int]:
+    """Turn the `devices` and `workers` arguments into a device list and a count.
+
+    On CPU, at most `_MAX_CHUNKS_PER_CPU_DEVICE` workers share each device.
+    An explicit `workers` above that limit is lowered to it, with a warning.
+    """
+    local = jax.local_devices()
+    # Extra virtual CPU devices share the same cores, so on CPU `devices=None`
+    # uses only as many devices as the workers need, one per
+    # _MAX_CHUNKS_PER_CPU_DEVICE workers, which is one device on most
+    # machines. Each device costs a compile. Each accelerator brings its own
+    # hardware, so `devices=None` uses all of them.
+    auto_cpu = devices is None and local[0].platform == "cpu"
+    resolved = _resolve_devices(devices)
+    limit = (
+        _MAX_CHUNKS_PER_CPU_DEVICE * len(resolved)
+        if any(d.platform == "cpu" for d in resolved)
+        else None
+    )
+
+    if workers is None:
+        if all(d.platform == "cpu" for d in resolved):
+            workers = min(
+                _available_cores(), _MAX_CHUNKS_PER_CPU_DEVICE * len(resolved)
+            )
+            if not auto_cpu:
+                workers = max(workers, len(resolved))
+        else:
+            workers = len(resolved)
+    else:
+        workers = operator.index(workers)
+        if workers < 1:
+            raise ValueError(f"workers must be at least 1, got {workers}.")
+        if limit is not None and workers > limit:
+            needed = math.ceil(workers / _MAX_CHUNKS_PER_CPU_DEVICE)
+            if auto_cpu:
+                how = f"set `JAX_NUM_CPU_DEVICES={needed}` before you import JAX"
+            elif len(jax.local_devices(backend="cpu")) >= needed:
+                how = f"pass `devices={needed}`"
+            else:
+                how = (
+                    f"set `JAX_NUM_CPU_DEVICES={needed}` before you import JAX "
+                    f"and pass `devices={needed}`"
+                )
+            warnings.warn(
+                f"workers={workers}, but {len(resolved)} CPU device(s) can run "
+                f"at most {limit} chunks at a time without risking a deadlock, "
+                f"so GridSweep uses {limit} workers. XLA runs at most 32 "
+                "computations at a time on each CPU device. To run "
+                f"{workers} workers, {how}.",
+                stacklevel=3,
+            )
+            workers = limit
+
+    if auto_cpu:
+        resolved = resolved[: math.ceil(workers / _MAX_CHUNKS_PER_CPU_DEVICE)]
+    elif workers < len(resolved):
+        raise ValueError(
+            f"workers={workers}, but the sweep uses {len(resolved)} "
+            "devices: each device needs at least one worker."
+        )
+    return resolved, workers
 
 
 class GridSweep:
@@ -159,17 +237,21 @@ class GridSweep:
         Whether to show a `tqdm` progress bar during iteration.
         Default: `True`.
     devices : int or sequence of jax.Device, optional
-        Devices to run on. `None` uses the default CPU device on CPU, and
-        every local device on GPU or TPU. An `int` `n` uses the first `n`
-        local devices, and a sequence uses exactly those devices.
+        Devices to run on. `None` uses every local device on GPU or TPU. On
+        CPU, it uses one local CPU device per 31 workers: the default CPU
+        device for up to 31 workers, and more only if you set
+        `JAX_NUM_CPU_DEVICES`. An `int` `n` uses the first `n` local
+        devices, and a sequence uses exactly those devices.
         Default: `None`.
     workers : int, optional
         Number of chunks evaluated at the same time, each from its own
         thread. `None` uses one worker per CPU core available to the
-        process (respecting its CPU affinity) on CPU, and one worker per
-        device on GPU or TPU. `1` evaluates the chunks one after another on
-        the calling thread. `workers` must be at least the number of
-        devices. Default: `None`.
+        process (respecting its CPU affinity), up to 31 per CPU device, on
+        CPU, and one worker per device on GPU or TPU. `1` evaluates the
+        chunks one after another on the calling thread. `workers` must be
+        at least the number of devices. On CPU, `GridSweep` lowers a value
+        above 31 per device to that limit; see the parallelism note.
+        Default: `None`.
 
     Attributes
     ----------
@@ -197,13 +279,25 @@ class GridSweep:
         `batch_size` or `workers` isn't an integer, or `devices` has the
         wrong type.
 
+    Warns
+    -----
+    UserWarning
+        If `workers` is more than 31 per CPU device. `GridSweep` then runs
+        31 workers per CPU device.
+
     Notes
     -----
     - **Parallelism.** On CPU, one JAX device runs computations from
-      several threads in parallel, so the default needs no
-      `JAX_NUM_CPU_DEVICES` or `XLA_FLAGS` setup, and extra virtual CPU
-      devices only add compiles. To leave cores free on a shared machine,
-      or in a container whose CPU quota Python can't see, set `workers`.
+      several threads in parallel, so up to 31 workers need no
+      `JAX_NUM_CPU_DEVICES` or `XLA_FLAGS` setup. XLA runs at most 32
+      computations at a time on each CPU device, and a host callback that
+      runs a JAX operation needs a free slot, so `GridSweep` runs at most
+      31 chunks at a time on each CPU device. To use more than 31 cores,
+      set `JAX_NUM_CPU_DEVICES` to `ceil(cores / 31)` before you import
+      JAX; `devices=None` then uses as many CPU devices as the workers
+      need. Below 32 workers, extra virtual CPU devices only add compiles.
+      To leave cores free on a shared machine, or in a container whose CPU
+      quota Python can't see, set `workers`.
     - **Compilation.** Every call has the same shape, `per_worker` points,
       so `fn` is traced once and compiled once per device, and a ragged
       last chunk doesn't trigger a recompile. `GridSweep` pads that chunk
@@ -228,8 +322,13 @@ class GridSweep:
       and host memory holds at most `2 * workers` finished chunks plus the
       current batch.
     - **Thread safety.** Host callbacks inside `fn`, such as
-      `jax.debug.callback` or `jax.debug.print`, run on the worker threads
-      and can run at the same time, so they must be thread-safe.
+      `jax.debug.callback` or `jax.debug.print`, can run at the same time
+      from several threads, so they must be thread-safe. A host callback
+      must not run JAX operations, such as comparing or reducing the
+      `jax.Array` arguments of a `jax.debug.callback`; convert them with
+      `np.asarray` first. Such an operation needs a free computation slot
+      on the device, so it's slow, and it can deadlock if other JAX
+      computations in the process fill the slots.
     - **Known issue.** From JAX 0.11.1, XLA on CPU can deadlock when many
       large FFTs inside a loop run at the same time
       ([jax-ml/jax#41265](https://github.com/jax-ml/jax/issues/41265)). If
@@ -308,22 +407,7 @@ class GridSweep:
         self._sizes = [a.shape[0] for a in self._host_axes]
         self._N = math.prod(self._sizes)
 
-        resolved = _resolve_devices(devices)
-        if workers is None:
-            if all(d.platform == "cpu" for d in resolved):
-                workers = max(_available_cores(), len(resolved))
-            else:
-                workers = len(resolved)
-        else:
-            workers = operator.index(workers)
-            if workers < 1:
-                raise ValueError(f"workers must be at least 1, got {workers}.")
-            if workers < len(resolved):
-                raise ValueError(
-                    f"workers={workers}, but the sweep uses {len(resolved)} "
-                    "devices: each device needs at least one worker."
-                )
-
+        resolved, workers = _resolve_devices_and_workers(devices, workers)
         self.per_worker = math.ceil(min(batch_size, self._N) / workers)
         self.workers = min(workers, math.ceil(self._N / self.per_worker))
         self.batch_size = self.per_worker * self.workers
