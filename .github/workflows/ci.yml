@@ -12,8 +12,11 @@ on:
 permissions:
   contents: read
 
+# A new commit cancels the superseded run of the same pull request. Push,
+# scheduled, and manual runs each get their own group, so a merge to main never
+# cancels or queues behind the weekly run, or another main run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: true
 
 env:
