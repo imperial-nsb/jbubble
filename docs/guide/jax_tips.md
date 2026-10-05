@@ -21,8 +21,8 @@ result = simulate(eom, pulse, save_spec=SaveSpec(1000), t_max=10e-6)
 result2 = simulate(eom2, pulse, save_spec=SaveSpec(1000), t_max=10e-6)
 ```
 
-!!! warning "Static vs dynamic"
-    JAX traces through `eqx.Module` fields that are `jax.Array`. Fields that are plain Python scalars (`int`, `float`, `bool`) or non-array objects are treated as static and trigger recompilation if changed. Keep parameters as `jnp.array` or leave them as Equinox fields.
+!!! warning "Traced and static values"
+    `jax.jit` traces every leaf of its arguments, including Python floats, so changing a value doesn't trigger recompilation. Equinox's filtered transformations, such as `eqx.filter_jit` and `eqx.filter_grad`, treat Python floats inside a module as static instead: changing one triggers recompilation, and no gradient flows to it. To differentiate with respect to a value, pass it as a JAX array, or as a `Parameter` to `fit_parameters`.
 
 ---
 
@@ -105,131 +105,26 @@ results = jax.jit(batched_simulate)(batched_eom)
 
 ---
 
-## Gradient-based parameter fitting
+## Fit parameters to data
 
-`fit_parameters` runs gradient descent to minimise a differentiable loss function over the simulation result. It uses `jax.grad` through the entire ODE solve (via diffrax's backpropagation-through-time adjoint).
-
-### Minimal example
+[`fit_parameters`][jbubble.fitting.fit_parameters] differentiates a loss through the ODE solve and minimises it with an optax optimiser. Wrap each physical value in [`Parameter`][jbubble.fitting.Parameter], so that one learning rate suits values of any magnitude and bounds hold. In the following example, `make_eom(kappa_s)` builds the equation of motion, `pulse` is the drive, and `measured_radius` is the measured radius trace [m]:
 
 ```python
-import jax.numpy as jnp
 import optax
-from jbubble import run_simulation, fit_parameters, SaveSpec
-from jbubble.bubble.eom import KellerMiksis
-from jbubble.bubble.gas import PolytropicGas
-from jbubble.bubble.shell import LipidShell, GompertzSurfaceTension
-from jbubble.bubble.medium import NewtonianMedium
-from jbubble.pulse import ToneBurst
-from jbubble.pulse.shapes import Sine
+from jbubble import fit_parameters
+from jbubble.fitting import Parameter
 from jbubble.metrics import normalised_mse_radius
 
-# Measured radius trace (from experiment or higher-fidelity simulation)
-measured_radius = ...  # shape (N,) [m]
-R0_true = 2e-6
-
-pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
-
-
-def make_model(kappa_s):
-    sigma = GompertzSurfaceTension(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072)
-    eom = KellerMiksis(
-        gas=PolytropicGas(gamma=1.4),
-        shell=LipidShell(sigma=sigma, kappa_s=kappa_s),
-        medium=NewtonianMedium(mu=1e-3),
-        R0=R0_true,
-        P_amb=101325,
-        rho_L=998,
-        c_L=1500,
-    )
-    return eom, pulse
-
-
-fit_result = fit_parameters(
-    make_model=make_model,
-    params0=jnp.asarray(1e-9),  # initial guess for kappa_s [N·s/m]
-    save_spec=SaveSpec(500),
-    t_max=10e-6,
-    loss_fn=lambda result: normalised_mse_radius(
-        result.radius, measured_radius, R0_true
-    ),
-    optimizer=optax.adam(1e-10),
-    n_steps=200,
-    log_every=25,
+fit = fit_parameters(
+    make_model=lambda p: (make_eom(p["kappa_s"]), pulse),
+    params0={"kappa_s": Parameter(1e-9, lower=0.0)},  # initial guess [N s/m]
+    loss_fn=lambda result: normalised_mse_radius(result.radius, measured_radius, 2e-6),
+    optimizer=optax.adam(0.05),  # about 5 % per step
 )
-
-print("Fitted kappa_s:", fit_result.params)
-print("Final loss:", fit_result.loss_history[-1])
+print(fit.params["kappa_s"])
 ```
 
-### Fitting multiple parameters jointly
-
-`params0` can be any JAX-compatible PyTree. The `make_model` factory receives the same structure. The optimiser updates only JAX-array leaves; Python `int` and `float` leaves stay fixed, so wrap each value to fit in `jnp.asarray`:
-
-```python
-import jax.numpy as jnp
-
-params0 = {"kappa_s": jnp.asarray(1e-9), "chi": jnp.asarray(0.5)}
-
-def make_model(params):
-    sigma = GompertzSurfaceTension(
-        R_buckle_ratio=0.98,
-        chi=params["chi"],
-        sigma_rupture=0.072,
-    )
-    eom = KellerMiksis(
-        gas=PolytropicGas(gamma=1.4),
-        shell=LipidShell(sigma=sigma, kappa_s=params["kappa_s"]),
-        medium=NewtonianMedium(mu=1e-3),
-        R0=2e-6, P_amb=101325, rho_L=998, c_L=1500,
-    )
-    return eom, pulse
-
-fit_result = fit_parameters(
-    make_model=make_model,
-    params0=params0,
-    ...
-)
-```
-
-### Fitting to emission data
-
-The `loss_fn` receives a full `SimulationResult`, so you can compute any differentiable quantity — including the radiated pressure:
-
-```python
-from jbubble.acoustics import IncompressibleMonopole
-from jbubble.metrics import normalised_mse_emission
-
-emission = IncompressibleMonopole(rho_L=998.0)
-measured_p = ...  # measured hydrophone waveform [Pa]
-r = 10e-3  # hydrophone distance [m]
-
-fit_result = fit_parameters(
-    make_model=make_model,
-    params0=params0,
-    save_spec=SaveSpec(500),
-    t_max=10e-6,
-    loss_fn=lambda result: normalised_mse_emission(
-        emission(result, r), measured_p, p_ref=1e3
-    ),
-    optimizer=optax.adam(1e-10),
-    n_steps=300,
-)
-```
-
-### Monitoring convergence
-
-Pass a `step_callback` to inspect parameters and loss outside JIT at each step:
-
-```python
-history = []
-
-
-def callback(step, params, loss):
-    history.append({"step": step, "kappa_s": float(params), "loss": float(loss)})
-
-
-fit_result = fit_parameters(..., step_callback=callback)
-```
+To fit several recordings at once, learn a neural constitutive law, handle failed solves, choose solver settings, or estimate uncertainties, see [Fit model parameters to data](fitting.md).
 
 ---
 
@@ -239,8 +134,7 @@ For custom gradient computations (e.g. sensitivity analysis), use `jax.grad` dir
 
 ```python
 def peak_expansion(kappa_s):
-    _, pulse = make_model(kappa_s)
-    eom, _ = make_model(kappa_s)
+    eom = make_eom(kappa_s)
     result = run_simulation(eom, pulse, save_spec=SaveSpec(500), t_max=10e-6)
     return result.radius.max() / eom.R0
 
