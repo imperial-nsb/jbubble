@@ -134,13 +134,18 @@ A pulse parameterised by a small neural network. Useful for learned or optimised
 
 ```python
 import equinox as eqx
+import jax
 from jbubble.pulse import NeuralPulse
 
 net = eqx.nn.MLP(1, 1, width_size=32, depth=3, key=jax.random.key(0))
-pulse = NeuralPulse(net=net)
+pulse = NeuralPulse(
+    net=net,
+    pulse_duration=10e-6,  # normalises the network input [s]
+    pressure_scale=100e3,  # scales the network output [Pa]
+)
 ```
 
-The network receives the scalar time `t` and returns the driving pressure. Because it is an Equinox module, the network weights are differentiable and can be optimised via `fit_parameters`.
+The network receives the normalised time `t / pulse_duration` as a one-element array, and `pressure_scale` scales its output to the driving pressure. Because it is an Equinox module, the network weights are differentiable and can be optimised via `fit_parameters`.
 
 ---
 
@@ -155,7 +160,7 @@ from jbubble.pulse.shapes import Sine
 # Dual-frequency driving
 p1 = ToneBurst(freq=1e6, pressure=80e3, shape=Sine(), cycle_num=10)
 p2 = ToneBurst(freq=2e6, pressure=40e3, shape=Sine(), cycle_num=20)
-pulse = Summed(p1, p2)
+pulse = Summed(pulses=(p1, p2))  # same as p1 + p2
 ```
 
 ### Amplitude scaling
@@ -163,15 +168,31 @@ pulse = Summed(p1, p2)
 ```python
 from jbubble.pulse import Scaled
 
-pulse = Scaled(base=p1, scale=2.0)  # doubles the amplitude
+pulse = Scaled(pulse=p1, factor=2.0)  # doubles the amplitude, same as 2.0 * p1
 ```
 
-### Time offset
+### Constant offset
 
 ```python
 from jbubble.pulse import Offset
 
-delayed_pulse = Offset(base=p1, offset=5e-6)  # 5 µs delay
+biased = Offset(pulse=p1, offset=10e3)  # adds 10 kPa, same as p1 + 10e3
+```
+
+`Offset` adds a constant pressure at all times; it doesn't shift the pulse in time.
+
+### Time delay
+
+To delay a pulse, set its keyword-only `initial_time` field. The following tone burst starts at 5 µs.
+
+```python
+delayed = ToneBurst(
+    freq=1e6,
+    pressure=80e3,
+    shape=Sine(),
+    cycle_num=10,
+    initial_time=5e-6,  # start time [s]
+)
 ```
 
 ### Applying an envelope to any pulse
