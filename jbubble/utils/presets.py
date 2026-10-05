@@ -121,8 +121,8 @@ def free_bubble(
         Polytropic exponent. Default: `1.4`, the adiabatic exponent of a
         diatomic gas such as air.
     sigma : float
-        Surface tension [N/m]. Default: `0.072` (air-water interface at
-        20 °C: 0.0727 N/m, NIST).
+        Surface tension [N/m]. Default: `0.072` (surface tension of water
+        at 20 °C: 0.0727 N/m, NIST).
     mu : float
         Liquid dynamic viscosity [Pa s]. Default: `1e-3` (water at 20 °C:
         1.0016e-3 Pa s, NIST).
@@ -220,8 +220,8 @@ def lipid_bubble(
     chi : float
         Shell elasticity [N/m]. Default: `0.5` (Gümmer et al.).
     sigma_rupture : float
-        Surface tension after rupture [N/m]. Default: `0.072`, the clean
-        water surface (Gümmer et al.).
+        Surface tension after rupture [N/m]. Default: `0.072`, the surface
+        tension of clean water (Gümmer et al.).
     R_buckle_ratio : float
         Buckling radius as a fraction of `R0`. Default: `0.98058`, which
         gives the surface tension at `R0` of Gümmer et al.,
