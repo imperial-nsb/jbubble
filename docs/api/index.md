@@ -10,7 +10,7 @@ jbubble/
 ├── simulation.py         # SimulationResult
 ├── solver.py             # SaveSpec, SolverConfig, solve_eom
 ├── metrics.py            # mse_radius, mse_emission, …
-├── fitting.py            # fit_parameters, FitResult
+├── fitting.py            # fit_parameters, FitResult, Parameter, unwrap
 ├── bubble/
 │   ├── state.py          # BubbleState
 │   ├── property.py       # Property, ConstantProperty, NeuralProperty, as_property
@@ -69,6 +69,7 @@ from jbubble.pulse.shapes import Sine, Square, Sawtooth
 from jbubble.utils.presets import free_bubble, lipid_bubble, thick_shell_bubble
 from jbubble.utils.gridsweep import GridSweep
 from jbubble.utils.io import export_hdf5, load_hdf5
+from jbubble.fitting import Parameter, unwrap
 ```
 
 ## Pages
@@ -82,5 +83,5 @@ from jbubble.utils.io import export_hdf5, load_hdf5
 | [solver](solver.md) | SaveSpec, SolverConfig, solve_eom |
 | [simulation](simulation.md) | SimulationResult, run_simulation |
 | [metrics](metrics.md) | Differentiable loss functions |
-| [fitting](fitting.md) | fit_parameters, FitResult |
+| [fitting](fitting.md) | fit_parameters, FitResult, Parameter, unwrap |
 | [utils](utils.md) | Presets, GridSweep, HDF5 I/O, figure styles |

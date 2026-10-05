@@ -136,6 +136,7 @@ nav:
     - Quickstart: guide/quickstart.md
     - Bubble models: guide/bubble_models.md
     - Pulse shapes: guide/pulse_shapes.md
+    - Fitting: guide/fitting.md
     - JAX tips: guide/jax_tips.md
   - Examples: examples/index.md
   - API reference:
