@@ -254,7 +254,8 @@ class TestPulseComposition:
 # Near the pulse start the Hann window is about 0.02 while the default
 # soft-rectangular envelope is about 1, so windowing is clearly visible.
 T_EDGE = jnp.asarray(0.25e-6)
-T_MID = jnp.asarray(2.5e-6)
+# A carrier peak of tone_early (100 kPa), so a wrong sign or scale shows.
+T_MID = jnp.asarray(2.25e-6)
 
 
 @pytest.fixture
@@ -633,6 +634,29 @@ class TestTransparentWrappers:
         jaxpr = jax.make_jaxpr(value)(jnp.asarray(2.0), jnp.asarray(1.0))
         assert "callback" not in str(jaxpr)
 
+    @pytest.mark.parametrize(
+        "make",
+        [
+            lambda p, **kw: Scaled(pulse=p, factor=2.0, **kw),
+            lambda p, **kw: Offset(pulse=p, offset=1000.0, **kw),
+        ],
+        ids=["Scaled", "Offset"],
+    )
+    def test_traced_window_fields_are_not_checked(self, tone_early, make):
+        def with_start(t0):
+            return make(tone_early, initial_time=t0)(T_MID)
+
+        def with_steepness(k):
+            return make(tone_early, envelope=SoftRectangularEnvelope(steepness=k))(
+                T_MID
+            )
+
+        want = float(make(tone_early)(T_MID))
+        got = jax.jit(with_start)(jnp.asarray(0.0))
+        assert float(got) == pytest.approx(want, rel=1e-12)
+        got = jax.jit(with_steepness)(jnp.asarray(100.0))
+        assert float(got) == pytest.approx(want, rel=1e-12)
+
     def test_jit_round_trip_keeps_the_wrapper_valid(self, tone_early):
         # jit returns array leaves, so a rebuilt wrapper sees initial_time and
         # steepness as concrete arrays equal to their defaults.
@@ -670,6 +694,12 @@ class TestOperands:
     def test_grad_through_traced_offset(self, tone_early, build, slope):
         grad = jax.grad(lambda c: build(tone_early, c)(T_MID))(jnp.asarray(10.0))
         assert float(grad) == pytest.approx(slope)
+
+    def test_subtracting_from_a_constant_negates_the_pulse(self, tone_early):
+        want = 1000.0 - float(tone_early(T_MID))
+        assert float((1000.0 - tone_early)(T_MID)) == pytest.approx(want, rel=1e-12)
+        traced = jax.jit(lambda c: (c - tone_early)(T_MID))(jnp.asarray(1000.0))
+        assert float(traced) == pytest.approx(want, rel=1e-12)
 
     def test_in_place_operators_take_traced_values(self, tone_early):
         def value(k):
@@ -772,6 +802,16 @@ class TestWindowedSemantics:
             assert len(combined.pulses) == 2
             got = float(combined(T_EDGE))
             assert got == pytest.approx(float(windowed(T_EDGE)), rel=1e-12)
+
+    def test_a_nested_sum_with_its_own_start_flattens(self, tone_early, tone_late):
+        # NoEnvelope ignores the window, so flattening can't change the
+        # signal, and the rule reads only the envelope's type.
+        nested = Summed(pulses=(tone_early, tone_late), initial_time=4e-6)
+        silent = ToneBurst(freq=3e6, pressure=0.0, shape=Sine(), cycle_num=15)
+        combined = nested + silent
+        assert len(combined.pulses) == 3
+        got = jax.vmap(combined)(TS_GRID)
+        assert jnp.allclose(got, jax.vmap(nested)(TS_GRID), rtol=0.0, atol=1e-9)
 
     def test_plain_sums_still_flatten(self, tone_early, tone_late):
         silent = ToneBurst(freq=3e6, pressure=0.0, shape=Sine(), cycle_num=15)
@@ -957,6 +997,12 @@ class TestSampledPulseWindow:
         )
         assert float(pulse(jnp.asarray(10e-6))) == pytest.approx(100e3, rel=1e-6)
 
+    def test_accepts_initial_time_near_a_float32_first_sample(self):
+        ts = jnp.linspace(5e-6, 15e-6, 201, dtype=jnp.float32)
+        assert float(ts[0]) != 5e-6
+        pulse = SampledPulse(ts=ts, pressures=jnp.ones(201), initial_time=5e-6)
+        assert float(pulse.t_start) == pytest.approx(5e-6, rel=1e-6)
+
     def test_check_adds_no_host_callback(self, late_samples):
         def value(ts, ps):
             return SampledPulse(ts=ts, pressures=ps, initial_time=5e-6)(ts[100])
@@ -996,6 +1042,14 @@ class TestNeuralPulseConfiguration:
         t = jnp.asarray(9e-6)
         want = mlp(jnp.atleast_1d(0.5)).squeeze()
         assert float(pulse._evaluate(t)) == pytest.approx(float(want), rel=1e-9)
+
+    def test_pressure_scale_scales_the_output(self, mlp):
+        unit = NeuralPulse(net=mlp, pulse_duration=10e-6)
+        loud = NeuralPulse(net=mlp, pulse_duration=10e-6, pressure_scale=1e5)
+        ts = jnp.linspace(1e-6, 9e-6, 9)
+        want = 1e5 * jax.vmap(unit)(ts)
+        assert float(jnp.max(jnp.abs(want))) > 0.0
+        assert jnp.allclose(jax.vmap(loud)(ts), want, rtol=1e-12, atol=0.0)
 
     def test_configuration_is_static(self, mlp):
         pulse = NeuralPulse(
