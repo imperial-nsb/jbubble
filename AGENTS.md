@@ -35,7 +35,15 @@ After you change dependencies in `pyproject.toml`, run `uv lock` and commit
   analytical derivatives.
 - **Field ordering:** fields with defaults must follow fields without defaults
   (standard dataclass rule).
-- **Docstrings:** include the governing equation in a `::` code block.
+- **Docstrings:** Markdown-flavoured numpy style. Document `eqx.Module`
+  fields in a `Parameters` section, with units in square brackets. Write
+  the governing equation as `$$` LaTeX display math (`$...$` inline) in a
+  raw docstring, `r"""..."""`; ruff rule D301 flags a docstring that
+  contains a backslash and isn't raw. Link jbubble objects with autorefs,
+  such as ``[`KellerMiksis`][jbubble.bubble.eom.KellerMiksis]``; write
+  third-party objects in plain backticks. Use fenced ```` ```python ````
+  blocks for code samples, not reST `::` blocks or roles.
+- **Public names:** list each module's public names in its `__all__`.
 - **No barrel re-exports:** subpackage classes are NOT re-exported from
   `jbubble/__init__.py`. Users import from their subpackage
   (`jbubble.bubble.eom`, `jbubble.pulse`, etc.). Only top-level orchestration

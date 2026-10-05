@@ -126,7 +126,16 @@ tests, so raise one only when jbubble needs a newer release.
 - **Imports:** sorted by ruff (isort rules). No barrel re-exports of subpackage
   classes from `jbubble/__init__.py` — users import from their subpackage directly.
 - **Type annotations:** use standard Python types; JAX arrays are `jax.Array`.
-- **Docstrings:** include the governing equation in a `::` code block where applicable.
+- **Docstrings:** use Markdown-flavoured
+  [numpy style](https://numpydoc.readthedocs.io/en/latest/format.html), which
+  the API reference renders with mkdocstrings. Document `eqx.Module` fields in
+  a `Parameters` section, with units in square brackets. Where applicable,
+  write the governing equation as `$$` LaTeX display math (`$...$` inline), and
+  make the docstring raw (`r"""..."""`) so Python keeps the backslashes; ruff
+  rule D301 checks this. Link jbubble objects with cross-references, such as
+  ``[`KellerMiksis`][jbubble.bubble.eom.KellerMiksis]``, and put code samples
+  in fenced ```` ```python ```` blocks.
+- **Public names:** list each module's public names in its `__all__`.
 - **Use `jnp`** (not `np`) throughout — keep everything JAX-traceable.
 
 ### Architecture conventions
