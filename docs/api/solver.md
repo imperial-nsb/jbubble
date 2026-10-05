@@ -18,19 +18,21 @@ from jbubble import solve_eom, SaveSpec, SolverConfig
 
 ## Solver choice and tolerances
 
-The default solver is `Kvaerno5` (an implicit 5th-order Runge–Kutta method) with a PID step-size controller at relative tolerance $10^{-3}$ and absolute tolerance $10^{-6}$. This is appropriate for most bubble dynamics simulations.
+The default solver is `Dopri5` (an explicit 5th-order Runge–Kutta method) with a PID step-size controller at relative tolerance $10^{-6}$ and absolute tolerance $10^{-9}$, an initial step of 1 ns, and at most 10,000 steps. This is appropriate for most bubble dynamics simulations.
 
-For highly stiff problems (e.g. very small bubbles, extreme driving pressures, or large shear moduli in the medium), tighten the tolerances:
+For stiff problems (for example, very small bubbles, extreme driving pressures, or large shear moduli in the medium), use an implicit solver such as `Kvaerno5`, and allow more steps if `result.converged` is `False`:
 
 ```python
 import diffrax
 from jbubble import SolverConfig
 
 config = SolverConfig(
-    stepsize_controller=diffrax.PIDController(rtol=1e-5, atol=1e-8),
+    solver=diffrax.Kvaerno5(),
     max_steps=50_000,
 )
 ```
+
+`GridSweep` with `parallel=True` supports only explicit solvers, so set `parallel=False` when you sweep with an implicit solver.
 
 For gradient-based fitting, consider using the `RecursiveCheckpointAdjoint` to reduce memory usage during backpropagation:
 

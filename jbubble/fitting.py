@@ -114,8 +114,8 @@ def fit_parameters(
     n_steps : int
         Number of optimisation steps.  Default: 200.
     config : SolverConfig, optional
-        ODE solver settings.  Default: Tsit5 with PID(rtol=1e-4, atol=1e-8),
-        50 000 max steps.
+        ODE solver settings.  Default: Dopri5 with PID(rtol=1e-4, atol=1e-8),
+        10 000 max steps.
     adjoint : diffrax.AbstractAdjoint, optional
         Adjoint method.  Default: ``RecursiveCheckpointAdjoint()``
         (checkpoints the forward pass for stable gradients).

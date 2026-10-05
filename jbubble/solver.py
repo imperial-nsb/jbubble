@@ -36,13 +36,13 @@ class SolverConfig(eqx.Module):
     Fields
     ------
     solver : diffrax.AbstractSolver
-        ODE solver.  Default: ``Dopri()``.
+        ODE solver.  Default: ``Dopri5()``.
     stepsize_controller : diffrax.AbstractStepSizeController
-        Step-size controller.  Default: ``PIDController(rtol=1e-5, atol=1e-6)``.
+        Step-size controller.  Default: ``PIDController(rtol=1e-6, atol=1e-9)``.
     dt0 : float
         Initial step size [s].  Default: 1e-9.
     max_steps : int
-        Maximum solver steps per integration.  Default: 50 000.
+        Maximum solver steps per integration.  Default: 10 000.
     """
 
     solver: diffrax.AbstractSolver = eqx.field(default_factory=diffrax.Dopri5)
@@ -81,8 +81,8 @@ def solve_eom(
         Output sampling specification.  Default: 1024 evenly-spaced
         time points.
     config : SolverConfig, optional
-        Numerical integration settings.  Default: Kvaerno5 with
-        PIDController(rtol=1e-3, atol=1e-6).
+        Numerical integration settings.  Default: ``SolverConfig()``, that
+        is, Dopri5 with PIDController(rtol=1e-6, atol=1e-9).
     adjoint : diffrax.AbstractAdjoint, optional
         Adjoint method for gradient computation.  Default: diffrax built-in
         (``RecursiveCheckpointAdjoint``).  For gradient-based fitting through
