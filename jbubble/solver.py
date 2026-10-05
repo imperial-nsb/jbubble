@@ -99,13 +99,14 @@ class SolverConfig(eqx.Module):
     Notes
     -----
     **Choosing tolerances.** At the defaults, a microbubble driven at
-    100 kPa has radius errors of $10^{-6}$ to $10^{-4} R_0$ and gradient
-    errors of $10^{-6}$ to $10^{-2}$ relative; the kink in a Marmottant
-    surface-tension law is the hardest case. Through an inertial collapse
+    100 kPa has radius errors of $10^{-6}$ to $10^{-5} R_0$ and relative
+    gradient errors of $10^{-5}$ to $10^{-3}$. The kink in a Marmottant
+    surface-tension law is the hardest case, with errors up to about
+    $10^{-3} R_0$ and $10^{-2}$. Through an inertial collapse
     ($R_\text{max}/R_0 \approx 4$), both errors are about $10^{-3}$ to
-    $10^{-2}$. `rtol=1e-7` makes them about ten times smaller for about
-    1.5 times as many steps. Looser tolerances make gradients wrong by tens
-    of percent or more.
+    $10^{-2}$. `rtol=1e-8, atol=1e-12` makes them 100 to 1000 times smaller
+    for about twice as many steps. Looser tolerances can make gradients
+    through a collapse wrong by more than 100 %.
 
     `rtol` sets the accuracy of most solves. `atol` matters where a scaled
     state component is far below 1: the wall velocity of a small or weakly
@@ -116,9 +117,9 @@ class SolverConfig(eqx.Module):
     radius tolerance: through an inertial collapse, 0.1's gradients could be
     off by 50 % or more.
 
-    **Long integrations.** `Dopri5` needs about 50 to 90 steps, accepted and
-    rejected, per driving period for a microbubble in water, so
-    `max_steps=100_000` covers more than a thousand periods. Raise it for
+    **Long integrations.** `Dopri5` needs about 60 to 100 steps, accepted
+    and rejected, per driving period for a microbubble in water, so
+    `max_steps=100_000` covers about a thousand periods. Raise it for
     longer pulses. A larger `max_steps` costs neither memory nor compile
     time under `jax.grad`.
     """
