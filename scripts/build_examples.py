@@ -10,7 +10,8 @@ For each script, this tool:
    and `uv.lock`.
 2. Writes a page with the code, the printed output, and the figures to
    `docs/examples/NN_name.md`, plus a gallery of thumbnails to
-   `docs/examples/index.md`.
+   `docs/examples/index.md`. Each page ends with links to the previous and
+   the next example and to the gallery.
 3. Writes the executed notebook, with an install cell before the first code
    cell, to `docs/examples/notebooks/NN_name.ipynb`. The built site serves it
    at `examples/notebooks/NN_name.ipynb`. CI publishes the site to the
@@ -89,6 +90,7 @@ class Entry:
     thumb: str | None
     status: str
     seconds: float
+    page: str
 
 
 def default_pip_spec(version: str, repo: str, ref: str) -> str:
@@ -314,22 +316,56 @@ def build_one(script: pathlib.Path, settings: Settings) -> Entry:
     page, thumb = to_markdown(nb, name, title, links, settings.out / "media")
     if settings.execute and thumb is None:
         raise ExampleError(f"{script}: the example shows no PNG figure.")
-    (settings.out / f"{name}.md").write_text(page)
     nbformat.write(
         published_notebook(nb, settings.pip_spec),
         settings.out / "notebooks" / f"{name}.ipynb",
     )
-    return Entry(name, title, summary, thumb, status, seconds)
+    return Entry(name, title, summary, thumb, status, seconds, page)
+
+
+def link_text(text: str) -> str:
+    return text.replace("[", r"\[").replace("]", r"\]")
+
+
+def page_nav(previous: Entry | None, following: Entry | None) -> str:
+    """Link an example page to its neighbours and to the gallery.
+
+    The site's navigation lists only the gallery, so the theme shows no
+    previous and next links on an example page.
+    """
+    links = []
+    if previous is not None:
+        title = link_text(previous.title)
+        links.append(f"[Previous: {title}]({previous.name}.md){{ .jb-previous }}")
+    links.append("[All examples](index.md){ .jb-gallery }")
+    if following is not None:
+        title = link_text(following.title)
+        links.append(f"[Next: {title}]({following.name}.md){{ .jb-next }}")
+    # docs/stylesheets/extra.css lays out .jb-example-nav and its links.
+    return (
+        '<nav class="jb-example-nav" aria-label="Examples" markdown="span">\n'
+        + "\n".join(links)
+        + "\n</nav>\n"
+    )
+
+
+def write_pages(entries: list[Entry], settings: Settings) -> None:
+    """Write the page of each example, in gallery order."""
+    for i, entry in enumerate(entries):
+        previous = entries[i - 1] if i > 0 else None
+        following = entries[i + 1] if i + 1 < len(entries) else None
+        (settings.out / f"{entry.name}.md").write_text(
+            entry.page + "\n" + page_nav(previous, following)
+        )
 
 
 def write_index(entries: list[Entry], settings: Settings) -> None:
     cards = []
     for e in entries:
-        image = (
-            f"[![{e.title}](media/{e.thumb})]({e.name}.md)\n\n    " if e.thumb else ""
-        )
+        title = link_text(e.title)
+        image = f"[![{title}](media/{e.thumb})]({e.name}.md)\n\n    " if e.thumb else ""
         summary = f"\n\n    {e.summary}" if e.summary else ""
-        cards.append(f"-   {image}**[{e.title}]({e.name}.md)**{summary}\n")
+        cards.append(f"-   {image}**[{title}]({e.name}.md)**{summary}\n")
     intro = INTRO.format(repo=settings.repo, ref=settings.source_ref)
     (settings.out / "index.md").write_text(
         "# Examples\n\n"
@@ -452,7 +488,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\n{len(failures)} example(s) failed:\n", file=sys.stderr)
         print("\n\n".join(failures), file=sys.stderr)
         return 1
-    write_index(sorted(entries, key=lambda e: e.name), settings)
+    entries.sort(key=lambda e: e.name)
+    write_pages(entries, settings)
+    write_index(entries, settings)
     return 0
 
 

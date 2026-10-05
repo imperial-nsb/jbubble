@@ -7,6 +7,7 @@ tests skip themselves without it.
 import base64
 import importlib.util
 import pathlib
+import re
 import sys
 
 import pytest
@@ -151,6 +152,33 @@ def test_page_shows_code_output_and_figures(tmp_path):
     assert (media / thumb).read_bytes().startswith(b"\x89PNG")
 
 
+def test_pages_link_to_their_neighbours_and_the_gallery(tmp_path):
+    # The site's nav lists only the gallery, so each page links onwards itself.
+    out = tmp_path / "out"
+    out.mkdir()
+    titles = {"01_a": "First", "02_b": "Second [draft]", "03_c": "Third"}
+    entries = [
+        build_examples.Entry(name, title, "", None, "cached", 0.0, f"# {title}\n")
+        for name, title in titles.items()
+    ]
+    build_examples.write_pages(entries, settings(tmp_path, out=out))
+
+    def links(name):
+        page = (out / f"{name}.md").read_text()
+        return re.findall(r"^\[(.*)\]\((.*)\)\{ \.(.*) \}$", page, re.MULTILINE)
+
+    gallery = ("All examples", "index.md", "jb-gallery")
+    second = r"Second \[draft\]"
+    assert links("01_a") == [gallery, (f"Next: {second}", "02_b.md", "jb-next")]
+    assert links("02_b") == [
+        ("Previous: First", "01_a.md", "jb-previous"),
+        gallery,
+        ("Next: Third", "03_c.md", "jb-next"),
+    ]
+    assert links("03_c") == [(f"Previous: {second}", "02_b.md", "jb-previous"), gallery]
+    assert (out / "01_a.md").read_text().startswith("# First\n\n<nav ")
+
+
 def test_fences_outgrow_backticks_in_the_text():
     assert build_examples.fenced("a ``` b", "text") == "````text\na ``` b\n````"
 
@@ -187,6 +215,7 @@ def test_build_executes_examples_and_writes_the_gallery(tmp_path, monkeypatch):
     nb = nbformat.read(out / "notebooks" / "01_small.ipynb", as_version=4)
     assert nb.cells[1].metadata["tags"] == ["install"]
     assert "01_small.md" in (out / "index.md").read_text()
+    assert page.endswith("[All examples](index.md){ .jb-gallery }\n</nav>\n")
     # A second run reuses the executed notebook from the cache.
     (cached,) = (tmp_path / "cache").glob("01_small-*.ipynb")
     mtime = cached.stat().st_mtime_ns

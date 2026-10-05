@@ -101,6 +101,31 @@
   font-size: 0.7rem;
 }
 
+/*
+ * Example pages: links to the previous example, the gallery, and the next
+ * example, each in its own column, so the gallery link stays in the middle on
+ * the first and the last page.
+ */
+.md-typeset .jb-example-nav {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1rem;
+  align-items: start;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 0.05rem solid var(--md-default-fg-color--lightest);
+}
+.md-typeset .jb-example-nav .jb-previous {
+  grid-column: 1;
+}
+.md-typeset .jb-example-nav .jb-gallery {
+  grid-column: 2;
+}
+.md-typeset .jb-example-nav .jb-next {
+  grid-column: 3;
+  text-align: right;
+}
+
 /* Example pages: printed output, set apart from the code that produced it. */
 .md-typeset .jb-output pre > code {
   background-color: transparent;

@@ -122,7 +122,10 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
 
-# scripts/build_examples.py generates examples/ from the example scripts.
+# scripts/build_examples.py generates examples/ from the example scripts. The
+# nav lists only the gallery, so a new example needs no entry here; each
+# generated page links to the previous and the next example and to the
+# gallery instead.
 nav:
   - Home: index.md
   - Guide:
