@@ -7,6 +7,7 @@ import abc
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from .envelope import Envelope, SoftRectangularEnvelope
 
@@ -184,8 +185,8 @@ class Scaled(Pulse):
     where $k$ is `factor`. `Scaled` is transparent: it delegates to the
     child pulse's `__call__`, which already applies the child's envelope,
     and it takes its active window (`t_start`, `t_stop`, `duration`, and
-    `t_end`) from the child. It applies no envelope of its own, so
-    `windowed` passes the new envelope down to the child pulse.
+    `t_end`) from the child. It has no start time or envelope of its own,
+    so `windowed` passes the new envelope down to the child pulse.
 
     Parameters
     ----------
@@ -193,10 +194,20 @@ class Scaled(Pulse):
         The pulse to scale.
     factor : float
         Multiplicative factor.
+
+    Raises
+    ------
+    ValueError
+        If you set `initial_time` or `envelope` to anything other than the
+        default, because `Scaled` would ignore it. Traced values aren't
+        checked.
     """
 
     pulse: Pulse
     factor: float
+
+    def __check_init__(self) -> None:
+        _check_transparent(self)
 
     @property
     def duration(self) -> float | jax.Array:
@@ -244,8 +255,8 @@ class Offset(Pulse):
     `Offset` is transparent: it delegates to the child pulse's `__call__`,
     which already applies the child's envelope, and it takes its active
     window (`t_start`, `t_stop`, `duration`, and `t_end`) from the child.
-    It applies no envelope of its own, so `windowed` passes the new
-    envelope down to the child pulse and leaves the constant offset
+    It has no start time or envelope of its own, so `windowed` passes the
+    new envelope down to the child pulse and leaves the constant offset
     unwindowed.
 
     Parameters
@@ -254,10 +265,20 @@ class Offset(Pulse):
         The pulse to offset.
     offset : float
         Additive constant pressure [Pa].
+
+    Raises
+    ------
+    ValueError
+        If you set `initial_time` or `envelope` to anything other than the
+        default, because `Offset` would ignore it. Traced values aren't
+        checked.
     """
 
     pulse: Pulse
     offset: float
+
+    def __check_init__(self) -> None:
+        _check_transparent(self)
 
     @property
     def duration(self) -> float | jax.Array:
@@ -334,3 +355,57 @@ class Summed(Pulse):
     def _evaluate(self, t: jax.Array) -> jax.Array:
         # Each p(t) includes the child's own envelope.
         return jnp.sum(jnp.array([p(t) for p in self.pulses]))
+
+
+def _concrete(value: object) -> np.ndarray | None:
+    """Return `value` as a NumPy array, or `None` if it is a JAX tracer."""
+    try:
+        return np.asarray(value)
+    except (
+        jax.errors.TracerArrayConversionError,
+        jax.errors.ConcretizationTypeError,
+    ):
+        return None
+
+
+def _equals(value: object, default: object) -> bool | None:
+    """Return whether the PyTree `value` equals `default`.
+
+    Returns `None` when a traced leaf hides the answer.
+    """
+    if jax.tree.structure(value) != jax.tree.structure(default):
+        return False
+    unknown = False
+    leaves = zip(jax.tree.leaves(value), jax.tree.leaves(default), strict=True)
+    for leaf, default_leaf in leaves:
+        concrete = _concrete(leaf)
+        if concrete is None:
+            unknown = True
+        elif not np.array_equal(concrete, default_leaf):
+            return False
+    return None if unknown else True
+
+
+def _default_initial_time(pulse: Pulse) -> bool | None:
+    return _equals(pulse.initial_time, 0.0)
+
+
+def _default_envelope(pulse: Pulse) -> bool | None:
+    return _equals(pulse.envelope, SoftRectangularEnvelope())
+
+
+def _check_transparent(pulse: Scaled | Offset) -> None:
+    """Reject an `initial_time` or `envelope` that `pulse` would ignore."""
+    name = type(pulse).__name__
+    if _default_initial_time(pulse) is False:
+        raise ValueError(
+            f"{name} has no start time of its own, so it can't use "
+            f"initial_time={pulse.initial_time!r}. Set initial_time on the "
+            "wrapped pulse instead."
+        )
+    if _default_envelope(pulse) is False:
+        raise ValueError(
+            f"{name} has no envelope of its own, so it can't use "
+            f"envelope={pulse.envelope!r}. Call .windowed(envelope) instead, "
+            "which passes the envelope to the wrapped pulse."
+        )

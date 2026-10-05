@@ -12,6 +12,7 @@ from jbubble.pulse import (
     Offset,
     SampledPulse,
     Scaled,
+    SoftRectangularEnvelope,
     Summed,
     ToneBurst,
 )
@@ -408,6 +409,62 @@ class TestDelayedChildInSum:
         direct = run_simulation(eom, tone_early + louder, save_spec=spec)
         assert bool(wrapped.converged)
         assert jnp.allclose(wrapped.radius, direct.radius, rtol=1e-9, atol=0.0)
+
+
+class TestTransparentWrappers:
+    """Scaled and Offset reject the window fields that they would ignore."""
+
+    @pytest.mark.parametrize(
+        "make",
+        [
+            lambda p, **kw: Scaled(pulse=p, factor=2.0, **kw),
+            lambda p, **kw: Offset(pulse=p, offset=1000.0, **kw),
+        ],
+        ids=["Scaled", "Offset"],
+    )
+    def test_rejects_initial_time(self, tone_early, make):
+        with pytest.raises(ValueError, match="initial_time"):
+            make(tone_early, initial_time=5e-6)
+
+    @pytest.mark.parametrize(
+        "make",
+        [
+            lambda p, **kw: Scaled(pulse=p, factor=2.0, **kw),
+            lambda p, **kw: Offset(pulse=p, offset=1000.0, **kw),
+        ],
+        ids=["Scaled", "Offset"],
+    )
+    def test_rejects_envelope(self, tone_early, make):
+        with pytest.raises(ValueError, match="windowed"):
+            make(tone_early, envelope=HannEnvelope())
+
+    def test_accepts_the_defaults_explicitly(self, tone_early):
+        scaled = Scaled(
+            pulse=tone_early,
+            factor=2.0,
+            initial_time=0.0,
+            envelope=SoftRectangularEnvelope(),
+        )
+        assert float(scaled(T_MID)) == pytest.approx(2.0 * float(tone_early(T_MID)))
+
+    def test_checks_add_no_host_callback(self, tone_early):
+        def value(k, c):
+            return Offset(pulse=Scaled(pulse=tone_early, factor=k), offset=c)(T_MID)
+
+        jaxpr = jax.make_jaxpr(value)(jnp.asarray(2.0), jnp.asarray(1.0))
+        assert "callback" not in str(jaxpr)
+
+    def test_jit_round_trip_keeps_the_wrapper_valid(self, tone_early):
+        # jit returns array leaves, so a rebuilt wrapper sees initial_time and
+        # steepness as concrete arrays equal to their defaults.
+        out = jax.jit(lambda p: p)(tone_early * 2.0)
+        rebuilt = Scaled(
+            pulse=out.pulse,
+            factor=3.0,
+            initial_time=out.initial_time,
+            envelope=out.envelope,
+        )
+        assert isinstance(rebuilt, Scaled)
 
 
 class TestSummedWithoutUserJit:
