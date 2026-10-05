@@ -366,12 +366,13 @@ class Gilmore(EquationOfMotion[BubbleState]):
     \frac{\partial H}{\partial p_\infty} = -K (p_\infty + B)^{-1/n}.
     $$
 
-    The partial derivatives of $H$ come from the Tait formula;
-    `jax.grad(self.p_L)` gives $\mathrm{d}p_L/\mathrm{d}t$ and
-    `jax.grad(p_ac_fn)` gives $\mathrm{d}p_\text{ac}/\mathrm{d}t$. The
-    $\ddot{R}$ coupling through $\partial p_L/\partial \dot{R}$ moves into
-    the denominator, in the same way as in
-    [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis].
+    The partial derivatives of $H$ come from the Tait formula.
+    `jax.grad(self.p_L)` gives $\partial p_L/\partial R$ and
+    $\partial p_L/\partial \dot{R}$, from which the chain rule builds
+    $\mathrm{d}p_L/\mathrm{d}t$; `jax.grad(p_ac_fn)` gives
+    $\mathrm{d}p_\text{ac}/\mathrm{d}t$. The $\ddot{R}$ coupling through
+    $\partial p_L/\partial \dot{R}$ moves into the denominator, in the
+    same way as in [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis].
 
     The default Tait parameters correspond to water (Gilmore 1952):
     $n = 7$, $B = 304.9$ MPa.

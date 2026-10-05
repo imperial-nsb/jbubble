@@ -90,8 +90,8 @@ class VanDerWaalsGas(GasModel):
     gamma : float or Property
         Polytropic exponent.
     h_frac : float or Property
-        Hard-core radius as a fraction of `R0` (dimensionless).
-        A common value for lipid shells is 1/5.61 ≈ 0.178.
+        Hard-core radius as a fraction of `R0` (dimensionless). Example 07
+        (`examples/07_cavitation_regimes.py`) uses `1 / 5.61` ≈ 0.178.
     """
 
     gamma: Property = eqx.field(converter=as_property)
