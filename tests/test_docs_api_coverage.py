@@ -29,8 +29,22 @@ pytestmark = [
         "catches up with them before the release",
     ),
 ]
-# Optional dependencies. A module that needs a missing one is skipped.
+# The packages that the optional extras install. Both tests skip a module
+# that fails to import because one of them is missing.
 OPTIONAL = {"h5py", "matplotlib"}
+
+
+def missing_optional(error: ImportError) -> bool:
+    """Return whether an import failed only because an optional package is missing.
+
+    A module such as `jbubble.utils.io` re-raises the `ModuleNotFoundError`
+    for h5py as an `ImportError` with an install hint, so check the cause too.
+    """
+    return any(
+        isinstance(cause, ModuleNotFoundError)
+        and (cause.name or "").partition(".")[0] in OPTIONAL
+        for cause in (error, error.__cause__)
+    )
 
 
 def public_modules():
@@ -41,10 +55,12 @@ def public_modules():
     ]
     for name in names:
         try:
-            yield importlib.import_module(name)
-        except ModuleNotFoundError as error:
-            if error.name not in OPTIONAL:
-                raise
+            module = importlib.import_module(name)
+        except ImportError as error:
+            if missing_optional(error):
+                continue
+            raise
+        yield module
 
 
 def directives() -> set[str]:
@@ -78,14 +94,23 @@ def test_every_directive_names_an_object():
     stale = []
     for path in sorted(directives()):
         module_name, _, attr = path.rpartition(".")
+        # A directive names a module or an attribute of one. An import error
+        # other than a missing module is a bug in jbubble, so it propagates.
         try:
             importlib.import_module(path)
             continue
-        except ModuleNotFoundError:
-            pass
+        except ImportError as error:
+            if missing_optional(error):
+                continue
+            if not isinstance(error, ModuleNotFoundError):
+                raise
         try:
             module = importlib.import_module(module_name)
-        except ModuleNotFoundError:
+        except ImportError as error:
+            if missing_optional(error):
+                continue
+            if not isinstance(error, ModuleNotFoundError):
+                raise
             stale.append(path)
             continue
         if not hasattr(module, attr):
