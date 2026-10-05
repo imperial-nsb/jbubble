@@ -59,6 +59,14 @@ class NeuralPulse(Pulse):
 
     `NeuralPulse` inherits the `initial_time` and `envelope` fields from
     [`Pulse`][jbubble.pulse.base.Pulse]; set them as keyword arguments.
+    Unlike `pulse_duration` and `pressure_scale`, they stay PyTree leaves,
+    as on every other pulse, so you can `jax.vmap` or differentiate over
+    the start time or an envelope parameter, such as the `steepness` of
+    [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope].
+    When they're Python floats, as they are by default, they aren't
+    inexact arrays, so `eqx.filter_grad` doesn't differentiate them, and an
+    optimiser that updates only the leaves that `eqx.is_inexact_array`
+    selects leaves them fixed.
 
     Parameters
     ----------
