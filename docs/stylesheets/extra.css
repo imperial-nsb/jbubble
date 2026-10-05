@@ -2,10 +2,14 @@
  * jbubble site theme for Zensical's modern variant.
  *
  * The colours come from the figure palette in jbubble/style: azure for links
- * and primary buttons, coral for hover and focus. Text colours keep at least
- * 4.5:1 contrast on the page background in both schemes. The dark scheme uses
- * the same background as the dark figure style (#0d1117), so dark figures
- * blend into the page.
+ * and primary buttons, coral for hover and focus. Text keeps at least 4.5:1
+ * contrast on the page, on inline code, and on the tint of the active
+ * navigation entry in both schemes. For that, the light scheme's link colour
+ * (#0b6cb8) and accent (#b8431c) are darker than the palette's azure
+ * (#0d77ca) and coral (#e35a2d), which reach only 4.3:1 on inline code
+ * (#f5f5f5) and 4.1:1 on the navigation tint. The dark scheme uses the
+ * palette colours as they are, and the same background as the dark figure
+ * style (#0d1117), so dark figures blend into the page.
  */
 
 [data-md-color-scheme="default"] {
@@ -14,11 +18,11 @@
   --md-primary-fg-color--dark: #0a5fa3;
   --md-primary-bg-color: #ffffff;
   --md-primary-bg-color--light: #ffffffb3;
-  --md-accent-fg-color: #c94a1f;
+  --md-accent-fg-color: #b8431c;
   --md-accent-fg-color--transparent: #e35a2d1a;
   --md-accent-bg-color: #ffffff;
   --md-accent-bg-color--light: #ffffffb3;
-  --md-typeset-a-color: #0d77ca;
+  --md-typeset-a-color: #0b6cb8;
 }
 
 [data-md-color-scheme="slate"] {
