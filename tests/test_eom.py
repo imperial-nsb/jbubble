@@ -74,6 +74,24 @@ class TestInitialState:
         assert float(R) == 3e-6
 
 
+class TestIsAdmissible:
+    @pytest.mark.parametrize(
+        ("R", "expected"), [(R0, True), (1e-12, True), (0.0, False), (-R0, False)]
+    )
+    def test_requires_a_positive_radius(self, R, expected):
+        eom = KellerMiksis(**_common_args(), c_L=C_L)
+        s = eom.initial_state(R=R)
+        assert bool(eom.is_admissible(s)) is expected
+
+    def test_defers_to_the_gas(self):
+        from jbubble.bubble.gas import VanDerWaalsGas
+
+        args = _common_args() | {"gas": VanDerWaalsGas(gamma=1.4, h_frac=0.25)}
+        eom = RayleighPlesset(**args)
+        assert not bool(eom.is_admissible(eom.initial_state(R=0.2 * R0)))
+        assert bool(eom.is_admissible(eom.initial_state(R=0.3 * R0)))
+
+
 class TestPL:
     def test_p_L_at_equilibrium(self):
         """At equilibrium with zero velocity, p_L should equal P_amb + laplace."""

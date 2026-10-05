@@ -5,11 +5,19 @@ r"""Diffrax-based ODE solvers for bubble dynamics.
 in [`SolverConfig`][jbubble.solver.SolverConfig] and samples the solution as
 [`SaveSpec`][jbubble.solver.SaveSpec] describes.
 
-The solver integrates the dimensionless state
-`state / eom.state_scale(state)`, where the radius is in units of `R0` and
-the wall velocity in units of $\sqrt{P_\text{amb}/\rho_L}$. The step-size
-controller's `rtol` and `atol` therefore apply to that dimensionless state,
-and mean the same thing for every bubble size.
+Two details matter when you choose tolerances or differentiate through a
+solve:
+
+- **Scaled state.** The solver integrates the dimensionless state
+  `state / eom.state_scale(state)`, where the radius is in units of `R0` and
+  the wall velocity in units of $\sqrt{P_\text{amb}/\rho_L}$. The step-size
+  controller's `rtol` and `atol` therefore apply to that dimensionless state,
+  and mean the same thing for every bubble size.
+- **Guarded right-hand side.** The equation of motion is never evaluated at
+  a state outside its domain, such as `R <= 0`, so gradients stay finite
+  when an adaptive solver tries, and then rejects, a step that overshoots a
+  violent collapse. With an explicit solver, such as the default `Dopri5`,
+  the forward solution is the same, bit for bit, as without the guard.
 """
 
 from __future__ import annotations
@@ -125,11 +133,48 @@ class SolverConfig(eqx.Module):
     max_steps: int = eqx.field(default=_DEFAULT_MAX_STEPS, static=True)
 
 
-def _scaled_vector_field(t: Any, z: Any, args: tuple) -> Any:
-    """Right-hand side for the scaled state `z = state / scale`."""
-    eom, pulse, scale = args
-    state = jtu.tree_map(jnp.multiply, z, scale)
-    return jtu.tree_map(jnp.divide, eom(t, state, pulse), scale)
+def _is_admissible(eom: EquationOfMotion, state: Any) -> jax.Array:
+    """`True` if every state leaf is finite and the state is in the EoM's domain."""
+    finite = jnp.stack([jnp.all(jnp.isfinite(x)) for x in jtu.tree_leaves(state)])
+    return jnp.all(finite) & jnp.all(eom.is_admissible(state))
+
+
+def _guarded_vector_field(t: Any, z: Any, args: tuple) -> Any:
+    """Right-hand side for the scaled state `z = state / scale`, NaN-safe.
+
+    An adaptive solver tries trial steps that it later rejects. During a
+    strong collapse, a stage of such a trial step can reach `R <= 0`, or
+    inherit a NaN from an earlier stage. There the gas law evaluates
+    `(R0 / R) ** (3 * gamma)` of a negative base, so the right-hand side and
+    its Jacobian are NaN. Diffrax rejects the step, so the solution is
+    unaffected, but reverse-mode autodiff still multiplies the rejected
+    step's NaN Jacobian by a zero cotangent, and `0 * NaN` is NaN.
+
+    This function applies the "double `where`" from the JAX FAQ:
+
+        ok     = all_finite(z * scale) and eom.is_admissible(z * scale)
+        z_safe = where(ok, z, z_ref)
+        dz     = where(ok, eom(t, z_safe * scale, pulse) / scale, NaN)
+
+    The equation of motion is always evaluated at an admissible state, so
+    its Jacobian is finite, and the output is still NaN at an inadmissible
+    state, so the solver still rejects the step. At an admissible state the
+    result is the same, bit for bit, as without the guard,
+    `eom(t, z * scale, pulse) / scale`. Two details keep it so:
+
+    - The guard selects `z` before the multiplication by `scale`, not the
+      SI state after it. A select between a multiplication and the addition
+      that consumes it stops XLA from fusing the pair into one fused
+      multiply-add, which rounds differently.
+    - The output select comes after the division by `scale`, which keeps
+      XLA from rewriting `(a / b) / c` as `a / (b * c)` in one version only.
+    """
+    eom, pulse, z_ref, scale = args
+    ok = _is_admissible(eom, jtu.tree_map(jnp.multiply, z, scale))
+    z_safe = jtu.tree_map(lambda a, b: jnp.where(ok, a, b), z, z_ref)
+    d_state = eom(t, jtu.tree_map(jnp.multiply, z_safe, scale), pulse)
+    dz = jtu.tree_map(jnp.divide, d_state, scale)
+    return jtu.tree_map(lambda d: jnp.where(ok, d, jnp.nan), dz)
 
 
 def _with_equilibrium(eom: EquationOfMotion, y0: Any) -> Any:
@@ -170,7 +215,16 @@ def solve_eom(
     The solver works on the scaled state `state / eom.state_scale(y0)`, so
     the tolerances in `config` are relative to `R0` for the radius and to
     $\sqrt{P_\text{amb}/\rho_L}$ for the wall velocity, and returns the
-    solution in SI units.
+    solution in SI units. It evaluates the equation of motion only at
+    admissible states (see
+    [`EquationOfMotion.is_admissible`][jbubble.bubble.eom.EquationOfMotion.is_admissible]);
+    elsewhere the right-hand side is NaN, so the adaptive solver rejects
+    the trial step. Rejected steps never enter the solution, so the guard
+    keeps gradients finite without changing the forward solve: with an
+    explicit solver, such as the default `Dopri5`, the solution is the same,
+    bit for bit, as without the guard. With an implicit solver, XLA can
+    round the Newton iterations differently in the last bit, so the
+    solution agrees to within the solver tolerance.
 
     The integration doesn't raise when the solver fails (`throw=False`);
     check `diffrax.is_successful` on the solution's `result`.
@@ -234,13 +288,13 @@ def solve_eom(
     _adjoint = adjoint if adjoint is not None else diffrax.RecursiveCheckpointAdjoint()
 
     sol = diffrax.diffeqsolve(
-        diffrax.ODETerm(_scaled_vector_field),
+        diffrax.ODETerm(_guarded_vector_field),
         config.solver,
         t0=t0,
         t1=t1,
         dt0=config.dt0,
         y0=z0,
-        args=(eom, pulse, scale),
+        args=(eom, pulse, jax.lax.stop_gradient(z0), scale),
         saveat=saveat,
         stepsize_controller=config.stepsize_controller,
         max_steps=config.max_steps,

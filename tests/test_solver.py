@@ -5,19 +5,40 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
+import jbubble.solver as solver_module
 import numpy as np
 import pytest
-from jbubble.bubble.eom import KellerMiksis
-from jbubble.bubble.gas import PolytropicGas
-from jbubble.bubble.medium import NewtonianMedium
+from jbubble.bubble.eom import Gilmore, KellerMiksis
+from jbubble.bubble.gas import PolytropicGas, VanDerWaalsGas
+from jbubble.bubble.medium import KelvinVoigtMedium, NewtonianMedium
 from jbubble.bubble.shell import LipidShell, MarmottantSurfaceTension, NoShell
 from jbubble.bubble.state import BubbleState
 from jbubble.pulse import ToneBurst
 from jbubble.pulse.shapes import Sine
 from jbubble.simulation import run_simulation
-from jbubble.solver import SaveSpec, SolverConfig, solve_eom
+from jbubble.solver import SaveSpec, SolverConfig, _guarded_vector_field, solve_eom
 
 _PID = diffrax.PIDController
+# Loose tolerances: rejected trial steps leave the domain during a collapse.
+_LOOSE = SolverConfig(stepsize_controller=_PID(rtol=1e-4, atol=1e-6))
+# The jbubble 0.1 fit_parameters tolerances.
+_FIT01 = SolverConfig(stepsize_controller=_PID(rtol=1e-4, atol=1e-8))
+_VERY_LOOSE = SolverConfig(stepsize_controller=_PID(rtol=1e-3, atol=1e-6))
+_TIGHT = SolverConfig(stepsize_controller=_PID(rtol=1e-8, atol=1e-10))
+
+
+def _unguarded_vector_field(t, z, args):
+    """`_guarded_vector_field` without the guard."""
+    eom, pulse, _, scale = args
+    state = jtu.tree_map(jnp.multiply, z, scale)
+    return jtu.tree_map(jnp.divide, eom(t, state, pulse), scale)
+
+
+def _scaled_args(eom, pulse):
+    """Return the `_guarded_vector_field` arguments that `solve_eom` builds."""
+    y0 = eom.initial_state()
+    scale = eom.state_scale(y0)
+    return (eom, pulse, jtu.tree_map(jnp.divide, y0, scale), scale)
 
 
 def _scaled(state, scale):
@@ -53,8 +74,60 @@ def _free_bubble(mu, *, R0=2e-6):
     )
 
 
+def _vdw_bubble(mu):
+    return KellerMiksis(
+        gas=VanDerWaalsGas(gamma=1.4, h_frac=1 / 5.61),
+        shell=NoShell(sigma=0.072),
+        medium=NewtonianMedium(mu=mu),
+        R0=2e-6,
+        P_amb=101325.0,
+        rho_L=998.0,
+        c_L=1500.0,
+    )
+
+
+def _gilmore_bubble(kappa_s):
+    return Gilmore(
+        gas=PolytropicGas(gamma=1.07),
+        shell=_marmottant(kappa_s),
+        medium=NewtonianMedium(mu=1e-3),
+        R0=2e-6,
+        P_amb=101325.0,
+        rho_L=998.0,
+    )
+
+
+def _tissue_bubble(G):
+    return KellerMiksis(
+        gas=PolytropicGas(gamma=1.4),
+        shell=NoShell(sigma=0.056),
+        medium=KelvinVoigtMedium(mu=0.015, G=G),
+        R0=1e-6,
+        P_amb=101325.0,
+        rho_L=1060.0,
+        c_L=1540.0,
+    )
+
+
 def _tone(pressure=100e3, cycles=5, freq=1e6):
     return ToneBurst(freq=freq, pressure=pressure, shape=Sine(), cycle_num=cycles)
+
+
+def _radius_loss(make_eom, pulse, *, t_max=10e-6, config=None, adjoint=None):
+    """Return `p -> (mean((R/R0 - 1)^2), solution)` for `jax.value_and_grad`."""
+
+    def loss(p):
+        sol = solve_eom(
+            make_eom(p),
+            pulse,
+            t_max=t_max,
+            save_spec=SaveSpec(500),
+            config=config,
+            adjoint=adjoint,
+        )
+        return jnp.mean((sol.ys.R / sol.ys.R0 - 1.0) ** 2), sol
+
+    return loss
 
 
 class TestSaveSpec:
@@ -335,3 +408,231 @@ class TestNoHostCallbacks:
             lambda e, p: run_simulation(e, p, save_spec=SaveSpec(16), t_max=1e-6).radius
         )(simple_eom, sine_pulse)
         assert "debug_callback" not in str(jaxpr)
+
+
+# ── gradient-safe right-hand side ────────────────────────────────────────────
+
+
+def _bitwise_equal(a, b):
+    return all(
+        bool(jnp.array_equal(x, y))
+        for x, y in zip(jtu.tree_leaves(a), jtu.tree_leaves(b), strict=True)
+    )
+
+
+class TestGuardedVectorField:
+    @pytest.mark.parametrize(
+        ("R", "R_dot", "P_gas0_factor"),
+        [
+            (-1e-6, -10.0, 1.0),
+            (0.0, 0.0, 1.0),
+            (jnp.nan, 1.0, 1.0),
+            (1e-6, jnp.nan, 1.0),
+            (1e-6, 1.0, jnp.nan),  # a NaN stage also reaches P_gas0
+            (jnp.inf, 1.0, 1.0),
+        ],
+    )
+    def test_nan_outside_domain_with_finite_vjp(self, R, R_dot, P_gas0_factor):
+        eom = _lipid_bubble(1e-9)
+        args = _scaled_args(eom, _tone())
+        y0 = eom.initial_state()
+        y = BubbleState(
+            R=jnp.asarray(R),
+            R_dot=jnp.asarray(R_dot),
+            R0=y0.R0,
+            P_gas0=y0.P_gas0 * P_gas0_factor,
+        )
+        t = jnp.asarray(1e-7)
+        out, vjp = jax.vjp(
+            lambda z: _guarded_vector_field(t, z, args), _scaled(y, args[3])
+        )
+        assert all(bool(jnp.isnan(v)) for v in jtu.tree_leaves(out))
+        (cotangent,) = vjp(jtu.tree_map(jnp.zeros_like, out))
+        assert all(bool(jnp.all(jnp.isfinite(v))) for v in jtu.tree_leaves(cotangent))
+
+    def test_van_der_waals_hard_core_is_outside_domain(self):
+        """Inside the hard core (0 < R <= h) the gas law is unphysical, so the
+        guard rejects it too."""
+        eom = _vdw_bubble(1e-3)
+        args = _scaled_args(eom, _tone())
+        y0 = eom.initial_state()
+        h = float(y0.R0) / 5.61
+        y = BubbleState(
+            R=jnp.asarray(0.9 * h), R_dot=jnp.asarray(-50.0), R0=y0.R0, P_gas0=y0.P_gas0
+        )
+        assert not bool(eom.is_admissible(y))
+        t = jnp.asarray(1e-7)
+        out, vjp = jax.vjp(
+            lambda z: _guarded_vector_field(t, z, args), _scaled(y, args[3])
+        )
+        assert all(bool(jnp.isnan(v)) for v in jtu.tree_leaves(out))
+        (cotangent,) = vjp(jtu.tree_map(jnp.zeros_like, out))
+        assert all(bool(jnp.all(jnp.isfinite(v))) for v in jtu.tree_leaves(cotangent))
+        just_outside = eqx.tree_at(lambda s: s.R, y, jnp.asarray(1.01 * h))
+        assert bool(eom.is_admissible(just_outside))
+
+    def test_bitwise_equal_to_unguarded_inside_domain(self):
+        """The right-hand side and its derivatives match the unguarded field.
+
+        Every argument is traced, as inside a solve, so XLA can't constant-fold
+        the comparison away.
+        """
+        eom = _lipid_bubble(5e-9)
+        args = _scaled_args(eom, _tone(300e3))
+        y0 = eom.initial_state()
+        rng = np.random.default_rng(0)
+
+        def evaluate(field):
+            def all_derivatives(t, z, args, dz):
+                def f(zz):
+                    return field(t, zz, args)
+
+                return f(z), jax.jvp(f, (z,), (dz,))[1], jax.jacfwd(f)(z)
+
+            return eqx.filter_jit(all_derivatives)
+
+        guarded, plain = (
+            evaluate(_guarded_vector_field),
+            evaluate(_unguarded_vector_field),
+        )
+        dz = jtu.tree_map(lambda x: jnp.asarray(rng.normal()), y0)
+        for _ in range(50):
+            y = BubbleState(
+                R=jnp.asarray(2e-6 * rng.uniform(0.2, 3.0)),
+                R_dot=jnp.asarray(rng.uniform(-200.0, 200.0)),
+                R0=y0.R0,
+                P_gas0=y0.P_gas0,
+            )
+            t = jnp.asarray(rng.uniform(0.0, 5e-6))
+            z = _scaled(y, args[3])
+            assert _bitwise_equal(guarded(t, z, args, dz), plain(t, z, args, dz))
+
+    @staticmethod
+    def _guarded_and_plain(monkeypatch, make_eom, p, pulse, config, t_max):
+        def solve():
+            return jax.jit(
+                lambda p: solve_eom(
+                    make_eom(p),
+                    pulse,
+                    t_max=t_max,
+                    save_spec=SaveSpec(500),
+                    config=config,
+                )
+            )(jnp.asarray(p))
+
+        guarded = solve()
+        with monkeypatch.context() as patch:
+            patch.setattr(
+                solver_module, "_guarded_vector_field", _unguarded_vector_field
+            )
+            plain = solve()
+        assert diffrax.is_successful(guarded.result)
+        assert int(guarded.stats["num_rejected_steps"]) > 0
+        return guarded, plain
+
+    @pytest.mark.parametrize(
+        ("make_eom", "p", "pressure", "config", "t_max"),
+        [
+            (_lipid_bubble, 5e-9, 200e3, SolverConfig(), 10e-6),
+            (_lipid_bubble, 7.2e-9, 400e3, _LOOSE, 10e-6),
+            (_free_bubble, 1e-3, 300e3, _FIT01, 10e-6),
+            (_vdw_bubble, 1e-3, 500e3, _VERY_LOOSE, 10e-6),
+            (_gilmore_bubble, 5e-9, 300e3, _LOOSE, 10e-6),
+            (_tissue_bubble, 1e6, 1e6, _TIGHT, 6e-6),
+        ],
+        ids=[
+            "lipid-200k-default",
+            "lipid-400k-loose",
+            "free-300k-fit01",
+            "vdw-500k-rtol1e-3",
+            "gilmore-300k-loose",
+            "tissue-1MPa-tight",
+        ],
+    )
+    def test_explicit_solution_bit_identical(
+        self, monkeypatch, make_eom, p, pressure, config, t_max
+    ):
+        """With Dopri5 the guard changes no accepted step: R(t), R_dot(t),
+        and the step counts are equal.
+
+        Every case rejects trial steps; the loose ones reject steps that leave
+        the domain, where the unguarded gradient is NaN.
+        """
+        guarded, plain = self._guarded_and_plain(
+            monkeypatch, make_eom, p, _tone(pressure), config, t_max
+        )
+        assert bool(jnp.array_equal(guarded.ys.R, plain.ys.R))
+        assert bool(jnp.array_equal(guarded.ys.R_dot, plain.ys.R_dot))
+        for key in ("num_steps", "num_accepted_steps", "num_rejected_steps"):
+            assert int(guarded.stats[key]) == int(plain.stats[key])
+
+    def test_guard_fixes_nan_gradient_and_keeps_the_forward_pass(self, monkeypatch):
+        """Rejected trial steps reach R <= 0. Without the guard the gradient is
+        NaN; with it, it's finite, and the forward pass inside `jax.grad` is
+        unchanged."""
+        loss = _radius_loss(_lipid_bubble, _tone(200e3), config=_LOOSE)
+
+        def value_and_grad():
+            (value, sol), grad = jax.jit(jax.value_and_grad(loss, has_aux=True))(
+                jnp.asarray(5e-9)
+            )
+            return value, sol.ys.R, grad
+
+        value, R, grad = value_and_grad()
+        monkeypatch.setattr(
+            solver_module, "_guarded_vector_field", _unguarded_vector_field
+        )
+        plain_value, plain_R, plain_grad = value_and_grad()
+        assert bool(jnp.isnan(plain_grad))
+        assert bool(jnp.isfinite(grad))
+        assert float(value) == float(plain_value)
+        assert bool(jnp.array_equal(R, plain_R))
+
+
+class TestGradients:
+    """Finite gradients through strong collapses at the default tolerances."""
+
+    def test_keller_miksis_marmottant_400kpa(self):
+        loss = _radius_loss(_lipid_bubble, _tone(400e3))
+        (value, sol), grad = jax.jit(jax.value_and_grad(loss, has_aux=True))(
+            jnp.asarray(7.2e-9)
+        )
+        assert diffrax.is_successful(sol.result)
+        assert bool(jnp.isfinite(value)) and bool(jnp.isfinite(grad))
+
+    @pytest.mark.parametrize("pressure", [200e3, 350e3, 500e3])
+    def test_van_der_waals_strong_drive(self, pressure):
+        loss = _radius_loss(_vdw_bubble, _tone(pressure))
+        (value, sol), grad = jax.jit(jax.value_and_grad(loss, has_aux=True))(
+            jnp.asarray(1e-3)
+        )
+        assert diffrax.is_successful(sol.result)
+        assert bool(jnp.isfinite(value)) and bool(jnp.isfinite(grad))
+
+    @pytest.mark.slow
+    def test_inertial_collapse_gradient_matches_tight_reference(self):
+        """At the default tolerances the gradient through an inertial collapse
+        (Rmax/R0 about 4.4) is within 2 % of the converged gradient."""
+        pulse = _tone(300e3)
+        tight = SolverConfig(stepsize_controller=_PID(rtol=1e-11, atol=1e-13))
+
+        def grad(config):
+            loss = _radius_loss(_free_bubble, pulse, config=config)
+            return float(jax.jit(jax.grad(lambda mu: loss(mu)[0]))(jnp.asarray(1e-3)))
+
+        assert grad(SolverConfig()) == pytest.approx(grad(tight), rel=2e-2)
+
+    @pytest.mark.slow
+    def test_reverse_and_forward_mode_agree(self):
+        def loss(adjoint):
+            return _radius_loss(_lipid_bubble, _tone(400e3), adjoint=adjoint)
+
+        k = jnp.asarray(7.2e-9)
+        reverse = loss(diffrax.RecursiveCheckpointAdjoint())
+        forward = loss(diffrax.ForwardMode())
+        g_reverse = jax.jit(jax.grad(lambda k: reverse(k)[0]))(k)
+        g_forward = jax.jit(jax.jacfwd(lambda k: forward(k)[0]))(k)
+        assert bool(jnp.isfinite(g_reverse))
+        # Both differentiate the same discretised solve; they agree closely at
+        # the default tolerances but not bit for bit.
+        assert jnp.allclose(g_reverse, g_forward, rtol=1e-5)

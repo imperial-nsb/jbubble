@@ -74,11 +74,12 @@ class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
     The ODE carries them as frozen constants, with zero time derivatives in
     the standard case.
 
+    Two hooks tell [`solve_eom`][jbubble.solver.solve_eom] about the state:
+    [`is_admissible`][jbubble.bubble.eom.EquationOfMotion.is_admissible]
+    marks the states where the right-hand side is defined, and
     [`state_scale`][jbubble.bubble.eom.EquationOfMotion.state_scale] gives
-    the magnitude of each state field, which
-    [`solve_eom`][jbubble.solver.solve_eom] uses to make the solver
-    tolerances dimensionless. Override it in a subclass that adds state
-    fields.
+    the magnitude of each state field, which sets the meaning of the
+    solver tolerances. Override them in a subclass that adds state fields.
 
     Parameters
     ----------
@@ -167,6 +168,32 @@ class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
         R_init = R0 if R is None else jnp.asarray(R)
         R_dot_init = jnp.zeros_like(R0) if R_dot is None else jnp.asarray(R_dot)
         return BubbleState(R=R_init, R_dot=R_dot_init, R0=R0, P_gas0=P_gas0)
+
+    def is_admissible(self, state: StateType) -> jax.Array:
+        """Return whether the right-hand side is defined at `state`.
+
+        [`solve_eom`][jbubble.solver.solve_eom] never evaluates the equation
+        of motion at an inadmissible state, so its gradients stay finite
+        when an adaptive solver tries, and then rejects, a trial step that
+        leaves the physical domain. The default requires `R > 0` and defers
+        to [`GasModel.is_admissible`][jbubble.bubble.gas.GasModel.is_admissible],
+        which also excludes, for example, the van der Waals hard core.
+
+        Override this method in a subclass whose state has other fields with
+        a restricted domain, and combine the result with
+        `super().is_admissible(state)`.
+
+        Parameters
+        ----------
+        state : StateType
+            State to check. Its leaves may be NaN or infinite.
+
+        Returns
+        -------
+        jax.Array
+            Boolean scalar.
+        """
+        return (state.R > 0) & self.gas.is_admissible(state)
 
     def state_scale(self, state: StateType) -> StateType:
         r"""Return the characteristic magnitude of each state field.
