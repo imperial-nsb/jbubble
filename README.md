@@ -12,7 +12,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/readme/hero-bubble-dark.gif">
-  <img src="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/readme/hero-bubble-light.gif" alt="A microbubble, drawn to scale, grows and collapses under a five-cycle ultrasound pulse, next to its radius-time curve and the driving pressure." width="100%">
+  <img src="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/readme/hero-bubble-light.gif" alt="A microbubble, drawn to scale, grows and collapses under a six-cycle, 120 kPa ultrasound pulse, next to its radius-time curve and the driving pressure." width="100%">
 </picture>
 
 > **Beta.** jbubble 0.2 is a beta release, and its APIs may still change
@@ -158,6 +158,8 @@ The documentation lives at
   a [quickstart](https://imperial-nsb.github.io/jbubble/guide/quickstart/),
   [bubble models](https://imperial-nsb.github.io/jbubble/guide/bubble_models/),
   [pulse shapes](https://imperial-nsb.github.io/jbubble/guide/pulse_shapes/),
+  [solvers and stiffness](https://imperial-nsb.github.io/jbubble/guide/solvers/),
+  [parameter sweeps](https://imperial-nsb.github.io/jbubble/guide/sweeps/),
   [fitting model parameters to data](https://imperial-nsb.github.io/jbubble/guide/fitting/),
   and [JAX tips](https://imperial-nsb.github.io/jbubble/guide/jax_tips/).
 - The [API reference](https://imperial-nsb.github.io/jbubble/api/) documents
