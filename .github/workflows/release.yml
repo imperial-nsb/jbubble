@@ -89,6 +89,9 @@ jobs:
     name: Publish to PyPI
     needs: [test, build]
     runs-on: ubuntu-latest
+    # Protect this environment in the repository settings: require a reviewer
+    # and allow deployments from `v*` tags only. Without those rules, anyone
+    # who can push a `v*.*.*` tag publishes to PyPI.
     environment:
       name: pypi
       url: https://pypi.org/project/jbubble/
