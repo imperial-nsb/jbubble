@@ -389,7 +389,8 @@ def solve_eom(
         `solve_eom` fills it from the equation of motion, so
         `BubbleState(R=1.2 * R0)` starts at rest at 1.2 times the equilibrium
         radius. [`EquationOfMotion.initial_state`][jbubble.bubble.eom.EquationOfMotion.initial_state]
-        with `R=` and `R_dot=` builds the same state explicitly.
+        with `R=` and `R_dot=` builds the same state explicitly. For an
+        empty cavity, set `P_gas0` to a tiny positive value, such as `1e-12`.
     t_max : float, optional
         Integration end time [s]. `None` uses `pulse.t_end`.
     save_spec : SaveSpec, optional

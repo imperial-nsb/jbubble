@@ -147,7 +147,8 @@ def run_simulation(
         `P_gas0`, the `BubbleState` defaults, is filled from `eom`, so
         `BubbleState(R=1.2 * R0)` starts at rest at 1.2 times the
         equilibrium radius. You can also build the state with
-        `eom.initial_state(R=..., R_dot=...)`.
+        `eom.initial_state(R=..., R_dot=...)`. For an empty cavity, set
+        `P_gas0` to a tiny positive value, such as `1e-12`.
     t_max : float, optional
         Integration end time [s]. `None` uses `pulse.t_end`.
     config : SolverConfig, optional
