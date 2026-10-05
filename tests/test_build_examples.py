@@ -82,6 +82,32 @@ def test_unreleased_versions_install_from_git(version):
     )
 
 
+def test_cache_key_covers_the_script_package_version_and_lock(tmp_path, monkeypatch):
+    # A stale key would publish notebooks executed with old dependencies.
+    monkeypatch.setattr(build_examples, "ROOT", tmp_path)
+    lock = tmp_path / "uv.lock"
+    lock.write_text("jax 0.8.1\n")
+    package = tmp_path / "pkg"
+    package.mkdir()
+    (package / "core.py").write_text("x = 1\n")
+    script = tmp_path / "01_small.py"
+    script.write_text(SCRIPT)
+    base = settings(tmp_path, package_dir=package)
+    key = build_examples.cache_key(script, base)
+    assert build_examples.cache_key(script, base) == key
+
+    lock.write_text("jax 0.11.1\n")
+    assert build_examples.cache_key(script, base) != key
+    lock.write_text("jax 0.8.1\n")
+    bumped = settings(tmp_path, package_dir=package, version="0.2.1")
+    assert build_examples.cache_key(script, bumped) != key
+    (package / "core.py").write_text("x = 2\n")
+    assert build_examples.cache_key(script, base) != key
+    (package / "core.py").write_text("x = 1\n")
+    script.write_text(SCRIPT + "\n# %%\nprint(1)\n")
+    assert build_examples.cache_key(script, base) != key
+
+
 def test_scripts_without_cells_are_refused(tmp_path):
     script = tmp_path / "01_plain.py"
     script.write_text('"""A plain script."""\n\nprint("no cells")\n')
@@ -178,6 +204,30 @@ def test_build_executes_examples_and_writes_the_gallery(tmp_path, monkeypatch):
         == 0
     )
     assert cached.stat().st_mtime_ns == mtime
+
+
+def test_examples_without_a_figure_fail(tmp_path, monkeypatch, capsys):
+    examples = tmp_path / "examples"
+    examples.mkdir()
+    (examples / "01_quiet.py").write_text('# %%\nprint("no figure")\n')
+    monkeypatch.delenv("JUPYTER_PATH", raising=False)
+    out = tmp_path / "docs" / "examples"
+    code = build_examples.main(
+        [
+            "--examples",
+            str(examples),
+            "--out",
+            str(out),
+            "--cache-dir",
+            str(tmp_path / "cache"),
+            "--pip-spec",
+            "jbubble[examples]==0.2.0",
+        ]
+    )
+    assert code == 1
+    assert "01_quiet.py: the example shows no PNG figure." in capsys.readouterr().err
+    assert not (out / "01_quiet.md").exists()
+    assert not (out / "index.md").exists()
 
 
 def test_output_directory_must_be_generated(tmp_path):
