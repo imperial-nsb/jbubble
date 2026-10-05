@@ -75,7 +75,9 @@ class GridSweep:
         jit-able.
     search_space : dict[str, jax.Array]
         `{param_name: 1-D array of values}`. The sweep covers the
-        Cartesian product of all axes, in alphabetical order of the names.
+        Cartesian product of all axes, in `sorted()` order of the names
+        (Unicode code-point order, so uppercase names sort before lowercase
+        ones).
     batch_size : int
         Number of grid points evaluated per call. Default: `512`.
     progress : bool
@@ -158,7 +160,7 @@ class GridSweep:
 
     @property
     def axes(self) -> dict[str, jnp.ndarray]:
-        """Parameter axes in sweep order (alphabetical by name)."""
+        """Parameter axes in sweep order, that is, `sorted()` order of the names."""
         return dict(zip(self._keys, self._axes, strict=True))
 
     def batches(self):
@@ -194,9 +196,10 @@ class GridSweep:
         -------
         PyTree
             Each leaf has shape `(*grid_shape, *leaf_shape)`, where
-            `grid_shape` follows the axes in `search_space`, sorted
-            alphabetically and in row-major order (the last axis varies
-            fastest).
+            `grid_shape` follows the axes in `search_space` in `sorted()`
+            order of the names (Unicode code-point order, so uppercase names
+            sort before lowercase ones). The grid is row-major: the last
+            axis varies fastest.
         """
         chunks = [outputs for _, outputs in self.batches()]
         flat = jax.tree.map(lambda *xs: jnp.concatenate(xs, axis=0), *chunks)
