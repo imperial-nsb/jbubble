@@ -137,6 +137,18 @@ class TestGridGeometry:
         )
         assert gs.num_batches == -(-n // eff_batch)
 
+    def test_batch_size_attribute_stays_within_the_documented_bounds(self):
+        for n in (1, 2, 5, 15, 37):
+            ss = {"x": jnp.arange(float(n))}
+            for batch_size in (1, 3, 5, 8, 512):
+                for workers in (1, 2, 3, 4, 7):
+                    gs = GridSweep(_toy_1d, ss, batch_size=batch_size, workers=workers)
+                    target = min(batch_size, n)
+                    assert gs.per_worker == math.ceil(target / workers)
+                    assert target <= gs.batch_size < target + workers
+                    if n <= batch_size:
+                        assert gs.num_batches == 1
+
 
 # ── values, order, and output types ─────────────────────────────────────────
 
@@ -547,6 +559,15 @@ def test_explicit_workers_above_31_per_cpu_device_warn_and_stop_at_31():
     assert "devices=3" in str(record[0].message)
     assert record[0].filename == __file__
     assert gs.workers == MAX_PER_CPU_DEVICE
+    # With devices=None, more CPU devices need JAX_NUM_CPU_DEVICES, not an
+    # argument.
+    n_local = jax.local_device_count()
+    with pytest.warns(UserWarning, match="at most") as record:
+        gs = GridSweep(_toy, ss, workers=MAX_PER_CPU_DEVICE * n_local + 9)
+    message = str(record[0].message)
+    assert f"set `JAX_NUM_CPU_DEVICES={n_local + 1}` before you import JAX." in message
+    assert "devices=" not in message
+    assert gs.workers == MAX_PER_CPU_DEVICE * n_local
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         assert GridSweep(_toy, ss, devices=1, workers=31).workers == 31
