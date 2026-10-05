@@ -97,8 +97,11 @@ class TukeyEnvelope(Envelope):
     Parameters
     ----------
     alpha : float
-        Fraction of the window inside the cosine tapers. `alpha = 0` gives
-        a rectangular window and `alpha = 1` a Hann window. Default: `0.5`.
+        Fraction of the window inside the cosine tapers. Must be greater
+        than 0. As `alpha` approaches 0, the window approaches a
+        rectangular window; for a hard gate, use
+        [`RectangularEnvelope`][jbubble.pulse.envelope.RectangularEnvelope].
+        `alpha = 1` gives a Hann window. Default: `0.5`.
     """
 
     alpha: float = 0.5
