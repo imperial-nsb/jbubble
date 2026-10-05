@@ -165,6 +165,27 @@ def test_page_shows_code_output_and_figures(tmp_path):
     assert (media / thumb).read_bytes().startswith(b"\x89PNG")
 
 
+def test_printed_chunks_share_one_output_block(tmp_path):
+    # The kernel sends a loop's prints as separate chunks; stderr between
+    # them doesn't split the block, but a figure does.
+    nb = jupytext.reads(SCRIPT, fmt="py:percent")
+    stream = nbformat.v4.new_output
+    nb.cells[1].outputs = [
+        stream("stream", text="header\n"),
+        stream("stream", name="stderr", text="warning\n"),
+        stream("stream", text="row 1\n"),
+        stream("stream", text="row 2\n"),
+        stream("display_data", data={"image/png": PNG}),
+        stream("stream", text="after\n"),
+    ]
+    media = tmp_path / "media"
+    media.mkdir()
+    page, _ = build_examples.to_markdown(nb, "01_small", "A small example", "", media)
+    blocks = re.findall(r"```\{ \.text \.jb-output \}\n(.*?)\n```", page, re.DOTALL)
+    assert blocks == ["header\nrow 1\nrow 2", "after"]
+    assert "warning" not in page
+
+
 def test_pages_link_to_their_neighbours_and_the_gallery(tmp_path):
     # The site's nav lists only the gallery, so each page links onwards itself.
     out = tmp_path / "out"

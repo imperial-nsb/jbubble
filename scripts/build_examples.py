@@ -268,10 +268,20 @@ def to_markdown(
         # page shows their output but not their code.
         if cell.metadata.get("active") != "ipynb":
             parts.append(fenced(cell.source, "python"))
-        for out in cell.get("outputs", []):
-            if out.output_type == "stream" and out.name == "stdout":
-                parts.append(output_block(ANSI.sub("", out.text).rstrip()))
-            elif out.output_type in ("display_data", "execute_result"):
+        # The kernel sends printed text in chunks as it arrives, so join
+        # consecutive chunks into one block, as Jupyter shows them.
+        printed: list[str] = []
+        for out in [*cell.get("outputs", []), None]:
+            if out is not None and out.output_type == "stream":
+                if out.name == "stdout":
+                    printed.append(out.text)
+                continue
+            if printed:
+                parts.append(output_block(ANSI.sub("", "".join(printed)).rstrip()))
+                printed = []
+            if out is None:
+                break
+            if out.output_type in ("display_data", "execute_result"):
                 mime = next((m for m in IMAGE_TYPES if m in out.data), None)
                 if mime is None:
                     if out.output_type == "execute_result" and "text/plain" in out.data:
