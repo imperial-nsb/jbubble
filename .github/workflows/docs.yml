@@ -42,7 +42,7 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - run: uv sync --locked --no-default-groups --group docs
-      - run: uv run --no-sync mkdocs build
+      - run: uv run --no-sync mkdocs build --strict
 
   deploy:
     name: Build and deploy docs
@@ -59,4 +59,4 @@ jobs:
         with:
           enable-cache: false # no shared cache in a job that can write to the repo
       - run: uv sync --locked --no-default-groups --group docs
-      - run: uv run --no-sync mkdocs gh-deploy --force
+      - run: uv run --no-sync mkdocs gh-deploy --strict --force

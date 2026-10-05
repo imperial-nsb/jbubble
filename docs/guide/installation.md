@@ -111,5 +111,5 @@ From a source checkout, install the `docs` dependency group and start the live p
 ```bash
 uv sync --group docs
 uv run mkdocs serve   # live-preview at http://127.0.0.1:8000
-uv run mkdocs build   # static site in site/
+uv run mkdocs build --strict   # static site in site/; fails on warnings, as CI does
 ```
