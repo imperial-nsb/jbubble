@@ -76,15 +76,14 @@ jobs:
         run: uv run --no-sync python scripts/build_examples.py --jobs 2 --source-ref "$GITHUB_SHA"
 
       - name: Test the gallery script
-        run: uv run --no-sync pytest -p no:cacheprovider tests/test_build_examples.py
+        run: uv run --no-sync pytest tests/test_build_examples.py
 
       - name: Run the code blocks in the README and the guides
         env:
           JAX_PLATFORMS: cpu
           MPLBACKEND: Agg
         run: >-
-          uv run --no-sync pytest -p no:cacheprovider -o addopts=""
-          --markdown-docs --markdown-docs-syntax=superfences
+          uv run --no-sync pytest --markdown-docs --markdown-docs-syntax=superfences
           README.md docs/guide
 
       - name: Build the site
