@@ -10,8 +10,11 @@ command, test run, and example with `uv run`:
 
 ```bash
 uv sync
-uv run python examples/01_basic_simulation.py
+MPLBACKEND=Agg uv run python examples/01_basic_simulation.py
 ```
+
+Set `MPLBACKEND=Agg` when you run an example. Every example calls `plt.show()`,
+which otherwise opens a window and blocks until someone closes it.
 
 Don't use the old `bubbles` conda environment: it runs Python 3.11, and jbubble
 needs Python 3.12 or later.
