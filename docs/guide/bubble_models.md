@@ -45,12 +45,9 @@ eom = RayleighPlesset(gas=..., shell=..., medium=..., R0=2e-6, P_amb=101325, rho
 
 ### Modified Rayleigh–Plesset
 
-Adds a first-order compressibility correction to the RP equation via the acoustic radiation damping term $\frac{R}{c_L}\dot{p}_\text{gas}$. It is simply the Keller-Miksis equation without the $O(\dot R/c)$ prefactor terms. Suitable for low driving pressures and for instances where $M = \dot R/c \ll 1$.
+Adds a first-order compressibility correction to the RP equation through the acoustic radiation damping term $\frac{R}{c_L}\dot{p}_\text{gas}$, as used by Marmottant et al. (2005). Of the Keller–Miksis corrections, it keeps only the gas-pressure part of the radiation-damping term: it has no $(1 \pm M)$ prefactors, and it differentiates $p_\text{gas}$ rather than $p_L - p_\text{ac}$. Suitable for low driving pressures and for cases where $M = \dot R/c_L \ll 1$.
 
-
-$$(1 - M)\, R \ddot{R} + \frac{3}{2}\left(1 - \frac{M}{3}\right)\dot{R}^2
-= \frac{1}{\rho}(1 + M)\left(p_L - P_{\text{amb}} - p_{\text{ac}}\right)
-+ \frac{R}{\rho c}\left(\frac{d p_L}{dt} - \frac{d p_{\text{ac}}}{dt}\right)$$
+$$R\ddot{R} + \frac{3}{2}\dot{R}^2 = \frac{1}{\rho_L}\left(p_L + \frac{R}{c_L}\frac{\mathrm{d}p_\text{gas}}{\mathrm{d}t} - P_\text{amb} - p_\text{ac}\right)$$
 
 ```python
 from jbubble.bubble.eom import ModifiedRayleighPlesset
