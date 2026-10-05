@@ -1,15 +1,20 @@
 """Acoustic emission models for bubble dynamics.
 
-Computes the radiated acoustic pressure at a field point from a solved
-bubble trajectory.  Each model captures a different level of physical
-fidelity (incompressible monopole → quasi-acoustic → fully compressible).
+Each model computes the radiated acoustic pressure at a field point from a
+solved bubble trajectory, at a different level of physical fidelity:
+[`IncompressibleMonopole`][jbubble.acoustics.emission.IncompressibleMonopole]
+assumes an incompressible liquid, and
+[`QuasiAcoustic`][jbubble.acoustics.emission.QuasiAcoustic] adds a
+retarded-time correction.
 
-Usage::
+Examples
+--------
+```python
+from jbubble.acoustics import IncompressibleMonopole
 
-    from jbubble.acoustics import IncompressibleMonopole
-
-    emission = IncompressibleMonopole(rho_L=998.0)
-    p_rad = emission(result, r=0.01)  # at 1 cm
+emission = IncompressibleMonopole(rho_L=998.0)
+p_rad = emission(result, r=0.01)  # at 1 cm
+```
 """
 
 from __future__ import annotations
@@ -29,16 +34,18 @@ __all__ = ["EmissionModel", "IncompressibleMonopole", "QuasiAcoustic"]
 class EmissionModel(eqx.Module, abc.ABC):
     """Acoustic emission model: bubble trajectory → radiated pressure.
 
-    Subclasses implement ``__call__`` which takes a solved
-    :class:`~jbubble.simulation.SimulationResult` and a field-point
-    distance *r* and returns the radiated pressure time series.
+    Subclasses implement `__call__`, which takes a solved
+    [`SimulationResult`][jbubble.simulation.SimulationResult] and a
+    field-point distance `r`, and returns the radiated pressure time
+    series.
 
-    Multiple field-point distances are handled naturally via
-    ``jax.vmap``::
+    To evaluate several field-point distances, use `jax.vmap`:
 
-        distances = jnp.array([0.001, 0.005, 0.01])
-        p_all = jax.vmap(lambda r: model(result, r))(distances)
-        # shape (3, N)
+    ```python
+    distances = jnp.array([0.001, 0.005, 0.01])
+    p_all = jax.vmap(lambda r: model(result, r))(distances)
+    # shape (3, N)
+    ```
     """
 
     @abc.abstractmethod
@@ -47,12 +54,12 @@ class EmissionModel(eqx.Module, abc.ABC):
         result: SimulationResult,
         r: ArrayLike,
     ) -> jax.Array:
-        """Compute radiated pressure at distance *r*.
+        """Compute the radiated pressure at distance `r`.
 
         Parameters
         ----------
         result : SimulationResult
-            Solved bubble trajectory (``state``, ``state_dot``, ``ts``).
+            Solved bubble trajectory (`state`, `state_dot`, `ts`).
         r : float or jax.Array
             Distance from the bubble centre to the field point [m].
 
@@ -65,23 +72,22 @@ class EmissionModel(eqx.Module, abc.ABC):
 
 
 class IncompressibleMonopole(EmissionModel):
-    """Incompressible monopole radiation.
+    r"""Incompressible monopole radiation.
 
-    Assumes an incompressible surrounding liquid so that the radiated
-    pressure at distance *r* is given by the time derivative of the
-    volume flux:
+    Assumes an incompressible surrounding liquid, so the time derivative
+    of the volume flux gives the radiated pressure at distance $r$:
 
-    ::
+    $$
+    p_\text{rad}(r, t) = \frac{\rho_L}{r}\frac{\mathrm{d}}{\mathrm{d}t}\left(R^2\dot{R}\right)
+        = \frac{\rho_L}{r}\left(2R\dot{R}^2 + R^2\ddot{R}\right)
+    $$
 
-        p_rad(r, t) = rho_L / r · d/dt(R² Ṙ)
-                     = rho_L / r · (2 R Ṙ² + R² R̈)
+    This is the simplest acoustic emission model. It's accurate when the
+    bubble-wall Mach number $M = \dot{R}/c_L \ll 1$ and the field point
+    is in the geometric near field ($r \ll c_L/f$).
 
-    This is the simplest acoustic emission model and is accurate when
-    the bubble-wall Mach number Ṁ = Ṙ / c_L ≪ 1 and the field point
-    is in the geometric near-field (r ≪ c_L / f).
-
-    Fields
-    ------
+    Parameters
+    ----------
     rho_L : float or jax.Array
         Liquid density [kg/m³].
     """
@@ -104,24 +110,24 @@ class IncompressibleMonopole(EmissionModel):
 
 
 class QuasiAcoustic(EmissionModel):
-    """Quasi-acoustic emission with retarded-time correction.
+    r"""Quasi-acoustic emission with a retarded-time correction.
 
     Accounts for the finite speed of sound by evaluating the bubble-wall
-    quantities at the retarded time t_ret = t − r / c_L:
+    quantities at the retarded time $t_\text{ret} = t - r/c_L$:
 
-    ::
+    $$
+    p_\text{rad}(r, t) = \frac{\rho_L R^2(t_\text{ret})}{r}
+        \left[\ddot{R}(t_\text{ret}) + \frac{2\dot{R}^2(t_\text{ret})}{R(t_\text{ret})}\right]
+    $$
 
-        p_rad(r, t) = rho_L R²(t_ret) / r
-                      · [R̈(t_ret) + 2 Ṙ²(t_ret) / R(t_ret)]
+    The model evaluates the trajectory at retarded times with linear
+    interpolation (`jnp.interp`). Where $t_\text{ret}$ falls before the
+    first saved time, `jnp.interp` clamps the values to the first saved
+    (initial) state. That's physically reasonable, because the bubble is
+    quiescent before excitation.
 
-    Uses linear interpolation (``jnp.interp``) to evaluate the
-    trajectory at retarded times.  For field points where
-    t_ret < t_start the values are clamped to the initial (equilibrium)
-    state — physically reasonable since the bubble is quiescent before
-    excitation.
-
-    Fields
-    ------
+    Parameters
+    ----------
     rho_L : float or jax.Array
         Liquid density [kg/m³].
     c_L : float or jax.Array
