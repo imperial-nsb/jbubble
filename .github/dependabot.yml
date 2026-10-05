@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      hooks:
+        patterns: ["*"]
+
+  # Updates uv.lock only. Lower bounds in pyproject.toml are a deliberate
+  # support policy, so leave them alone.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: monthly
+    versioning-strategy: lockfile-only
+    groups:
+      python:
+        patterns: ["*"]
+    cooldown:
+      default-days: 7
