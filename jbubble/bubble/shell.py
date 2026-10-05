@@ -15,6 +15,7 @@ import abc
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 from .property import Property, as_property
 from .state import BubbleState
@@ -218,13 +219,18 @@ class MarmottantSurfaceTension(Property):
     `sigma_rupture`, and continuity of $\sigma$ at the elastic-to-ruptured
     transition gives $R_r = R_b\sqrt{1 + \sigma_r/\chi}$.
 
+    The surface tension at $R_0$ is
+    $\sigma_0 = \chi\left[(1/r_b)^2 - 1\right]$, where $r_b$ is
+    `R_buckle_ratio`, so $r_b = (1 + \sigma_0/\chi)^{-1/2}$. A ratio of 1
+    or more starts the bubble buckled.
+
     Parameters
     ----------
-    R_buckle_ratio : float
+    R_buckle_ratio : float or jax.Array
         Buckling radius as a fraction of `R0` (dimensionless).
-    chi : float
+    chi : float or Property
         Shell elasticity [N/m].
-    sigma_rupture : float
+    sigma_rupture : float or Property
         Surface tension after rupture [N/m].
 
     Notes
@@ -234,17 +240,31 @@ class MarmottantSurfaceTension(Property):
     gradient-based optimisation, use
     [`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension]
     instead.
+
+    The [`as_property`][jbubble.bubble.property.as_property] converter
+    stores `chi` and `sigma_rupture` as
+    [`Property`][jbubble.bubble.property.Property] instances. To replace
+    one in an existing model with `eqx.tree_at`, which bypasses the
+    converter, pass a `Property` or target its `val` leaf.
+
+    References
+    ----------
+    Marmottant, P., van der Meer, S., Emmer, M., Versluis, M., de Jong, N.,
+    Hilgenfeldt, S., & Lohse, D. (2005). A model for large amplitude
+    oscillations of coated bubbles accounting for buckling and rupture.
+    *J. Acoust. Soc. Am.* 118(6), 3499-3505.
+    [doi:10.1121/1.2109427](https://doi.org/10.1121/1.2109427)
     """
 
-    R_buckle_ratio: float
-    chi: float
-    sigma_rupture: float
+    R_buckle_ratio: ArrayLike
+    chi: Property = eqx.field(converter=as_property)
+    sigma_rupture: Property = eqx.field(converter=as_property)
 
     def __call__(self, state: BubbleState) -> jax.Array:
         R, R0 = state.R, state.R0
         R_buckle = self.R_buckle_ratio * R0
-        chi = self.chi
-        sigma_rupture = self.sigma_rupture
+        chi = self.chi(state)
+        sigma_rupture = self.sigma_rupture(state)
         R_rupture = R_buckle * jnp.sqrt(sigma_rupture / chi + 1.0)
         sigma_elastic = chi * ((R / R_buckle) ** 2 - 1.0)
         in_elastic = (R_buckle < R) & (R_rupture > R)

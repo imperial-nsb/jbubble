@@ -3,6 +3,7 @@
 import jax
 import jax.numpy as jnp
 import pytest
+from jbubble.bubble.property import ConstantProperty
 from jbubble.bubble.shell import (
     GompertzSurfaceTension,
     LipidShell,
@@ -141,6 +142,35 @@ class TestMarmottantSurfaceTension:
         # Surface tension should be non-decreasing (buckled→elastic→ruptured)
         diffs = jnp.diff(values)
         assert jnp.all(diffs >= -1e-10)
+
+    def test_chi_and_sigma_rupture_accept_a_property(self):
+        plain = MarmottantSurfaceTension(
+            R_buckle_ratio=0.98, chi=0.55, sigma_rupture=0.072
+        )
+        wrapped = MarmottantSurfaceTension(
+            R_buckle_ratio=0.98,
+            chi=ConstantProperty(0.55),
+            sigma_rupture=ConstantProperty(0.072),
+        )
+        assert isinstance(plain.chi, ConstantProperty)
+        assert isinstance(plain.sigma_rupture, ConstantProperty)
+        for ratio in (0.95, 1.0, 1.02, 1.5):
+            s = _make_state(ratio)
+            assert float(wrapped(s)) == float(plain(s))
+
+    def test_gradient_with_respect_to_chi(self):
+        def sigma(chi):
+            st = MarmottantSurfaceTension(
+                R_buckle_ratio=0.98, chi=chi, sigma_rupture=0.072
+            )
+            return st(_make_state(1.01))
+
+        expected = (1.01 / 0.98) ** 2 - 1.0
+        assert float(jax.grad(sigma)(0.55)) == pytest.approx(expected, rel=1e-12)
+
+    def test_ratio_of_one_starts_buckled(self):
+        st = MarmottantSurfaceTension(R_buckle_ratio=1.0, chi=0.55, sigma_rupture=0.072)
+        assert float(st(_make_state(1.0))) == 0.0
 
 
 class TestGompertzSurfaceTension:
