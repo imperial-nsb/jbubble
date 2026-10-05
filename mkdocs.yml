@@ -113,8 +113,11 @@ markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.details
+  # No links on line numbers: mkdocstrings highlights each "Source code"
+  # block on its own, so blocks on one page repeat the same line anchors, and
+  # a link could jump to another file's source.
   - pymdownx.highlight:
-      anchor_linenums: true
+      anchor_linenums: false
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
