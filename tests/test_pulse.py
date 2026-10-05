@@ -603,6 +603,74 @@ class TestWindowedSemantics:
         assert len(combined.pulses) == 4
 
 
+class TestSampledPulseWindow:
+    """A SampledPulse's window starts at its first sample time."""
+
+    @pytest.fixture
+    def late_samples(self):
+        ts = jnp.linspace(5e-6, 15e-6, 201)
+        return SampledPulse(ts=ts, pressures=jnp.full(201, 100e3))
+
+    def test_window_is_anchored_at_first_sample(self, late_samples):
+        assert float(late_samples.t_start) == pytest.approx(5e-6, rel=1e-12)
+        assert float(late_samples.t_stop) == pytest.approx(15e-6, rel=1e-12)
+        assert float(late_samples.t_end) == pytest.approx(25e-6, rel=1e-12)
+
+    @pytest.mark.parametrize("t", [6e-6, 10e-6, 12e-6, 14e-6])
+    def test_signal_passes_inside_the_samples(self, late_samples, t):
+        # The soft-rectangular plateau is flat to within 1e-4 here.
+        assert float(late_samples(jnp.asarray(t))) == pytest.approx(100e3, rel=1e-3)
+
+    @pytest.mark.parametrize("t", [3e-6, 17e-6])
+    def test_signal_is_gated_outside_the_samples(self, late_samples, t):
+        assert float(late_samples(jnp.asarray(t))) == pytest.approx(0.0, abs=1.0)
+
+    def test_edges_are_halved_at_the_first_and_last_samples(self, late_samples):
+        assert float(late_samples(jnp.asarray(5e-6))) == pytest.approx(50e3, rel=1e-6)
+        assert float(late_samples(jnp.asarray(15e-6))) == pytest.approx(50e3, rel=1e-6)
+
+    def test_matches_from_uniform(self, late_samples):
+        uniform = SampledPulse.from_uniform(
+            late_samples.pressures, dt=0.05e-6, initial_time=5e-6
+        )
+        assert float(uniform.t_start) == pytest.approx(5e-6, rel=1e-12)
+        for t in (5.2e-6, 9e-6, 14.9e-6):
+            assert float(uniform(jnp.asarray(t))) == pytest.approx(
+                float(late_samples(jnp.asarray(t))), rel=1e-9
+            )
+
+    def test_sum_keeps_the_late_samples(self, tone_early, late_samples):
+        summed = tone_early + late_samples
+        assert float(summed.t_stop) == pytest.approx(15e-6, rel=1e-12)
+        assert float(summed(jnp.asarray(10e-6))) == pytest.approx(100e3, rel=1e-3)
+
+    def test_rejects_initial_time_away_from_first_sample(self, late_samples):
+        with pytest.raises(ValueError, match="ts\\[0\\]"):
+            SampledPulse(
+                ts=late_samples.ts, pressures=late_samples.pressures, initial_time=2e-6
+            )
+
+    def test_accepts_initial_time_at_first_sample(self, late_samples):
+        pulse = SampledPulse(
+            ts=late_samples.ts, pressures=late_samples.pressures, initial_time=5e-6
+        )
+        assert float(pulse(jnp.asarray(10e-6))) == pytest.approx(100e3, rel=1e-6)
+
+    def test_check_adds_no_host_callback(self, late_samples):
+        def value(ts, ps):
+            return SampledPulse(ts=ts, pressures=ps, initial_time=5e-6)(ts[100])
+
+        jaxpr = jax.make_jaxpr(value)(late_samples.ts, late_samples.pressures)
+        assert "callback" not in str(jaxpr)
+
+    def test_builds_under_jit_with_traced_samples(self, late_samples):
+        def value(ts, ps):
+            return SampledPulse(ts=ts, pressures=ps, initial_time=5e-6)(ts[100])
+
+        got = jax.jit(value)(late_samples.ts, late_samples.pressures)
+        assert float(got) == pytest.approx(100e3, rel=1e-6)
+
+
 class TestSummedWithoutUserJit:
     """A Summed pulse simulates without an outer jit and under vmap."""
 
