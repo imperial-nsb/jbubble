@@ -449,9 +449,13 @@ class TestWindowEdges:
         [lambda p: 0.5 * p, lambda p: -p, lambda p: p + 1000.0, lambda p: 1.0 - p],
         ids=["scaled", "neg", "offset", "rsub"],
     )
-    def test_wrappers_delegate_the_edges(self, tone_late, wrap):
-        got = np.asarray(wrap(tone_late).window_edges)
-        np.testing.assert_array_equal(got, np.asarray(tone_late.window_edges))
+    @pytest.mark.parametrize(
+        "inner", [lambda a, b: b, lambda a, b: a + b], ids=["leaf", "sum"]
+    )
+    def test_wrappers_delegate_the_edges(self, tone_early, tone_late, wrap, inner):
+        pulse = inner(tone_early, tone_late)
+        got = np.asarray(wrap(pulse).window_edges)
+        np.testing.assert_array_equal(got, np.asarray(pulse.window_edges))
 
     def test_sum_lists_every_child_in_ascending_order(self, tone_early, tone_late):
         later = ToneBurst(
@@ -983,6 +987,23 @@ class TestOffsetsStayOutsideSums:
         assert float(windowed(T_EDGE)) == pytest.approx(
             float(want(T_EDGE)) + 2.0 * self.C, rel=1e-12
         )
+
+    @pytest.mark.parametrize(
+        ("build", "constant"),
+        [
+            (lambda a, b: ((a + 300.0) + 200.0) + b, 500.0),
+            (lambda a, b: b + ((a + 300.0) - 200.0), 100.0),
+            (lambda a, b: 2.0 * ((a + 300.0) + 200.0) + b, 1000.0),
+        ],
+        ids=["stacked", "stacked on the right", "scaled stack"],
+    )
+    def test_stacked_offsets_add_up(self, tone_early, tone_late, build, constant):
+        pulse = build(tone_early, tone_late)
+        assert isinstance(pulse, Offset)
+        assert isinstance(pulse.pulse, Summed)
+        assert float(pulse.offset) == constant
+        windowed = pulse.windowed(HannEnvelope())
+        assert float(windowed(jnp.asarray(-1e-6))) == constant
 
     def test_offsets_on_both_sides_add_up(self, tone_early, tone_late):
         pulse = (tone_early + 300.0) + (tone_late - 100.0)
