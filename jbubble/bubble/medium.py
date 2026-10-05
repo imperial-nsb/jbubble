@@ -99,14 +99,30 @@ class NewtonianMedium(MediumModel):
 
 
 class KelvinVoigtMedium(MediumModel):
-    r"""Kelvin-Voigt viscoelastic medium.
+    r"""Kelvin-Voigt viscoelastic medium (Yang & Church 2005).
 
     $$
     p_\text{medium} = \frac{4\mu\dot{R}}{R}
-        + \frac{4G}{3}\left[\left(\frac{R}{R_0}\right)^3 - 1\right]
+        + \frac{4G}{3}\left[1 - \left(\frac{R_0}{R}\right)^3\right]
     $$
 
-    The model reads $R_0$ from `state.R0`.
+    The elastic term integrates a linear (Hookean) elastic stress through
+    the incompressible surrounding solid. Yang and Church take the
+    displacement field $u(r) = (R^3 - R_0^3)/(3r^2)$ of the incompressible
+    radial motion, so the deviatoric stress difference is
+    $\tau_{rr} - \tau_{\theta\theta} = -2G(R^3 - R_0^3)/r^3$, and
+
+    $$
+    p_\text{elastic} = -2\int_R^\infty
+        \frac{\tau_{rr} - \tau_{\theta\theta}}{r}\,\mathrm{d}r
+        = \frac{4G}{3}\left[1 - \left(\frac{R_0}{R}\right)^3\right].
+    $$
+
+    The model reads $R_0$ from `state.R0`. The elastic term is zero at
+    $R = R_0$, linearises to $4G(R - R_0)/R_0$, which is the same small-strain
+    limit as [`NeoHookeanMedium`][jbubble.bubble.medium.NeoHookeanMedium],
+    and stays bounded by $4G/3$ under expansion. For large strains, prefer
+    the neo-Hookean model, whose constitutive law holds at finite strain.
 
     Parameters
     ----------
@@ -115,6 +131,16 @@ class KelvinVoigtMedium(MediumModel):
     G : float or Property
         Shear modulus [Pa]. It can be state-dependent, for example to model
         strain stiffening.
+
+    References
+    ----------
+    Yang, X., & Church, C. C. (2005). A model for the dynamics of gas
+    bubbles in soft tissue. *The Journal of the Acoustical Society of
+    America*, 118(6), 3595-3606. <https://doi.org/10.1121/1.2118307>
+
+    Warnez, M. T., & Johnsen, E. (2015). Numerical modeling of bubble
+    dynamics in viscoelastic media with relaxation. *Physics of Fluids*,
+    27(6), 063103, Eq. 42. <https://doi.org/10.1063/1.4922598>
     """
 
     G: Property = eqx.field(converter=as_property)
@@ -123,7 +149,7 @@ class KelvinVoigtMedium(MediumModel):
         return 4.0 * self.mu(state) * state.R_dot / state.R
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
-        return (4.0 / 3.0) * self.G(state) * ((state.R / state.R0) ** 3 - 1.0)
+        return (4.0 / 3.0) * self.G(state) * (1.0 - (state.R0 / state.R) ** 3)
 
 
 class NeoHookeanMedium(MediumModel):
@@ -183,59 +209,94 @@ class NeoHookeanMedium(MediumModel):
 class PowerLawMedium(MediumModel):
     r"""Power-law (generalised Newtonian) surrounding medium.
 
-    The effective viscosity depends on the shear rate at the bubble wall:
+    The viscosity depends on the local shear rate,
+    $\eta = K\dot{\gamma}^{\,n-1}$, where
+    $\dot{\gamma} = \sqrt{2\mathbf{D}:\mathbf{D}}$ is the rheometric
+    shear rate, the convention under which rheometers report $K$ and $n$.
+    For the incompressible radial flow $u = R^2\dot{R}/r^2$ the shear rate
+    is $\dot{\gamma}(r) = 2\sqrt{3}\,|R^2\dot{R}|/r^3$, which is
+    $\dot{\gamma}_w = 2\sqrt{3}\,|\dot{R}|/R$ at the bubble wall.
+    Integrating the viscous stress through the liquid,
 
     $$
-    \eta_\text{eff} = \mu \left|\frac{2\dot{R}}{R}\right|^{n-1}
+    p_\text{viscous} = -2\int_R^\infty
+        \frac{\tau_{rr} - \tau_{\theta\theta}}{r}\,\mathrm{d}r
+        = \frac{4K}{n}\,\dot{\gamma}_w^{\,n-1}\,\frac{\dot{R}}{R}.
     $$
 
-    Integrating the resulting stress field over the incompressible flow
-    around the bubble (Ting 1975) gives the viscous pressure:
+    The factor $1/n$ comes from the radial variation of $\eta$. For
+    $n = 1$ this is exactly the Newtonian result $4K\dot{R}/R$.
+
+    The pure power law has an infinite viscosity at zero shear rate when
+    $n < 1$, which makes the right-hand side non-smooth whenever
+    $\dot{R}$ changes sign. The model regularises the wall shear rate
+    smoothly:
 
     $$
-    p_\text{viscous} = \frac{4\mu}{n}
-        \left(\max\left[\left|\frac{2\dot{R}}{R}\right|, \varepsilon\right]\right)^{n-1}
-        \frac{\dot{R}}{R}
+    \dot{\gamma}_\text{eff}
+        = \sqrt{12\left(\frac{\dot{R}}{R}\right)^2 + \varepsilon^2},
+    \qquad
+    p_\text{viscous} = \frac{4K}{n}\,\dot{\gamma}_\text{eff}^{\,n-1}\,
+        \frac{\dot{R}}{R}.
     $$
-
-    The factor $1/n$ comes from the spatial variation of $\eta$ with
-    radius. For $n = 1$ this reduces exactly to the Newtonian result
-    $4\mu\dot{R}/R$.
 
     Special cases:
 
     - $n < 1$: shear-thinning (biological tissue, blood, polymer gels).
     - $n = 1$: Newtonian; recovers
       [`NewtonianMedium`][jbubble.bubble.medium.NewtonianMedium] with
-      viscosity $\mu$.
+      viscosity $K$.
     - $n > 1$: shear-thickening.
 
     Parameters
     ----------
     mu : float or Property
-        Consistency index $K$ [Pa sⁿ]. The inherited field name is `mu`,
-        but its dimensions are [Pa sⁿ], not [Pa s]. It equals the dynamic
-        viscosity when $n = 1$.
+        Consistency index $K$ [Pa sⁿ], in the rheometric convention
+        $\eta = K\dot{\gamma}^{\,n-1}$ with
+        $\dot{\gamma} = \sqrt{2\mathbf{D}:\mathbf{D}}$. The inherited field
+        name is `mu`, but its dimensions are [Pa sⁿ], not [Pa s]. It equals
+        the dynamic viscosity when $n = 1$.
     n_exp : float or Property
         Power-law exponent (dimensionless, positive).
     eps : float
-        Floor $\varepsilon$ on $|2\dot{R}/R|$ [s⁻¹]. Default: `1e-6`.
+        Shear-rate regularisation $\varepsilon$ [s⁻¹]. Default: `1e2`.
 
     Notes
     -----
-    Power-law fluids have unbounded viscosity at zero shear rate when
-    $n < 1$. The small floor `eps` on $|2\dot{R}/R|$ prevents numerical
-    divergence near turnaround points without affecting the dynamics.
+    The default $\varepsilon = 10^2$ s⁻¹ is three or more orders of
+    magnitude below the wall shear rates of a driven microbubble (a 1 %
+    oscillation at 1 MHz gives
+    $\dot{\gamma}_w \approx 2\sqrt{3}\,(2\pi \cdot 10^6)(0.01)
+    \approx 2 \times 10^5$ s⁻¹), so it changes the viscous pressure only
+    near the instants where $\dot{R}$ reverses. For a 2 µm bubble in a
+    shear-thinning liquid ($n = 0.7$) at 100 kPa, the radius differs from
+    the $\varepsilon \to 0$ solution by less than $10^{-7} R_0$. A much
+    smaller $\varepsilon$ (for example the `1e-6` of jbubble 0.1) leaves
+    a near-singular derivative at $\dot{R} = 0$, on which tight-tolerance
+    solves fail at 300 kPa. If you lower $\varepsilon$, check that your
+    solve still converges.
+
+    The earlier jbubble convention used the wall velocity gradient
+    $2|\dot{R}|/R$ as the shear rate, which overestimates the viscous
+    pressure by $\sqrt{3}^{\,1-n}$ for a $K$ measured on a rheometer.
+
+    References
+    ----------
+    Kaykanat, S. I., & Uguz, K. (2024). Shape stability of a microbubble in
+    a power-law liquid. *The European Physical Journal Special Topics*,
+    Eq. 17, with $M = 2m(2\sqrt{3})^{k-1}$.
+    <https://doi.org/10.1140/epjs/s11734-024-01174-7>
     """
 
     n_exp: Property = eqx.field(converter=as_property)
-    eps: float = 1e-6
+    eps: float = 1e2
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         n_val = self.n_exp(state)
         K_val = self.mu(state)
-        gamma_dot = jnp.maximum(2.0 * jnp.abs(state.R_dot / state.R), self.eps)
-        return 4.0 * K_val / n_val * gamma_dot ** (n_val - 1.0) * state.R_dot / state.R
+        strain_rate = state.R_dot / state.R
+        gamma_dot = jnp.sqrt(12.0 * strain_rate**2 + self.eps**2)
+        return 4.0 * K_val / n_val * gamma_dot ** (n_val - 1.0) * strain_rate
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
         return state.R * 0.0

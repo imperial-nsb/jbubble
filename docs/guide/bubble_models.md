@@ -206,9 +206,9 @@ medium = NewtonianMedium(mu=1e-3)  # [Pa·s]
 Linear viscoelastic medium (solid or gel). Contributes to the interfacial stresses through
 
 - a viscosity term $p_\text{viscous} = \frac{4\mu \dot{R}}{R}$
-- a spring-like elastic restoring term $p_\text{elastic} = \frac{4G}{3}\left[\left(\frac{R}{R_0}\right)^3 - 1\right]$
+- a spring-like elastic restoring term $p_\text{elastic} = \frac{4G}{3}\left[1 - \left(\frac{R_0}{R}\right)^3\right]$ (Yang & Church 2005)
 
-Valid only for small strains ($|R - R_0| \ll R_0$). Prefer `NeoHookeanMedium` for large oscillations.
+The linear elastic law holds only for small strains ($|R - R_0| \ll R_0$). Prefer `NeoHookeanMedium` for large oscillations.
 
 ```python
 from jbubble.bubble.medium import KelvinVoigtMedium
@@ -240,7 +240,9 @@ medium = NeoHookeanMedium(mu=1e-3, G=1e3)
 
 Generalised Newtonian (power-law) fluid. The consistency index $K$ (`mu` field) replaces the dynamic viscosity:
 
-$$p_\text{viscous} = \frac{4K}{n}\left(2\left|\frac{\dot{R}}{R}\right|\right)^{n-1}\frac{\dot{R}}{R}$$
+$$p_\text{viscous} = \frac{4K}{n}\left(2\sqrt{3}\left|\frac{\dot{R}}{R}\right|\right)^{n-1}\frac{\dot{R}}{R}$$
+
+$K$ follows the rheometric convention, with shear rate $\sqrt{2\mathbf{D}:\mathbf{D}}$. A smooth floor `eps` (default $10^2$ s⁻¹) regularises the shear rate where $\dot{R}$ changes sign.
 
 - $n < 1$ — shear-thinning (blood, mucus, some polymer solutions)
 - $n = 1$ — recovers `NewtonianMedium` exactly
