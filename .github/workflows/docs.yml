@@ -43,7 +43,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # GitHub cancels a pending run when a newer run joins its group, whatever
+  # cancel-in-progress says. The event name keeps a push to main from
+  # replacing a pending manual run, which publishes.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   # A new commit cancels the superseded run of a pull request. Never cancel a
   # run that might publish.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
