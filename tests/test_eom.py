@@ -167,6 +167,22 @@ class TestGilmore:
         result = eom(jnp.asarray(0.0), s, _zero_pulse)
         assert float(result.R_dot) == pytest.approx(0.0, abs=1e-2)
 
+    def test_default_tait_constants(self):
+        """Water values of Gümmer, Schenke & Denner (2021)."""
+        eom = Gilmore(**_common_args())
+        assert eom.n_tait == 7.15
+        assert eom.B_tait == 3.046e8
+
+    def test_far_field_sound_speed(self):
+        """At rest, C = c_inf = sqrt(n (P_amb + B) / rho_L), about 1477 m/s."""
+        eom = Gilmore(**_common_args())
+        p = jnp.asarray(P_AMB)
+        H, C = eom._H_and_C(p, p)
+        c_inf = (7.15 * (P_AMB + 3.046e8) / RHO_L) ** 0.5
+        assert float(H) == pytest.approx(0.0, abs=1e-6)
+        assert float(C) == pytest.approx(c_inf, rel=1e-12)
+        assert c_inf == pytest.approx(1477.49, abs=0.01)
+
     def test_custom_tait_params(self):
         eom = Gilmore(**_common_args(), n_tait=7.15, B_tait=300e6)
         s = eom.initial_state()

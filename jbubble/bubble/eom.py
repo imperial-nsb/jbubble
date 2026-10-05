@@ -374,8 +374,21 @@ class Gilmore(EquationOfMotion[BubbleState]):
     $\partial p_L/\partial \dot{R}$ moves into the denominator, in the
     same way as in [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis].
 
-    The default Tait parameters correspond to water (Gilmore 1952):
-    $n = 7$, $B = 304.9$ MPa.
+    The default Tait parameters for water, $n = 7.15$ and
+    $B = 3.046 \times 10^8$ Pa, are those of Gümmer, Schenke & Denner
+    (2021). Gilmore (1952) quotes the rounder "$B \approx 3000$ atm and
+    $n \approx 7$". The Tait parameters fix the far-field sound speed of the
+    liquid at rest,
+
+    $$
+    c_\infty = \sqrt{\frac{n\,(P_\text{amb} + B)}{\rho_L}},
+    $$
+
+    which is 1477 m/s for the defaults with $P_\text{amb} = 101\,325$ Pa and
+    $\rho_L = 998$ kg/m³. This EoM has no `c_L` field: to compare it with
+    [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis], give the Keller-Miksis
+    model $c_L = c_\infty$, or choose `B_tait` so that $c_\infty$ matches
+    your `c_L`.
 
     It takes the parameters of
     [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion] plus
@@ -384,19 +397,24 @@ class Gilmore(EquationOfMotion[BubbleState]):
     Parameters
     ----------
     n_tait : float or jax.Array
-        Tait exponent (dimensionless). Default: `7.0`.
+        Tait exponent (dimensionless). Default: `7.15`.
     B_tait : float or jax.Array
-        Tait pressure constant [Pa]. Default: `304.9e6`.
+        Tait pressure constant [Pa]. Default: `3.046e8`.
 
     References
     ----------
     Gilmore, F. R. (1952). *The growth or collapse of a spherical bubble
     in a viscous compressible liquid.* Hydrodynamics Laboratory Report
     26-4, California Institute of Technology.
+
+    Gümmer, J., Schenke, S., & Denner, F. (2021). Modelling lipid-coated
+    microbubbles in focused ultrasound applications at subresonance
+    frequencies. *Ultrasound in Medicine & Biology*, 47(10), 2958-2979,
+    Eqs. 2-6. <https://doi.org/10.1016/j.ultrasmedbio.2021.06.012>
     """
 
-    n_tait: ArrayLike = 7.0
-    B_tait: ArrayLike = 304.9e6
+    n_tait: ArrayLike = 7.15
+    B_tait: ArrayLike = 3.046e8
 
     def _tait_K(self) -> jax.Array:
         r"""Return the Tait prefactor, $K = (P_\text{amb} + B)^{1/n} / \rho_L$."""

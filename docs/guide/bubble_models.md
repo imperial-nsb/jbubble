@@ -85,8 +85,8 @@ from jbubble.bubble.eom import Gilmore
 
 eom = Gilmore(
     ...,
-    n_tait=7.0,  # Tait exponent (water default)
-    B_tait=304.9e6,  # Tait constant [Pa] (water default)
+    n_tait=7.15,  # Tait exponent (water default, Gümmer et al. 2021)
+    B_tait=3.046e8,  # Tait constant [Pa] (water default, Gümmer et al. 2021)
 )
 ```
 
