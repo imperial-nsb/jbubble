@@ -79,6 +79,7 @@ plugins:
           options:
             extensions:
               - scripts/griffe_extensions.py:DropValueTypeDocstrings
+              - scripts/griffe_extensions.py:CrossReferenceBases
             # Import jbubble instead of only parsing its source, so that the
             # signatures that Equinox generates for eqx.Module classes appear.
             force_inspection: true
