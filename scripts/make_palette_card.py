@@ -69,7 +69,7 @@ def draw_card(theme: str) -> plt.Figure:
         )
         lines.plot(t, radius, label=f"C{k} {NAMES[k]}")
     lines.set_title("Four series")
-    lines.set_xlabel(r"Time [$\mu$s]")
+    lines.set_xlabel("Time [µs]")
     lines.set_ylabel(r"$R / R_0$")
     lines.legend(loc="upper right", ncols=2)
 
@@ -77,7 +77,7 @@ def draw_card(theme: str) -> plt.Figure:
     drive = fig.add_subplot(grid[1, 1])
     drive.plot(t, np.sin(2 * np.pi * t) * np.exp(-((t - 3) ** 2)), color=DRIVE[theme])
     drive.set_title("Drive trace")
-    drive.set_xlabel(r"Time [$\mu$s]")
+    drive.set_xlabel("Time [µs]")
     drive.set_yticks([])
 
     ramp = fig.add_subplot(grid[2, 1])
