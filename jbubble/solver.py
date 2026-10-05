@@ -61,7 +61,7 @@ class SaveSpec(eqx.Module):
 
 _DEFAULT_RTOL = 1e-6
 _DEFAULT_ATOL = 1e-10
-_DEFAULT_MAX_STEPS = 10_000
+_DEFAULT_MAX_STEPS = 100_000
 
 
 class SolverConfig(eqx.Module):
@@ -84,7 +84,7 @@ class SolverConfig(eqx.Module):
     dt0 : float
         Initial step size [s]. Default: `1e-9`.
     max_steps : int
-        Maximum number of solver steps per integration. Default: `10_000`.
+        Maximum number of solver steps per integration. Default: `100_000`.
         A solve that needs more steps stops early and reports
         `converged = False`.
 
@@ -107,6 +107,12 @@ class SolverConfig(eqx.Module):
     relative to $R_0$, so a collapsing microbubble no longer has a loose
     radius tolerance: through an inertial collapse, 0.1's gradients could be
     off by 50 % or more.
+
+    **Long integrations.** `Dopri5` needs about 50 to 90 steps, accepted and
+    rejected, per driving period for a microbubble in water, so
+    `max_steps=100_000` covers more than a thousand periods. Raise it for
+    longer pulses. A larger `max_steps` costs neither memory nor compile
+    time under `jax.grad`.
     """
 
     solver: diffrax.AbstractSolver = eqx.field(default_factory=diffrax.Dopri5)

@@ -80,7 +80,7 @@ class TestSolverConfig:
         assert config.stepsize_controller.rtol == 1e-6
         assert config.stepsize_controller.atol == 1e-10
         assert config.dt0 == 1e-9
-        assert config.max_steps == 10_000
+        assert config.max_steps == 100_000
 
     def test_custom_config(self):
         config = SolverConfig(
