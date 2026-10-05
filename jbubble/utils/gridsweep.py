@@ -250,8 +250,9 @@ class GridSweep:
         CPU, and one worker per device on GPU or TPU. `1` evaluates the
         chunks one after another on the calling thread. `workers` must be
         at least the number of devices. On CPU, `GridSweep` lowers a value
-        above 31 per device to that limit; see the parallelism note.
-        Default: `None`.
+        above 31 per device to that limit; see the parallelism note. The
+        default follows the core count, so it also sets `per_worker`; see
+        the reproducibility note. Default: `None`.
 
     Attributes
     ----------
@@ -308,11 +309,15 @@ class GridSweep:
       worker. Within a chunk, `jax.vmap` runs the solver loop until its
       slowest point finishes, so a point that hits `max_steps` still
       slows its whole chunk. Check `converged` in the results.
-    - **Reproducibility.** Results don't depend on `workers` or `devices`:
-      a sweep is bitwise identical to a serial sweep (`workers=1`) with the
-      same `per_worker`. A different chunk size compiles a different
-      program, so results can change slightly, for adaptive solvers
-      roughly at the level of the solver tolerances.
+    - **Reproducibility.** For a given `per_worker`, results don't depend
+      on `workers` or `devices`: a sweep is bitwise identical to a serial
+      sweep (`workers=1`) with the same `per_worker`. `per_worker` is
+      `ceil(min(batch_size, total_points) / workers)`, so by default it
+      depends on the core count and the grid size. A different chunk size compiles a different program, which
+      can shift saved trajectories near violent collapses by more than
+      the solver tolerances. To get the same chunks on another machine,
+      pass `workers` and `batch_size` explicitly. A different CPU or JAX
+      version can still change the results slightly.
     - **Stopping early.** If you stop iterating over
       [`batches`][jbubble.utils.gridsweep.GridSweep.batches] early, for
       example with `break`, an exception, or Ctrl+C, `GridSweep` cancels
@@ -329,11 +334,16 @@ class GridSweep:
       `np.asarray` first. Such an operation needs a free computation slot
       on the device, so it's slow, and it can deadlock if other JAX
       computations in the process fill the slots.
-    - **Known issue.** From JAX 0.11.1, XLA on CPU can deadlock when many
-      large FFTs inside a loop run at the same time
-      ([jax-ml/jax#41265](https://github.com/jax-ml/jax/issues/41265)). If
-      `fn` runs FFTs inside the ODE solve and the sweep stops making
-      progress, set `workers=1`.
+    - **Known issue.** From JAX 0.11.1, XLA on CPU can deadlock when more
+      large FFTs inside a loop run at the same time than XLA has threads
+      in its pool
+      ([jax-ml/jax#41265](https://github.com/jax-ml/jax/issues/41265)),
+      and chunks that run at the same time add to that count. If `fn` runs
+      FFTs inside the ODE solve and the sweep stops making progress, set
+      `XLA_FLAGS=--xla_cpu_multi_thread_eigen=false` before you import
+      JAX, as the issue suggests; each FFT then runs on one thread. Fewer
+      `workers` also means fewer FFTs in flight, but that doesn't help when
+      a single chunk runs enough FFTs at the same time.
 
     Examples
     --------
