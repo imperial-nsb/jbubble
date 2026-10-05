@@ -2,8 +2,11 @@
 
 Tests that need several JAX devices run in a child process that sets
 `JAX_NUM_CPU_DEVICES`, and the child asserts the device count, so they never
-skip silently. Thread tests carry a pytest-timeout limit, so a deadlock fails
-the test instead of hanging the suite.
+skip silently. Every test also carries a pytest-timeout limit with the
+`thread` method, which dumps the stacks and stops the run when a test hangs.
+The default `signal` method can't stop a deadlocked worker thread: its
+exception reaches the main thread, which then waits for that worker forever
+when it shuts down the thread pool.
 """
 
 import collections
@@ -27,7 +30,7 @@ from jbubble.pulse import ToneBurst
 from jbubble.pulse.shapes import Sine
 from jbubble.utils.gridsweep import GridSweep
 
-pytestmark = pytest.mark.timeout(300)
+pytestmark = pytest.mark.timeout(300, method="thread")
 
 SS = {"x": jnp.arange(5.0), "y": jnp.arange(3.0)}  # 15 points: not a power of 2
 THREAD_PREFIX = "jbubble-gridsweep"
