@@ -96,8 +96,9 @@ def fit_parameters(
         Number of optimisation steps. Default: `200`.
     config : SolverConfig, optional
         ODE solver settings. `None` uses `Dopri5` with
-        `PIDController(rtol=1e-4, atol=1e-8)`, `dt0=1e-9`, and at most
-        10,000 steps.
+        `PIDController(rtol=1e-4, atol=1e-8)` on the scaled state of
+        [`solve_eom`][jbubble.solver.solve_eom], `dt0=1e-9`, and at most
+        100,000 steps.
     adjoint : diffrax.AbstractAdjoint, optional
         Adjoint method. `None` uses `RecursiveCheckpointAdjoint()`, which
         checkpoints the forward pass for stable gradients.

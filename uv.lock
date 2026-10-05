@@ -538,6 +538,7 @@ dependencies = [
     { name = "lineax" },
     { name = "numpy" },
     { name = "optax" },
+    { name = "optimistix" },
     { name = "tqdm" },
 ]
 
@@ -584,6 +585,7 @@ requires-dist = [
     { name = "matplotlib", marker = "extra == 'examples'", specifier = ">=3.9" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "optax", specifier = ">=0.2.3" },
+    { name = "optimistix", specifier = ">=0.1.0" },
     { name = "tqdm", specifier = ">=4.65" },
 ]
 provides-extras = ["examples", "io"]

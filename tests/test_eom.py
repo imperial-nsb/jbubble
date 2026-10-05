@@ -59,6 +59,38 @@ class TestInitialState:
         expected = P_AMB + 2.0 * SIGMA / R0
         assert float(s.P_gas0) == pytest.approx(expected, rel=1e-8)
 
+    def test_keywords_start_away_from_equilibrium(self):
+        eom = RayleighPlesset(**_common_args())
+        s = eom.initial_state(R=1.2 * R0, R_dot=-0.5)
+        equilibrium = eom.initial_state()
+        assert float(s.R) == 1.2 * R0
+        assert float(s.R_dot) == -0.5
+        assert float(s.R0) == float(equilibrium.R0)
+        assert float(s.P_gas0) == float(equilibrium.P_gas0)
+
+    def test_keywords_are_traceable(self):
+        eom = RayleighPlesset(**_common_args())
+        R = jax.jit(lambda r: eom.initial_state(R=r).R)(jnp.asarray(3e-6))
+        assert float(R) == 3e-6
+
+
+class TestIsAdmissible:
+    @pytest.mark.parametrize(
+        ("R", "expected"), [(R0, True), (1e-12, True), (0.0, False), (-R0, False)]
+    )
+    def test_requires_a_positive_radius(self, R, expected):
+        eom = KellerMiksis(**_common_args(), c_L=C_L)
+        s = eom.initial_state(R=R)
+        assert bool(eom.is_admissible(s)) is expected
+
+    def test_defers_to_the_gas(self):
+        from jbubble.bubble.gas import VanDerWaalsGas
+
+        args = _common_args() | {"gas": VanDerWaalsGas(gamma=1.4, h_frac=0.25)}
+        eom = RayleighPlesset(**args)
+        assert not bool(eom.is_admissible(eom.initial_state(R=0.2 * R0)))
+        assert bool(eom.is_admissible(eom.initial_state(R=0.3 * R0)))
+
 
 class TestPL:
     def test_p_L_at_equilibrium(self):
@@ -166,6 +198,22 @@ class TestGilmore:
         s = eom.initial_state()
         result = eom(jnp.asarray(0.0), s, _zero_pulse)
         assert float(result.R_dot) == pytest.approx(0.0, abs=1e-2)
+
+    def test_default_tait_constants(self):
+        """Water values of Gümmer, Schenke & Denner (2021)."""
+        eom = Gilmore(**_common_args())
+        assert eom.n_tait == 7.15
+        assert eom.B_tait == 3.046e8
+
+    def test_far_field_sound_speed(self):
+        """At rest, C = c_inf = sqrt(n (P_amb + B) / rho_L), about 1477 m/s."""
+        eom = Gilmore(**_common_args())
+        p = jnp.asarray(P_AMB)
+        H, C = eom._H_and_C(p, p)
+        c_inf = (7.15 * (P_AMB + 3.046e8) / RHO_L) ** 0.5
+        assert float(H) == pytest.approx(0.0, abs=1e-6)
+        assert float(C) == pytest.approx(c_inf, rel=1e-12)
+        assert c_inf == pytest.approx(1477.49, abs=0.01)
 
     def test_custom_tait_params(self):
         eom = Gilmore(**_common_args(), n_tait=7.15, B_tait=300e6)

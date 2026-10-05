@@ -74,6 +74,13 @@ class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
     The ODE carries them as frozen constants, with zero time derivatives in
     the standard case.
 
+    Two hooks tell [`solve_eom`][jbubble.solver.solve_eom] about the state:
+    [`is_admissible`][jbubble.bubble.eom.EquationOfMotion.is_admissible]
+    marks the states where the right-hand side is defined, and
+    [`state_scale`][jbubble.bubble.eom.EquationOfMotion.state_scale] gives
+    the magnitude of each state field, which sets the meaning of the
+    solver tolerances. Override them in a subclass that adds state fields.
+
     Parameters
     ----------
     gas : GasModel
@@ -118,28 +125,128 @@ class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
         """
         return self.gas(state) - self.shell(state) - self.medium(state)
 
-    def initial_state(self) -> BubbleState:
-        r"""Return the default initial state: equilibrium radius, zero velocity.
+    def initial_state(
+        self,
+        *,
+        R: ArrayLike | None = None,
+        R_dot: ArrayLike | None = None,
+    ) -> BubbleState:
+        r"""Return an initial state seeded with the equilibrium configuration.
 
-        Seeds `R0` and the Laplace-equilibrium gas pressure into the state:
+        By default the bubble starts at rest at its equilibrium radius. Seeds
+        `R0` and the Laplace-equilibrium gas pressure into the state:
 
         $$
         P_{\text{gas},0} = P_\text{amb} + \frac{2\sigma(R_0)}{R_0}
         $$
 
+        Pass `R` or `R_dot` to start away from equilibrium, for example
+        `eom.initial_state(R=1.2 * eom.R0)` for a bubble released from rest
+        at 1.2 times its equilibrium radius. `R0` and `P_gas0` stay at their
+        equilibrium values, so the gas pressure at `R` follows the gas law.
+
         Override this method for coupled systems with a larger state vector.
+        An override must accept the same keyword arguments.
+
+        Parameters
+        ----------
+        R : float or jax.Array, optional
+            Initial radius [m]. `None` uses `R0`.
+        R_dot : float or jax.Array, optional
+            Initial wall velocity [m/s]. `None` uses `0`.
 
         Returns
         -------
         BubbleState
-            State with `R = R0`, `R_dot = 0`, `R0`, and `P_gas0` set.
+            State with `R`, `R_dot`, `R0`, and `P_gas0` set.
         """
         R0 = jnp.asarray(self.R0)
         P_gas0 = (
             jnp.asarray(self.P_amb)
             + 2.0 * self.shell.sigma(BubbleState(R=R0, R0=R0)) / R0
         )
-        return BubbleState(R=R0, R0=R0, P_gas0=P_gas0)
+        R_init = R0 if R is None else jnp.asarray(R)
+        R_dot_init = jnp.zeros_like(R0) if R_dot is None else jnp.asarray(R_dot)
+        return BubbleState(R=R_init, R_dot=R_dot_init, R0=R0, P_gas0=P_gas0)
+
+    def is_admissible(self, state: StateType) -> jax.Array:
+        """Return whether the right-hand side is defined at `state`.
+
+        [`solve_eom`][jbubble.solver.solve_eom] never evaluates the equation
+        of motion at an inadmissible state, so its gradients stay finite
+        when an adaptive solver tries, and then rejects, a trial step that
+        leaves the physical domain. The default requires `R > 0` and defers
+        to [`GasModel.is_admissible`][jbubble.bubble.gas.GasModel.is_admissible],
+        which also excludes, for example, the van der Waals hard core.
+
+        Override this method in a subclass whose state has other fields with
+        a restricted domain, and combine the result with
+        `super().is_admissible(state)`.
+
+        Parameters
+        ----------
+        state : StateType
+            State to check. Its leaves may be NaN or infinite.
+
+        Returns
+        -------
+        jax.Array
+            Boolean scalar.
+        """
+        return (state.R > 0) & self.gas.is_admissible(state)
+
+    def state_scale(self, state: StateType) -> StateType:
+        r"""Return the characteristic magnitude of each state field.
+
+        [`solve_eom`][jbubble.solver.solve_eom] integrates the dimensionless
+        state `state / state_scale(state)`, so the step-size controller's
+        `rtol` and `atol` mean the same thing for a 50 nm bubble as for a
+        50 µm one. The default scales are:
+
+        - `R` and `R0`: the equilibrium radius `state.R0` [m].
+        - `R_dot`: the velocity scale $\sqrt{P_\text{amb}/\rho_L}$
+          [m/s], about 10 m/s in water at atmospheric pressure. It's the
+          natural velocity of bubble dynamics: $R_0\omega_0 \approx
+          \sqrt{3\kappa P_\text{amb}/\rho_L}$ for the Minnaert frequency
+          $\omega_0$.
+        - `P_gas0`: its own value `state.P_gas0` [Pa], or `P_amb` if that
+          value isn't positive.
+        - Any other field of a `BubbleState` subclass: `1`, that is, SI
+          units.
+
+        Because `R0` and `P_gas0` are scaled by their own values, the solver
+        sees them exactly: `(x / x) * x == x` in floating point.
+
+        Override this method to give extra state fields a scale. The scale
+        must be positive and finite; the solver treats it as a constant.
+
+        Parameters
+        ----------
+        state : StateType
+            Initial state, with a positive `R0`.
+
+        Returns
+        -------
+        StateType
+            Scale for each field, with the same structure as `state`.
+        """
+        P_amb = jnp.asarray(self.P_amb)
+        velocity = jnp.sqrt(P_amb / jnp.asarray(self.rho_L))
+        R0 = jnp.asarray(state.R0)
+        P_gas0 = jnp.asarray(state.P_gas0)
+        pressure = jnp.where(P_gas0 > 0, P_gas0, P_amb)
+        ones = jax.tree_util.tree_map(jnp.ones_like, state)
+        values = (R0, velocity, R0, pressure)
+        return eqx.tree_at(
+            lambda s: (s.R, s.R_dot, s.R0, s.P_gas0),
+            ones,
+            tuple(
+                jnp.broadcast_to(v, jnp.shape(leaf)).astype(jnp.result_type(leaf))
+                for v, leaf in zip(
+                    values, (state.R, state.R_dot, state.R0, state.P_gas0), strict=True
+                )
+            ),
+        )
 
     @abc.abstractmethod
     def __call__(
@@ -374,8 +481,21 @@ class Gilmore(EquationOfMotion[BubbleState]):
     $\partial p_L/\partial \dot{R}$ moves into the denominator, in the
     same way as in [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis].
 
-    The default Tait parameters correspond to water (Gilmore 1952):
-    $n = 7$, $B = 304.9$ MPa.
+    The default Tait parameters for water, $n = 7.15$ and
+    $B = 3.046 \times 10^8$ Pa, are those of Gümmer, Schenke & Denner
+    (2021). Gilmore (1952) quotes the rounder "$B \approx 3000$ atm and
+    $n \approx 7$". The Tait parameters fix the far-field sound speed of the
+    liquid at rest,
+
+    $$
+    c_\infty = \sqrt{\frac{n\,(P_\text{amb} + B)}{\rho_L}},
+    $$
+
+    which is 1477 m/s for the defaults with $P_\text{amb} = 101\,325$ Pa and
+    $\rho_L = 998$ kg/m³. This EoM has no `c_L` field: to compare it with
+    [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis], give the Keller-Miksis
+    model $c_L = c_\infty$, or choose `B_tait` so that $c_\infty$ matches
+    your `c_L`.
 
     It takes the parameters of
     [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion] plus
@@ -384,19 +504,24 @@ class Gilmore(EquationOfMotion[BubbleState]):
     Parameters
     ----------
     n_tait : float or jax.Array
-        Tait exponent (dimensionless). Default: `7.0`.
+        Tait exponent (dimensionless). Default: `7.15`.
     B_tait : float or jax.Array
-        Tait pressure constant [Pa]. Default: `304.9e6`.
+        Tait pressure constant [Pa]. Default: `3.046e8`.
 
     References
     ----------
     Gilmore, F. R. (1952). *The growth or collapse of a spherical bubble
     in a viscous compressible liquid.* Hydrodynamics Laboratory Report
     26-4, California Institute of Technology.
+
+    Gümmer, J., Schenke, S., & Denner, F. (2021). Modelling lipid-coated
+    microbubbles in focused ultrasound applications at subresonance
+    frequencies. *Ultrasound in Medicine & Biology*, 47(10), 2958-2979,
+    Eqs. 2-6. <https://doi.org/10.1016/j.ultrasmedbio.2021.06.012>
     """
 
-    n_tait: ArrayLike = 7.0
-    B_tait: ArrayLike = 304.9e6
+    n_tait: ArrayLike = 7.15
+    B_tait: ArrayLike = 3.046e8
 
     def _tait_K(self) -> jax.Array:
         r"""Return the Tait prefactor, $K = (P_\text{amb} + B)^{1/n} / \rho_L$."""

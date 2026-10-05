@@ -26,6 +26,20 @@ except ImportError as err:  # h5py is an optional dependency
 __all__ = ["export_hdf5", "load_hdf5"]
 
 
+def _json_default(obj: Any) -> Any:
+    """Convert NumPy and JAX values that `json` can't serialise.
+
+    NumPy scalars and 0-d arrays (NumPy or JAX) become Python scalars, and
+    higher-dimensional arrays become nested lists.
+    """
+    if isinstance(obj, np.generic):
+        return obj.item()
+    if hasattr(obj, "__array__"):
+        arr = np.asarray(obj)
+        return arr.item() if arr.ndim == 0 else arr.tolist()
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+
 def export_hdf5(
     path: str | Path,
     *,
@@ -34,15 +48,26 @@ def export_hdf5(
 ) -> None:
     """Save named arrays and optional metadata to an HDF5 file.
 
+    `export_hdf5` serialises the metadata and converts the arrays before it
+    opens the file, so an unserialisable value raises without creating or
+    overwriting anything.
+
     Parameters
     ----------
     path : str or Path
         Output `.h5` file path. `export_hdf5` overwrites an existing file.
     metadata : dict, optional
         JSON-serialisable metadata, stored as an attribute on the root group.
+        NumPy and JAX scalars become Python numbers, and arrays become
+        nested lists.
     **arrays
         Each keyword argument becomes a dataset. `np.asarray` converts the
         values to NumPy arrays.
+
+    Raises
+    ------
+    TypeError
+        If `metadata` contains a value that isn't JSON-serialisable.
 
     Examples
     --------
@@ -62,13 +87,14 @@ def export_hdf5(
     ```
     """
     path = Path(path)
+    encoded = None if metadata is None else json.dumps(metadata, default=_json_default)
+    datasets = {name: np.asarray(arr) for name, arr in arrays.items()}
 
     with h5py.File(path, "w") as f:
-        for name, arr in arrays.items():
-            f.create_dataset(name, data=np.asarray(arr))
-
-        if metadata is not None:
-            f.attrs["metadata"] = json.dumps(metadata)
+        if encoded is not None:
+            f.attrs["metadata"] = encoded
+        for name, data in datasets.items():
+            f.create_dataset(name, data=data)
 
 
 def load_hdf5(path: str | Path) -> tuple[dict[str, np.ndarray], dict[str, Any]]:

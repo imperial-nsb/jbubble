@@ -44,6 +44,9 @@ dependencies = [
     # Not imported directly. lineax<=0.0.8 raises TracerBoolConversionError in
     # implicit solvers with jax>=0.8.2 (lineax#187), fixed in 0.1.0.
     "lineax>=0.1.0",
+    # SolverConfig.stiff builds an optimistix root finder. diffrax 0.7.2
+    # already requires optimistix>=0.1.0.
+    "optimistix>=0.1.0",
     "optax>=0.2.3",
     "numpy>=2.0",
     "tqdm>=4.65",

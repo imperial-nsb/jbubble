@@ -55,6 +55,30 @@ class GasModel(eqx.Module, abc.ABC):
         """
         ...
 
+    def is_admissible(self, state: BubbleState) -> jax.Array:
+        """Return whether the gas law is defined at `state`.
+
+        The default requires a positive radius, `R > 0`. A gas law with a
+        smaller domain, such as
+        [`VanDerWaalsGas`][jbubble.bubble.gas.VanDerWaalsGas], overrides
+        this method. [`solve_eom`][jbubble.solver.solve_eom] uses it,
+        through
+        [`EquationOfMotion.is_admissible`][jbubble.bubble.eom.EquationOfMotion.is_admissible],
+        to keep gradients finite when a rejected trial step leaves the
+        domain.
+
+        Parameters
+        ----------
+        state : BubbleState
+            State to check. Its leaves may be NaN or infinite.
+
+        Returns
+        -------
+        jax.Array
+            Boolean scalar.
+        """
+        return state.R > 0
+
 
 class PolytropicGas(GasModel):
     r"""Polytropic gas law.
@@ -83,7 +107,13 @@ class VanDerWaalsGas(GasModel):
         \left(\frac{R_0^3 - h^3}{R^3 - h^3}\right)^{\gamma}
     $$
 
-    where $h = h_\text{frac} R_0$ is the van der Waals hard-core radius.
+    where $h = h_\text{frac} R_0$ is the van der Waals hard-core radius: the
+    radius of the bubble's gas content compressed to its excluded volume. The
+    hard core is a property of the gas, not of the bubble, so `h_frac`
+    depends on the gas species and its equilibrium density. The pressure
+    diverges as $R \to h$ and the law is undefined for $R \le h$, which
+    [`is_admissible`][jbubble.bubble.gas.VanDerWaalsGas.is_admissible]
+    reports to the solver.
 
     Parameters
     ----------
@@ -102,3 +132,19 @@ class VanDerWaalsGas(GasModel):
         return state.P_gas0 * (
             (state.R0**3 - h**3) / (state.R**3 - h**3)
         ) ** self.gamma(state)
+
+    def is_admissible(self, state: BubbleState) -> jax.Array:
+        """Return whether `R` lies outside the hard core, `R > h_frac * R0`.
+
+        Parameters
+        ----------
+        state : BubbleState
+            State to check. Its leaves may be NaN or infinite.
+
+        Returns
+        -------
+        jax.Array
+            Boolean scalar.
+        """
+        hard_core = self.h_frac(state) * state.R0
+        return hard_core < state.R

@@ -72,7 +72,13 @@ axes[0].grid(True, alpha=0.3)
 
 # Panel 2: monopole vs quasi-acoustic at 1 cm
 axes[1].plot(t_us, p_rad, lw=1.5, label="Incompressible monopole")
-axes[1].plot(t_us, p_qa, lw=1.5, ls="--", label="Quasi-acoustic")
+axes[1].plot(
+    quasi.observer_time(result, r_sensor) * 1e6,
+    p_qa,
+    lw=1.5,
+    ls="--",
+    label="Quasi-acoustic (arrival time)",
+)
 axes[1].set_ylabel("Pressure (Pa)")
 axes[1].set_title(f"Emission at r = {r_sensor * 100:.0f} cm")
 axes[1].legend()

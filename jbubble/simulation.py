@@ -8,6 +8,8 @@ from typing import Any, cast
 import diffrax
 import equinox as eqx
 import jax
+import jax.numpy as jnp
+from jax.core import Tracer
 from jax.typing import ArrayLike
 
 from .bubble.eom import EquationOfMotion
@@ -68,6 +70,47 @@ class SimulationResult(eqx.Module):
         return self.state_dot.R_dot
 
 
+def _simulate(
+    eom: EquationOfMotion,
+    pulse: Pulse,
+    *,
+    save_spec: SaveSpec | None = None,
+    state0: Any = None,
+    t_max: ArrayLike | None = None,
+    config: SolverConfig | None = None,
+    adjoint: diffrax.AbstractAdjoint | None = None,
+    progress: bool = False,
+) -> SimulationResult:
+    """Solve and post-process, without the non-convergence warning.
+
+    [`run_simulation`][jbubble.simulation.run_simulation] adds the warning
+    on top of this. Callers that check `converged` themselves, such as a
+    fitting loop, call this function directly.
+    """
+    sol = solve_eom(
+        eom,
+        pulse,
+        y0=state0,  # None: solve_eom calls eom.initial_state()
+        t_max=t_max,
+        save_spec=save_spec,
+        config=config,
+        adjoint=adjoint,
+        progress=progress,
+    )
+
+    ts = cast(jax.Array, sol.ts)
+    ys = cast(BubbleState, sol.ys)
+    ys_dot: BubbleState = jax.vmap(lambda t, x: eom(t, x, pulse))(ts, ys)
+
+    return SimulationResult(
+        ts=ts,
+        state=ys,
+        state_dot=ys_dot,
+        driving_pressure=jax.vmap(pulse)(ts),
+        converged=diffrax.is_successful(sol.result),
+    )
+
+
 def run_simulation(
     eom: EquationOfMotion,
     pulse: Pulse,
@@ -76,9 +119,17 @@ def run_simulation(
     state0: Any = None,
     t_max: ArrayLike | None = None,
     config: SolverConfig | None = None,
+    adjoint: diffrax.AbstractAdjoint | None = None,
     progress: bool = False,
 ) -> SimulationResult:
     """Run a simulation and return the results in SI units.
+
+    `run_simulation` works under `jax.jit` and `jax.vmap`, and you can
+    differentiate it with `jax.grad`. If the solver fails, for example
+    because it reaches `config.max_steps`, the samples after the failure
+    are `inf` and `result.converged` is `False`. Called eagerly,
+    `run_simulation` also warns. Under `jax.jit` or `jax.vmap` it can't
+    inspect the flag, so check `result.converged` yourself.
 
     Parameters
     ----------
@@ -92,12 +143,21 @@ def run_simulation(
         [`SaveSpec()`][jbubble.solver.SaveSpec], 1024 evenly spaced time
         points.
     state0 : BubbleState, optional
-        Initial state. `None` uses `eom.initial_state()`.
+        Initial state. `None` uses `eom.initial_state()`. A zero `R0` or
+        `P_gas0`, the `BubbleState` defaults, is filled from `eom`, so
+        `BubbleState(R=1.2 * R0)` starts at rest at 1.2 times the
+        equilibrium radius. You can also build the state with
+        `eom.initial_state(R=..., R_dot=...)`. For an empty cavity, set
+        `P_gas0` to a tiny positive value, such as `1e-12`.
     t_max : float, optional
         Integration end time [s]. `None` uses `pulse.t_end`.
     config : SolverConfig, optional
         ODE solver settings. `None` uses
         [`SolverConfig()`][jbubble.solver.SolverConfig].
+    adjoint : diffrax.AbstractAdjoint, optional
+        How `jax.grad` differentiates through the solve. `None` uses
+        `diffrax.RecursiveCheckpointAdjoint()`. Pass `diffrax.ForwardMode()`
+        to use `jax.jacfwd`.
     progress : bool
         Whether to show a text progress meter. Default: `False`.
 
@@ -106,38 +166,33 @@ def run_simulation(
     SimulationResult
         Trajectory, time derivatives, driving pressure, and convergence
         flag.
+
+    Warns
+    -----
+    UserWarning
+        If the solver didn't converge and `run_simulation` runs outside
+        `jax.jit` and `jax.vmap`.
     """
-    sol = solve_eom(
+    result = _simulate(
         eom,
         pulse,
-        y0=state0,  # None → solve_eom calls eom.initial_state()
-        t_max=t_max,
         save_spec=save_spec,
+        state0=state0,
+        t_max=t_max,
         config=config,
+        adjoint=adjoint,
         progress=progress,
     )
 
-    ts = cast(jax.Array, sol.ts)
-    ys = cast(BubbleState, sol.ys)
-    ys_dot: BubbleState = jax.vmap(lambda t, x: eom(t, x, pulse))(ts, ys)
-
-    converged = diffrax.is_successful(sol.result)
-
-    def _warn_not_converged(c: bool) -> None:
-        if not c:
-            warnings.warn(
-                "ODE solver did not converge. "
-                "Returned trajectory may be incomplete. Check `result.converged` before use.",
-                UserWarning,
-                stacklevel=2,
-            )
-
-    jax.debug.callback(_warn_not_converged, converged)
-
-    return SimulationResult(
-        ts=ts,
-        state=ys,
-        state_dot=ys_dot,
-        driving_pressure=jax.vmap(pulse)(ts),
-        converged=converged,
-    )
+    converged = result.converged
+    if not isinstance(converged, Tracer) and not bool(jnp.all(converged)):
+        warnings.warn(
+            "ODE solver did not converge, so the trajectory is incomplete: "
+            "samples after the failure are inf. Check `result.converged`. "
+            "If the solver reached `max_steps`, raise "
+            "`SolverConfig(max_steps=...)`, or use `SolverConfig.stiff()` for "
+            "a stiff problem.",
+            UserWarning,
+            stacklevel=2,
+        )
+    return result
