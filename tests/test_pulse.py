@@ -4,6 +4,7 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 import pytest
+from jbubble import SaveSpec, run_simulation
 from jbubble.pulse import (
     ChirpPulse,
     HannEnvelope,
@@ -16,6 +17,7 @@ from jbubble.pulse import (
 )
 from jbubble.pulse.chirp import ExponentialSweep
 from jbubble.pulse.shapes import Sine
+from jbubble.utils.presets import free_bubble
 
 
 class TestToneBurst:
@@ -242,3 +244,83 @@ class TestPulseComposition:
         s2 = s1 + p3
         assert isinstance(s2, Summed)
         assert len(s2.pulses) == 3
+
+
+# Near the pulse start the Hann window is about 0.02 while the default
+# soft-rectangular envelope is about 1, so windowing is clearly visible.
+T_EDGE = jnp.asarray(0.25e-6)
+T_MID = jnp.asarray(2.5e-6)
+
+
+@pytest.fixture
+def tone_early():
+    return ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
+
+
+@pytest.fixture
+def tone_late():
+    return ToneBurst(
+        freq=2.5e6, pressure=30e3, shape=Sine(), cycle_num=15, initial_time=6e-6
+    )
+
+
+class TestCompositeWindowed:
+    """``windowed`` on Scaled and Offset reaches the child pulse."""
+
+    def test_scaled_windowed_applies_envelope(self, tone_early):
+        got = (tone_early * 2.0).windowed(HannEnvelope())(T_EDGE)
+        want = 2.0 * tone_early.windowed(HannEnvelope())(T_EDGE)
+        assert float(got) == pytest.approx(float(want), rel=1e-9, abs=1e-9)
+
+    def test_offset_windowed_applies_envelope_to_child(self, tone_early):
+        got = (tone_early + 1000.0).windowed(HannEnvelope())(T_EDGE)
+        want = tone_early.windowed(HannEnvelope())(T_EDGE) + 1000.0
+        assert float(got) == pytest.approx(float(want), rel=1e-9, abs=1e-9)
+
+    def test_offset_constant_stays_unwindowed(self, tone_early):
+        windowed = (tone_early + 1000.0).windowed(HannEnvelope())
+        assert float(windowed(jnp.asarray(-1e-6))) == pytest.approx(1000.0)
+
+    def test_scaled_sum_is_windowed(self, tone_early, tone_late):
+        final = ((tone_early + tone_late) * 0.7).windowed(HannEnvelope())
+        want = 0.7 * (tone_early + tone_late).windowed(HannEnvelope())(T_EDGE)
+        assert float(final(T_EDGE)) == pytest.approx(float(want), rel=1e-9, abs=1e-9)
+        unwindowed = 0.7 * (tone_early + tone_late)(T_EDGE)
+        assert abs(float(final(T_EDGE))) < 0.2 * abs(float(unwindowed))
+
+    def test_windowed_keeps_type(self, tone_early):
+        assert isinstance((tone_early * 2.0).windowed(HannEnvelope()), Scaled)
+        assert isinstance((tone_early + 1.0).windowed(HannEnvelope()), Offset)
+
+
+class TestSummedUnderTracing:
+    """A Summed pulse works under jit, so it can be simulated."""
+
+    def test_duration_under_jit(self, tone_early, tone_late):
+        duration = jax.jit(lambda s: s.duration)(tone_early + tone_late)
+        assert float(duration) == pytest.approx(12e-6, rel=1e-12)
+
+    def test_t_end_under_jit(self, tone_early, tone_late):
+        t_end = jax.jit(lambda s: s.t_end)(tone_early + tone_late)
+        assert float(t_end) == pytest.approx(18e-6, rel=1e-12)
+
+    def test_matches_python_max(self, tone_early, tone_late):
+        summed = tone_early + tone_late
+        assert float(summed.t_end) == max(
+            float(tone_early.t_end), float(tone_late.t_end)
+        )
+
+    def test_run_simulation_with_summed_pulse(self, tone_early, tone_late):
+        eom, _ = free_bubble()
+        result = jax.jit(run_simulation)(
+            eom, (tone_early + tone_late) * 0.5, save_spec=SaveSpec(num_samples=64)
+        )
+        assert bool(result.converged)
+        assert float(result.ts[-1]) == pytest.approx(18e-6, rel=1e-9)
+
+    def test_grad_through_summed(self, tone_early):
+        def value(pressure):
+            other = ToneBurst(freq=2e6, pressure=pressure, shape=Sine(), cycle_num=5)
+            return (tone_early + other)(T_MID)
+
+        assert jnp.isfinite(jax.grad(value)(jnp.asarray(10e3)))

@@ -168,6 +168,12 @@ class Scaled(Pulse):
         # Transparent — child's envelope is already applied via self.pulse(t).
         return self._evaluate(t)
 
+    def windowed(self, envelope: Envelope) -> Pulse:
+        # Scaled ignores its own envelope, so setting it here would be a silent
+        # no-op.  Push the window down to the child pulse, which actually
+        # applies envelopes, so ((a + b) * k).windowed(env) windows the sum.
+        return eqx.tree_at(lambda p: p.pulse, self, self.pulse.windowed(envelope))
+
 
 class Offset(Pulse):
     """Constant-offset version of another pulse.
@@ -202,6 +208,11 @@ class Offset(Pulse):
         # Transparent — child's envelope is already applied via self.pulse(t).
         return self._evaluate(t)
 
+    def windowed(self, envelope: Envelope) -> Pulse:
+        # Offset ignores its own envelope; push the window down to the child.
+        # The constant offset itself stays unwindowed.
+        return eqx.tree_at(lambda p: p.pulse, self, self.pulse.windowed(envelope))
+
 
 class Summed(Pulse):
     """Additive superposition of multiple pulses.
@@ -221,16 +232,18 @@ class Summed(Pulse):
     pulses: tuple[Pulse, ...]
 
     @property
-    def duration(self) -> float:
-        # Span from self.initial_time to the latest child endpoint.
-        # float() is intentional: Summed uses Python's max(), which requires
-        # concrete values — JAX-traced durations are not supported here.
-        ends = [float(p.initial_time + p.duration) for p in self.pulses]
-        return max(ends) - float(self.initial_time)
+    def duration(self) -> float | jax.Array:
+        # Span from self.initial_time to the latest child endpoint.  Uses
+        # jnp.max over stacked child endpoints (not Python max/float) so it
+        # stays valid under JAX tracing, so a Summed pulse can be simulated.
+        ends = jnp.stack(
+            [jnp.asarray(p.initial_time + p.duration) for p in self.pulses]
+        )
+        return jnp.max(ends) - jnp.asarray(self.initial_time)
 
     @property
-    def t_end(self) -> float:
-        return max(float(p.t_end) for p in self.pulses)
+    def t_end(self) -> float | jax.Array:
+        return jnp.max(jnp.stack([jnp.asarray(p.t_end) for p in self.pulses]))
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
         # Each p(t) includes the child's own envelope.
