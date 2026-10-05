@@ -118,7 +118,22 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - run: uv build --no-sources
       - run: uvx twine check --strict dist/*
+      - name: Check the wheel ships every tracked package file
+        run: diff <(git ls-files jbubble | sort) <(unzip -Z1 dist/*.whl | grep '^jbubble/' | sort)
       - name: Smoke-test the wheel in a clean environment
-        run: >-
-          uv run --isolated --no-project --python 3.12 --with dist/*.whl
-          python -c "import jbubble; print(jbubble.__version__)"
+        # -P keeps the checkout off sys.path, so Python imports the installed
+        # wheel, not ./jbubble. Every module must import with the core
+        # dependencies alone, except jbubble.utils.io, which needs the io extra.
+        run: |
+          uv run --isolated --no-project --python 3.12 --with dist/*.whl python -P - <<'EOF'
+          import importlib
+          import pkgutil
+
+          import jbubble
+
+          names = [m.name for m in pkgutil.walk_packages(jbubble.__path__, "jbubble.")]
+          for name in names:
+              if name != "jbubble.utils.io":
+                  importlib.import_module(name)
+          print(jbubble.__version__, jbubble.__file__, f"{len(names)} modules")
+          EOF
