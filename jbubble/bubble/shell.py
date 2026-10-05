@@ -178,9 +178,10 @@ class ThickShell(ShellModel):
     V_s = R_0^3 - (R_0 - d_s)^3,
     $$
 
-    where $R$ is the outer, liquid-side radius. $V_s$ is the shell volume
-    divided by $4\pi/3$; the shell conserves it, so $R^3 - V_s$ is the
-    cube of the inner radius. The total shell pressure is
+    where $R$ is the outer, liquid-side radius and $V_s$ is the shell
+    volume divided by $4\pi/3$. Because the shell is incompressible, $V_s$
+    stays constant, and $R^3 - V_s$ is the cube of the inner radius. The
+    total shell pressure is
 
     $$
     p_\text{shell} = \frac{2\sigma(R)}{R} + p_\text{elastic} + p_\text{viscous}.
@@ -196,10 +197,10 @@ class ThickShell(ShellModel):
     p_\text{viscous} \approx 12 \mu_s d_s \frac{R_0^2 \dot{R}}{R^4}.
     $$
 
-    The viscous terms agree exactly in that limit and the elastic terms
-    agree to first order in the strain. Small oscillations about $R_0$
-    therefore feel a shell stiffness of $12 G_s d_s / R_0$ per unit
-    radial strain and a shell damping of $12 \mu_s d_s / R_0^2$ per unit
+    The viscous terms agree exactly in that limit, and the elastic terms
+    agree to first order in the strain. For small oscillations about
+    $R_0$, the shell therefore adds a stiffness of $12 G_s d_s / R_0$ per
+    unit radial strain and a damping of $12 \mu_s d_s / R_0^2$ per unit
     wall velocity, with relative corrections of order $d_s/R_0$.
 
     Parameters
@@ -224,7 +225,7 @@ class ThickShell(ShellModel):
     - The gas model reads the outer radius $R$ rather than the inner
       radius $(R^3 - V_s)^{1/3}$, so the gas stiffness comes out low by a
       relative amount of about $3 d_s / R_0$.
-    - The shell's inertia is neglected, a relative error of order
+    - The class neglects the shell's inertia, a relative error of order
       $d_s / R_0$ in the inertial terms.
     - A single surface tension $\sigma$ acts at $R$, in place of separate
       gas-shell and shell-liquid tensions.
@@ -399,8 +400,9 @@ class SmoothMarmottantSurfaceTension(Property):
       0.5 mN/m.
     - It converges uniformly to the Marmottant law as
       $\varepsilon \to 0$.
-    - It's well-posed for every parameter value, including bubbles that
-      start buckled (`R_buckle_ratio` of 1 or more) or ruptured.
+    - It's well-posed for all positive `R_buckle_ratio`, `chi`, and
+      `sigma_rupture`, including bubbles that start buckled
+      (`R_buckle_ratio` of 1 or more) or ruptured.
 
     Use this law for gradient-based fitting of a lipid shell. Use
     [`MarmottantSurfaceTension`][jbubble.bubble.shell.MarmottantSurfaceTension]
