@@ -611,6 +611,58 @@ class TestSolverSeesDelayedPulses:
         assert float(jax.grad(peak)(k)) == pytest.approx(want, rel=_GRAD_RTOL)
 
 
+def _offset_peak_gradient(t0, envelope, offset, config=None):
+    """Derivative of the peak radius with respect to a constant offset [m/Pa]."""
+    eom, _ = free_bubble()
+    spec = SaveSpec(num_samples=401)
+
+    def peak(c):
+        pulse = _late_tone(t0, envelope=envelope) + c
+        result = run_simulation(
+            eom, pulse, save_spec=spec, t_max=t0 + 20e-6, config=config
+        )
+        return result.radius.max()
+
+    return float(jax.grad(peak)(jnp.asarray(offset)))
+
+
+class TestOffsetGradientAfterALeadIn:
+    """The gradient with respect to an offset, for a pulse that starts late.
+
+    At an offset of exactly zero, the bubble sits exactly at rest until the
+    pulse starts, so the adaptive step-size controller sees no error and
+    takes steps of several microseconds, against a natural period of about
+    0.5 µs. The derivative with respect to the offset isn't at rest, and
+    it's unstable at those steps: the gradient can be tens of times too
+    large, have the wrong sign, or be NaN. The solution itself is accurate.
+    """
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason=(
+            "solve_eom doesn't cap the adaptive step size relative to the "
+            "bubble's natural period."
+        ),
+    )
+    @pytest.mark.parametrize("t0", [2e-6, 20e-6], ids=["2 us", "20 us"])
+    @pytest.mark.parametrize(
+        "envelope",
+        [SoftRectangularEnvelope(), HannEnvelope()],
+        ids=["soft rectangular", "Hann"],
+    )
+    def test_at_zero_offset_matches_a_reference(self, t0, envelope):
+        want = _offset_peak_gradient(t0, envelope, 0.0, _REFERENCE)
+        got = _offset_peak_gradient(t0, envelope, 0.0)
+        assert got == pytest.approx(want, rel=1e-2)
+
+    def test_at_a_nonzero_offset_matches_a_reference(self):
+        # 10 Pa moves the bubble by more than the solver's absolute
+        # tolerance, so the controller resolves its oscillation.
+        want = _offset_peak_gradient(20e-6, HannEnvelope(), 10.0, _REFERENCE)
+        got = _offset_peak_gradient(20e-6, HannEnvelope(), 10.0)
+        assert got == pytest.approx(want, rel=_GRAD_RTOL)
+
+
 class TestDelayedChildInSum:
     """A delayed child wrapped in Scaled or Offset survives a sum."""
 
