@@ -25,6 +25,12 @@
   --md-accent-bg-color: #ffffff;
   --md-accent-bg-color--light: #ffffffb3;
   --md-typeset-a-color: #0b6cb8;
+  /*
+   * The "module" label and "mod" badge of the API reference. The theme's
+   * green (#5cad0f) reaches only 2.8:1 on the page; this darker shade of the
+   * same hue keeps 4.5:1.
+   */
+  --doc-symbol-module-fg-color: #40780a;
 }
 
 [data-md-color-scheme="slate"] {

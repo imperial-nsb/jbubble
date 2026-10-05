@@ -119,3 +119,15 @@ def test_links_and_the_accent_keep_aa_contrast(scheme, theme):
         (accent, tint),
     ]:
         assert contrast(foreground, background) >= 4.5, (foreground, background)
+
+
+def test_the_module_badge_keeps_aa_contrast():
+    # The API reference labels a module "module" in its heading and "mod" in
+    # the table of contents. The theme's light-scheme green for them, #5cad0f,
+    # reaches only 2.8:1 on white, so extra.css sets a darker one.
+    surface, _ = palette("light")
+    light = tokens("default")
+    tint = blend(light["--md-accent-fg-color--transparent"], surface)
+    module = light["--doc-symbol-module-fg-color"]
+    for background in (surface, CODE_BACKGROUND["default"], tint):
+        assert contrast(module, background) >= 4.5, (module, background)
