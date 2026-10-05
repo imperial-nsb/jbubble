@@ -8,10 +8,31 @@ from typing import cast
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import numpy as np
+from jax.core import Tracer
+from jax.typing import ArrayLike
 
 from .base import Pulse
 
 __all__ = ["NeuralPulse"]
+
+
+def _static_float(name: str, hint: str) -> Callable[[ArrayLike], float]:
+    """Return a converter that turns the static field `name` into a Python float.
+
+    The converter raises a TypeError that names the field when it gets a
+    traced value, which can't become a static float.
+    """
+
+    def convert(value: ArrayLike) -> float:
+        if isinstance(value, Tracer):
+            raise TypeError(
+                f"NeuralPulse.{name} is static configuration, so it must be a "
+                f"concrete number, not a traced JAX value. {hint}"
+            )
+        return float(np.asarray(value))
+
+    return convert
 
 
 class NeuralPulse(Pulse):
@@ -51,6 +72,14 @@ class NeuralPulse(Pulse):
         Multiplicative scaling applied to the network output [Pa]. Static:
         it must be concrete, not traced. Default: `1.0`.
 
+    Raises
+    ------
+    TypeError
+        If `pulse_duration` or `pressure_scale` is a traced JAX value, for
+        example inside `jax.jit`, `jax.vmap`, or `jax.grad`. To sweep or fit
+        the amplitude, scale the pulse instead: `k * pulse` accepts a
+        traced factor `k`.
+
     Examples
     --------
     >>> import jax
@@ -64,8 +93,21 @@ class NeuralPulse(Pulse):
     """
 
     net: eqx.Module
-    pulse_duration: float = eqx.field(static=True, converter=float)
-    pressure_scale: float = eqx.field(default=1.0, static=True, converter=float)
+    pulse_duration: float = eqx.field(
+        static=True,
+        converter=_static_float(
+            "pulse_duration", "To compare durations, build one NeuralPulse for each."
+        ),
+    )
+    pressure_scale: float = eqx.field(
+        default=1.0,
+        static=True,
+        converter=_static_float(
+            "pressure_scale",
+            "To sweep or fit the amplitude, scale the pulse instead: k * pulse "
+            "accepts a traced factor k.",
+        ),
+    )
 
     @property
     def duration(self) -> float:

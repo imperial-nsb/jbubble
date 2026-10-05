@@ -1011,6 +1011,27 @@ class TestNeuralPulseConfiguration:
         n_net_arrays = len(jax.tree.leaves(eqx.filter(mlp, eqx.is_array)))
         assert len(jax.tree.leaves(eqx.filter(pulse, eqx.is_array))) == n_net_arrays
 
+    @pytest.mark.parametrize(
+        "transform",
+        [jax.vmap, jax.grad, jax.jit],
+        ids=["vmap", "grad", "jit"],
+    )
+    def test_traced_pressure_scale_names_the_field(self, mlp, transform):
+        def value(scale):
+            pulse = NeuralPulse(net=mlp, pulse_duration=10e-6, pressure_scale=scale)
+            return pulse(jnp.asarray(1e-6))
+
+        scales = jnp.array([1.0, 2.0]) if transform is jax.vmap else jnp.asarray(1.0)
+        with pytest.raises(TypeError, match=r"NeuralPulse\.pressure_scale.*k \* pulse"):
+            transform(value)(scales)
+
+    def test_traced_pulse_duration_names_the_field(self, mlp):
+        def value(duration):
+            return NeuralPulse(net=mlp, pulse_duration=duration)(jnp.asarray(1e-6))
+
+        with pytest.raises(TypeError, match=r"NeuralPulse\.pulse_duration"):
+            jax.jit(value)(jnp.asarray(10e-6))
+
 
 class TestSummedWithoutUserJit:
     """A Summed pulse simulates without an outer jit and under vmap."""
