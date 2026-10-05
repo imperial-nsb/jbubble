@@ -5,11 +5,15 @@ mkdocs.yml loads this file through the mkdocstrings `extensions` option.
 
 from __future__ import annotations
 
+import collections
 import importlib
 import inspect
 from typing import Any
 
 import griffe
+
+# The descriptor type of a namedtuple field, such as `BubblePreset.eom`.
+_TUPLEGETTER = type(collections.namedtuple("_Pair", "first").first)
 
 
 class DropValueTypeDocstrings(griffe.Extension):
@@ -67,6 +71,28 @@ class CrossReferenceBases(griffe.Extension):
         if len(bases) != len(cls.bases):
             return
         cls.bases = [base_name(base) for base in bases]
+
+
+class NamedTupleFields(griffe.Extension):
+    """Drop the value and docstring that inspection gives `NamedTuple` fields.
+
+    With `force_inspection: true`, each field of a `NamedTuple` class is a
+    descriptor, so the API reference would show the field `eom` with the value
+    `_tuplegetter(0, 'Alias for field number 0')` and the docstring "Alias for
+    field number 0". Without them, a field renders as it does with static
+    analysis, and the class docstring's `Attributes` section describes it.
+    """
+
+    def on_attribute_instance(
+        self,
+        *,
+        node: Any,
+        attr: griffe.Attribute,
+        **kwargs: Any,
+    ) -> None:
+        if isinstance(node, griffe.ObjectNode) and type(node.obj) is _TUPLEGETTER:
+            attr.value = None
+            attr.docstring = None
 
 
 def base_name(base: type) -> griffe.ExprName:

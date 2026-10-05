@@ -26,6 +26,8 @@ _spec.loader.exec_module(griffe_extensions)
 SOURCE = '''\
 """A package for the griffe extension tests."""
 
+from typing import NamedTuple
+
 import equinox as eqx
 
 from jbubble.bubble.property import Property
@@ -46,6 +48,13 @@ class Custom(Property):
 
 class Pair(tuple):
     """A tuple."""
+
+
+class Preset(NamedTuple):
+    """A named pair."""
+
+    model: Model
+    scale: float
 '''
 
 
@@ -94,3 +103,13 @@ def test_bases_become_names_with_public_paths(load):
         "Pair": ["tuple"],
     }
     assert all(isinstance(base, griffe.ExprName) for base in package["Model"].bases)
+
+
+def test_named_tuple_fields_lose_the_descriptor_value_and_docstring(load):
+    plain = load()
+    assert plain["Preset.model"].docstring.value == "Alias for field number 0"
+    assert "_tuplegetter" in str(plain["Preset.model"].value)
+    package = load(griffe_extensions.NamedTupleFields)
+    for field in ("model", "scale"):
+        assert package[f"Preset.{field}"].value is None
+        assert package[f"Preset.{field}"].docstring is None
