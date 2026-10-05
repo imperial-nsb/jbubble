@@ -70,7 +70,14 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax.sharding import SingleDeviceSharding
-from tqdm.auto import tqdm
+from tqdm import TqdmWarning
+
+# In a Jupyter kernel without ipywidgets, importing tqdm.auto warns that
+# IProgress isn't found and falls back to a text bar. The text bar works, so
+# don't tell every notebook that imports jbubble.utils to install ipywidgets.
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", TqdmWarning)
+    from tqdm.auto import tqdm
 
 PyTree = Any
 

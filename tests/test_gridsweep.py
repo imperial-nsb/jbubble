@@ -11,6 +11,7 @@ shuts down the thread pool.
 """
 
 import collections
+import json
 import math
 import os
 import subprocess
@@ -394,6 +395,56 @@ def test_progress_bar_counts_grid_points(monkeypatch, progress):
     for bar in bars:
         assert bar.disable is not progress
         assert bar.total == bar.n == gs.total_points
+
+
+# Runs in a child process that looks like a Jupyter kernel without ipywidgets
+# to tqdm.autonotebook, for the detection in both old and new tqdm releases.
+_IMPORT_IN_A_KERNEL_WITHOUT_IPYWIDGETS = """
+import json, sys, types, warnings
+
+class ZMQInteractiveShell:
+    config = {"IPKernelApp": {}}
+
+ipython = types.ModuleType("IPython")
+ipython.get_ipython = ZMQInteractiveShell
+sys.modules["IPython"] = ipython
+sys.modules["ipykernel.zmqshell"] = types.ModuleType("ipykernel.zmqshell")
+sys.modules["ipywidgets"] = None  # `import ipywidgets` raises ImportError
+
+from tqdm import TqdmWarning
+
+def tqdm_warnings(module):
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        __import__(module)
+    return [str(w.message) for w in caught if issubclass(w.category, TqdmWarning)]
+
+found = {"jbubble.utils": tqdm_warnings("jbubble.utils")}
+for name in ("tqdm.auto", "tqdm.autonotebook", "tqdm.notebook"):
+    sys.modules.pop(name, None)
+found["tqdm.auto"] = tqdm_warnings("tqdm.auto")
+print(json.dumps(found))
+"""
+
+
+def test_importing_in_a_notebook_without_ipywidgets_does_not_warn():
+    # Regression: importing jbubble.utils in a Jupyter kernel without
+    # ipywidgets printed tqdm's "IProgress not found" warning.
+    env = dict(os.environ, JAX_PLATFORMS="cpu")
+    proc = subprocess.run(
+        [sys.executable, "-c", _IMPORT_IN_A_KERNEL_WITHOUT_IPYWIDGETS],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert proc.returncode == 0, proc.stderr
+    found = json.loads(proc.stdout.splitlines()[-1])
+    assert found["tqdm.auto"], (
+        "tqdm.auto no longer warns in the fake kernel, so this test checks "
+        f"nothing; update the fake for this tqdm release.\n{proc.stderr}"
+    )
+    assert found["jbubble.utils"] == []
 
 
 def test_breaking_out_of_batches_stops_the_pool():
