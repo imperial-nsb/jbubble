@@ -1,17 +1,34 @@
+# Runs with prek, which `uv sync` installs from the dev group: enable the hooks
+# with `uv run prek install`. Classic pre-commit also reads this file. CI runs
+# the same hooks through j178/prek-action.
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.9
+    rev: v0.16.10 # keep in step with `ruff` in uv.lock
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md] # keep Markdown hard line breaks
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-toml
       - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=2048] # rejects files over 2 MB, such as large GIFs
       - id: debug-statements
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.12.23
+    hooks:
+      - id: uv-lock # fails if uv.lock is out of date with pyproject.toml
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.38.2
+    hooks:
+      - id: check-github-workflows
+      - id: check-dependabot
