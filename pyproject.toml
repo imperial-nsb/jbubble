@@ -35,8 +35,8 @@ classifiers = [
 # No upper bounds: a weekly CI job tests the newest releases instead.
 dependencies = [
     "jax>=0.8.1",
-    # diffrax 0.7.1 + optimistix 0.1.0 rejects every implicit (Kvaerno) step;
-    # 0.7.2 is the first release that supports optimistix 0.1.
+    # diffrax 0.7.0 and 0.7.1 paired with optimistix 0.1.0 reject every implicit
+    # (Kvaerno) step; 0.7.2 is the first release that supports optimistix 0.1.
     "diffrax>=0.7.2",
     # 0.13.3 crashed on scan-of-vmap of modules with default fields
     # (equinox#1172); 0.13.4 is also the first release tested with jax>=0.8.2.
