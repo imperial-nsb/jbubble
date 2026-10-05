@@ -696,6 +696,20 @@ class TestNeuralPulseConfiguration:
         want = mlp(jnp.atleast_1d(0.5)).squeeze()
         assert float(pulse._evaluate(t)) == pytest.approx(float(want), rel=1e-9)
 
+    def test_configuration_is_static(self, mlp):
+        pulse = NeuralPulse(
+            net=mlp, pulse_duration=jnp.asarray(10e-6), pressure_scale=jnp.asarray(1e5)
+        )
+        assert type(pulse.pulse_duration) is float
+        assert type(pulse.pressure_scale) is float
+        # A static field stays on both halves of a partition, while a leaf
+        # that isn't an array becomes None on the trainable half.
+        trainable, _ = eqx.partition(pulse, eqx.is_array)
+        assert trainable.pulse_duration == pulse.pulse_duration
+        assert trainable.pressure_scale == pulse.pressure_scale
+        n_net_arrays = len(jax.tree.leaves(eqx.filter(mlp, eqx.is_array)))
+        assert len(jax.tree.leaves(eqx.filter(pulse, eqx.is_array))) == n_net_arrays
+
 
 class TestSummedWithoutUserJit:
     """A Summed pulse simulates without an outer jit and under vmap."""
