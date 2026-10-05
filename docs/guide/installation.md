@@ -2,28 +2,54 @@
 
 ## Prerequisites
 
-jbubble requires Python 3.10+ and a working JAX installation. GPU support is optional but recommended for large parameter sweeps.
+jbubble requires Python 3.12 or later. pip and uv install JAX automatically as a dependency. GPU support is optional but recommended for large parameter sweeps.
 
-## Conda environment (recommended)
+## Install from PyPI
 
-The project ships a conda environment spec:
+Install jbubble with pip:
 
 ```bash
-conda env create -f environment.yml
-conda activate bubbles
+pip install jbubble
 ```
 
-All development and examples assume the `bubbles` environment is active.
+Or add it to a uv project:
 
-## Installing from source
+```bash
+uv add jbubble
+```
+
+## Optional extras
+
+| Extra | Installs | Needed for |
+|---|---|---|
+| `io` | `h5py` | HDF5 export and import with `jbubble.utils.io` |
+| `examples` | `matplotlib` | Plotting in the example scripts |
+
+To install jbubble with both extras, run the following command:
+
+```bash
+pip install "jbubble[io,examples]"
+```
+
+## Install in a conda environment
+
+To use jbubble from conda, create an environment with Python and pip, then install jbubble with pip:
+
+```bash
+conda create -n jbubble python=3.13 pip
+conda activate jbubble
+pip install "jbubble[io,examples]"
+```
+
+## Install from source
 
 ```bash
 git clone https://github.com/imperial-nsb/jbubble.git
 cd jbubble
-pip install -e ".[dev]"
+uv sync
 ```
 
-The `[dev]` extra installs testing and documentation dependencies.
+`uv sync` creates a virtual environment in `.venv/` with jbubble, both extras, and the development tools. For the full development setup, including a conda route, see the [contributing guide](https://github.com/imperial-nsb/jbubble/blob/main/CONTRIBUTING.md).
 
 ## Dependencies
 
@@ -31,9 +57,10 @@ The `[dev]` extra installs testing and documentation dependencies.
 |---|---|
 | `jax` | Numerical backend, autodiff, JIT, vmap |
 | `equinox` | PyTree-based neural networks and modules |
-| `diffrax` | Adaptive ODE solvers (Kvaerno5) |
+| `diffrax` | Adaptive ODE solvers (Dopri5 by default) |
+| `lineax` | Linear solves inside diffrax's implicit solvers |
 | `optax` | Optimisers for parameter fitting |
-| `h5py` | HDF5 export/import |
+| `h5py` | HDF5 export and import (optional, `io` extra) |
 
 ## Verifying the installation
 
@@ -59,7 +86,7 @@ Expected output (values are approximate):
 
 ```
 converged: True
-peak R/R0: 2.3
+peak R/R0: 1.6
 ```
 
 ## GPU / accelerator support
@@ -68,9 +95,10 @@ JAX automatically uses a GPU if one is available. No code changes are needed. Fo
 
 ## Building the documentation
 
+From a source checkout, install the `docs` dependency group and start the live preview:
+
 ```bash
-conda activate bubbles
-pip install mkdocs mkdocs-material mkdocstrings[python]
-mkdocs serve   # live-preview at http://127.0.0.1:8000
-mkdocs build   # static site in site/
+uv sync --group docs
+uv run mkdocs serve   # live-preview at http://127.0.0.1:8000
+uv run mkdocs build   # static site in site/
 ```

@@ -43,15 +43,20 @@ Developed by the [Noninvasive Surgery & Biopsy Laboratory](https://www.nsblab.or
 pip install jbubble
 ```
 
-For development:
+To include the optional extras for HDF5 export (`io`) and the example scripts
+(`examples`), run `pip install "jbubble[io,examples]"`.
+
+For development, use [uv](https://docs.astral.sh/uv/):
 
 ```bash
 git clone https://github.com/imperial-nsb/jbubble.git
 cd jbubble
-pip install -e ".[dev]"
+uv sync
 ```
 
-Requires Python &ge; 3.11. See the docs for more information.
+Requires Python 3.12 or later. For more options, see the
+[installation guide](https://imperial-nsb.github.io/jbubble/guide/installation/)
+and the [contributing guide](https://github.com/imperial-nsb/jbubble/blob/main/CONTRIBUTING.md).
 
 ## Quick start
 
