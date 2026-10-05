@@ -411,11 +411,12 @@ class SmoothMarmottantSurfaceTension(Property):
     Parameters
     ----------
     R_buckle_ratio : float or jax.Array
-        Buckling radius as a fraction of `R0` (dimensionless).
+        Buckling radius as a fraction of `R0` (dimensionless). Must be
+        positive.
     chi : float or Property
-        Shell elasticity [N/m].
+        Shell elasticity [N/m]. Must be positive.
     sigma_rupture : float or Property
-        Surface tension after rupture [N/m].
+        Surface tension after rupture [N/m]. Must be positive.
     smoothing : float or jax.Array
         Corner width $\varepsilon$ as a fraction of `sigma_rupture`
         (dimensionless). Must be positive. Default: `0.01`.
@@ -423,8 +424,12 @@ class SmoothMarmottantSurfaceTension(Property):
     Raises
     ------
     ValueError
-        If `smoothing` isn't positive. The constructor checks concrete
-        values only, and skips the check when `smoothing` is a JAX tracer.
+        If `R_buckle_ratio`, `chi`, `sigma_rupture`, or `smoothing` isn't
+        positive. The constructor checks concrete values only. It skips
+        the check for a value that's a JAX tracer, for example inside
+        `jax.jit` or `jax.grad`, or a state-dependent
+        [`Property`][jbubble.bubble.property.Property], so keep such values
+        in range yourself.
 
     Notes
     -----
@@ -467,12 +472,13 @@ class SmoothMarmottantSurfaceTension(Property):
     smoothing: ArrayLike = 0.01
 
     def __check_init__(self) -> None:
-        smoothing = _concrete_value(self.smoothing)
-        if smoothing is not None and not np.all(smoothing > 0.0):
-            raise ValueError(
-                "SmoothMarmottantSurfaceTension needs smoothing > 0, got "
-                f"{_format_values(smoothing)}."
-            )
+        for name in ("R_buckle_ratio", "chi", "sigma_rupture", "smoothing"):
+            value = _concrete_value(getattr(self, name))
+            if value is not None and not np.all(value > 0.0):
+                raise ValueError(
+                    f"SmoothMarmottantSurfaceTension needs {name} > 0, got "
+                    f"{_format_values(value)}."
+                )
 
     def __call__(self, state: BubbleState) -> jax.Array:
         R_b = self.R_buckle_ratio * state.R0

@@ -501,6 +501,34 @@ class TestSmoothMarmottantSurfaceTension:
                 smoothing=smoothing,
             )
 
+    @pytest.mark.parametrize(
+        "name,value",
+        [
+            ("R_buckle_ratio", 0.0),
+            ("R_buckle_ratio", -0.98),
+            ("chi", 0.0),
+            ("chi", -0.55),
+            ("sigma_rupture", 0.0),
+            ("sigma_rupture", -SIGMA_R),
+        ],
+    )
+    def test_non_positive_parameter_raises(self, name, value):
+        kw = dict(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=SIGMA_R)
+        kw[name] = value
+        with pytest.raises(ValueError, match=f"{name} > 0"):
+            SmoothMarmottantSurfaceTension(**kw)
+
+    def test_batched_parameters_are_checked(self):
+        SmoothMarmottantSurfaceTension(
+            R_buckle_ratio=0.98, chi=jnp.asarray([0.3, 0.55]), sigma_rupture=SIGMA_R
+        )
+        with pytest.raises(ValueError, match="chi > 0"):
+            SmoothMarmottantSurfaceTension(
+                R_buckle_ratio=0.98,
+                chi=jnp.asarray([0.3, -0.55]),
+                sigma_rupture=SIGMA_R,
+            )
+
     def test_traced_smoothing_skips_the_check(self):
         def sigma(smoothing):
             st = SmoothMarmottantSurfaceTension(
