@@ -146,16 +146,30 @@ the newest releases.
    uv run zensical serve
    ```
 
-4. Before you open a pull request, build the site the same way as CI:
+4. Before you open a pull request, write the gallery as in step 2, and then
+   build the site in strict mode:
 
    ```bash
    uv run zensical build --clean --strict
    ```
 
    With `--strict`, the build fails on broken links and cross-references.
-   It still passes when griffe warns about a docstring, so check the output
-   for lines that start with `griffe:`. Keep `--clean`: a cached build
-   doesn't repeat the warnings.
+   It still passes in two cases that CI rejects, so check for them
+   yourself:
+
+   - griffe warns about a docstring. Look for lines that start with
+     `griffe:` in the output. Keep `--clean`: a cached build doesn't repeat
+     the warnings.
+   - A nav entry names a page that doesn't exist, such as the gallery
+     before you run step 2. The built site then links to the Markdown file.
+     To list those links, run this command:
+
+     ```bash
+     grep -rhoE 'href="[^":]*\.md(#[^"]*)?"' site --include='*.html'
+     ```
+
+   For a quick check of the pages alone, the gallery from
+   `scripts/build_examples.py --no-execute` is enough.
 
 Each example is a [jupytext](https://jupytext.readthedocs.io/) percent-format
 script: start each code cell with `# %%` and each Markdown cell with
