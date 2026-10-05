@@ -5,11 +5,11 @@
   <a href="https://github.com/imperial-nsb/jbubble/actions/workflows/ci.yml"><img src="https://github.com/imperial-nsb/jbubble/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://pypi.org/project/jbubble/"><img src="https://badge.fury.io/py/jbubble.svg" alt="PyPI"></a>
   <a href="https://pypi.org/project/jbubble/"><img src="https://img.shields.io/pypi/pyversions/jbubble.svg" alt="Python"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://github.com/imperial-nsb/jbubble/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
 > [!WARNING]
-> **Alpha release.** jbubble is under active development. APIs may change without deprecation. Please reach out if you'd like to use or contribute to the project!
+> **Beta release.** jbubble is under active development, and APIs may change between minor releases without deprecation. If you'd like to use or contribute to jbubble, get in touch by [opening an issue](https://github.com/imperial-nsb/jbubble/issues).
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/bubble_coating_comparison.png" alt="Comparison of R(t) curves, with and without a lipid coating." width="100%">
@@ -116,7 +116,7 @@ combinations are valid and differentiated through automatically via `jax.grad`.
 
 ## Key capabilities
 
-- **Composable physics** — Mix and match 6 equations of motion (Rayleigh-Plesset through Gilmore), 2 gas models, 3 shell models, and 4 medium models. All combinations work automatically.
+- **Composable physics** — Mix and match 4 equations of motion (Rayleigh-Plesset through Gilmore), 2 gas models, 3 shell models, and 4 medium models. All combinations work automatically.
 
 - **Batch parameter sweeps** — Run thousands of simulations in parallel with `GridSweep`, which uses `jax.vmap` under the hood:
   ```python
@@ -138,22 +138,22 @@ combinations are valid and differentiated through automatically via `jax.grad`.
 
 ## Examples
 
-The [`examples/`](examples/) directory contains 12 self-contained scripts:
+The [`examples/`](https://github.com/imperial-nsb/jbubble/tree/main/examples) directory contains 12 self-contained scripts:
 
 | # | Script | Description |
 |---|--------|-------------|
-| 00 | [Presets](examples/00_presets.py) | Quickest start — pick a preset and run |
-| 01 | [Basic simulation](examples/01_basic_simulation.py) | Assemble an EoM from components manually |
-| 02 | [Pulse algebra](examples/02_pulse_algebra.py) | Add, scale, and window pulse waveforms |
-| 03 | [Shell models](examples/03_shell_models.py) | Compare no-shell, lipid, and thick-shell coatings |
-| 04 | [Batch sweeps](examples/04_batch_sweeps.py) | `GridSweep` + `vmap` over parameter grids |
-| 05 | [Parameter fitting](examples/05_fitting.py) | Gradient-based estimation of shell elasticity |
-| 06 | [JIT timing](examples/06_jit_timing.py) | Benchmark JIT compilation vs steady-state throughput |
-| 07 | [Cavitation regimes](examples/07_cavitation_regimes.py) | Stable vs inertial cavitation physics |
-| 08 | [Acoustic emissions](examples/08_acoustic_emissions.py) | Monopole and quasi-acoustic radiated pressure |
-| 09 | [Custom pulse shapes](examples/09_custom_pulse_shapes.py) | Subclass `FourierPulseShape` for custom waveforms |
-| 10 | [Envelopes](examples/10_envelopes.py) | Envelope types and their gradient compatibility |
-| 11 | [Gradient resonance](examples/11_gradient_resonance.py) | 2D sweep + gradient descent to resonance peak |
+| 00 | [Presets](https://github.com/imperial-nsb/jbubble/blob/main/examples/00_presets.py) | Quickest start — pick a preset and run |
+| 01 | [Basic simulation](https://github.com/imperial-nsb/jbubble/blob/main/examples/01_basic_simulation.py) | Assemble an EoM from components manually |
+| 02 | [Pulse algebra](https://github.com/imperial-nsb/jbubble/blob/main/examples/02_pulse_algebra.py) | Add, scale, and window pulse waveforms |
+| 03 | [Shell models](https://github.com/imperial-nsb/jbubble/blob/main/examples/03_shell_models.py) | Compare no-shell, lipid, and thick-shell coatings |
+| 04 | [Batch sweeps](https://github.com/imperial-nsb/jbubble/blob/main/examples/04_batch_sweeps.py) | `GridSweep` + `vmap` over parameter grids |
+| 05 | [Parameter fitting](https://github.com/imperial-nsb/jbubble/blob/main/examples/05_fitting.py) | Gradient-based estimation of shell elasticity |
+| 06 | [JIT timing](https://github.com/imperial-nsb/jbubble/blob/main/examples/06_jit_timing.py) | Benchmark JIT compilation vs steady-state throughput |
+| 07 | [Cavitation regimes](https://github.com/imperial-nsb/jbubble/blob/main/examples/07_cavitation_regimes.py) | Stable vs inertial cavitation physics |
+| 08 | [Acoustic emissions](https://github.com/imperial-nsb/jbubble/blob/main/examples/08_acoustic_emissions.py) | Monopole and quasi-acoustic radiated pressure |
+| 09 | [Custom pulse shapes](https://github.com/imperial-nsb/jbubble/blob/main/examples/09_custom_pulse_shapes.py) | Subclass `FourierPulseShape` for custom waveforms |
+| 10 | [Envelopes](https://github.com/imperial-nsb/jbubble/blob/main/examples/10_envelopes.py) | Envelope types and their gradient compatibility |
+| 11 | [Gradient resonance](https://github.com/imperial-nsb/jbubble/blob/main/examples/11_gradient_resonance.py) | 2D sweep + gradient descent to resonance peak |
 
 ## Documentation
 
@@ -166,9 +166,9 @@ Full documentation is available at **[imperial-nsb.github.io/jbubble](https://im
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome. To get started, see the [contributing guide](https://github.com/imperial-nsb/jbubble/blob/main/CONTRIBUTING.md).
 
 ## License
 
 MIT License. Copyright (c) 2026 Noninvasive Surgery & Biopsy Laboratory.
-See [LICENSE](LICENSE) for details.
+See [LICENSE](https://github.com/imperial-nsb/jbubble/blob/main/LICENSE) for details.
