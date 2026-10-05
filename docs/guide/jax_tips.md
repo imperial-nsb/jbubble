@@ -112,6 +112,7 @@ results = jax.jit(batched_simulate)(batched_eom)
 ### Minimal example
 
 ```python
+import jax.numpy as jnp
 import optax
 from jbubble import run_simulation, fit_parameters, SaveSpec
 from jbubble.bubble.eom import KellerMiksis
@@ -145,7 +146,7 @@ def make_model(kappa_s):
 
 fit_result = fit_parameters(
     make_model=make_model,
-    params0=1e-9,  # initial guess for kappa_s [N·s/m]
+    params0=jnp.asarray(1e-9),  # initial guess for kappa_s [N·s/m]
     save_spec=SaveSpec(500),
     t_max=10e-6,
     loss_fn=lambda result: normalised_mse_radius(
@@ -162,12 +163,12 @@ print("Final loss:", fit_result.loss_history[-1])
 
 ### Fitting multiple parameters jointly
 
-`params0` can be any JAX-compatible PyTree. The `make_model` factory receives the same structure:
+`params0` can be any JAX-compatible PyTree. The `make_model` factory receives the same structure. Only JAX-array leaves are optimised; Python `int` and `float` leaves stay fixed, so wrap each value to fit in `jnp.asarray`:
 
 ```python
 import jax.numpy as jnp
 
-params0 = {"kappa_s": 1e-9, "chi": 0.5}
+params0 = {"kappa_s": jnp.asarray(1e-9), "chi": jnp.asarray(0.5)}
 
 def make_model(params):
     sigma = GompertzSurfaceTension(

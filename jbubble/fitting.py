@@ -78,8 +78,10 @@ def fit_parameters(
     make_model : callable
         `params -> (EquationOfMotion, Pulse)`. Must be JAX-traceable.
     params0 : PyTree
-        Initial parameter values: any JAX-compatible pytree (scalar,
-        array, dict, tuple, or `eqx.Module`).
+        Initial parameter values: any JAX-compatible pytree, such as a
+        scalar array, a dict, a tuple, or an `eqx.Module`. Only JAX-array
+        leaves are optimised; Python `int` and `float` leaves stay fixed,
+        so wrap each value to fit in `jnp.asarray`.
     save_spec : SaveSpec
         Output sampling specification.
     t_max : float, optional
@@ -127,14 +129,14 @@ def fit_parameters(
     # Single parameter as a dict
     fit_parameters(
         make_model=lambda p: (make_eom(p), my_pulse),
-        params0={"kappa_s": 2.4e-9},
+        params0={"kappa_s": jnp.asarray(2.4e-9)},
         ...,
     )
 
     # Joint frequency and radius optimisation
     fit_parameters(
         make_model=lambda p: (make_eom(p["R0"]), make_pulse(p["freq"])),
-        params0={"R0": 5e-6, "freq": 1e6},
+        params0={"R0": jnp.asarray(5e-6), "freq": jnp.asarray(1e6)},
         ...,
     )
 
@@ -145,7 +147,9 @@ def fit_parameters(
             p.pulse,
         ),
         params0=LearnedParams(
-            sigma=NeuralProperty(...), kappa_s=2.4e-9, pulse=NeuralPulse(...)
+            sigma=NeuralProperty(...),
+            kappa_s=jnp.asarray(2.4e-9),
+            pulse=NeuralPulse(...),
         ),
         ...,
     )
