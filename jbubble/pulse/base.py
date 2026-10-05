@@ -487,8 +487,12 @@ class Summed(Pulse):
         return jnp.sort(jnp.concatenate(edges))
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
-        # Each p(t) includes the child's own envelope.
-        return jnp.sum(jnp.array([p(t) for p in self.pulses]))
+        # Each p(t) includes the child's own envelope. Sum over the children
+        # only, so an array of times gives one value per time. Keep
+        # jnp.array: under jax.vmap, jnp.stack rounds some sums of three or
+        # more children differently in the last bit.
+        values = jnp.broadcast_arrays(*(p(t) for p in self.pulses))
+        return jnp.sum(jnp.array(values), axis=0)
 
 
 def _operand(value: object) -> float | jax.Array | None:

@@ -831,6 +831,40 @@ class TestTransparentSum:
         want = jax.vmap(tone_early)(TS_GRID) + jax.vmap(tone_late)(TS_GRID)
         assert float(jnp.max(jnp.abs(got - want))) <= 1e-9
 
+    def test_an_array_of_times_gives_the_sum_at_each_time(self, tone_early, tone_late):
+        got = (tone_early + tone_late)(TS_GRID)
+        assert got.shape == TS_GRID.shape
+        want = tone_early(TS_GRID) + tone_late(TS_GRID)
+        assert float(jnp.max(jnp.abs(got - want))) <= 1e-9
+
+    def test_an_array_of_times_gives_the_windowed_sum_at_each_time(
+        self, tone_early, tone_late
+    ):
+        summed = tone_early + tone_late
+        got = summed.windowed(HannEnvelope())(TS_GRID)
+        assert got.shape == TS_GRID.shape
+        hann = HannEnvelope()(TS_GRID - summed.t_start, summed.duration)
+        want = hann * (tone_early(TS_GRID) + tone_late(TS_GRID))
+        assert float(jnp.max(jnp.abs(got - want))) <= 1e-9
+
+    @pytest.mark.parametrize(
+        "build",
+        [
+            lambda a, b, c: a + b + c,
+            lambda a, b, c: 0.5 * (a + b) - 1000.0,
+            lambda a, b, c: (a + b).windowed(HannEnvelope()) + c,
+        ],
+        ids=["three children", "scaled offset sum", "windowed sum plus a pulse"],
+    )
+    def test_an_array_of_times_matches_vmap(self, tone_early, tone_late, build):
+        later = ToneBurst(
+            freq=1e6, pressure=50e3, shape=Sine(), cycle_num=4, initial_time=12e-6
+        )
+        pulse = build(tone_early, tone_late, later)
+        got = pulse(TS_GRID)
+        assert got.shape == TS_GRID.shape
+        assert float(jnp.max(jnp.abs(got - jax.vmap(pulse)(TS_GRID)))) <= 1e-9
+
     @pytest.mark.parametrize("delay", [10e-6, 100e-6, 1e-3])
     def test_late_child_keeps_all_its_energy(self, tone_early, delay):
         late = ToneBurst(
