@@ -78,6 +78,7 @@ def _simulate(
     state0: Any = None,
     t_max: ArrayLike | None = None,
     config: SolverConfig | None = None,
+    adjoint: diffrax.AbstractAdjoint | None = None,
     progress: bool = False,
 ) -> SimulationResult:
     """Solve and post-process, without the non-convergence warning.
@@ -93,6 +94,7 @@ def _simulate(
         t_max=t_max,
         save_spec=save_spec,
         config=config,
+        adjoint=adjoint,
         progress=progress,
     )
 
@@ -117,6 +119,7 @@ def run_simulation(
     state0: Any = None,
     t_max: ArrayLike | None = None,
     config: SolverConfig | None = None,
+    adjoint: diffrax.AbstractAdjoint | None = None,
     progress: bool = False,
 ) -> SimulationResult:
     """Run a simulation and return the results in SI units.
@@ -150,6 +153,10 @@ def run_simulation(
     config : SolverConfig, optional
         ODE solver settings. `None` uses
         [`SolverConfig()`][jbubble.solver.SolverConfig].
+    adjoint : diffrax.AbstractAdjoint, optional
+        How `jax.grad` differentiates through the solve. `None` uses
+        `diffrax.RecursiveCheckpointAdjoint()`. Pass `diffrax.ForwardMode()`
+        to use `jax.jacfwd`.
     progress : bool
         Whether to show a text progress meter. Default: `False`.
 
@@ -172,6 +179,7 @@ def run_simulation(
         state0=state0,
         t_max=t_max,
         config=config,
+        adjoint=adjoint,
         progress=progress,
     )
 

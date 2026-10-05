@@ -2,6 +2,8 @@
 
 import warnings
 
+import diffrax
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 import pytest
@@ -144,3 +146,19 @@ class TestInitialState:
         assert float(result.state.P_gas0[0]) == pytest.approx(
             float(expected.P_gas0), rel=1e-15
         )
+
+
+class TestAdjoint:
+    def test_forward_mode_jacobian_matches_reverse_mode(self, simple_eom, sine_pulse):
+        def peak(mu, adjoint=None):
+            eom = eqx.tree_at(lambda e: e.medium.mu.val, simple_eom, mu)
+            result = run_simulation(
+                eom, sine_pulse, save_spec=SaveSpec(200), t_max=5e-6, adjoint=adjoint
+            )
+            return jnp.max(result.radius)
+
+        mu = jnp.asarray(1e-3)
+        g_forward = jax.jit(jax.jacfwd(lambda m: peak(m, diffrax.ForwardMode())))(mu)
+        g_reverse = jax.jit(jax.grad(peak))(mu)
+        assert bool(jnp.isfinite(g_forward)) and float(g_forward) < 0.0
+        assert jnp.allclose(g_forward, g_reverse, rtol=1e-6)
