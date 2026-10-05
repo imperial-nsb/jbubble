@@ -233,13 +233,16 @@ class ThickShell(ShellModel):
       [`initial_state`][jbubble.bubble.eom.EquationOfMotion.initial_state]
       balances the Laplace pressure with the gas pressure.
 
-    The viscous term is identical to Church's
+    In Church's model, as quoted by Tu et al. (2009, Eqs. 2 and 3),
+    $R_1$ is the inner radius and $R_{e1}$ is the unstrained inner
+    radius. The viscous term is identical to Church's
     $4 \mu_s V_s \dot{R}_1 / (R_1 R^3)$, written with the outer radius.
-    The elastic term agrees with Church's
-    $4 G_s (V_s / R^3)(1 - R_{1,0}/R_1)$, quoted by Tu et al. (2009,
-    Eq. 2), to first order in the strain. Here $R_1$ is the inner radius
-    and $R_{1,0} = R_0 - d_s$. The model needs $R^3 > V_s$, that is, a
-    positive inner radius.
+    The elastic term agrees to first order in the strain with Church's
+    $4 G_s (V_s / R^3)(1 - R_{e1}/R_1)$ if you set $R_{e1} = R_0 - d_s$,
+    which leaves the shell unstrained at $R_0$, as in this class.
+    Church's own $R_{e1}$ is slightly larger, because Church's shell is
+    strained at equilibrium so that it carries the Laplace pressure. The
+    model needs $R^3 > V_s$, that is, a positive inner radius.
 
     References
     ----------
@@ -435,16 +438,20 @@ class SmoothMarmottantSurfaceTension(Property):
     -----
     The default `smoothing = 0.01` keeps the law close to the piecewise
     one without stiffening the ODE. Keller-Miksis benchmarks with
-    `R_buckle_ratio = 0.98`, `R0` from 1 to 3 µm, 1 to 3 MHz, and 25 kPa
-    to 1 MPa show that, at the default:
+    `R_buckle_ratio = 0.98`, $\chi$ from 0.1 to 1.5 N/m, `R0` from 1 to
+    3 µm, 1 to 3 MHz, and 25 kPa to 1 MPa show that, at the default:
 
-    - The radius curve differs from the piecewise law's by about as much
-      as the piecewise law's own error at the default solver tolerances.
+    - The median root-mean-square difference between the radius curves
+      of the two laws is of order $10^{-5} R_0$, about the size of the
+      piecewise law's own error at the default solver tolerances. At
+      50 kPa and below, where the piecewise law's own error is smallest,
+      the smoothing error dominates.
     - The derivative of the peak radius with respect to $\chi$ has the
       same sign as the piecewise law's in every case tested.
     - Fitting $\chi$ to radius curves from the piecewise law at 50 kPa
       recovers it to within 0.1%.
-    - The solver takes no more steps than it does for the piecewise law.
+    - The solver takes about as many steps as it does for the piecewise
+      law, with a median ratio between 0.92 and 1.0.
 
     The smoothing biases the result when the bubble starts near a corner,
     that is, when $\sigma_0 = \sigma(R_0)$ of the piecewise law lies within
