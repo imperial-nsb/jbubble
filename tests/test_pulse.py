@@ -671,6 +671,32 @@ class TestSampledPulseWindow:
         assert float(got) == pytest.approx(100e3, rel=1e-6)
 
 
+class TestNeuralPulseConfiguration:
+    """NeuralPulse normalises from initial_time and keeps its config static."""
+
+    @pytest.fixture
+    def mlp(self):
+        return eqx.nn.MLP(
+            in_size=1, out_size=1, width_size=8, depth=2, key=jax.random.PRNGKey(1)
+        )
+
+    def test_delay_shifts_the_waveform(self, mlp):
+        base = NeuralPulse(net=mlp, pulse_duration=10e-6, pressure_scale=100e3)
+        delayed = NeuralPulse(
+            net=mlp, pulse_duration=10e-6, pressure_scale=100e3, initial_time=4e-6
+        )
+        for t in (1e-6, 5e-6, 9e-6):
+            assert float(delayed(jnp.asarray(t + 4e-6))) == pytest.approx(
+                float(base(jnp.asarray(t))), rel=1e-9
+            )
+
+    def test_network_input_is_normalised_from_initial_time(self, mlp):
+        pulse = NeuralPulse(net=mlp, pulse_duration=10e-6, initial_time=4e-6)
+        t = jnp.asarray(9e-6)
+        want = mlp(jnp.atleast_1d(0.5)).squeeze()
+        assert float(pulse._evaluate(t)) == pytest.approx(float(want), rel=1e-9)
+
+
 class TestSummedWithoutUserJit:
     """A Summed pulse simulates without an outer jit and under vmap."""
 
