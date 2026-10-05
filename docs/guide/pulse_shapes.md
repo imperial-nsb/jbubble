@@ -145,7 +145,7 @@ pulse = NeuralPulse(
 )
 ```
 
-The network receives the normalised time `t / pulse_duration` as a one-element array, and `pressure_scale` scales its output to the driving pressure. Because it is an Equinox module, the network weights are differentiable and can be optimised via `fit_parameters`.
+The network receives the normalised time `(t - initial_time) / pulse_duration` as a one-element array, and `pressure_scale` scales its output to the driving pressure. Because it is an Equinox module, the network weights are differentiable and can be optimised via `fit_parameters`.
 
 ---
 
