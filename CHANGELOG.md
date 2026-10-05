@@ -31,7 +31,13 @@ Installation:
 Models:
 
 - `LeightonTube`, `SphericalConfinement`, and `ConfinedBubbleState` are
-  removed, with no replacement in this release.
+  removed, with no replacement in this release, and so are the
+  `SimulationResult.has_vessel`, `vessel_radius`, and `vessel_velocity`
+  accessors.
+- The module-level type variable `jbubble.bubble.eom.StateType` is removed.
+  `EquationOfMotion` declares its state type as a type parameter instead, so
+  `EquationOfMotion[MyState]` still works. To annotate generic code of your
+  own, declare your own type variable.
 - `ThickShell`, `KelvinVoigtMedium`, `PowerLawMedium`, and
   `GompertzSurfaceTension` now follow their published equations, so they give
   different results. Rerun simulations and refit parameters that use them.
@@ -129,7 +135,7 @@ Fitting:
   `workers`, `devices`, and `num_batches` attributes.
 - `jbubble.fitting.Parameter`, which fits a value on a scaled coordinate with
   optional bounds or a fixed value, so one learning rate suits every
-  parameter.
+  parameter. As in SciPy, a bound of `-inf` or `inf` means no bound.
 - `jbubble.fitting.unwrap`, which replaces each `Parameter` in a pytree with
   its physical value, for your own training loops.
 - The `conditions=` argument to `fit_parameters`, which fits shared
@@ -233,8 +239,11 @@ Fitting:
 
 ### Removed
 
-- The confinement models `LeightonTube` and `SphericalConfinement`, and
-  `ConfinedBubbleState`.
+- The confinement models `LeightonTube` and `SphericalConfinement`,
+  `ConfinedBubbleState`, and the `SimulationResult.has_vessel`,
+  `vessel_radius`, and `vessel_velocity` accessors.
+- `jbubble.bubble.eom.StateType`. `EquationOfMotion` declares its state type
+  as a type parameter.
 - Support for Python 3.11.
 - The `chex` dependency, and h5py as a core dependency.
 - The `dev` and `docs` extras, replaced by dependency groups.
@@ -276,8 +285,14 @@ Fitting:
   samples that start after 0 are no longer cut off early.
 - `NeuralPulse` normalises time as `(t - initial_time) / pulse_duration`, so
   `initial_time` delays the waveform instead of changing it.
-- `export_hdf5` accepts NumPy and JAX scalar metadata, and writes nothing if
-  the metadata can't be serialised.
+- `export_hdf5` accepts NumPy and JAX scalar metadata. When it can't save a
+  value, such as metadata that isn't JSON-serialisable or a dict passed as an
+  array, it raises without creating the file or changing an existing one.
+- `ExponentialSweep` gives a constant tone, not NaN, when `freq_end` equals
+  `freq_start`, and its gradients there are finite.
+- `fit_parameters` raises `TypeError` for `adjoint=diffrax.ForwardMode()`
+  instead of failing inside JAX. It differentiates in reverse mode, which
+  `ForwardMode` doesn't support.
 - `fit_parameters` no longer compiles twice for a weakly typed initial array.
 
 ## [0.1.1] - 2026-04-09
