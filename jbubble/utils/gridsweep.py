@@ -235,11 +235,14 @@ class GridSweep:
         (Unicode code-point order, so uppercase names sort before lowercase
         ones).
     batch_size : int
-        Number of grid points in each batch that
-        [`batches`][jbubble.utils.gridsweep.GridSweep.batches] yields.
-        `GridSweep` rounds it up to a multiple of `workers`, so each
-        worker evaluates `ceil(batch_size / workers)` points per call.
-        Default: `512`.
+        Target number of grid points in each batch that
+        [`batches`][jbubble.utils.gridsweep.GridSweep.batches] yields. A
+        batch holds one chunk per worker, and each worker evaluates
+        `ceil(min(batch_size, total_points) / workers)` points per call.
+        The batch size that `GridSweep` uses, in the `batch_size`
+        attribute, is therefore at least `min(batch_size, total_points)`
+        and less than that plus `workers`, and a grid with at most
+        `batch_size` points comes in one batch. Default: `512`.
     progress : bool
         Whether to show a `tqdm` progress bar during iteration.
         Default: `True`.
@@ -320,11 +323,12 @@ class GridSweep:
       on `workers` or `devices`: a sweep is bitwise identical to a serial
       sweep (`workers=1`) with the same `per_worker`. `per_worker` is
       `ceil(min(batch_size, total_points) / workers)`, so by default it
-      depends on the core count and the grid size. A different chunk size compiles a different program, which
-      can shift saved trajectories near violent collapses by more than
-      the solver tolerances. To get the same chunks on another machine,
-      pass `workers` and `batch_size` explicitly. A different CPU or JAX
-      version can still change the results slightly.
+      depends on the core count and the grid size. A different chunk size
+      compiles a different program, which can shift saved trajectories
+      near violent collapses by more than the solver tolerances. To get
+      the same chunks on another machine, pass `workers` and `batch_size`
+      explicitly. A different CPU or JAX version can still change the
+      results slightly.
     - **Stopping early.** If you stop iterating over
       [`batches`][jbubble.utils.gridsweep.GridSweep.batches] early, for
       example with `break`, an exception, or Ctrl+C, `GridSweep` cancels
@@ -340,17 +344,24 @@ class GridSweep:
       `jax.Array` arguments of a `jax.debug.callback`; convert them with
       `np.asarray` first. Such an operation needs a free computation slot
       on the device, so it's slow, and it can deadlock if other JAX
-      computations in the process fill the slots.
-    - **Known issue.** From JAX 0.11.1, XLA on CPU can deadlock when more
-      large FFTs inside a loop run at the same time than XLA has threads
-      in its pool
+      computations in the process fill the slots. Worker threads don't
+      inherit JAX settings that a `with` block sets for the calling thread
+      only, such as `jax.enable_x64(...)` or `jax.debug_nans(...)`, so
+      with more than one worker, the chunks run without them. Set them
+      with `jax.config.update` instead.
+    - **Known issue.** From JAX 0.11.1, XLA on CPU can deadlock when at
+      least as many large FFTs inside a loop run at the same time as XLA
+      has threads in its pool
       ([jax-ml/jax#41265](https://github.com/jax-ml/jax/issues/41265)),
       and chunks that run at the same time add to that count. If `fn` runs
       FFTs inside the ODE solve and the sweep stops making progress, set
       `XLA_FLAGS=--xla_cpu_multi_thread_eigen=false` before you import
-      JAX, as the issue suggests; each FFT then runs on one thread. Fewer
-      `workers` also means fewer FFTs in flight, but that doesn't help when
-      a single chunk runs enough FFTs at the same time.
+      JAX, as the issue suggests; each FFT then runs on one thread. To
+      keep FFTs multithreaded, use the issue's other workaround: before
+      you import JAX, set `PJRT_NPROC` to more than the number of FFTs in
+      flight, which gives the pool more threads. Fewer `workers` also
+      means fewer FFTs in flight, but that doesn't help when a single
+      chunk runs enough FFTs at the same time.
 
     Examples
     --------
