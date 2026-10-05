@@ -118,28 +118,49 @@ class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
         """
         return self.gas(state) - self.shell(state) - self.medium(state)
 
-    def initial_state(self) -> BubbleState:
-        r"""Return the default initial state: equilibrium radius, zero velocity.
+    def initial_state(
+        self,
+        *,
+        R: ArrayLike | None = None,
+        R_dot: ArrayLike | None = None,
+    ) -> BubbleState:
+        r"""Return an initial state seeded with the equilibrium configuration.
 
-        Seeds `R0` and the Laplace-equilibrium gas pressure into the state:
+        By default the bubble starts at rest at its equilibrium radius. Seeds
+        `R0` and the Laplace-equilibrium gas pressure into the state:
 
         $$
         P_{\text{gas},0} = P_\text{amb} + \frac{2\sigma(R_0)}{R_0}
         $$
 
+        Pass `R` or `R_dot` to start away from equilibrium, for example
+        `eom.initial_state(R=1.2 * eom.R0)` for a bubble released from rest
+        at 1.2 times its equilibrium radius. `R0` and `P_gas0` stay at their
+        equilibrium values, so the gas pressure at `R` follows the gas law.
+
         Override this method for coupled systems with a larger state vector.
+        An override must accept the same keyword arguments.
+
+        Parameters
+        ----------
+        R : float or jax.Array, optional
+            Initial radius [m]. `None` uses `R0`.
+        R_dot : float or jax.Array, optional
+            Initial wall velocity [m/s]. `None` uses `0`.
 
         Returns
         -------
         BubbleState
-            State with `R = R0`, `R_dot = 0`, `R0`, and `P_gas0` set.
+            State with `R`, `R_dot`, `R0`, and `P_gas0` set.
         """
         R0 = jnp.asarray(self.R0)
         P_gas0 = (
             jnp.asarray(self.P_amb)
             + 2.0 * self.shell.sigma(BubbleState(R=R0, R0=R0)) / R0
         )
-        return BubbleState(R=R0, R0=R0, P_gas0=P_gas0)
+        R_init = R0 if R is None else jnp.asarray(R)
+        R_dot_init = jnp.zeros_like(R0) if R_dot is None else jnp.asarray(R_dot)
+        return BubbleState(R=R_init, R_dot=R_dot_init, R0=R0, P_gas0=P_gas0)
 
     @abc.abstractmethod
     def __call__(

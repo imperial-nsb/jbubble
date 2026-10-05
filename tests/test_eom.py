@@ -59,6 +59,20 @@ class TestInitialState:
         expected = P_AMB + 2.0 * SIGMA / R0
         assert float(s.P_gas0) == pytest.approx(expected, rel=1e-8)
 
+    def test_keywords_start_away_from_equilibrium(self):
+        eom = RayleighPlesset(**_common_args())
+        s = eom.initial_state(R=1.2 * R0, R_dot=-0.5)
+        equilibrium = eom.initial_state()
+        assert float(s.R) == 1.2 * R0
+        assert float(s.R_dot) == -0.5
+        assert float(s.R0) == float(equilibrium.R0)
+        assert float(s.P_gas0) == float(equilibrium.P_gas0)
+
+    def test_keywords_are_traceable(self):
+        eom = RayleighPlesset(**_common_args())
+        R = jax.jit(lambda r: eom.initial_state(R=r).R)(jnp.asarray(3e-6))
+        assert float(R) == 3e-6
+
 
 class TestPL:
     def test_p_L_at_equilibrium(self):
