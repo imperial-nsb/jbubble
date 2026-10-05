@@ -24,7 +24,9 @@ from jbubble.utils.presets import free_bubble, lipid_bubble, thick_shell_bubble
 
 ## GridSweep
 
-Memory-efficient batched Cartesian-product parameter sweeps.
+Batched Cartesian-product parameter sweeps. `GridSweep` runs chunks of the grid
+in parallel on worker threads, one per CPU core by default, and returns NumPy
+arrays in grid order.
 
 ```python
 from jbubble.utils.gridsweep import GridSweep
@@ -61,7 +63,7 @@ sweep = GridSweep(
     batch_size=256,
 )
 
-grid = sweep.run()  # shape (20, 4)
+grid = sweep.run()  # NumPy array of shape (20, 4)
 print(sweep.grid_shape)  # (20, 4)
 print(sweep.total_points)  # 80
 ```
