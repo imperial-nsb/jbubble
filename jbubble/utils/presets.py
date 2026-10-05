@@ -11,11 +11,15 @@ The available presets are:
   polytropic gas bubble in a Newtonian liquid. The simplest case, and a
   good starting point for sensitivity studies.
 - [`lipid_bubble`][jbubble.utils.presets.lipid_bubble]: a thin lipid
-  monolayer shell with smooth Gompertz surface tension. Representative of
-  clinical ultrasound contrast agents (UCAs) such as SonoVue or Definity.
+  monolayer shell with the smoothed Marmottant surface tension law and the
+  SonoVue parameters of Gümmer et al. (2021). Representative of clinical
+  ultrasound contrast agents (UCAs) such as SonoVue.
 - [`thick_shell_bubble`][jbubble.utils.presets.thick_shell_bubble]: a
   thick viscoelastic polymer shell (Church 1995 model). Representative of
   polymer-shelled agents such as Optison.
+
+All three presets share the same liquid: water at about 20 °C, with
+properties from the NIST Chemistry WebBook.
 
 Examples
 --------
@@ -37,7 +41,12 @@ from typing import NamedTuple
 from ..bubble.eom import EquationOfMotion, KellerMiksis
 from ..bubble.gas import PolytropicGas
 from ..bubble.medium import NewtonianMedium
-from ..bubble.shell import GompertzSurfaceTension, LipidShell, NoShell, ThickShell
+from ..bubble.shell import (
+    LipidShell,
+    NoShell,
+    SmoothMarmottantSurfaceTension,
+    ThickShell,
+)
 from ..pulse.base import Pulse
 from ..pulse.shapes import Sine
 from ..pulse.tone_burst import ToneBurst
@@ -109,23 +118,36 @@ def free_bubble(
     cycle_num : int
         Number of tone-burst cycles. Default: `5`.
     gamma : float
-        Polytropic exponent. Default: `1.4` (a diatomic gas, such as air).
+        Polytropic exponent. Default: `1.4`, the adiabatic exponent of a
+        diatomic gas such as air.
     sigma : float
-        Surface tension [N/m]. Default: `0.072` (air–water interface).
+        Surface tension [N/m]. Default: `0.072` (air-water interface at
+        20 °C: 0.0727 N/m, NIST).
     mu : float
-        Liquid dynamic viscosity [Pa·s]. Default: `1e-3` (water, 20 °C).
+        Liquid dynamic viscosity [Pa s]. Default: `1e-3` (water at 20 °C:
+        1.0016e-3 Pa s, NIST).
     P_amb : float
-        Ambient pressure [Pa]. Default: `101325.0` (1 atm).
+        Ambient pressure [Pa]. Default: `101325.0` (one standard
+        atmosphere).
     rho_L : float
-        Liquid density [kg/m³]. Default: `998.0` (water, 20 °C).
+        Liquid density [kg/m³]. Default: `998.0` (water at 20 °C:
+        998.2 kg/m³, NIST).
     c_L : float
-        Speed of sound in the liquid [m/s]. Default: `1500.0` (water).
+        Speed of sound in the liquid [m/s]. Default: `1500.0`, the round
+        value that ultrasound modelling commonly uses for water (NIST gives
+        1482 m/s at 20 °C and 1497 m/s at 25 °C).
 
     Returns
     -------
     BubblePreset
         `(eom, pulse)` pair, ready for
         [`run_simulation`][jbubble.simulation.run_simulation].
+
+    References
+    ----------
+    NIST Chemistry WebBook, NIST Standard Reference Database 69,
+    Thermophysical Properties of Fluid Systems: water at 0.101325 MPa.
+    [doi:10.18434/T4D303](https://doi.org/10.18434/T4D303)
     """
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=gamma),
@@ -146,34 +168,46 @@ def lipid_bubble(
     pressure: float = 100e3,
     cycle_num: int = 5,
     *,
-    kappa_s: float = 2.4e-9,
-    chi: float = 0.55,
+    kappa_s: float = 7.5e-9,
+    chi: float = 0.5,
     sigma_rupture: float = 0.072,
-    R_buckle_ratio: float = 0.98,
-    gamma: float = 1.4,
+    R_buckle_ratio: float = 0.98058,
+    smoothing: float = 0.01,
+    gamma: float = 1.095,
     mu: float = 1e-3,
     P_amb: float = 101325.0,
     rho_L: float = 998.0,
     c_L: float = 1500.0,
 ) -> BubblePreset:
-    """Lipid-shelled ultrasound contrast agent: the Marmottant (2005) model.
+    r"""Lipid-shelled ultrasound contrast agent: the Marmottant (2005) model.
 
-    Models a thin lipid monolayer with surface-dilatational viscosity. For
-    gradient-based parameter fitting, it uses a smooth Gompertz surface
-    tension law in place of the piecewise Marmottant law. Representative of
-    clinical agents such as SonoVue and Definity.
+    Models an SF6 bubble coated with a thin lipid monolayer that buckles
+    under compression, stretches elastically, and ruptures under
+    expansion, with surface-dilatational viscosity. The surface tension
+    follows
+    [`SmoothMarmottantSurfaceTension`][jbubble.bubble.shell.SmoothMarmottantSurfaceTension],
+    which matches the piecewise Marmottant law to within
+    `smoothing * ln(2) * sigma_rupture` and keeps gradients smooth for
+    fitting.
+
+    The shell and gas defaults are the SonoVue parameters of Gümmer et al.
+    (2021), who take them from earlier characterisations of SonoVue. The
+    preset solves the Keller-Miksis equation with a polytropic gas, not
+    the Rayleigh-Plesset and Gilmore equations with a hard-core gas that
+    Gümmer et al. use.
 
     Physics: [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis] +
     [`PolytropicGas`][jbubble.bubble.gas.PolytropicGas] +
     [`LipidShell`][jbubble.bubble.shell.LipidShell] with
-    [`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension] +
+    [`SmoothMarmottantSurfaceTension`][jbubble.bubble.shell.SmoothMarmottantSurfaceTension] +
     [`NewtonianMedium`][jbubble.bubble.medium.NewtonianMedium], driven by
     a sine [`ToneBurst`][jbubble.pulse.tone_burst.ToneBurst].
 
     Parameters
     ----------
     R0 : float
-        Equilibrium radius [m]. Default: `2e-6` (2 µm).
+        Equilibrium radius [m]. Default: `2e-6` (2 µm, the top of the
+        1-2 µm range that Gümmer et al. study).
     freq : float
         Driving frequency [Hz]. Default: `1e6` (1 MHz).
     pressure : float
@@ -181,27 +215,39 @@ def lipid_bubble(
     cycle_num : int
         Number of tone-burst cycles. Default: `5`.
     kappa_s : float
-        Shell surface-dilatational viscosity [N·s/m]. Default: `2.4e-9`
-        (Marmottant 2005, BR14, a SonoVue-type agent).
+        Shell surface-dilatational viscosity [N s/m]. Default: `7.5e-9`
+        (Gümmer et al., who consider 5e-9 to 1e-8).
     chi : float
-        Shell elasticity [N/m]. Default: `0.55`.
+        Shell elasticity [N/m]. Default: `0.5` (Gümmer et al.).
     sigma_rupture : float
-        Asymptotic (ruptured) surface tension [N/m]. Default: `0.072`
-        (water).
+        Surface tension after rupture [N/m]. Default: `0.072`, the clean
+        water surface (Gümmer et al.).
     R_buckle_ratio : float
-        Buckling radius as a fraction of `R0`. Default: `0.98`, which gives
-        an initial surface tension `sigma(R0) ≈ 0.023` N/m, well below
-        `sigma_rupture`, as the Gompertz model needs to be well-posed.
+        Buckling radius as a fraction of `R0`. Default: `0.98058`, which
+        gives the surface tension at `R0` of Gümmer et al.,
+        $\sigma_0 = 0.020$ N/m, through their Eq. 11:
+        $(1 + \sigma_0/\chi)^{-1/2} = 0.98058$ at $\chi = 0.5$ N/m. If you
+        change `chi`, $\sigma_0$ changes with it.
+    smoothing : float
+        Corner width of the smoothed Marmottant law as a fraction of
+        `sigma_rupture`. Default: `0.01`; see
+        [`SmoothMarmottantSurfaceTension`][jbubble.bubble.shell.SmoothMarmottantSurfaceTension].
     gamma : float
-        Polytropic exponent. Default: `1.4`.
+        Polytropic exponent. Default: `1.095`, the value Gümmer et al. use
+        for the SF6 in SonoVue.
     mu : float
-        Liquid dynamic viscosity [Pa·s]. Default: `1e-3` (water).
+        Liquid dynamic viscosity [Pa s]. Default: `1e-3` (water at 20 °C:
+        1.0016e-3 Pa s, NIST).
     P_amb : float
-        Ambient pressure [Pa]. Default: `101325.0` (1 atm).
+        Ambient pressure [Pa]. Default: `101325.0` (one standard
+        atmosphere).
     rho_L : float
-        Liquid density [kg/m³]. Default: `998.0` (water).
+        Liquid density [kg/m³]. Default: `998.0` (water at 20 °C:
+        998.2 kg/m³, NIST).
     c_L : float
-        Speed of sound in the liquid [m/s]. Default: `1500.0` (water).
+        Speed of sound in the liquid [m/s]. Default: `1500.0`, the round
+        value that ultrasound modelling commonly uses for water (NIST gives
+        1482 m/s at 20 °C and 1497 m/s at 25 °C).
 
     Returns
     -------
@@ -211,13 +257,27 @@ def lipid_bubble(
 
     References
     ----------
-    Marmottant et al., J. Acoust. Soc. Am. 118 (2005) 3499–3505.
+    Gümmer, J., Schenke, S., & Denner, F. (2021). Modelling lipid-coated
+    microbubbles in focused ultrasound applications at subresonance
+    frequencies. *Ultrasound Med. Biol.* 47(10), 2958-2979.
+    [doi:10.1016/j.ultrasmedbio.2021.06.012](https://doi.org/10.1016/j.ultrasmedbio.2021.06.012)
+
+    Marmottant, P., van der Meer, S., Emmer, M., Versluis, M., de Jong, N.,
+    Hilgenfeldt, S., & Lohse, D. (2005). A model for large amplitude
+    oscillations of coated bubbles accounting for buckling and rupture.
+    *J. Acoust. Soc. Am.* 118(6), 3499-3505.
+    [doi:10.1121/1.2109427](https://doi.org/10.1121/1.2109427)
+
+    NIST Chemistry WebBook, NIST Standard Reference Database 69,
+    Thermophysical Properties of Fluid Systems: water at 0.101325 MPa.
+    [doi:10.18434/T4D303](https://doi.org/10.18434/T4D303)
     """
     shell = LipidShell(
-        sigma=GompertzSurfaceTension(
+        sigma=SmoothMarmottantSurfaceTension(
             R_buckle_ratio=R_buckle_ratio,
             chi=chi,
             sigma_rupture=sigma_rupture,
+            smoothing=smoothing,
         ),
         kappa_s=kappa_s,
     )
