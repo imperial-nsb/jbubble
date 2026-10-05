@@ -4,6 +4,7 @@ import jax
 import jax.numpy as jnp
 import pytest
 from jbubble import SaveSpec, run_simulation
+from jbubble.bubble.state import BubbleState
 from jbubble.simulation import SimulationResult
 
 
@@ -80,3 +81,22 @@ class TestSimulationResultAccessors:
 
     def test_radial_acceleration(self, result):
         assert jnp.allclose(result.radial_acceleration, result.state_dot.R_dot)
+
+
+class TestInitialState:
+    def test_partial_state0_is_filled_from_the_eom(self, simple_eom, sine_pulse):
+        R0 = simple_eom.R0
+        result = run_simulation(
+            simple_eom,
+            sine_pulse,
+            save_spec=SaveSpec(100),
+            t_max=5e-6,
+            state0=BubbleState(R=jnp.asarray(1.2 * R0)),
+        )
+        assert bool(result.converged)
+        assert float(result.radius[0]) == pytest.approx(1.2 * R0, rel=1e-14)
+        assert float(result.state.R0[0]) == R0
+        expected = simple_eom.initial_state(R=1.2 * R0)
+        assert float(result.state.P_gas0[0]) == pytest.approx(
+            float(expected.P_gas0), rel=1e-15
+        )

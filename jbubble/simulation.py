@@ -92,7 +92,11 @@ def run_simulation(
         [`SaveSpec()`][jbubble.solver.SaveSpec], 1024 evenly spaced time
         points.
     state0 : BubbleState, optional
-        Initial state. `None` uses `eom.initial_state()`.
+        Initial state. `None` uses `eom.initial_state()`. A zero `R0` or
+        `P_gas0`, the `BubbleState` defaults, is filled from `eom`, so
+        `BubbleState(R=1.2 * R0)` starts at rest at 1.2 times the
+        equilibrium radius. You can also build the state with
+        `eom.initial_state(R=..., R_dot=...)`.
     t_max : float, optional
         Integration end time [s]. `None` uses `pulse.t_end`.
     config : SolverConfig, optional

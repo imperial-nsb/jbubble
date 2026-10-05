@@ -70,6 +70,19 @@ class SolverConfig(eqx.Module):
     max_steps: int = eqx.field(default=10_000, static=True)
 
 
+def _with_equilibrium(eom: EquationOfMotion, y0: Any) -> Any:
+    """Fill a zero (unset) `R0` or `P_gas0` in `y0` from the EoM.
+
+    A zero `R0` becomes `eom.R0`, and a zero `P_gas0` becomes the
+    Laplace-equilibrium gas pressure for the (filled) `R0`.
+    """
+    R0_in, P_gas0_in = jnp.asarray(y0.R0), jnp.asarray(y0.P_gas0)
+    R0 = jnp.where(R0_in == 0, jnp.asarray(eom.R0, dtype=R0_in.dtype), R0_in)
+    equilibrium = eqx.tree_at(lambda e: e.R0, eom, R0).initial_state()
+    P_gas0 = jnp.where(P_gas0_in == 0, equilibrium.P_gas0, P_gas0_in)
+    return eqx.tree_at(lambda s: (s.R0, s.P_gas0), y0, (R0, P_gas0))
+
+
 def solve_eom(
     eom: EquationOfMotion,
     pulse: Pulse,
@@ -95,7 +108,12 @@ def solve_eom(
     pulse : Pulse
         Driving acoustic pulse.
     y0 : BubbleState, optional
-        Initial state in SI units. `None` uses `eom.initial_state()`.
+        Initial state in SI units. `None` uses `eom.initial_state()`. A zero
+        `R0` or `P_gas0`, the `BubbleState` defaults, means "unset":
+        `solve_eom` fills it from the equation of motion, so
+        `BubbleState(R=1.2 * R0)` starts at rest at 1.2 times the equilibrium
+        radius. [`EquationOfMotion.initial_state`][jbubble.bubble.eom.EquationOfMotion.initial_state]
+        with `R=` and `R_dot=` builds the same state explicitly.
     t_max : float, optional
         Integration end time [s]. `None` uses `pulse.t_end`.
     save_spec : SaveSpec, optional
@@ -126,8 +144,7 @@ def solve_eom(
         config = SolverConfig()
     assert isinstance(config, SolverConfig)
 
-    if y0 is None:
-        y0 = eom.initial_state()
+    y0 = eom.initial_state() if y0 is None else _with_equilibrium(eom, y0)
 
     t0 = jnp.asarray(0.0)
     t1 = jnp.asarray(pulse.t_end if t_max is None else t_max)
