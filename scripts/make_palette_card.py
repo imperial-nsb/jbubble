@@ -27,16 +27,13 @@ from matplotlib.patches import FancyBboxPatch  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 NAMES = ("azure", "coral", "teal", "plum", "green", "violet", "amber", "crimson")
-# Secondary ink and the drive-trace grey; the style sheets list the same values.
-NEUTRALS = {
-    "light": {"ink2": "#59636e", "drive": "#8c959f"},
-    "dark": {"ink2": "#9198a1", "drive": "#6e7681"},
-}
+# The drive-trace grey, which only the comments in the style sheets list.
+DRIVE = {"light": "#8c959f", "dark": "#6e7681"}
 
 
 def draw_card(theme: str) -> plt.Figure:
-    neutral = NEUTRALS[theme]
     colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    secondary_ink = plt.rcParams["xtick.labelcolor"]
     fig = plt.figure(figsize=(8.0, 4.6))
     grid = fig.add_gridspec(
         3, 2, height_ratios=(1.0, 1.35, 0.75), width_ratios=(2.2, 1.0)
@@ -60,7 +57,7 @@ def draw_card(theme: str) -> plt.Figure:
             )
         )
         ax.text(i + 0.08, 0.3, f"C{i} {name}", fontsize=9, va="center")
-        ax.text(i + 0.08, 0.08, color, fontsize=8, va="center", color=neutral["ink2"])
+        ax.text(i + 0.08, 0.08, color, fontsize=8, va="center", color=secondary_ink)
 
     # Four series: the first four slots stay distinct from one another.
     t = np.linspace(0.0, 6.0, 600)
@@ -78,9 +75,7 @@ def draw_card(theme: str) -> plt.Figure:
 
     # The drive goes on its own axes in a neutral grey.
     drive = fig.add_subplot(grid[1, 1])
-    drive.plot(
-        t, np.sin(2 * np.pi * t) * np.exp(-((t - 3) ** 2)), color=neutral["drive"]
-    )
+    drive.plot(t, np.sin(2 * np.pi * t) * np.exp(-((t - 3) ** 2)), color=DRIVE[theme])
     drive.set_title("Drive trace")
     drive.set_xlabel(r"Time [$\mu$s]")
     drive.set_yticks([])
