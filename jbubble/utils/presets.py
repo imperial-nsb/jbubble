@@ -101,30 +101,31 @@ def free_bubble(
     Parameters
     ----------
     R0 : float
-        Equilibrium radius [m].  Default: 2 µm.
+        Equilibrium radius [m]. Default: `2e-6` (2 µm).
     freq : float
-        Driving frequency [Hz].  Default: 1 MHz.
+        Driving frequency [Hz]. Default: `1e6` (1 MHz).
     pressure : float
-        Peak acoustic pressure amplitude [Pa].  Default: 100 kPa.
+        Peak acoustic pressure amplitude [Pa]. Default: `100e3` (100 kPa).
     cycle_num : int
-        Number of tone-burst cycles.  Default: 5.
+        Number of tone-burst cycles. Default: `5`.
     gamma : float
-        Polytropic exponent.  Default: 1.4 (diatomic gas / air).
+        Polytropic exponent. Default: `1.4` (a diatomic gas, such as air).
     sigma : float
-        Surface tension [N/m].  Default: 0.072 (air–water interface).
+        Surface tension [N/m]. Default: `0.072` (air–water interface).
     mu : float
-        Liquid dynamic viscosity [Pa·s].  Default: 1e-3 (water, 20 °C).
+        Liquid dynamic viscosity [Pa·s]. Default: `1e-3` (water, 20 °C).
     P_amb : float
-        Ambient pressure [Pa].  Default: 101 325 (1 atm).
+        Ambient pressure [Pa]. Default: `101325.0` (1 atm).
     rho_L : float
-        Liquid density [kg/m³].  Default: 998 (water, 20 °C).
+        Liquid density [kg/m³]. Default: `998.0` (water, 20 °C).
     c_L : float
-        Speed of sound in the liquid [m/s].  Default: 1500 (water).
+        Speed of sound in the liquid [m/s]. Default: `1500.0` (water).
 
     Returns
     -------
     BubblePreset
-        `(eom, pulse)` pair, ready for [`run_simulation`][jbubble.simulation.run_simulation].
+        `(eom, pulse)` pair, ready for
+        [`run_simulation`][jbubble.simulation.run_simulation].
     """
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=gamma),
@@ -172,39 +173,41 @@ def lipid_bubble(
     Parameters
     ----------
     R0 : float
-        Equilibrium radius [m].  Default: 2 µm.
+        Equilibrium radius [m]. Default: `2e-6` (2 µm).
     freq : float
-        Driving frequency [Hz].  Default: 1 MHz.
+        Driving frequency [Hz]. Default: `1e6` (1 MHz).
     pressure : float
-        Peak acoustic pressure amplitude [Pa].  Default: 100 kPa.
+        Peak acoustic pressure amplitude [Pa]. Default: `100e3` (100 kPa).
     cycle_num : int
-        Number of tone-burst cycles.  Default: 5.
+        Number of tone-burst cycles. Default: `5`.
     kappa_s : float
-        Shell surface-dilatational viscosity [N·s/m].  Default: 2.4e-9
-        (Marmottant 2005, BR14 / SonoVue-type).
+        Shell surface-dilatational viscosity [N·s/m]. Default: `2.4e-9`
+        (Marmottant 2005, BR14, a SonoVue-type agent).
     chi : float
-        Shell elasticity [N/m].  Default: 0.55.
+        Shell elasticity [N/m]. Default: `0.55`.
     sigma_rupture : float
-        Asymptotic (ruptured) surface tension [N/m].  Default: 0.072 (water).
+        Asymptotic (ruptured) surface tension [N/m]. Default: `0.072`
+        (water).
     R_buckle_ratio : float
         Buckling radius as a fraction of `R0`. Default: `0.98`, which gives
         an initial surface tension `sigma(R0) ≈ 0.023` N/m, well below
         `sigma_rupture`, as the Gompertz model needs to be well-posed.
     gamma : float
-        Polytropic exponent.  Default: 1.4.
+        Polytropic exponent. Default: `1.4`.
     mu : float
-        Liquid dynamic viscosity [Pa·s].  Default: 1e-3 (water).
+        Liquid dynamic viscosity [Pa·s]. Default: `1e-3` (water).
     P_amb : float
-        Ambient pressure [Pa].  Default: 101 325 (1 atm).
+        Ambient pressure [Pa]. Default: `101325.0` (1 atm).
     rho_L : float
-        Liquid density [kg/m³].  Default: 998 (water).
+        Liquid density [kg/m³]. Default: `998.0` (water).
     c_L : float
-        Speed of sound in the liquid [m/s].  Default: 1500 (water).
+        Speed of sound in the liquid [m/s]. Default: `1500.0` (water).
 
     Returns
     -------
     BubblePreset
-        `(eom, pulse)` pair, ready for [`run_simulation`][jbubble.simulation.run_simulation].
+        `(eom, pulse)` pair, ready for
+        [`run_simulation`][jbubble.simulation.run_simulation].
 
     References
     ----------
@@ -263,36 +266,39 @@ def thick_shell_bubble(
     Parameters
     ----------
     R0 : float
-        Equilibrium radius [m].  Default: 2 µm.
+        Equilibrium radius [m]. Default: `2e-6` (2 µm).
     freq : float
-        Driving frequency [Hz].  Default: 1 MHz.
+        Driving frequency [Hz]. Default: `1e6` (1 MHz).
     pressure : float
-        Peak acoustic pressure amplitude [Pa].  Default: 100 kPa.
+        Peak acoustic pressure amplitude [Pa]. Default: `100e3` (100 kPa).
     cycle_num : int
-        Number of tone-burst cycles.  Default: 5.
+        Number of tone-burst cycles. Default: `5`.
     d_s : float
-        Shell thickness [m].  Default: 15 nm.
+        Shell thickness [m]. Default: `15e-9` (15 nm).
     G_s : float
-        Shell shear modulus [Pa].  Default: 10 MPa (stiff polymer shell).
+        Shell shear modulus [Pa]. Default: `10e6` (10 MPa, a stiff polymer
+        shell).
     mu_s : float
-        Shell viscosity [Pa·s].  Default: 0.5.
+        Shell viscosity [Pa·s]. Default: `0.5`.
     sigma : float
-        Surface tension [N/m].  Default: 0.04 (reduced by polymer coating).
+        Surface tension [N/m]. Default: `0.04` (reduced by the polymer
+        coating).
     gamma : float
-        Polytropic exponent.  Default: 1.4.
+        Polytropic exponent. Default: `1.4`.
     mu : float
-        Liquid dynamic viscosity [Pa·s].  Default: 1e-3 (water).
+        Liquid dynamic viscosity [Pa·s]. Default: `1e-3` (water).
     P_amb : float
-        Ambient pressure [Pa].  Default: 101 325 (1 atm).
+        Ambient pressure [Pa]. Default: `101325.0` (1 atm).
     rho_L : float
-        Liquid density [kg/m³].  Default: 998 (water).
+        Liquid density [kg/m³]. Default: `998.0` (water).
     c_L : float
-        Speed of sound in the liquid [m/s].  Default: 1500 (water).
+        Speed of sound in the liquid [m/s]. Default: `1500.0` (water).
 
     Returns
     -------
     BubblePreset
-        `(eom, pulse)` pair, ready for [`run_simulation`][jbubble.simulation.run_simulation].
+        `(eom, pulse)` pair, ready for
+        [`run_simulation`][jbubble.simulation.run_simulation].
 
     References
     ----------

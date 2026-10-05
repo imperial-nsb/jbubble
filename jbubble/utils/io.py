@@ -37,7 +37,7 @@ def export_hdf5(
     Parameters
     ----------
     path : str or Path
-        Output `.h5` file path. An existing file is overwritten.
+        Output `.h5` file path. `export_hdf5` overwrites an existing file.
     metadata : dict, optional
         JSON-serialisable metadata, stored as an attribute on the root group.
     **arrays
