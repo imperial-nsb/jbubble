@@ -34,6 +34,18 @@ pressure = pulse(t)  # scalar time → scalar pressure [Pa]
 
 ---
 
+## Chirp sweep laws
+
+A sweep law sets how the instantaneous frequency of a `ChirpPulse` changes over time. Pass one as the `sweep` argument.
+
+::: jbubble.pulse.chirp.ChirpSweep
+
+::: jbubble.pulse.chirp.LinearSweep
+
+::: jbubble.pulse.chirp.ExponentialSweep
+
+---
+
 ## Envelopes
 
 ::: jbubble.pulse.envelope.Envelope
