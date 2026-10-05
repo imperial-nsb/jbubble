@@ -50,6 +50,8 @@ These are `Property` subclasses that encode a state-dependent surface tension la
 
 ::: jbubble.bubble.shell.MarmottantSurfaceTension
 
+::: jbubble.bubble.shell.SmoothMarmottantSurfaceTension
+
 ::: jbubble.bubble.shell.GompertzSurfaceTension
 
 ---

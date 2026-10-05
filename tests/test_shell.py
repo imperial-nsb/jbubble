@@ -1,20 +1,28 @@
 """Tests for jbubble.bubble.shell."""
 
+import math
+
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
-from jbubble.bubble.property import ConstantProperty
+from jbubble.bubble.property import ConstantProperty, Property
 from jbubble.bubble.shell import (
     GompertzSurfaceTension,
     LipidShell,
     MarmottantSurfaceTension,
     NoShell,
+    SmoothMarmottantSurfaceTension,
     ThickShell,
+    _smooth_clamp_unit,
 )
 from jbubble.bubble.state import BubbleState
 
 R0 = 2e-6
 P_GAS0 = 173_325.0
+SIGMA_R = 0.072
+CHIS = np.geomspace(0.05, 2.0, 9)
+RATIOS = [0.9, 0.95, 0.98, 0.995]
 
 
 def _make_state(R_ratio, R_dot=0.0):
@@ -24,6 +32,26 @@ def _make_state(R_ratio, R_dot=0.0):
         R0=jnp.asarray(R0),
         P_gas0=jnp.asarray(P_GAS0),
     )
+
+
+def _sigma_curve(law, ratios):
+    """Evaluate `law` at R = ratios * R0."""
+    R0_arr = jnp.asarray(R0)
+    return jax.vmap(lambda x: law(BubbleState(R=x * R0, R0=R0_arr)))(
+        jnp.asarray(ratios)
+    )
+
+
+def _dsigma_dx(law, ratios, R_b):
+    """Return d sigma / d(R / R_b) at R = ratios * R0."""
+    R0_arr = jnp.asarray(R0)
+    f = jax.grad(lambda R: law(BubbleState(R=R, R0=R0_arr)))
+    return jax.vmap(f)(jnp.asarray(ratios) * R0) * R_b
+
+
+def _has_callback(fn, *args):
+    """Return whether the jaxpr of `fn(*args)` contains a host callback."""
+    return "callback" in str(jax.make_jaxpr(fn)(*args))
 
 
 class TestNoShell:
@@ -171,6 +199,203 @@ class TestMarmottantSurfaceTension:
     def test_ratio_of_one_starts_buckled(self):
         st = MarmottantSurfaceTension(R_buckle_ratio=1.0, chi=0.55, sigma_rupture=0.072)
         assert float(st(_make_state(1.0))) == 0.0
+
+
+class TestSmoothMarmottantSurfaceTension:
+    @pytest.mark.parametrize("ratio", [0.9, 0.98, 1.0, 1.05])
+    @pytest.mark.parametrize("chi", [0.05, 0.55, 2.0, 10.0])
+    def test_bounds_and_monotonic(self, chi, ratio):
+        # Includes initially buckled (ratio >= 1) and ruptured (chi = 10) bubbles.
+        st = SmoothMarmottantSurfaceTension(
+            R_buckle_ratio=ratio, chi=chi, sigma_rupture=SIGMA_R
+        )
+        s = _sigma_curve(st, np.linspace(0.01, 10.0, 20_001))
+        assert bool(jnp.all(s >= 0.0)) and bool(jnp.all(s <= SIGMA_R))
+        assert bool(jnp.all(jnp.diff(s) >= 0.0))
+
+    @pytest.mark.parametrize("smoothing", [0.005, 0.01, 0.05])
+    def test_max_error_is_chi_independent(self, smoothing):
+        # sup |sigma - sigma_Marmottant| = smoothing * ln 2 * sigma_r for every
+        # chi and ratio.
+        bound = smoothing * math.log(2.0) * SIGMA_R
+        for chi in CHIS:
+            for ratio in RATIOS:
+                kw = dict(R_buckle_ratio=ratio, chi=float(chi), sigma_rupture=SIGMA_R)
+                x_b = ratio
+                x_r = ratio * math.sqrt(1.0 + SIGMA_R / chi)
+                # A dense grid that contains both corners exactly.
+                x = np.unique(
+                    np.concatenate([np.linspace(0.5, 3.0, 20_001), [x_b, x_r]])
+                )
+                err = jnp.abs(
+                    _sigma_curve(
+                        SmoothMarmottantSurfaceTension(**kw, smoothing=smoothing), x
+                    )
+                    - _sigma_curve(MarmottantSurfaceTension(**kw), x)
+                )
+                assert float(jnp.max(err)) <= bound * (1.0 + 1e-9)
+                assert float(jnp.max(err)) >= 0.99 * bound
+
+    def test_converges_to_marmottant(self):
+        kw = dict(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=SIGMA_R)
+        x = np.linspace(0.5, 3.0, 10_001)
+        ref = _sigma_curve(MarmottantSurfaceTension(**kw), x)
+        errs = [
+            float(
+                jnp.max(
+                    jnp.abs(
+                        _sigma_curve(
+                            SmoothMarmottantSurfaceTension(**kw, smoothing=e), x
+                        )
+                        - ref
+                    )
+                )
+            )
+            for e in [1e-1, 1e-2, 1e-3, 1e-4]
+        ]
+        assert all(b < a for a, b in zip(errs, errs[1:], strict=False))
+        assert errs[-1] < 1e-5
+
+    def test_matches_elastic_law_away_from_corners(self):
+        st = SmoothMarmottantSurfaceTension(
+            R_buckle_ratio=0.98, chi=0.55, sigma_rupture=SIGMA_R
+        )
+        expected = 0.55 * ((1.0 / 0.98) ** 2 - 1.0)  # sigma_0 / sigma_r = 0.32
+        assert float(_sigma_curve(st, [1.0])[0]) == pytest.approx(expected, rel=1e-9)
+
+    def test_gradients_finite_for_all_inputs(self):
+        def sigma(R, chi, ratio, s_r):
+            st = SmoothMarmottantSurfaceTension(
+                R_buckle_ratio=ratio, chi=chi, sigma_rupture=s_r
+            )
+            return st(BubbleState(R=R, R0=jnp.asarray(R0)))
+
+        g = jax.vmap(
+            jax.grad(sigma, argnums=(0, 1, 2, 3)), in_axes=(0, None, None, None)
+        )
+        Rs = jnp.asarray(np.linspace(0.01, 100.0, 5001) * R0)
+        for chi, ratio in [(0.05, 0.9), (0.55, 0.98), (2.0, 0.995), (0.55, 1.02)]:
+            for leaf in g(Rs, chi, ratio, SIGMA_R):
+                assert bool(jnp.all(jnp.isfinite(leaf)))
+
+    def test_jit_and_vmap_over_parameters(self):
+        def sigma_at_R0(chi):
+            st = SmoothMarmottantSurfaceTension(
+                R_buckle_ratio=0.98, chi=chi, sigma_rupture=SIGMA_R
+            )
+            return st(BubbleState(R=jnp.asarray(1.01 * R0), R0=jnp.asarray(R0)))
+
+        out = jax.jit(jax.vmap(sigma_at_R0))(jnp.asarray(CHIS))
+        assert out.shape == (len(CHIS),) and bool(jnp.all(jnp.isfinite(out)))
+
+    @pytest.mark.parametrize("smoothing", [0.01, 0.1, 0.5])
+    def test_clamp_derivative_at_the_tie(self, smoothing):
+        # f'(y) = sigmoid(y / eps) - sigmoid((y - 1) / eps), so f'(1/2) =
+        # tanh(1 / (4 eps)). jnp.minimum(y, 1 - y) would give 0 here.
+        grad = jax.grad(lambda y: _smooth_clamp_unit(y, smoothing))(0.5)
+        assert float(grad) == pytest.approx(math.tanh(0.25 / smoothing), rel=1e-12)
+
+    def test_clamp_derivative_is_continuous_across_the_tie(self):
+        f_prime = jax.vmap(jax.grad(lambda y: _smooth_clamp_unit(y, 0.1)))
+        y = jnp.asarray([0.5 - 1e-9, 0.5, 0.5 + 1e-9])
+        assert np.ptp(np.asarray(f_prime(y))) < 1e-8
+
+    @pytest.mark.parametrize("smoothing", [0.005, 0.01, 0.02])
+    def test_bias_at_buckling_start(self, smoothing):
+        # R_buckle_ratio = 1 starts the bubble at the buckling corner. The
+        # smoothing shifts sigma(R0) to smoothing * ln 2 * sigma_r and halves
+        # the elastic slope 2 chi / R0 of the piecewise law there. The
+        # SmoothMarmottantSurfaceTension docstring documents this bias.
+        chi = 0.55
+        st = SmoothMarmottantSurfaceTension(
+            R_buckle_ratio=1.0, chi=chi, sigma_rupture=SIGMA_R, smoothing=smoothing
+        )
+        state = _make_state(1.0)
+        assert float(st(state)) == pytest.approx(
+            smoothing * math.log(2.0) * SIGMA_R, rel=1e-12
+        )
+        slope = jax.grad(lambda R: st(BubbleState(R=R, R0=jnp.asarray(R0))))(
+            jnp.asarray(R0)
+        )
+        assert float(slope) == pytest.approx(0.5 * 2.0 * chi / R0, rel=1e-12)
+
+    @pytest.mark.parametrize("smoothing", [0.0, -0.01])
+    def test_non_positive_smoothing_raises(self, smoothing):
+        with pytest.raises(ValueError, match="smoothing > 0"):
+            SmoothMarmottantSurfaceTension(
+                R_buckle_ratio=0.98,
+                chi=0.55,
+                sigma_rupture=SIGMA_R,
+                smoothing=smoothing,
+            )
+
+    def test_traced_smoothing_skips_the_check(self):
+        def sigma(smoothing):
+            st = SmoothMarmottantSurfaceTension(
+                R_buckle_ratio=0.98,
+                chi=0.55,
+                sigma_rupture=SIGMA_R,
+                smoothing=smoothing,
+            )
+            return st(_make_state(1.0))
+
+        assert bool(jnp.isfinite(jax.jit(sigma)(0.01)))
+        assert not _has_callback(sigma, 0.01)
+
+    def test_chi_and_sigma_rupture_accept_a_state_dependent_property(self):
+        class RadiusScaledChi(Property):
+            # chi grows linearly with R / R0, a strain-stiffening shell.
+            chi0: float
+
+            def __call__(self, state):
+                return self.chi0 * state.R / state.R0
+
+        st = SmoothMarmottantSurfaceTension(
+            R_buckle_ratio=0.98,
+            chi=RadiusScaledChi(chi0=0.55),
+            sigma_rupture=ConstantProperty(SIGMA_R),
+        )
+        x = 1.005
+        expected = 0.55 * x * ((x / 0.98) ** 2 - 1.0)
+        assert float(st(_make_state(x))) == pytest.approx(expected, rel=1e-9)
+
+    def test_no_callback_in_jaxpr(self):
+        def sigma(chi, sigma_r, ratio):
+            st = SmoothMarmottantSurfaceTension(
+                R_buckle_ratio=ratio, chi=chi, sigma_rupture=sigma_r
+            )
+            return st(_make_state(1.01))
+
+        assert not _has_callback(sigma, 0.55, SIGMA_R, 0.98)
+
+
+class TestSmoothMarmottantDynamics:
+    def test_peak_expansion_matches_marmottant(self):
+        from jbubble.bubble.eom import KellerMiksis
+        from jbubble.bubble.gas import PolytropicGas
+        from jbubble.bubble.medium import NewtonianMedium
+        from jbubble.pulse.shapes import Sine
+        from jbubble.pulse.tone_burst import ToneBurst
+        from jbubble.simulation import run_simulation
+
+        kw = dict(R_buckle_ratio=0.98, chi=0.55, sigma_rupture=SIGMA_R)
+        pulse = ToneBurst(freq=1e6, pressure=50e3, shape=Sine(), cycle_num=5)
+
+        def peak(law):
+            eom = KellerMiksis(
+                gas=PolytropicGas(gamma=1.4),
+                shell=LipidShell(sigma=law, kappa_s=2.4e-9),
+                medium=NewtonianMedium(mu=1e-3),
+                R0=R0,
+                P_amb=101325.0,
+                rho_L=998.0,
+                c_L=1500.0,
+            )
+            return float(jnp.max(run_simulation(eom, pulse).radius)) / R0 - 1.0
+
+        ref = peak(MarmottantSurfaceTension(**kw))
+        smooth = peak(SmoothMarmottantSurfaceTension(**kw))
+        assert smooth == pytest.approx(ref, rel=0.01)
 
 
 class TestGompertzSurfaceTension:
