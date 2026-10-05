@@ -150,3 +150,13 @@
 a.md-content__button[rel="edit"][href*="/docs/examples/"] {
   display: none;
 }
+
+/*
+ * Table of contents: keep each API entry, such as MarmottantSurfaceTension,
+ * on one line, and cut a name that doesn't fit with an ellipsis instead of
+ * breaking it mid-word. Section headings still wrap.
+ */
+.md-nav--secondary .md-ellipsis:has(.doc-symbol) {
+  min-width: 0;
+  white-space: nowrap;
+}
