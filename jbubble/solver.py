@@ -131,7 +131,9 @@ class SolverConfig(eqx.Module):
     100 kPa has radius errors of $10^{-6}$ to $10^{-5} R_0$ and relative
     gradient errors of $10^{-5}$ to $10^{-3}$. The kink in a Marmottant
     surface-tension law is the hardest case, with radius errors up to about
-    $10^{-3} R_0$ and gradient errors of a few times $10^{-2}$. Through an
+    $10^{-3} R_0$ and gradient errors of a few percent, or about 12 % for the
+    peak radius of the `lipid_bubble` preset with respect to `kappa_s`. Use
+    tighter tolerances when you fit a lipid shell. Through an
     inertial collapse ($R_\text{max}/R_0 \approx 4$), both errors are about
     $10^{-3}$ to $10^{-2}$. `rtol=1e-8, atol=1e-12` makes them 100 to 1000
     times smaller for two to three times as many steps. Looser tolerances
