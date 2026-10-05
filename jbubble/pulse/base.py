@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import abc
+import numbers
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
 import numpy as np
+from jax.typing import ArrayLike
 
 from .envelope import Envelope, SoftRectangularEnvelope
 
@@ -35,7 +37,9 @@ class Pulse(eqx.Module, abc.ABC):
     which equals `initial_time` for most pulses. The active window runs
     from `t_start` to [`t_stop`][jbubble.pulse.base.Pulse.t_stop].
 
-    Operator overloads compose pulses:
+    Operator overloads compose pulses. A factor or offset can be a Python
+    number or a JAX scalar, including a traced one, so you can
+    differentiate with respect to it:
 
     ```python
     combined = pulse_a + pulse_b  # Summed
@@ -57,6 +61,10 @@ class Pulse(eqx.Module, abc.ABC):
     envelope: Envelope = eqx.field(
         default_factory=SoftRectangularEnvelope, kw_only=True
     )
+
+    # NumPy defers to the reflected operators below, so `array * pulse`
+    # builds a `Scaled` pulse rather than an object array of pulses.
+    __array_ufunc__ = None
 
     @abc.abstractmethod
     def _evaluate(self, t: jax.Array) -> jax.Array:
@@ -98,29 +106,36 @@ class Pulse(eqx.Module, abc.ABC):
         tau = t - self.t_start
         return self._evaluate(t) * self.envelope(tau, self.duration)
 
-    def __add__(self, other: Pulse | float) -> Pulse:
+    def __add__(self, other: Pulse | ArrayLike) -> Pulse:
         """Add another pulse or a constant offset: `pulse_a + pulse_b` or `pulse + 1.0`."""
-        if isinstance(other, (int, float)):
-            return Offset(pulse=self, offset=float(other))
-        left = self.pulses if isinstance(self, Summed) else (self,)
-        right = other.pulses if isinstance(other, Summed) else (other,)
-        return Summed(pulses=left + right)
+        if isinstance(other, Pulse):
+            left = self.pulses if isinstance(self, Summed) else (self,)
+            right = other.pulses if isinstance(other, Summed) else (other,)
+            return Summed(pulses=left + right)
+        offset = _operand(other)
+        if offset is None:
+            return NotImplemented
+        return Offset(pulse=self, offset=offset)
 
-    def __radd__(self, other: Pulse | float) -> Pulse:
+    def __radd__(self, other: Pulse | ArrayLike) -> Pulse:
         """Right addition, `other + self`. If `other` is a `Pulse`, delegate to its `__add__`."""
-        if isinstance(other, (int, float)):
-            return Offset(pulse=self, offset=float(other))
         if isinstance(other, Pulse):
             return other.__add__(self)
-        return NotImplemented
+        offset = _operand(other)
+        if offset is None:
+            return NotImplemented
+        return Offset(pulse=self, offset=offset)
 
-    def __mul__(self, factor: float) -> Scaled:
+    def __mul__(self, factor: ArrayLike) -> Scaled:
         """Scale the pulse by a factor: `pulse * factor`."""
-        return Scaled(pulse=self, factor=float(factor))
+        value = _operand(factor)
+        if value is None:
+            return NotImplemented
+        return Scaled(pulse=self, factor=value)
 
-    def __rmul__(self, factor: float) -> Scaled:
+    def __rmul__(self, factor: ArrayLike) -> Scaled:
         """Right multiplication: `factor * pulse`."""
-        return Scaled(pulse=self, factor=float(factor))
+        return self.__mul__(factor)
 
     def __neg__(self) -> Scaled:
         """Negate the pulse (flip its polarity): `-pulse`."""
@@ -130,40 +145,47 @@ class Pulse(eqx.Module, abc.ABC):
         """Unary plus (identity): `+pulse`."""
         return self
 
-    def __sub__(self, other: Pulse | float) -> Pulse:
+    def __sub__(self, other: Pulse | ArrayLike) -> Pulse:
         """Subtract another pulse or a constant offset: `pulse_a - pulse_b` or `pulse - 1.0`."""
-        if isinstance(other, (int, float)):
-            return Offset(pulse=self, offset=-float(other))
-        return self + (-other)
+        if isinstance(other, Pulse):
+            return self + (-other)
+        offset = _operand(other)
+        if offset is None:
+            return NotImplemented
+        return Offset(pulse=self, offset=-offset)
 
-    def __rsub__(self, other: Pulse | float) -> Pulse:
+    def __rsub__(self, other: Pulse | ArrayLike) -> Pulse:
         """Right subtraction: `other - self`."""
-        if isinstance(other, (int, float)):
-            # other - self = (-self) + other
-            return Offset(pulse=(-self), offset=float(other))
         if isinstance(other, Pulse):
             return other + (-self)
-        return NotImplemented
+        offset = _operand(other)
+        if offset is None:
+            return NotImplemented
+        # other - self = (-self) + other
+        return Offset(pulse=-self, offset=offset)
 
-    def __truediv__(self, factor: float) -> Scaled:
+    def __truediv__(self, factor: ArrayLike) -> Scaled:
         """Divide the pulse by a factor: `pulse / 2.0`."""
-        return Scaled(pulse=self, factor=1.0 / float(factor))
+        value = _operand(factor)
+        if value is None:
+            return NotImplemented
+        return Scaled(pulse=self, factor=1.0 / value)
 
-    def __iadd__(self, other: Pulse | float):
+    def __iadd__(self, other: Pulse | ArrayLike) -> Pulse:
         """In-place addition: `pulse += other` or `pulse += 1.0`."""
-        return self + other
+        return self.__add__(other)
 
-    def __isub__(self, other: Pulse | float):
+    def __isub__(self, other: Pulse | ArrayLike) -> Pulse:
         """In-place subtraction: `pulse -= other` or `pulse -= 1.0`."""
-        return self - other
+        return self.__sub__(other)
 
-    def __imul__(self, factor: float):
+    def __imul__(self, factor: ArrayLike) -> Scaled:
         """In-place multiplication: `pulse *= factor`."""
-        return Scaled(pulse=self, factor=float(factor))
+        return self.__mul__(factor)
 
-    def __itruediv__(self, factor: float):
+    def __itruediv__(self, factor: ArrayLike) -> Scaled:
         """In-place division: `pulse /= factor`."""
-        return Scaled(pulse=self, factor=1.0 / float(factor))
+        return self.__truediv__(factor)
 
     def windowed(self, envelope: Envelope) -> Pulse:
         """Return a copy of this pulse with `envelope` replacing the current one."""
@@ -192,8 +214,8 @@ class Scaled(Pulse):
     ----------
     pulse : Pulse
         The pulse to scale.
-    factor : float
-        Multiplicative factor.
+    factor : float or jax.Array
+        Multiplicative factor. A JAX scalar, including a traced one, works.
 
     Raises
     ------
@@ -204,7 +226,7 @@ class Scaled(Pulse):
     """
 
     pulse: Pulse
-    factor: float
+    factor: float | jax.Array
 
     def __check_init__(self) -> None:
         _check_transparent(self)
@@ -263,8 +285,9 @@ class Offset(Pulse):
     ----------
     pulse : Pulse
         The pulse to offset.
-    offset : float
-        Additive constant pressure [Pa].
+    offset : float or jax.Array
+        Additive constant pressure [Pa]. A JAX scalar, including a traced
+        one, works.
 
     Raises
     ------
@@ -275,7 +298,7 @@ class Offset(Pulse):
     """
 
     pulse: Pulse
-    offset: float
+    offset: float | jax.Array
 
     def __check_init__(self) -> None:
         _check_transparent(self)
@@ -355,6 +378,34 @@ class Summed(Pulse):
     def _evaluate(self, t: jax.Array) -> jax.Array:
         # Each p(t) includes the child's own envelope.
         return jnp.sum(jnp.array([p(t) for p in self.pulses]))
+
+
+def _operand(value: object) -> float | jax.Array | None:
+    """Return `value` as a factor or offset, or `None` if it isn't one.
+
+    Python and NumPy numbers become Python floats, and 0-d NumPy arrays
+    become JAX arrays. 0-d JAX arrays, including traced values, pass
+    through unchanged, so you can differentiate or `vmap` over a factor or
+    offset.
+
+    Raises
+    ------
+    ValueError
+        If `value` is an array with one or more dimensions.
+    """
+    if isinstance(value, Pulse):
+        return None
+    if isinstance(value, numbers.Real):
+        return float(value)
+    if isinstance(value, (jax.Array, np.ndarray)):
+        if value.ndim != 0:
+            raise ValueError(
+                "Pulse arithmetic takes a scalar factor or offset, but got an "
+                f"array of shape {value.shape}. To build one pulse per value, "
+                "map over the values with jax.vmap."
+            )
+        return jnp.asarray(value)
+    return None
 
 
 def _concrete(value: object) -> np.ndarray | None:

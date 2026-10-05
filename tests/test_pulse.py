@@ -3,6 +3,7 @@
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
 from jbubble import SaveSpec, run_simulation
 from jbubble.pulse import (
@@ -465,6 +466,110 @@ class TestTransparentWrappers:
             envelope=out.envelope,
         )
         assert isinstance(rebuilt, Scaled)
+
+
+class TestOperands:
+    """Pulse operators accept JAX scalars, including traced ones."""
+
+    def test_grad_through_traced_factor(self, tone_early):
+        grad = jax.grad(lambda k: (tone_early * k)(T_MID))(jnp.asarray(2.0))
+        assert float(grad) == pytest.approx(float(tone_early(T_MID)), rel=1e-12)
+
+    def test_grad_through_traced_divisor(self, tone_early):
+        grad = jax.grad(lambda k: (tone_early / k)(T_MID))(jnp.asarray(2.0))
+        assert float(grad) == pytest.approx(-float(tone_early(T_MID)) / 4.0, rel=1e-12)
+
+    @pytest.mark.parametrize(
+        ("build", "slope"),
+        [
+            (lambda p, c: p + c, 1.0),
+            (lambda p, c: c + p, 1.0),
+            (lambda p, c: p - c, -1.0),
+            (lambda p, c: c - p, 1.0),
+        ],
+        ids=["add", "radd", "sub", "rsub"],
+    )
+    def test_grad_through_traced_offset(self, tone_early, build, slope):
+        grad = jax.grad(lambda c: build(tone_early, c)(T_MID))(jnp.asarray(10.0))
+        assert float(grad) == pytest.approx(slope)
+
+    def test_in_place_operators_take_traced_values(self, tone_early):
+        def value(k):
+            pulse = tone_early
+            pulse *= k
+            pulse /= 2.0
+            pulse += k
+            pulse -= 1.0
+            return pulse(T_MID)
+
+        k = jnp.asarray(3.0)
+        want = 1.5 * tone_early(T_MID) + 2.0
+        assert float(jax.jit(value)(k)) == pytest.approx(float(want), rel=1e-12)
+
+    def test_vmap_over_factor(self, tone_early):
+        ks = jnp.array([0.5, 1.0, 2.0])
+        got = jax.vmap(lambda k: (k * tone_early)(T_MID))(ks)
+        assert jnp.allclose(got, ks * tone_early(T_MID))
+
+    @pytest.mark.parametrize(
+        "constant",
+        [jnp.asarray(1000.0), np.float64(1000.0), np.asarray(1000.0), 1000],
+        ids=["jax", "numpy-scalar", "numpy-0d", "int"],
+    )
+    def test_adding_a_scalar_gives_offset(self, tone_early, constant):
+        for shifted in (tone_early + constant, constant + tone_early):
+            assert isinstance(shifted, Offset)
+            want = float(tone_early(T_MID)) + 1000.0
+            assert float(shifted(T_MID)) == pytest.approx(want, rel=1e-12)
+
+    @pytest.mark.parametrize(
+        "factor",
+        [jnp.asarray(2.0), np.float64(2.0), np.asarray(2.0)],
+        ids=["jax", "numpy-scalar", "numpy-0d"],
+    )
+    def test_multiplying_by_an_array_scalar_gives_scaled(self, tone_early, factor):
+        for scaled in (tone_early * factor, factor * tone_early):
+            assert isinstance(scaled, Scaled)
+            want = 2.0 * float(tone_early(T_MID))
+            assert float(scaled(T_MID)) == pytest.approx(want, rel=1e-12)
+
+    def test_python_numbers_stay_python_floats(self, tone_early):
+        assert type((tone_early * 2).factor) is float
+        assert type((tone_early + 1).offset) is float
+
+    @pytest.mark.parametrize(
+        "operation",
+        [
+            lambda p: p + "a",
+            lambda p: "a" + p,
+            lambda p: p * "a",
+            lambda p: p * p,
+            lambda p: p / p,
+            lambda p: p - None,
+        ],
+        ids=["add-str", "radd-str", "mul-str", "mul-pulse", "div-pulse", "sub-none"],
+    )
+    def test_unsupported_operands_raise_type_error(self, tone_early, operation):
+        with pytest.raises(TypeError):
+            operation(tone_early)
+
+    @pytest.mark.parametrize(
+        "operation",
+        [
+            lambda p: p * jnp.ones(3),
+            lambda p: jnp.ones(3) * p,
+            lambda p: p + jnp.ones((1,)),
+            lambda p: jnp.ones(2) - p,
+            lambda p: p / np.ones(2),
+            # Pulse sets __array_ufunc__ = None, so NumPy defers to the pulse
+            # instead of building an object array of pulses.
+            lambda p: np.ones(2) * p,
+        ],
+        ids=["mul", "rmul", "add", "rsub", "div", "numpy-rmul"],
+    )
+    def test_non_scalar_arrays_raise_value_error(self, tone_early, operation):
+        with pytest.raises(ValueError, match="scalar"):
+            operation(tone_early)
 
 
 class TestSummedWithoutUserJit:
