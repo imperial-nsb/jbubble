@@ -1,10 +1,14 @@
 name: Docs
 
-# Pull requests and pushes to main execute the examples, run the code blocks in
-# the README and the guides, and build the site. Release tags, and manual runs
-# on main, also publish the built site, which includes the executed notebooks,
-# to the gh-pages branch. GitHub Pages serves that branch, and the Colab
-# badges on the example pages open the notebooks from it.
+# Pull requests, pushes to main, and release tags execute the examples, run the
+# code blocks in the README and the guides, and build the site. Manual runs on
+# main or on a release tag also publish the built site, which includes the
+# executed notebooks, to the gh-pages branch. GitHub Pages serves that branch,
+# and the Colab badges on the example pages open the notebooks from it.
+#
+# A release notebook installs `jbubble[examples]==VERSION` from PyPI, so a tag
+# push only builds. After release.yml uploads the release to PyPI, it starts a
+# manual run on the tag, which publishes.
 on:
   pull_request:
     paths:
@@ -22,7 +26,7 @@ on:
       - ".github/workflows/docs.yml"
   push:
     branches: [main]
-    # GitHub ignores path filters for tag pushes, so every release publishes.
+    # GitHub ignores path filters for tag pushes, so every release builds.
     tags: ["v*.*.*"]
     paths:
       - "docs/**"
@@ -119,9 +123,11 @@ jobs:
   publish:
     name: Publish to gh-pages
     needs: build
+    # Only manual runs publish. release.yml starts one on each release tag once
+    # PyPI has the release; maintainers can start one on main.
     if: >-
-      startsWith(github.ref, 'refs/tags/v') ||
-      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+      github.event_name == 'workflow_dispatch' &&
+      (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

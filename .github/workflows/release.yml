@@ -103,3 +103,20 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+
+  docs:
+    name: Publish the docs
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write # starts the Docs workflow
+    steps:
+      # The release notebooks on the docs site install this version from PyPI,
+      # so the site goes live only after the upload. Events that GITHUB_TOKEN
+      # triggers start no workflow runs, except workflow_dispatch and
+      # repository_dispatch.
+      - name: Start the Docs workflow on the release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run docs.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
