@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-jbubble requires Python 3.12 or later. pip and uv install JAX automatically as a dependency. GPU support is optional but recommended for large parameter sweeps.
+jbubble requires Python 3.12 or later. pip and uv install JAX as a dependency, in its CPU-only build. A GPU is optional but speeds up large parameter sweeps; to set one up, see [GPU and accelerator support](#gpu-and-accelerator-support).
 
 ## Install from PyPI
 
@@ -60,9 +60,12 @@ uv sync
 | `diffrax` | Adaptive ODE solvers (Dopri5 by default) |
 | `lineax` | Linear solves inside diffrax's implicit solvers |
 | `optax` | Optimisers for parameter fitting |
+| `numpy` | Host-side arrays for HDF5 export and import |
+| `tqdm` | Progress bars for `GridSweep` |
 | `h5py` | HDF5 export and import (optional, `io` extra) |
+| `matplotlib` | Plotting in the example scripts (optional, `examples` extra) |
 
-## Verifying the installation
+## Verify the installation
 
 ```python
 import jbubble
@@ -89,11 +92,19 @@ converged: True
 peak R/R0: 1.6
 ```
 
-## GPU / accelerator support
+## GPU and accelerator support
 
-JAX automatically uses a GPU if one is available. No code changes are needed. For multi-GPU setups, use `jax.devices()` to select a device and `jax.device_put` to place arrays explicitly.
+`pip install jbubble` installs the CPU-only build of JAX. To use an NVIDIA GPU on Linux, install JAX's CUDA build after jbubble:
 
-## Building the documentation
+```bash
+pip install --upgrade "jax[cuda13]"
+```
+
+For CUDA 12, use `jax[cuda12]`. In a uv project, run `uv add "jax[cuda13]"` instead. For TPUs, AMD and Intel GPUs, and other platforms, see the [JAX installation guide](https://docs.jax.dev/en/latest/installation.html).
+
+With a GPU build installed, JAX uses the GPU automatically, and jbubble needs no code changes. To check which devices JAX found, run `python -c "import jax; print(jax.devices())"`. For multi-GPU setups, use `jax.devices()` to select a device and `jax.device_put` to place arrays explicitly.
+
+## Build the documentation
 
 From a source checkout, install the `docs` dependency group and start the live preview:
 
