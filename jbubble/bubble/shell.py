@@ -263,8 +263,8 @@ class MarmottantSurfaceTension(Property):
 class GompertzSurfaceTension(Property):
     r"""Smooth Gompertz surface tension law.
 
-    This class is being redesigned for a later release, so its parameters
-    and defaults may change.
+    A later release redesigns this class, so its parameters and defaults
+    may change.
 
     A differentiable Gompertz function approximates the piecewise
     Marmottant surface tension, which keeps automatic differentiation
@@ -295,8 +295,8 @@ class GompertzSurfaceTension(Property):
     through rectified diffusion.
 
     The `sharpness` factor sets the steepness of the transition through
-    $c$. Scaling $c$ leaves both anchors fixed: $b$ is re-solved so
-    $\sigma(R_0)$ is unchanged, and $\sigma \to \sigma_r$ as
+    $c$. Scaling $c$ leaves both anchors fixed: the code re-solves $b$ so
+    that $\sigma(R_0)$ stays the same, and $\sigma \to \sigma_r$ as
     $R \to \infty$ regardless.
 
     Parameters
@@ -315,7 +315,9 @@ class GompertzSurfaceTension(Property):
     ------
     ValueError
         If $\sigma_0 \ge \sigma_r$ at construction, that is, the bubble
-        starts in the ruptured regime.
+        starts in the ruptured regime. If you construct the model inside
+        `jax.jit`, JAX raises it as `jax.errors.JaxRuntimeError`, a
+        `RuntimeError` subclass.
 
     Notes
     -----
