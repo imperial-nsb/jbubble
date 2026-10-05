@@ -7,6 +7,7 @@ suite stays fast. Tests marked `slow` recover parameters to a tolerance.
 import warnings
 from typing import Any
 
+import diffrax
 import equinox as eqx
 import jax
 import jax.numpy as jnp
@@ -134,17 +135,16 @@ class TestParameter:
             dict(value=0.0),
             dict(value=1.0, scale=-1.0),
             dict(value=float("nan")),
-        ],
             dict(value=0.5, lower=float("nan")),
             dict(value=0.5, upper=float("nan")),
             dict(value=0.5, lower=float("inf")),
             dict(value=0.5, upper=float("-inf")),
+        ],
     )
     def test_invalid_specification_raises(self, kwargs):
         with pytest.raises(ValueError):
             Parameter(**kwargs)
 
-    def test_bounds_hold_for_any_coordinate(self):
     @pytest.mark.parametrize(
         "kwargs, lower, upper",
         [
@@ -159,6 +159,7 @@ class TestParameter:
         assert bool(jnp.isfinite(p.raw))
         assert float(p.value) == pytest.approx(0.5, rel=1e-12)
 
+    def test_bounds_hold_for_any_coordinate(self):
         u = jnp.linspace(-50.0, 50.0, 101)
         bounded = Parameter(0.5, lower=0.1, upper=1.7)
         positive = Parameter(1e-9, lower=0.0)
@@ -310,6 +311,10 @@ class TestErrors:
     def test_conditions_must_be_a_sequence(self, target):
         with pytest.raises(TypeError, match="list or tuple"):
             _fit(target, conditions={"pressure": jnp.array([20e3, 30e3])})
+
+    def test_forward_mode_adjoint_raises(self, target):
+        with pytest.raises(TypeError, match="reverse mode"):
+            _fit(target, adjoint=diffrax.ForwardMode())
 
 
 # ── result and callback ──────────────────────────────────────────────────────

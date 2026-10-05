@@ -593,7 +593,9 @@ def fit_parameters(
         you fit is the model you simulate.
     adjoint : diffrax.AbstractAdjoint, optional
         How the gradient is computed through the solve. `None` uses
-        `diffrax.RecursiveCheckpointAdjoint()`.
+        `diffrax.RecursiveCheckpointAdjoint()`. `fit_parameters`
+        differentiates in reverse mode, so it can't use
+        `diffrax.ForwardMode()`.
     max_backtracks : int
         How many times to halve a step that fails before stopping. If every
         halved step fails, the fit warns and returns the last accepted
@@ -621,9 +623,10 @@ def fit_parameters(
         If `params0` has nothing to fit, a Python float in `params0` is zero,
         or `conditions` is empty.
     TypeError
-        If `conditions` isn't a list or tuple, `make_model` or `loss_fn`
-        takes the wrong number of arguments, `make_model` doesn't return an
-        `(eom, pulse)` tuple, or `loss_fn` doesn't return a scalar.
+        If `adjoint` is `diffrax.ForwardMode()`, `conditions` isn't a list
+        or tuple, `make_model` or `loss_fn` takes the wrong number of
+        arguments, `make_model` doesn't return an `(eom, pulse)` tuple, or
+        `loss_fn` doesn't return a scalar.
     RuntimeError
         If a solve fails, or the loss or its gradient isn't finite, at
         `params0`.
@@ -658,6 +661,14 @@ def fit_parameters(
     """
     config = SolverConfig() if config is None else config
     adjoint = diffrax.RecursiveCheckpointAdjoint() if adjoint is None else adjoint
+    if isinstance(adjoint, diffrax.ForwardMode):
+        raise TypeError(
+            "fit_parameters: diffrax.ForwardMode() gives only forward-mode "
+            "derivatives, and fit_parameters differentiates in reverse mode. Keep "
+            "the default diffrax.RecursiveCheckpointAdjoint(). For a least-squares "
+            "fit with forward-mode Jacobians, pass adjoint=diffrax.ForwardMode() "
+            "to run_simulation instead, as the fitting guide shows."
+        )
 
     if conditions is not None:
         if not isinstance(conditions, (list, tuple)):

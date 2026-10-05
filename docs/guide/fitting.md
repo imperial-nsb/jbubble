@@ -403,7 +403,7 @@ so the model that you fit is the model that you simulate.
 | `SolverConfig(stepsize_controller=diffrax.PIDController(rtol=1e-4, atol=1e-8))` | Quick exploratory fits to noisy data. Each step is faster, but gradients can be a few percent off. |
 | `SolverConfig.stiff()` | Stiff dynamics, for example a nanobubble or a sub-micron bubble in a viscous liquid, where `Dopri5` takes many tiny steps. See [When stiffness matters](solvers.md#when-stiffness-matters). |
 | `adjoint=diffrax.RecursiveCheckpointAdjoint()` (default) | Gradient-based fits. Gives the exact gradient of the computed solution. |
-| `adjoint=diffrax.ForwardMode()` | Forward-mode Jacobians with few parameters, for example Levenberg-Marquardt. |
+| `adjoint=diffrax.ForwardMode()` | Not for `fit_parameters`, which differentiates in reverse mode and raises `TypeError` for it. Pass it to `run_simulation` in a hand-written least-squares fit, for forward-mode Jacobians with few parameters, as [Use a least-squares solver](#use-a-least-squares-solver) shows. |
 
 ## Use a least-squares solver
 
