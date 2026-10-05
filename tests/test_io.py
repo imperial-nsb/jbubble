@@ -2,7 +2,11 @@
 
 import jax.numpy as jnp
 import numpy as np
-from jbubble.utils.io import export_hdf5, load_hdf5
+import pytest
+
+pytest.importorskip("h5py")
+
+from jbubble.utils.io import export_hdf5, load_hdf5  # noqa: E402
 
 
 class TestHdf5RoundTrip:

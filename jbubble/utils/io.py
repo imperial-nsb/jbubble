@@ -11,8 +11,14 @@ import json
 from pathlib import Path
 from typing import Any
 
-import h5py
 import numpy as np
+
+try:
+    import h5py
+except ImportError as err:  # h5py is an optional dependency
+    raise ImportError(
+        "jbubble.utils.io needs h5py. Install it with: pip install 'jbubble[io]'"
+    ) from err
 
 
 def export_hdf5(
