@@ -111,9 +111,12 @@ class Pulse(eqx.Module, abc.ABC):
         [`Scaled`][jbubble.pulse.base.Scaled] and
         [`Offset`][jbubble.pulse.base.Offset] return the edges of the pulse
         they wrap, and [`Summed`][jbubble.pulse.base.Summed] returns its own
-        edges with those of every child, in ascending order. If you write a
-        pulse that wraps other pulses, override this property to include
-        their edges.
+        edges with those of every child, in ascending order.
+
+        [`solve_eom`][jbubble.solver.solve_eom] makes an adaptive step-size
+        controller step to each of these times, so it can't step over a
+        pulse that starts late. If you write a pulse that wraps other
+        pulses, override this property to include their edges.
         """
         return jnp.stack([jnp.asarray(self.t_start), jnp.asarray(self.t_stop)])
 

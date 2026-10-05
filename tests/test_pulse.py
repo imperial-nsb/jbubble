@@ -1,11 +1,12 @@
 """Tests for jbubble.pulse — ToneBurst, ChirpPulse, SampledPulse, NeuralPulse, composition."""
 
+import diffrax
 import equinox as eqx
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from jbubble import SaveSpec, run_simulation
+from jbubble import SaveSpec, SolverConfig, run_simulation
 from jbubble.pulse import (
     ChirpPulse,
     HannEnvelope,
@@ -464,6 +465,98 @@ class TestWindowEdges:
         got = jax.jit(jax.vmap(edges))(jnp.array([10e-6, 1e-6]))
         np.testing.assert_allclose(got[0], [0.0, 0.0, 5e-6, 10e-6, 12e-6, 12e-6])
         np.testing.assert_allclose(got[1], [0.0, 0.0, 1e-6, 3e-6, 5e-6, 5e-6])
+
+
+def _peak_ratio(pulse, **kwargs):
+    """Peak R/R0 of the free-bubble preset driven by `pulse`."""
+    eom, _ = free_bubble()
+    result = run_simulation(eom, pulse, save_spec=SaveSpec(num_samples=2001), **kwargs)
+    assert bool(result.converged)
+    return float(jnp.max(result.radius)) / float(eom.R0)
+
+
+def _late_tone(t0, **kwargs):
+    return ToneBurst(
+        freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5, initial_time=t0, **kwargs
+    )
+
+
+class TestSolverSeesDelayedPulses:
+    """An adaptive solver can't step over a pulse that starts late.
+
+    A 5-cycle, 100 kPa tone burst drives the preset bubble to a peak R/R0
+    of about 1.59. Without step times at the window edges, the default
+    solver grows its step through the silent lead-in, steps over the
+    pulse, and returns R/R0 = 1 with `converged = True`.
+    """
+
+    def test_sampled_pulse_with_late_samples(self):
+        ts = jnp.linspace(30e-6, 35e-6, 501)
+        pressures = 100e3 * jnp.sin(2 * jnp.pi * 1e6 * (ts - 30e-6))
+        assert _peak_ratio(SampledPulse(ts=ts, pressures=pressures)) > 1.5
+
+    @pytest.mark.parametrize("t0", [25e-6, 200e-6])
+    def test_tone_burst_with_a_short_t_max(self, t0):
+        assert _peak_ratio(_late_tone(t0), t_max=t0 + 20e-6) > 1.5
+
+    def test_late_compact_window_with_a_long_tail(self):
+        # Landing on t_start isn't enough: from there, the proposed step can
+        # still span the whole Hann window, so the solver also steps to t_stop.
+        pulse = _late_tone(200e-6, envelope=HannEnvelope())
+        assert _peak_ratio(pulse, t_max=300e-6) > 1.5
+
+    def test_late_child_of_a_sum(self, tone_early):
+        pulse = tone_early + 0.8 * _late_tone(50e-6)
+        eom, _ = free_bubble()
+        result = run_simulation(
+            eom, pulse, save_spec=SaveSpec(num_samples=2001), t_max=70e-6
+        )
+        after = result.ts >= 50e-6
+        peak = float(jnp.max(jnp.where(after, result.radius, 0.0))) / float(eom.R0)
+        assert peak > 1.4
+
+    def test_user_clip_controller_still_works(self):
+        controller = diffrax.ClipStepSizeController(
+            diffrax.PIDController(rtol=1e-6, atol=1e-9), step_ts=jnp.array([1e-6])
+        )
+        config = SolverConfig(stepsize_controller=controller)
+        assert _peak_ratio(_late_tone(25e-6), t_max=45e-6, config=config) > 1.5
+
+    def test_constant_step_size_is_unchanged(self):
+        config = SolverConfig(
+            stepsize_controller=diffrax.ConstantStepSize(), dt0=5e-9, max_steps=10_000
+        )
+        assert _peak_ratio(_late_tone(25e-6), t_max=45e-6, config=config) > 1.5
+
+    def test_gradient_with_respect_to_the_delay_is_finite(self):
+        eom, _ = free_bubble()
+        spec = SaveSpec(num_samples=256)
+
+        def peak(t0):
+            pulse = _late_tone(t0)
+            return run_simulation(eom, pulse, save_spec=spec, t_max=45e-6).radius.max()
+
+        peaks = jax.vmap(peak)(jnp.array([25e-6, 30e-6]))
+        assert bool(jnp.all(peaks > 1.5 * eom.R0))
+        assert bool(jnp.isfinite(jax.grad(peak)(jnp.asarray(25e-6))))
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason=(
+            "While the drive is exactly zero, the bubble sits exactly at rest, "
+            "and the reverse pass of the adaptive solve gives NaN. A guarded "
+            "vector field in solve_eom removes the NaN."
+        ),
+    )
+    def test_gradient_through_a_late_compact_window_is_finite(self):
+        eom, _ = free_bubble()
+        spec = SaveSpec(num_samples=512)
+
+        def peak(amplitude):
+            pulse = amplitude * _late_tone(2e-6, envelope=HannEnvelope())
+            return run_simulation(eom, pulse, save_spec=spec).radius.max()
+
+        assert bool(jnp.isfinite(jax.grad(peak)(jnp.asarray(1.0))))
 
 
 class TestDelayedChildInSum:

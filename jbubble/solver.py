@@ -16,6 +16,26 @@ from .pulse import Pulse
 __all__ = ["SaveSpec", "SolverConfig", "solve_eom"]
 
 
+def _step_to_window_edges(
+    controller: diffrax.AbstractStepSizeController, pulse: Pulse
+) -> diffrax.AbstractStepSizeController:
+    """Make an adaptive `controller` step to every window edge of `pulse`.
+
+    While the drive is zero, before a delayed pulse starts, an adaptive
+    controller grows its step size by up to 10 times per step. Without
+    these step times, it can step over a delayed pulse entirely, so the
+    bubble never moves. The edges are
+    [`Pulse.window_edges`][jbubble.pulse.base.Pulse.window_edges], with
+    gradients stopped, because a step location carries no meaningful
+    derivative. Other controllers, such as `diffrax.ConstantStepSize`, are
+    returned unchanged.
+    """
+    if not isinstance(controller, diffrax.AbstractAdaptiveStepSizeController):
+        return controller
+    edges = jax.lax.stop_gradient(pulse.window_edges)
+    return diffrax.ClipStepSizeController(controller, step_ts=edges)
+
+
 class SaveSpec(eqx.Module):
     """Specification for ODE output sampling.
 
@@ -93,7 +113,10 @@ def solve_eom(
         Assembled equation of motion, such as
         [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis].
     pulse : Pulse
-        Driving acoustic pulse.
+        Driving acoustic pulse. An adaptive step-size controller steps to
+        every time in
+        [`pulse.window_edges`][jbubble.pulse.base.Pulse.window_edges], so
+        it can't step over a pulse that starts late.
     y0 : BubbleState, optional
         Initial state in SI units. `None` uses `eom.initial_state()`.
     t_max : float, optional
@@ -152,7 +175,7 @@ def solve_eom(
         y0=y0,
         args=(eom, pulse),
         saveat=saveat,
-        stepsize_controller=config.stepsize_controller,
+        stepsize_controller=_step_to_window_edges(config.stepsize_controller, pulse),
         max_steps=config.max_steps,
         progress_meter=progress_meter,
         throw=False,
