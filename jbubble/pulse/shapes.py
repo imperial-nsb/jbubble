@@ -2,7 +2,7 @@ r"""Library of carrier waveform shapes for acoustic pulses.
 
 Every shape is differentiable enough for gradient-based work. A shape
 evaluates a periodic waveform at the phase $x = 2\pi f (t - t_0) - \phi$.
-The Fourier-series shapes sum the first 10 harmonics.
+The Fourier-series shapes sum the first 10 terms of their series.
 """
 
 from __future__ import annotations
@@ -67,9 +67,11 @@ class PulseShape(eqx.Module):
 class FourierPulseShape(PulseShape):
     r"""Abstract carrier waveform built from a truncated Fourier series.
 
-    Subclasses implement `term`, the $m$-th harmonic, and `norm_factor`.
-    The shape sums the first 10 harmonics (`NUM_FOURIER_TERMS`), divides
-    by `norm_factor`, and adds `dc_offset`:
+    Subclasses implement `term`, the $m$-th term of the series, and
+    `norm_factor`. Term $m$ isn't always harmonic $m$: in
+    [`Square`][jbubble.pulse.shapes.Square], term $m$ is harmonic $2m - 1$.
+    The shape sums the first 10 terms (`NUM_FOURIER_TERMS`), divides by
+    `norm_factor`, and adds `dc_offset`:
 
     $$
     s(t) = \frac{1}{\text{norm\_factor}}
@@ -203,7 +205,8 @@ class Triangle(FourierPulseShape):
     $$
 
     with $x = 2\pi f (t - t_0) - \phi$ as in
-    [`PulseShape`][jbubble.pulse.shapes.PulseShape]. The wave starts at 0 and peaks at $x = \pi/2$.
+    [`PulseShape`][jbubble.pulse.shapes.PulseShape]. The wave starts at 0
+    and peaks at $x = \pi/2$.
     """
 
     def term(
@@ -276,7 +279,8 @@ class Square(FourierPulseShape):
     $$
 
     with $x = 2\pi f (t - t_0) - \phi$ as in
-    [`PulseShape`][jbubble.pulse.shapes.PulseShape]. The truncated series shows Gibbs ringing at the edges.
+    [`PulseShape`][jbubble.pulse.shapes.PulseShape]. The truncated series
+    shows Gibbs ringing at the edges.
     """
 
     def term(
@@ -389,14 +393,16 @@ class Rectangular(FourierPulseShape):
     $$
     s =
     \begin{cases}
-    A & \dfrac{\phi_\text{off}}{2\pi} T \le t' < \left(\dfrac{\phi_\text{off}}{2\pi} + D\right) T, \\
+    A & \left(t - t_0 - \dfrac{\phi_\text{off}}{2\pi} T\right) \bmod T < D T, \\
     B & \text{otherwise},
     \end{cases}
     $$
 
-    where $T = 1/f$ is the period and $t'$ is the time within the current
-    period, $t' = (t - t_0) \bmod T$ for zero carrier phase. The code
-    evaluates the first 10 harmonics of its Fourier series:
+    for zero carrier phase, where $T = 1/f$ is the period. The high window
+    starts a fraction $\phi_\text{off}/2\pi$ into each period and lasts
+    $DT$; when $\phi_\text{off}/2\pi + D > 1$, it wraps into the start of
+    the next period. The code evaluates the first 10 harmonics of its
+    Fourier series:
 
     $$
     \begin{aligned}
@@ -428,7 +434,7 @@ class Rectangular(FourierPulseShape):
 
     Examples
     --------
-    Common named forms:
+    The following examples show common named forms.
 
     ```python
     Rectangular(duty=0.5)  # ±1 square
