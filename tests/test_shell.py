@@ -54,6 +54,15 @@ def _has_callback(fn, *args):
     return "callback" in str(jax.make_jaxpr(fn)(*args))
 
 
+class RadiusScaledChi(Property):
+    """A chi that grows linearly with R / R0, as for a strain-stiffening shell."""
+
+    chi0: float
+
+    def __call__(self, state):
+        return self.chi0 * state.R / state.R0
+
+
 class TestNoShell:
     def test_laplace_pressure(self):
         shell = NoShell(sigma=0.072)
@@ -328,6 +337,24 @@ class TestMarmottantSurfaceTension:
             s = _make_state(ratio)
             assert float(wrapped(s)) == float(plain(s))
 
+    @pytest.mark.parametrize("x", [0.97, 1.005, 1.03, 1.2])
+    def test_state_dependent_chi_matches_the_closed_form(self, x):
+        # chi(state) sets both the elastic branch and the rupture radius.
+        st = MarmottantSurfaceTension(
+            R_buckle_ratio=0.98,
+            chi=RadiusScaledChi(chi0=0.55),
+            sigma_rupture=ConstantProperty(SIGMA_R),
+        )
+        chi = 0.55 * x
+        x_r = 0.98 * math.sqrt(1.0 + SIGMA_R / chi)
+        if x <= 0.98:
+            expected = 0.0
+        elif x < x_r:
+            expected = chi * ((x / 0.98) ** 2 - 1.0)
+        else:
+            expected = SIGMA_R
+        assert float(st(_make_state(x))) == pytest.approx(expected, rel=1e-9, abs=0.0)
+
     def test_gradient_with_respect_to_chi(self):
         def sigma(chi):
             st = MarmottantSurfaceTension(
@@ -355,16 +382,19 @@ class TestSmoothMarmottantSurfaceTension:
         assert bool(jnp.all(s >= 0.0)) and bool(jnp.all(s <= SIGMA_R))
         assert bool(jnp.all(jnp.diff(s) >= 0.0))
 
-    @pytest.mark.parametrize("smoothing", [0.005, 0.01, 0.05])
-    def test_max_error_is_chi_independent(self, smoothing):
+    @pytest.mark.parametrize(
+        "smoothing,sigma_r",
+        [(0.005, SIGMA_R), (0.01, SIGMA_R), (0.05, SIGMA_R), (0.01, 0.05)],
+    )
+    def test_max_error_is_chi_independent(self, smoothing, sigma_r):
         # sup |sigma - sigma_Marmottant| = smoothing * ln 2 * sigma_r for every
-        # chi and ratio.
-        bound = smoothing * math.log(2.0) * SIGMA_R
+        # chi and ratio: the corner width scales with sigma_r.
+        bound = smoothing * math.log(2.0) * sigma_r
         for chi in CHIS:
             for ratio in RATIOS:
-                kw = dict(R_buckle_ratio=ratio, chi=float(chi), sigma_rupture=SIGMA_R)
+                kw = dict(R_buckle_ratio=ratio, chi=float(chi), sigma_rupture=sigma_r)
                 x_b = ratio
-                x_r = ratio * math.sqrt(1.0 + SIGMA_R / chi)
+                x_r = ratio * math.sqrt(1.0 + sigma_r / chi)
                 # A dense grid that contains both corners exactly.
                 x = np.unique(
                     np.concatenate([np.linspace(0.5, 3.0, 20_001), [x_b, x_r]])
@@ -485,13 +515,6 @@ class TestSmoothMarmottantSurfaceTension:
         assert not _has_callback(sigma, 0.01)
 
     def test_chi_and_sigma_rupture_accept_a_state_dependent_property(self):
-        class RadiusScaledChi(Property):
-            # chi grows linearly with R / R0, a strain-stiffening shell.
-            chi0: float
-
-            def __call__(self, state):
-                return self.chi0 * state.R / state.R0
-
         st = SmoothMarmottantSurfaceTension(
             R_buckle_ratio=0.98,
             chi=RadiusScaledChi(chi0=0.55),
@@ -645,6 +668,14 @@ class TestGompertzSurfaceTensionPublished:
         with pytest.raises(ValueError, match="strictly between"):
             GompertzSurfaceTension(R_buckle_ratio=ratio, chi=chi, sigma_rupture=SIGMA_R)
 
+    def test_sigma_0_equal_to_sigma_rupture_raises(self):
+        # chi * ((1 / 0.5)**2 - 1) = 3 * 0.03125 = 0.09375 exactly in binary
+        # floating point, so sigma_0 equals sigma_rupture.
+        with pytest.raises(ValueError, match="strictly between"):
+            GompertzSurfaceTension(
+                R_buckle_ratio=0.5, chi=0.03125, sigma_rupture=0.09375
+            )
+
     def test_negative_chi_raises(self):
         # chi < 0 with R_buckle_ratio > 1 gives 0 < sigma_0 < sigma_r, but the
         # law is meaningless.
@@ -703,9 +734,35 @@ class TestGompertzSurfaceTensionPublished:
             float(ref(_make_state(1.01))), rel=1e-12
         )
 
-    def test_gradients_finite_under_deep_compression(self):
-        st = GompertzSurfaceTension(
-            R_buckle_ratio=0.995, chi=2.0, sigma_rupture=SIGMA_R
+    @pytest.mark.parametrize(
+        "chi,ratio,x",
+        [
+            # Rejected solver trial steps can reach R < 0, for example
+            # R / R0 = -14.6 in a Keller-Miksis run.
+            (
+                2.0,
+                0.995,
+                np.concatenate(
+                    [np.linspace(-15.0, 0.0, 301), np.linspace(0.01, 10.0, 2001)]
+                ),
+            ),
+            # A stiff shell overflows the uncapped exponent at R > 0 too.
+            (10.0, 0.9975, np.asarray([0.01, 0.1])),
+        ],
+    )
+    def test_gradients_finite_under_deep_compression(self, chi, ratio, x):
+        # Without the cap on the inner exponent, exp() overflows at these
+        # states and both gradients are NaN.
+        def sigma(R, chi):
+            st = GompertzSurfaceTension(
+                R_buckle_ratio=ratio, chi=chi, sigma_rupture=SIGMA_R
+            )
+            return st(BubbleState(R=R, R0=jnp.asarray(R0)))
+
+        grads = jax.vmap(jax.grad(sigma, argnums=(0, 1)), in_axes=(0, None))(
+            jnp.asarray(x * R0), chi
         )
-        x = np.linspace(0.01, 10.0, 2001)
-        assert bool(jnp.all(jnp.isfinite(_dsigma_dx(st, x, 0.995 * R0))))
+        for g in grads:
+            assert bool(jnp.all(jnp.isfinite(g)))
+        values = jax.vmap(sigma, in_axes=(0, None))(jnp.asarray(x * R0), chi)
+        assert float(values[0]) == 0.0
