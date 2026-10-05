@@ -197,7 +197,7 @@ class InvertedSawtooth(FourierPulseShape):
 
 
 class Triangle(FourierPulseShape):
-    r"""Triangle wave from a 10-term Fourier series (odd harmonics only).
+    r"""Triangle wave from a 10-term Fourier series (odd harmonics 1 to 9).
 
     $$
     s = -\frac{4}{\pi^2} \sum_{m=1}^{10} \frac{1 - (-1)^m}{m^2}
@@ -205,8 +205,9 @@ class Triangle(FourierPulseShape):
     $$
 
     with $x = 2\pi f (t - t_0) - \phi$ as in
-    [`PulseShape`][jbubble.pulse.shapes.PulseShape]. The wave starts at 0
-    and peaks at $x = \pi/2$.
+    [`PulseShape`][jbubble.pulse.shapes.PulseShape]. The even terms
+    vanish, so the 10 terms give the five harmonics 1, 3, 5, 7, and 9. The
+    wave starts at 0 and peaks at $x = \pi/2$.
     """
 
     def term(

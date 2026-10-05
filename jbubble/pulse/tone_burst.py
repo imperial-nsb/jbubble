@@ -53,8 +53,8 @@ class ToneBurst(Pulse):
     >>> from jbubble.pulse import ToneBurst
     >>> from jbubble.pulse.shapes import Sine
     >>> pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
-    >>> float(pulse(jnp.array(0.0))) < 0.5  # the soft envelope is ~0.5 at t=0
-    True
+    >>> float(pulse(jnp.array(0.0)))  # sin(0) = 0
+    0.0
     """
 
     freq: ArrayLike

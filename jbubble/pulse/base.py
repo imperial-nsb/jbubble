@@ -242,8 +242,8 @@ class Summed(Pulse):
     """Additive superposition of multiple pulses.
 
     `Summed` evaluates each child pulse with its own envelope, then sums
-    the results. It applies its own `envelope` on top: the field is
-    inherited from [`Pulse`][jbubble.pulse.base.Pulse], and its default is
+    the results. It applies its own `envelope` on top. `Summed` inherits
+    that field from [`Pulse`][jbubble.pulse.base.Pulse], and it defaults to
     [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope].
     To window the combined signal, use `.windowed(HannEnvelope())`.
 
