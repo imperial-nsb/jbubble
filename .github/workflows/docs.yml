@@ -30,9 +30,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Only main deploys. Pull requests, and manual runs on other branches, build
+  # the site without publishing it.
   build:
     name: Build docs
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -44,7 +46,7 @@ jobs:
 
   deploy:
     name: Build and deploy docs
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write # `mkdocs gh-deploy` pushes to the gh-pages branch
