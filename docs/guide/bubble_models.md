@@ -45,7 +45,7 @@ eom = RayleighPlesset(gas=..., shell=..., medium=..., R0=2e-6, P_amb=101325, rho
 
 ### Modified Rayleigh–Plesset
 
-Adds a first-order compressibility correction to the RP equation via the acoustic radiation damping term $\frac{R}{c_L}\dot{p}_\text{gas}$. It is simply the Keller-Miksis equation without the $$O(\dot R/c)$$ prefactor terms. Suitable for low driving pressures and for instances where $$M = \dot R/ c\ll 1$$.
+Adds a first-order compressibility correction to the RP equation via the acoustic radiation damping term $\frac{R}{c_L}\dot{p}_\text{gas}$. It is simply the Keller-Miksis equation without the $O(\dot R/c)$ prefactor terms. Suitable for low driving pressures and for instances where $M = \dot R/c \ll 1$.
 
 
 $$(1 - M)\, R \ddot{R} + \frac{3}{2}\left(1 - \frac{M}{3}\right)\dot{R}^2
@@ -60,7 +60,7 @@ eom = ModifiedRayleighPlesset(..., c_L=1500.0)
 
 ### Keller–Miksis
 
-First-order compressible model. The standard choice for moderate-to-high driving pressures. Breaks down when $$M = \dot R/c \approx 1$$.
+First-order compressible model. The standard choice for moderate-to-high driving pressures. Breaks down when $M = \dot R/c \approx 1$.
 
 $$\left(1 - \frac{\dot{R}}{c_L}\right)R\ddot{R} + \frac{3}{2}\left(1 - \frac{\dot{R}}{3c_L}\right)\dot{R}^2 = \left(1 + \frac{\dot{R}}{c_L}\right)\frac{p_L - P_\infty - p_{ac}}{\rho_L} + \frac{R}{\rho_L c_L}\frac{d}{dt}(p_L - p_{ac})$$
 
@@ -74,7 +74,7 @@ eom = KellerMiksis(..., c_L=1500.0)
 
 ### Gilmore
 
-First-order compressible model. Uses enthalpy $H$ rather than pressure and assumes that the speed of sound $C$ varies with $H$. Handles cases where $$M \approx 1$$ well by suppressing the Mach number during violent collapses. Uses the Tait equation of state for the liquid, from which the enthalpy $H$ and local sound speed $C$ are computed; $\dot{H}$ is expanded analytically via the chain rule.
+First-order compressible model. Uses enthalpy $H$ rather than pressure and assumes that the speed of sound $C$ varies with $H$. Handles cases where $M \approx 1$ well by suppressing the Mach number during violent collapses. Uses the Tait equation of state for the liquid, from which the enthalpy $H$ and local sound speed $C$ are computed; $\dot{H}$ is expanded analytically via the chain rule.
 
 $$
 \left(1 - \frac{\dot{R}}{C}\right) R \ddot{R}
@@ -101,11 +101,11 @@ eom = Gilmore(
 
 The most common gas model. Assumes a polytropic process:
 
-$$p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0}{R}\right)^{3\gamma}$$.
+$$p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0}{R}\right)^{3\gamma}$$
 
 In an isothermal process, heat transfer is fast compared bubble oscillations and $\gamma = 1$ for all gases.
 
-In an adiabatic process, heat transfer is slow compared to bubble oscillations. The adiabatic index for SF6, which is commonly used as the gaseous core of lipid-coated microbubbles, is $$approx 1.095$$.
+In an adiabatic process, heat transfer is slow compared to bubble oscillations. The adiabatic index for SF6, which is commonly used as the gaseous core of lipid-coated microbubbles, is $\approx 1.095$.
 
 
 ```python
@@ -173,6 +173,7 @@ shell = LipidShell(sigma=sigma, kappa_s=2.4e-9)  # kappa_s [N·s/m]
 Church (1995) thick viscoelastic shell. Models polymer-shelled agents (e.g. PLGA). The shell has finite thickness $d_s$ and both elastic ($G_s$) and viscous ($\mu_s$) stiffness:
 
 $$p_\text{elastic} = \frac{4}{3}G_s \frac{d_s}{R_0}\left(1 - \left(\frac{R_0}{R}\right)^3\right)$$
+
 $$p_\text{viscous} = \frac{4\mu_s d_s \dot{R}}{R^2}$$
 
 ```python
@@ -207,8 +208,8 @@ medium = NewtonianMedium(mu=1e-3)  # [Pa·s]
 
 Linear viscoelastic medium (solid or gel). Contributes to the interfacial stresses through
 
-- a viscosity term $$p_\text{viscous} = \frac{4\mu \dot{R}}{R}$$
-- a spring-like elastic restoring term $$p_\text{elastic} = \frac{4G}{3}\left[\left(\frac{R}{R_0}\right)^3 - 1\right]$$
+- a viscosity term $p_\text{viscous} = \frac{4\mu \dot{R}}{R}$
+- a spring-like elastic restoring term $p_\text{elastic} = \frac{4G}{3}\left[\left(\frac{R}{R_0}\right)^3 - 1\right]$
 
 Valid only for small strains ($|R - R_0| \ll R_0$). Prefer `NeoHookeanMedium` for large oscillations.
 
