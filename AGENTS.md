@@ -10,7 +10,7 @@ command, test run, and example with `uv run`:
 
 ```bash
 uv sync
-MPLBACKEND=Agg uv run python examples/01_basic_simulation.py
+MPLBACKEND=Agg uv run python examples/01_first_simulation.py
 ```
 
 Set `MPLBACKEND=Agg` when you run an example. Every example calls `plt.show()`,
