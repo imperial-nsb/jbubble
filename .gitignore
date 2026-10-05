@@ -12,6 +12,10 @@
 dist/
 build/
 *.egg-info/
+# Left over from the setuptools-scm builds in jbubble 0.1.x. jbubble now reads
+# its version from package metadata, so delete this file from old checkouts.
+# Hatchling honours this rule, which keeps the stale file out of local builds.
+jbubble/_version.py
 
 # Docs builds and tool caches
 site/

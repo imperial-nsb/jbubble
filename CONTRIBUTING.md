@@ -57,6 +57,20 @@ pip doesn't read `uv.lock`, so it installs the newest versions that
 `pyproject.toml` allows. To run the checks in the next section, leave out the
 `uv run` prefix.
 
+### Update a checkout from jbubble 0.1
+
+jbubble 0.1 built with setuptools-scm, which wrote `jbubble/_version.py` into
+the source tree. jbubble now reads its version from the package metadata, so
+delete the leftover file:
+
+```bash
+rm -f jbubble/_version.py
+```
+
+jbubble now needs Python 3.12 or later. If your environment runs an older
+Python, create a new one with `uv sync` or with the
+[conda steps](#use-conda-instead-of-uv).
+
 ## Development workflow
 
 ### Run the checks
