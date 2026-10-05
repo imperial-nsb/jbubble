@@ -159,54 +159,127 @@ class LipidShell(ShellModel):
 
 
 class ThickShell(ShellModel):
-    r"""Church (1995) thick viscoelastic shell.
+    r"""Incompressible viscoelastic shell of finite thickness (Church 1995).
 
-    In addition to Laplace pressure, this model includes thick-shell
-    elastic and viscous contributions:
+    The shell is a layer of incompressible Kelvin-Voigt solid with shear
+    modulus $G_s$, shear viscosity $\mu_s$, and thickness $d_s$ at the
+    equilibrium radius $R_0$. Integrating its radial stress across the
+    layer gives the shell stresses of the Church (1995) model in the
+    finite-deformation form of Qin and Ferrara (2010, Eq. 10):
 
     $$
     \begin{aligned}
-    p_\text{elastic} &= \frac{4}{3} G_s \frac{d_s}{R_0}
-        \left[1 - \left(\frac{R_0}{R}\right)^3\right], \\
-    p_\text{viscous} &= \frac{4\mu_s d_s \dot{R}}{R^2}.
+    p_\text{elastic} &= \frac{4}{3} G_s
+        \left[1 - \left(\frac{R_0}{R}\right)^3\right]
+        \frac{V_s}{R^3 - V_s}, \\
+    p_\text{viscous} &= 4 \mu_s \frac{V_s}{R^3 - V_s} \frac{\dot{R}}{R},
     \end{aligned}
+    \qquad
+    V_s = R_0^3 - (R_0 - d_s)^3,
     $$
 
-    The total shell pressure is
+    where $R$ is the outer, liquid-side radius. $V_s$ is the shell volume
+    divided by $4\pi/3$; the shell conserves it, so $R^3 - V_s$ is the
+    cube of the inner radius. The total shell pressure is
 
     $$
     p_\text{shell} = \frac{2\sigma(R)}{R} + p_\text{elastic} + p_\text{viscous}.
     $$
+
+    For a thin shell, $d_s \ll R_0$, so $V_s \approx 3 R_0^2 d_s$, and the
+    model reduces to the thin-shell model of Hoff et al. (2000):
+
+    $$
+    p_\text{elastic} \approx 12 G_s d_s \frac{R_0^2}{R^3}
+        \left(1 - \frac{R_0}{R}\right),
+    \qquad
+    p_\text{viscous} \approx 12 \mu_s d_s \frac{R_0^2 \dot{R}}{R^4}.
+    $$
+
+    The viscous terms agree exactly in that limit and the elastic terms
+    agree to first order in the strain. Small oscillations about $R_0$
+    therefore feel a shell stiffness of $12 G_s d_s / R_0$ per unit
+    radial strain and a shell damping of $12 \mu_s d_s / R_0^2$ per unit
+    wall velocity, with relative corrections of order $d_s/R_0$.
 
     Parameters
     ----------
     sigma : float or Property
         Surface tension law [N/m].
     d_s : float or Property
-        Shell thickness [m].
+        Shell thickness at the equilibrium radius $R_0$ [m]. The shell
+        volume, not the thickness, stays constant as the bubble moves.
     G_s : float or Property
         Shell shear modulus [Pa]. It can be state-dependent, for example to
         model strain stiffening or strain softening.
     mu_s : float or Property
-        Shell viscosity [Pa s]. It can be state-dependent, for example to
-        model shear thinning.
+        Shell shear viscosity [Pa s]. It can be state-dependent, for
+        example to model shear thinning.
+
+    Notes
+    -----
+    jbubble integrates a single radius, so this class simplifies the full
+    Church and Qin-Ferrara equations as follows:
+
+    - The gas model reads the outer radius $R$ rather than the inner
+      radius $(R^3 - V_s)^{1/3}$, so the gas stiffness comes out low by a
+      relative amount of about $3 d_s / R_0$.
+    - The shell's inertia is neglected, a relative error of order
+      $d_s / R_0$ in the inertial terms.
+    - A single surface tension $\sigma$ acts at $R$, in place of separate
+      gas-shell and shell-liquid tensions.
+    - The shell is unstrained at $R_0$, and
+      [`initial_state`][jbubble.bubble.eom.EquationOfMotion.initial_state]
+      balances the Laplace pressure with the gas pressure.
+
+    The viscous term is identical to Church's
+    $4 \mu_s V_s \dot{R}_1 / (R_1 R^3)$, written with the outer radius.
+    The elastic term agrees with Church's
+    $4 G_s (V_s / R^3)(1 - R_{1,0}/R_1)$, quoted by Tu et al. (2009,
+    Eq. 2), to first order in the strain. Here $R_1$ is the inner radius
+    and $R_{1,0} = R_0 - d_s$. The model needs $R^3 > V_s$, that is, a
+    positive inner radius.
+
+    References
+    ----------
+    Church, C. C. (1995). The effects of an elastic solid surface layer on
+    the radial pulsations of gas bubbles. *J. Acoust. Soc. Am.* 97(3),
+    1510-1521. [doi:10.1121/1.412091](https://doi.org/10.1121/1.412091)
+
+    Hoff, L., Sontum, P. C., & Hovem, J. M. (2000). Oscillations of
+    polymeric microbubbles: Effect of the encapsulating shell. *J. Acoust.
+    Soc. Am.* 107(4), 2272-2280.
+    [doi:10.1121/1.428557](https://doi.org/10.1121/1.428557)
+
+    Qin, S., & Ferrara, K. W. (2010). A model for the dynamics of
+    ultrasound contrast agents in vivo. *J. Acoust. Soc. Am.* 128(3),
+    1511-1521. [doi:10.1121/1.3409476](https://doi.org/10.1121/1.3409476)
+
+    Tu, J., Guan, J., Qiu, Y., & Matula, T. J. (2009). Estimating the shell
+    parameters of SonoVue microbubbles using light scattering. *J. Acoust.
+    Soc. Am.* 126(6), 2954-2962.
+    [doi:10.1121/1.3242346](https://doi.org/10.1121/1.3242346)
     """
 
     d_s: Property = eqx.field(converter=as_property)
     G_s: Property = eqx.field(converter=as_property)
     mu_s: Property = eqx.field(converter=as_property)
 
+    def _volume_factor(self, state: BubbleState) -> jax.Array:
+        r"""Return $V_s / (R^3 - V_s)$, the shell-to-inner-gas volume ratio."""
+        R0, d_s = state.R0, self.d_s(state)
+        # R0^3 - (R0 - d_s)^3, factored to avoid cancellation for thin shells.
+        V_s = d_s * (3.0 * R0**2 - 3.0 * R0 * d_s + d_s**2)
+        return V_s / (state.R**3 - V_s)
+
     def p_elastic(self, state: BubbleState) -> jax.Array:
-        R = state.R
-        return (
-            (4.0 / 3.0)
-            * self.G_s(state)
-            * (self.d_s(state) / state.R0)
-            * (1.0 - (state.R0 / R) ** 3)
-        )
+        strain = 1.0 - (state.R0 / state.R) ** 3
+        return (4.0 / 3.0) * self.G_s(state) * strain * self._volume_factor(state)
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
-        return 4.0 * self.mu_s(state) * self.d_s(state) * state.R_dot / state.R**2
+        return (
+            4.0 * self.mu_s(state) * self._volume_factor(state) * state.R_dot / state.R
+        )
 
 
 class MarmottantSurfaceTension(Property):

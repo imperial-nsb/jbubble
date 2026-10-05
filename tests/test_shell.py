@@ -100,33 +100,175 @@ class TestLipidShell:
         assert total == pytest.approx(laplace + viscous, rel=1e-10)
 
 
+def _shell_volume(d_s, R0_=R0):
+    """Return V_s = R0^3 - (R0 - d_s)^3, computed directly."""
+    return R0_**3 - (R0_ - d_s) ** 3
+
+
+def _linear_coefficients(eom):
+    """Return (omega0^2, beta) of the EoM linearised about equilibrium.
+
+    The undriven ODE linearises to x'' + 2 beta x' + omega0^2 x = 0, so the
+    Jacobian of (R, R_dot) -> (R_dot, R_ddot) has -omega0^2 and -2 beta in its
+    second row.
+    """
+    y0 = eom.initial_state()
+
+    def rhs(v):
+        st = BubbleState(R=v[0], R_dot=v[1], R0=y0.R0, P_gas0=y0.P_gas0)
+        d = eom(jnp.asarray(0.0), st, lambda t: 0.0 * t)
+        return jnp.stack([d.R, d.R_dot])
+
+    J = jax.jacfwd(rhs)(jnp.stack([y0.R, y0.R_dot]))
+    return float(-J[1, 0]), float(-J[1, 1] / 2.0)
+
+
 class TestThickShell:
+    G_S, MU_S, SIGMA = 11.7e6, 0.45, 0.04
+    GAMMA, P_AMB, RHO, MU = 1.4, 101325.0, 998.0, 1e-3
+
+    def _eom(self, d_s):
+        from jbubble.bubble.eom import RayleighPlesset
+        from jbubble.bubble.gas import PolytropicGas
+        from jbubble.bubble.medium import NewtonianMedium
+
+        return RayleighPlesset(
+            gas=PolytropicGas(gamma=self.GAMMA),
+            shell=ThickShell(sigma=self.SIGMA, d_s=d_s, G_s=self.G_S, mu_s=self.MU_S),
+            medium=NewtonianMedium(mu=self.MU),
+            R0=R0,
+            P_amb=self.P_AMB,
+            rho_L=self.RHO,
+        )
+
+    def _hoff(self, d_s):
+        """Return (omega0^2, beta) with the Hoff et al. (2000) thin-shell terms."""
+        P_gas0 = self.P_AMB + 2.0 * self.SIGMA / R0
+        k = 3.0 * self.GAMMA * P_gas0 - 2.0 * self.SIGMA / R0
+        k_shell = 12.0 * self.G_S * d_s / R0
+        c_shell = 12.0 * self.MU_S * d_s / R0
+        w2 = (k + k_shell) / (self.RHO * R0**2)
+        beta = (4.0 * self.MU + c_shell) / (2.0 * self.RHO * R0**2)
+        return w2, beta
+
     def test_elastic_zero_at_equilibrium(self):
         shell = ThickShell(sigma=0.04, d_s=15e-9, G_s=10e6, mu_s=0.5)
         s = _make_state(1.0)
-        assert float(shell.p_elastic(s)) == pytest.approx(0.0, abs=1e-6)
-
-    def test_elastic_nonzero_away_from_equilibrium(self):
-        shell = ThickShell(sigma=0.04, d_s=15e-9, G_s=10e6, mu_s=0.5)
-        s = _make_state(1.2)
-        assert float(shell.p_elastic(s)) != pytest.approx(0.0, abs=1e-3)
+        assert float(shell.p_elastic(s)) == 0.0
 
     def test_elastic_formula(self):
-        d_s, G_s = 15e-9, 10e6
-        shell = ThickShell(sigma=0.04, d_s=d_s, G_s=G_s, mu_s=0.5)
-        R_ratio = 1.3
-        s = _make_state(R_ratio)
-        expected = (4.0 / 3.0) * G_s * (d_s / R0) * (1.0 - (1.0 / R_ratio) ** 3)
-        assert float(shell.p_elastic(s)) == pytest.approx(expected, rel=1e-10)
+        # Qin & Ferrara (2010), Eq. 10.
+        d_s, G_s = 100e-9, 11.7e6
+        shell = ThickShell(sigma=0.04, d_s=d_s, G_s=G_s, mu_s=0.45)
+        V_s = _shell_volume(d_s)
+        for x in (0.7, 1.3, 2.0):
+            R = x * R0
+            expected = (4.0 / 3.0) * G_s * (1.0 - (R0 / R) ** 3) * V_s / (R**3 - V_s)
+            assert float(shell.p_elastic(_make_state(x))) == pytest.approx(
+                expected, rel=1e-10
+            )
 
     def test_viscous_formula(self):
-        d_s, mu_s = 15e-9, 0.5
-        shell = ThickShell(sigma=0.04, d_s=d_s, G_s=10e6, mu_s=mu_s)
-        R_dot = 0.4
-        R = 1.1 * R0
-        s = _make_state(1.1, R_dot=R_dot)
-        expected = 4.0 * mu_s * d_s * R_dot / R**2
-        assert float(shell.p_viscous(s)) == pytest.approx(expected, rel=1e-10)
+        d_s, mu_s, R_dot = 100e-9, 0.45, 0.4
+        shell = ThickShell(sigma=0.04, d_s=d_s, G_s=11.7e6, mu_s=mu_s)
+        V_s = _shell_volume(d_s)
+        for x in (0.7, 1.1, 2.0):
+            R = x * R0
+            expected = 4.0 * mu_s * V_s / (R**3 - V_s) * R_dot / R
+            assert float(shell.p_viscous(_make_state(x, R_dot=R_dot))) == pytest.approx(
+                expected, rel=1e-10
+            )
+
+    @pytest.mark.parametrize("x", [0.6, 0.9, 1.2, 2.5])
+    def test_stresses_match_the_integrated_shell_stress(self, x):
+        # Independent check of the closed form: integrate the radial stress of
+        # an incompressible Kelvin-Voigt shell, tau_rr(r) = -(4 G / (3 r^3))
+        # (R^3 - R0^3) - 4 mu R^2 R_dot / r^3 (Qin & Ferrara 2010, Eq. 7), from
+        # the inner radius to R. The shell pushes inward with -3 int tau_rr / r.
+        d_s, G_s, mu_s, R_dot = 100e-9, 11.7e6, 0.45, 3.0
+        shell = ThickShell(sigma=0.04, d_s=d_s, G_s=G_s, mu_s=mu_s)
+        R = x * R0
+        R1 = (R**3 - _shell_volume(d_s)) ** (1.0 / 3.0)
+        r = np.linspace(R1, R, 200_001)
+        tau_rr = -(4.0 * G_s / (3.0 * r**3)) * (R**3 - R0**3) - (
+            4.0 * mu_s * R**2 * R_dot / r**3
+        )
+        expected = -3.0 * np.trapezoid(tau_rr / r, r)
+        state = _make_state(x, R_dot=R_dot)
+        total = float(shell.p_elastic(state) + shell.p_viscous(state))
+        assert total == pytest.approx(expected, rel=1e-8)
+
+    @pytest.mark.parametrize("d_s", [1e-9, 15e-9, 100e-9])
+    def test_linear_resonance_and_damping_are_exact(self, d_s):
+        # Linearising Eq. 10 gives a shell stiffness 4 G_s V_s / R10^3 per unit
+        # strain and a shell damping 4 mu_s V_s / R10^3 per unit strain rate,
+        # where R10 = R0 - d_s is the inner radius.
+        w2, beta = _linear_coefficients(self._eom(d_s))
+        factor = _shell_volume(d_s) / (R0 - d_s) ** 3
+        P_gas0 = self.P_AMB + 2.0 * self.SIGMA / R0
+        k = 3.0 * self.GAMMA * P_gas0 - 2.0 * self.SIGMA / R0
+        expected_w2 = (k + 4.0 * self.G_S * factor) / (self.RHO * R0**2)
+        expected_beta = (4.0 * self.MU + 4.0 * self.MU_S * factor) / (
+            2.0 * self.RHO * R0**2
+        )
+        assert w2 == pytest.approx(expected_w2, rel=1e-9)
+        assert beta == pytest.approx(expected_beta, rel=1e-9)
+
+    @pytest.mark.parametrize("thickness_ratio", [1e-2, 1e-3, 1e-4])
+    def test_thin_shell_limit_is_hoff(self, thickness_ratio):
+        # Hoff et al. (2000): 12 G_s d_s / R0 and 12 mu_s d_s / R0^2. The
+        # relative shell corrections are 2 d_s / R0 + O((d_s / R0)^2).
+        d_s = thickness_ratio * R0
+        w2, beta = _linear_coefficients(self._eom(d_s))
+        w2_hoff, beta_hoff = self._hoff(d_s)
+        assert abs(w2 / w2_hoff - 1.0) < 2.5 * thickness_ratio
+        assert abs(beta / beta_hoff - 1.0) < 2.5 * thickness_ratio
+        # The shell terms themselves converge at first order.
+        w2_gas, beta_gas = self._hoff(0.0)
+        shell_w2 = (w2 - w2_gas) / (w2_hoff - w2_gas)
+        shell_beta = (beta - beta_gas) / (beta_hoff - beta_gas)
+        assert shell_w2 - 1.0 == pytest.approx(2.0 * thickness_ratio, rel=0.02)
+        assert shell_beta - 1.0 == pytest.approx(2.0 * thickness_ratio, rel=0.02)
+
+    def test_resonance_matches_hoff_for_a_15_nm_shell(self):
+        # Regression for the factor-3 error in jbubble 0.1, whose shell
+        # stiffness was 4 G_s d_s / R0. With d_s / R0 = 0.0075 the exact
+        # model sits within 2 d_s / R0 = 1.5% of Hoff's shell stiffness.
+        d_s = 15e-9
+        w2, beta = _linear_coefficients(self._eom(d_s))
+        w2_hoff, beta_hoff = self._hoff(d_s)
+        assert w2 == pytest.approx(w2_hoff, rel=0.015)
+        assert beta == pytest.approx(beta_hoff, rel=0.015)
+
+    def test_viscous_term_tends_to_hoff_at_finite_strain(self):
+        # The viscous terms agree exactly in the thin-shell limit, at any R.
+        mu_s, R_dot = 0.45, 2.0
+        for x in (0.7, 1.5):
+            R = x * R0
+            hoff = 12.0 * mu_s * R0**2 * R_dot / R**4
+            errs = []
+            for ratio in (1e-3, 1e-4, 1e-5):
+                d_s = ratio * R0
+                shell = ThickShell(sigma=0.04, d_s=d_s, G_s=11.7e6, mu_s=mu_s)
+                p = float(shell.p_viscous(_make_state(x, R_dot=R_dot)))
+                errs.append(abs(p / (hoff * d_s) - 1.0))
+            assert errs[0] > errs[1] > errs[2]
+            assert errs[-1] < 1e-4
+
+    def test_equilibrium_is_at_rest(self):
+        eom = self._eom(100e-9)
+        y0 = eom.initial_state()
+        d = eom(jnp.asarray(0.0), y0, lambda t: 0.0 * t)
+        assert float(d.R_dot) == 0.0
+
+    def test_no_callback_in_jaxpr(self):
+        def total(d_s, G_s, mu_s):
+            shell = ThickShell(sigma=0.04, d_s=d_s, G_s=G_s, mu_s=mu_s)
+            return shell(_make_state(1.1, R_dot=0.5))
+
+        assert not _has_callback(total, 100e-9, 11.7e6, 0.45)
+        grads = jax.grad(total, argnums=(0, 1, 2))(100e-9, 11.7e6, 0.45)
+        assert all(np.isfinite(float(g)) for g in grads)
 
 
 class TestMarmottantSurfaceTension:
