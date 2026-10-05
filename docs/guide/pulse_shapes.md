@@ -35,7 +35,9 @@ hann = ToneBurst(
 
 ts = jnp.linspace(0.0, 6e-6, 601)  # [s]
 p = jax.vmap(pulse)(ts)  # [Pa]
-print(f"peak {p.max() / 1e3:.1f} kPa, Hann peak {jax.vmap(hann)(ts).max() / 1e3:.1f} kPa")
+print(
+    f"peak {p.max() / 1e3:.1f} kPa, Hann peak {jax.vmap(hann)(ts).max() / 1e3:.1f} kPa"
+)
 ```
 
 ### Carrier shapes

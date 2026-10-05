@@ -33,9 +33,7 @@ from jbubble import SolverConfig, run_simulation, solve_eom
 from jbubble.utils.presets import lipid_bubble
 
 eom, pulse = lipid_bubble(R0=2e-6, freq=1e6, pressure=100e3)
-precise = SolverConfig(
-    stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-12)
-)
+precise = SolverConfig(stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-12))
 result = run_simulation(eom, pulse, config=precise)
 ```
 
@@ -213,16 +211,15 @@ def peak_ratio(kappa_s, config=None):
     return run_simulation(eom, pulse, config=config).radius.max() / eom.R0
 
 
-precise = SolverConfig(
-    stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-12)
-)
+precise = SolverConfig(stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-12))
 kappa_s, h = 7.5e-9, 1e-11  # [N s/m]
-reference = (peak_ratio(kappa_s + h, precise) - peak_ratio(kappa_s - h, precise)) / (
-    2 * h
-)
+up, down = peak_ratio(kappa_s + h, precise), peak_ratio(kappa_s - h, precise)
+reference = (up - down) / (2 * h)
 for name, config in [("default", None), ("precise", precise)]:
     grad = jax.grad(peak_ratio)(kappa_s, config)
-    print(f"{name:8s} jax.grad = {grad:.4e}, relative error {grad / reference - 1:+.1e}")
+    print(
+        f"{name:8s} jax.grad = {grad:.4e}, relative error {grad / reference - 1:+.1e}"
+    )
 ```
 
 At the default tolerances the gradient is about 12 % off; at
