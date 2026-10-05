@@ -135,12 +135,30 @@ class TestParameter:
             dict(value=1.0, scale=-1.0),
             dict(value=float("nan")),
         ],
+            dict(value=0.5, lower=float("nan")),
+            dict(value=0.5, upper=float("nan")),
+            dict(value=0.5, lower=float("inf")),
+            dict(value=0.5, upper=float("-inf")),
     )
     def test_invalid_specification_raises(self, kwargs):
         with pytest.raises(ValueError):
             Parameter(**kwargs)
 
     def test_bounds_hold_for_any_coordinate(self):
+    @pytest.mark.parametrize(
+        "kwargs, lower, upper",
+        [
+            (dict(lower=0.0, upper=float("inf")), 0.0, None),
+            (dict(lower=-jnp.inf, upper=1.0), None, 1.0),
+            (dict(lower=-jnp.inf, upper=jnp.inf), None, None),
+        ],
+    )
+    def test_infinite_bound_means_no_bound(self, kwargs, lower, upper):
+        p = Parameter(0.5, **kwargs)
+        assert (p.lower, p.upper) == (lower, upper)
+        assert bool(jnp.isfinite(p.raw))
+        assert float(p.value) == pytest.approx(0.5, rel=1e-12)
+
         u = jnp.linspace(-50.0, 50.0, 101)
         bounded = Parameter(0.5, lower=0.1, upper=1.7)
         positive = Parameter(1e-9, lower=0.0)

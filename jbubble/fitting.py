@@ -67,9 +67,11 @@ class Parameter(eqx.Module):
         element.
     lower : float, optional
         Lower bound. `value` must be greater than it. A scalar: one bound
-        applies to every element of an array `value`.
+        applies to every element of an array `value`. `-inf`, as in SciPy,
+        means no lower bound, the same as `None`.
     upper : float, optional
         Upper bound. `value` must be less than it. A scalar, like `lower`.
+        `inf` means no upper bound, the same as `None`.
     scale : float, optional
         Typical magnitude of $x$ (no bounds) or of its distance from the
         bound (one bound). Required when `value` is zero, there are no
@@ -97,8 +99,8 @@ class Parameter(eqx.Module):
     ------
     ValueError
         If `value` isn't finite, lies outside the bounds, or is zero
-        without bounds, `scale`, or `fixed`, or if `lower >= upper` or
-        `scale` isn't positive and finite.
+        without bounds, `scale`, or `fixed`, or if a bound is NaN,
+        `lower >= upper`, or `scale` isn't positive and finite.
 
     Examples
     --------
@@ -127,8 +129,18 @@ class Parameter(eqx.Module):
         v = jnp.asarray(value, dtype=float)
         if not bool(jnp.all(jnp.isfinite(v))):
             raise ValueError(f"Parameter: value must be finite, got {value!r}.")
-        self.lower = None if lower is None else float(lower)
-        self.upper = None if upper is None else float(upper)
+        lower = None if lower is None else float(lower)
+        upper = None if upper is None else float(upper)
+        if (lower is not None and lower != lower) or (
+            upper is not None and upper != upper
+        ):
+            raise ValueError(
+                f"Parameter: lower and upper can't be NaN, got lower={lower}, "
+                f"upper={upper}. Omit a bound, or pass None, for no bound."
+            )
+        # An infinite bound on its own side is no bound, as in SciPy.
+        self.lower = None if lower == float("-inf") else lower
+        self.upper = None if upper == float("inf") else upper
         self.fixed = bool(fixed)
         lo, hi = self.lower, self.upper
         if lo is not None and hi is not None and not lo < hi:
