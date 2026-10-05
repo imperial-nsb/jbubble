@@ -35,6 +35,12 @@ pytestmark = pytest.mark.timeout(300, method="thread")
 SS = {"x": jnp.arange(5.0), "y": jnp.arange(3.0)}  # 15 points: not a power of 2
 THREAD_PREFIX = "jbubble-gridsweep"
 
+# Tests of the CPU defaults: on a GPU or TPU host, `workers=None` and
+# `devices=None` follow the accelerators instead.
+cpu_only = pytest.mark.skipif(
+    jax.default_backend() != "cpu", reason="tests the defaults on CPU"
+)
+
 
 def _toy(x, y):
     return {"s": x + y, "p": x * y}
@@ -331,6 +337,61 @@ def test_closing_batches_early_cancels_queued_chunks(monkeypatch):
     assert {0, 1} <= started <= {0, 1, 2, 3}
 
 
+def test_window_holds_at_most_twice_workers_chunks(monkeypatch):
+    # Host memory stays O(batch_size) only if the window is bounded.
+    submitted = []
+
+    class Executor(ThreadPoolExecutor):
+        def submit(self, fn, /, *args, **kwargs):
+            submitted.append(args[0])
+            return super().submit(fn, *args, **kwargs)
+
+    monkeypatch.setattr("jbubble.utils.gridsweep.ThreadPoolExecutor", Executor)
+    gs = GridSweep(
+        _toy,
+        {"x": jnp.arange(1000.0), "y": jnp.zeros(1)},
+        batch_size=2,
+        progress=False,
+        workers=2,
+    )
+    it = gs.batches()
+    next(it)  # consumes chunks 0 and 1
+    # The two consumed chunks, plus at most 2 * workers in the window.
+    assert len(submitted) <= 2 + 2 * gs.workers
+    it.close()
+
+
+@pytest.mark.parametrize("progress", [True, False])
+def test_progress_bar_counts_grid_points(monkeypatch, progress):
+    bars = []
+
+    class Bar:
+        def __init__(self, *, total, desc, unit, disable):
+            self.total, self.disable, self.n = total, disable, 0
+            bars.append(self)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def update(self, n):
+            self.n += n
+
+        def set_description_str(self, desc):
+            pass
+
+    monkeypatch.setattr("jbubble.utils.gridsweep.tqdm", Bar)
+    gs = GridSweep(_toy, SS, batch_size=4, progress=progress, workers=2)
+    _assert_toy_grid(gs.run())
+    list(gs.batches())
+    assert len(bars) == 2
+    for bar in bars:
+        assert bar.disable is not progress
+        assert bar.total == bar.n == gs.total_points
+
+
 def test_breaking_out_of_batches_stops_the_pool():
     gs = GridSweep(
         _toy,
@@ -373,17 +434,20 @@ def _default_workers() -> int:
     return GridSweep(_toy, {"x": jnp.arange(100.0), "y": jnp.zeros(1)}).workers
 
 
+@cpu_only
 def test_default_workers_use_process_cpu_count(monkeypatch):
     monkeypatch.setattr(os, "process_cpu_count", lambda: 3, raising=False)
     assert _default_workers() == 3
 
 
+@cpu_only
 def test_default_workers_fall_back_to_cpu_affinity(monkeypatch):
     monkeypatch.delattr(os, "process_cpu_count", raising=False)
     monkeypatch.setattr(os, "sched_getaffinity", lambda pid: {0, 5}, raising=False)
     assert _default_workers() == 2
 
 
+@cpu_only
 def test_default_workers_fall_back_to_cpu_count(monkeypatch):
     monkeypatch.delattr(os, "process_cpu_count", raising=False)
     monkeypatch.delattr(os, "sched_getaffinity", raising=False)
@@ -391,7 +455,9 @@ def test_default_workers_fall_back_to_cpu_count(monkeypatch):
     assert _default_workers() == 5
 
 
-def test_default_device_on_cpu_is_the_first_local_device():
+@cpu_only
+def test_default_device_on_cpu_is_the_first_local_device(monkeypatch):
+    monkeypatch.setattr(os, "process_cpu_count", lambda: 8, raising=False)
     gs = GridSweep(_toy, SS)
     assert gs.devices == jax.local_devices()[:1]
 
