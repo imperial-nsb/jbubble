@@ -19,15 +19,17 @@ This directory contains clean, minimal examples of how to use the `jbubble` libr
 
 ## Running the Examples
 
-Ensure you have installed `jbubble` in your environment:
+The examples need the `examples` extra, which installs matplotlib. From a source checkout, `uv sync` installs it, and `uv run` runs any example script:
 
 ```bash
-pip install -e .
+uv sync
+uv run python examples/01_basic_simulation.py
 ```
 
-Then run any example script:
+To use pip instead, install the extra, then run the script:
 
 ```bash
+pip install -e ".[examples]"
 python examples/01_basic_simulation.py
 ```
 
