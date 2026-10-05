@@ -1,0 +1,174 @@
+/*
+ * jbubble site theme for Zensical's modern variant.
+ *
+ * The colours come from the figure palette in jbubble/style: azure for links
+ * and primary buttons, coral for hover and focus. Text keeps at least 4.5:1
+ * contrast on the page, on inline code, and on the tint of the active
+ * navigation entry in both schemes. For that, the light scheme's link colour
+ * (#0b6cb8) and accent (#b8431c) are darker than the palette's azure
+ * (#0d77ca) and coral (#e35a2d), which reach only 4.3:1 on inline code
+ * (#f5f5f5) and 4.1:1 on the navigation tint. The dark scheme uses the
+ * palette colours as they are, and the same background as the dark figure
+ * style (#0d1117), so figures in that style, such as the dark palette card,
+ * blend into the page. The example figures use the light style, so they show
+ * as light panels in both schemes.
+ */
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #0d77ca;
+  --md-primary-fg-color--light: #3e96ea;
+  --md-primary-fg-color--dark: #0a5fa3;
+  --md-primary-bg-color: #ffffff;
+  --md-primary-bg-color--light: #ffffffb3;
+  --md-accent-fg-color: #b8431c;
+  --md-accent-fg-color--transparent: #e35a2d1a;
+  --md-accent-bg-color: #ffffff;
+  --md-accent-bg-color--light: #ffffffb3;
+  --md-typeset-a-color: #0b6cb8;
+  /*
+   * The "module" label and "mod" badge of the API reference. The theme's
+   * green (#5cad0f) reaches only 2.8:1 on the page; this darker shade of the
+   * same hue keeps 4.5:1.
+   */
+  --doc-symbol-module-fg-color: #40780a;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-hue: 216;
+  --md-default-bg-color: #0d1117;
+  --md-default-bg-color--light: #0d11178a;
+  --md-default-bg-color--lighter: #0d111742;
+  --md-default-bg-color--lightest: #0d111712;
+  --md-primary-fg-color: #3e96ea;
+  --md-primary-fg-color--light: #6cb0f0;
+  --md-primary-fg-color--dark: #0d77ca;
+  --md-primary-bg-color: #0d1117;
+  --md-primary-bg-color--light: #0d1117b3;
+  --md-accent-fg-color: #e6653c;
+  --md-accent-fg-color--transparent: #e6653c1a;
+  --md-accent-bg-color: #0d1117;
+  --md-accent-bg-color--light: #0d1117b3;
+  --md-typeset-a-color: #3e96ea;
+}
+
+/* The logo is a square icon; give it a little more height than the default. */
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 1.5rem;
+  width: auto;
+}
+
+/*
+ * Material for MkDocs, the emergency fallback for building this site, fills
+ * the header with the primary colour, which hides the azure logo. A backdrop
+ * in the page colour keeps the logo visible there. Zensical's header has the
+ * page colour, so the backdrop doesn't show.
+ */
+.md-header__button.md-logo img {
+  background-color: var(--md-default-bg-color);
+  border-radius: 0.3rem;
+  padding: 0.1rem;
+}
+
+/*
+ * KaTeX's auto-render wraps display math in an inline <span>, which adds an
+ * empty line above and below each equation. Make the wrapper a block.
+ */
+.md-typeset div.arithmatex > span {
+  display: block;
+}
+
+/* Long display equations scroll sideways instead of overflowing the page. */
+.md-typeset .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.2rem 0;
+}
+
+/*
+ * Example gallery (docs/examples/index.md): thumbnails of equal height. A
+ * figure that isn't 16:9 is letterboxed, so fill the box with the light
+ * style's figure background (#ffffff). Then each thumbnail shows as one
+ * rounded panel of the same size in the dark scheme too.
+ */
+.md-typeset .grid.cards img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background-color: #ffffff;
+  border-radius: 0.2rem;
+}
+
+/*
+ * Example pages: the figures are light panels, which stand out in the dark
+ * scheme; round their corners like the gallery thumbnails.
+ */
+.md-typeset img[src*="media/"] {
+  border-radius: 0.2rem;
+}
+
+/* Example pages: line up the Colab badge with the buttons beside it. */
+.md-typeset .jb-example-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.md-typeset .jb-example-links img {
+  display: block;
+}
+.md-typeset .jb-example-links .md-button {
+  margin: 0;
+  padding: 0.2em 0.9em;
+  font-size: 0.7rem;
+}
+
+/*
+ * Example pages: links to the previous example, the gallery, and the next
+ * example, each in its own column, so the gallery link stays in the middle on
+ * the first and the last page.
+ */
+.md-typeset .jb-example-nav {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1rem;
+  align-items: start;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 0.05rem solid var(--md-default-fg-color--lightest);
+}
+.md-typeset .jb-example-nav .jb-previous {
+  grid-column: 1;
+}
+.md-typeset .jb-example-nav .jb-gallery {
+  grid-column: 2;
+}
+.md-typeset .jb-example-nav .jb-next {
+  grid-column: 3;
+  text-align: right;
+}
+
+/* Example pages: printed output, set apart from the code that produced it. */
+.md-typeset .jb-output pre > code {
+  background-color: transparent;
+  box-shadow: inset 0.15rem 0 0 var(--md-primary-fg-color);
+}
+
+/*
+ * scripts/build_examples.py generates the example pages from examples/*.py,
+ * so their Markdown isn't in the repository. Hide the "Edit this page" button
+ * there; each page links to its source script instead.
+ */
+a.md-content__button[rel="edit"][href*="/docs/examples/"] {
+  display: none;
+}
+
+/*
+ * Table of contents: keep each API entry, such as MarmottantSurfaceTension,
+ * on one line, and cut a name that doesn't fit with an ellipsis instead of
+ * breaking it mid-word. Section headings still wrap.
+ */
+.md-nav--secondary .md-ellipsis:has(.doc-symbol) {
+  min-width: 0;
+  white-space: nowrap;
+}

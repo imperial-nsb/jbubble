@@ -23,6 +23,7 @@ jbubble/
 ├── pulse/
 │   ├── __init__.py       # ToneBurst, SampledPulse, ChirpPulse, NeuralPulse, Scaled, Summed, Offset, envelopes
 │   └── shapes.py         # PulseShape, Sine, Square, Sawtooth, Rectangular, …
+├── style/                # light.mplstyle, dark.mplstyle (Matplotlib styles)
 └── utils/
     ├── presets.py        # BubblePreset, free_bubble, lipid_bubble, thick_shell_bubble
     ├── gridsweep.py      # GridSweep
@@ -82,4 +83,4 @@ from jbubble.utils.io import export_hdf5, load_hdf5
 | [simulation](simulation.md) | SimulationResult, run_simulation |
 | [metrics](metrics.md) | Differentiable loss functions |
 | [fitting](fitting.md) | fit_parameters, FitResult |
-| [utils](utils.md) | Presets, GridSweep, HDF5 I/O |
+| [utils](utils.md) | Presets, GridSweep, HDF5 I/O, figure styles |

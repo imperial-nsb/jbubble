@@ -113,6 +113,89 @@ CI runs the full suite on Python 3.12 with the oldest versions that
 `pyproject.toml` allows and with `uv.lock`, and on Python 3.13 and 3.14 with
 the newest releases.
 
+### Build the docs
+
+[Zensical](https://zensical.org/) builds the documentation site from
+`docs/` and `mkdocs.yml`. The example gallery comes from the scripts in
+`examples/`.
+
+1. Install the docs tools:
+
+   ```bash
+   uv sync --group docs
+   ```
+
+2. Run the examples, and write the gallery and the notebooks to
+   `docs/examples/`:
+
+   ```bash
+   uv run python scripts/build_examples.py
+   ```
+
+   The first run executes every example and takes a few minutes. The script
+   caches the executed notebooks in `build/examples-cache/`, so later runs
+   only re-execute an example when the example, the jbubble source, or
+   `uv.lock` changes. To write the pages without running anything new, add
+   `--no-execute`; pages without a cached notebook then show code but no
+   output.
+
+3. Preview the site at <http://localhost:8000>. The preview rebuilds when
+   you save a file in `docs/`.
+
+   ```bash
+   uv run zensical serve
+   ```
+
+4. Before you open a pull request, write the gallery as in step 2, and then
+   build the site in strict mode:
+
+   ```bash
+   uv run zensical build --clean --strict
+   ```
+
+   With `--strict`, the build fails on broken links and cross-references.
+   It still passes in two cases that CI rejects, so check for them
+   yourself:
+
+   - griffe warns about a docstring. Look for lines that start with
+     `griffe:` in the output. Keep `--clean`: a cached build doesn't repeat
+     the warnings.
+   - A nav entry names a page that doesn't exist, such as the gallery
+     before you run step 2. The built site then links to the Markdown file.
+     To list those links, run this command:
+
+     ```bash
+     grep -rhoE 'href="[^":]*\.md(#[^"]*)?"' site --include='*.html'
+     ```
+
+   For a quick check of the pages alone, the gallery from
+   `scripts/build_examples.py --no-execute` is enough.
+
+Each example is a [jupytext](https://jupytext.readthedocs.io/) percent-format
+script: start each code cell with `# %%` and each Markdown cell with
+`# %% [markdown]`, and create, draw, and show each figure within one cell. The
+gallery script rejects a script without cells and an example that shows no
+figure.
+
+CI also runs the code blocks in `README.md` and `docs/guide/`. To run them
+yourself, use this command:
+
+```bash
+uv run pytest --markdown-docs --markdown-docs-syntax=superfences README.md docs/guide
+```
+
+To skip a block that can't run on its own, open it with
+```` ```{.python notest} ````. To run a block in the namespace of the block
+before it, open it with ```` ```{.python continuation} ````.
+
+To change the colours of jbubble figures, edit the style sheets in
+`jbubble/style/`, then regenerate the palette cards in `docs/assets/` with
+`uv run python scripts/make_palette_card.py`. The site theme in
+`docs/stylesheets/extra.css` and the logo in `docs/assets/images/logo.svg`
+repeat the first two colours of each style sheet and both surfaces, so
+update them too. `tests/test_docs_theme.py` checks that they match, and that
+links and the accent colour keep at least 4.5:1 contrast.
+
 ### Change dependencies
 
 To add or change a dependency, edit `pyproject.toml`, run `uv lock`, and commit

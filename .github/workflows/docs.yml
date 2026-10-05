@@ -1,22 +1,43 @@
-name: Deploy documentation
+name: Docs
 
-# GitHub Pages serves the gh-pages branch, which `mkdocs gh-deploy` updates.
-
+# Pull requests, pushes to main, and release tags execute the examples, run the
+# code blocks in the README and the guides, and build the site. Manual runs on
+# main or on a release tag also publish the built site, which includes the
+# executed notebooks, to the gh-pages branch. GitHub Pages serves that branch,
+# and the Colab badges on the example pages open the notebooks from it.
+#
+# A release notebook installs `jbubble[examples]==VERSION` from PyPI, so a tag
+# push only builds. After release.yml uploads the release to PyPI, it starts a
+# manual run on the tag, which publishes.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "docs/**"
-      - "mkdocs.yml"
-      - "jbubble/**"
-      - "pyproject.toml"
-      - "uv.lock"
-      - ".github/workflows/docs.yml"
   pull_request:
     paths:
       - "docs/**"
-      - "mkdocs.yml"
+      - "examples/**"
       - "jbubble/**"
+      - "scripts/build_examples.py"
+      - "scripts/griffe_extensions.py"
+      - "tests/test_build_examples.py"
+      - "tests/test_griffe_extensions.py"
+      - "mkdocs.yml"
+      - "README.md"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/docs.yml"
+  push:
+    branches: [main]
+    # GitHub ignores path filters for tag pushes, so every release builds.
+    tags: ["v*.*.*"]
+    paths:
+      - "docs/**"
+      - "examples/**"
+      - "jbubble/**"
+      - "scripts/build_examples.py"
+      - "scripts/griffe_extensions.py"
+      - "tests/test_build_examples.py"
+      - "tests/test_griffe_extensions.py"
+      - "mkdocs.yml"
+      - "README.md"
       - "pyproject.toml"
       - "uv.lock"
       - ".github/workflows/docs.yml"
@@ -26,37 +47,113 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # GitHub cancels a pending run when a newer run joins its group, whatever
+  # cancel-in-progress says. The event name keeps a push to main from
+  # replacing a pending manual run, which publishes.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  # A new commit cancels the superseded run of a pull request. Never cancel a
+  # run that might publish.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  FORCE_COLOR: "1"
 
 jobs:
-  # Only main deploys. Pull requests, and manual runs on other branches, build
-  # the site without publishing it.
   build:
-    name: Build docs
-    if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
+    name: Build site and notebooks
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0 # hatch-vcs needs the tags to compute the version
           persist-credentials: false
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-      - run: uv sync --locked --no-default-groups --group docs
-      - run: uv run --no-sync mkdocs build --strict
 
-  deploy:
-    name: Build and deploy docs
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write # `mkdocs gh-deploy` pushes to the gh-pages branch
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0 # gh-deploy needs the gh-pages branch history
-          persist-credentials: true # zizmor: ignore[artipacked] gh-deploy pushes with these credentials
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          enable-cache: false # no shared cache in a job that can write to the repo
-      - run: uv sync --locked --no-default-groups --group docs
-      - run: uv run --no-sync mkdocs gh-deploy --strict --force
+          python-version: "3.13" # Google Colab's Python
+          enable-cache: false # this job builds what the publish job pushes
+
+      - name: Install jbubble and the docs tools
+        run: uv sync --locked --no-default-groups --group docs
+
+      # For a release, the notebooks pin `jbubble[examples]==VERSION`. For
+      # any other build, they install jbubble from git at this commit.
+      - name: Execute the examples and write the gallery
+        env:
+          JAX_PLATFORMS: cpu
+        run: uv run --no-sync python scripts/build_examples.py --jobs 2 --source-ref "$GITHUB_SHA"
+
+      - name: Test the gallery script and the griffe extensions
+        run: uv run --no-sync pytest tests/test_build_examples.py tests/test_griffe_extensions.py
+
+      - name: Run the code blocks in the README and the guides
+        env:
+          JAX_PLATFORMS: cpu
+          MPLBACKEND: Agg
+        run: >-
+          uv run --no-sync pytest --markdown-docs --markdown-docs-syntax=superfences
+          README.md docs/guide
+
+      - name: Build the site
+        run: |
+          set -o pipefail
+          uv run --no-sync zensical build --clean --strict 2>&1 | tee build.log
+          # --strict fails on broken links and cross-references, but not on
+          # griffe's docstring warnings.
+          if grep "griffe:" build.log; then
+            echo "::error::Fix the griffe warnings above."
+            exit 1
+          fi
+          # Zensical keeps a link to a missing page, such as a nav entry,
+          # as a relative .md link.
+          if grep -rhoE 'href="[^":]*\.md(#[^"]*)?"' site --include='*.html'; then
+            echo "::error::The built site links to missing Markdown pages."
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: site
+          path: site
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 7
+
+  publish:
+    name: Publish to gh-pages
+    needs: build
+    # Only manual runs publish. release.yml starts one on each release tag once
+    # PyPI has the release; maintainers can start one on main.
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # force-pushes the gh-pages branch
+    # Publish one site at a time, in order.
+    concurrency:
+      group: docs-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: site
+          path: site
+
+      - name: Force-push the site as a single commit
+        working-directory: site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # GitHub Pages serves the files as they are, without Jekyll.
+          touch .nojekyll
+          git init --quiet --initial-branch gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit --quiet --message "Publish the docs for ${GITHUB_REF_NAME} (${GITHUB_SHA::7})"
+          git push --force --quiet \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            gh-pages

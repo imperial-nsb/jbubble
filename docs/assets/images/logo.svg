@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">jbubble</title>
+  <!-- Azure #0d77ca and coral #e35a2d both keep at least 3:1 contrast on the
+       white (#ffffff) and the dark (#0d1117) site headers. -->
+  <circle cx="27" cy="37" r="24" fill="#0d77ca"/>
+  <path d="M11.5 32.5 A16 16 0 0 1 22.5 21.6" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+  <circle cx="52" cy="12" r="9" fill="#e35a2d"/>
+  <circle cx="49.2" cy="9.4" r="2.4" fill="#ffffff"/>
+</svg>
