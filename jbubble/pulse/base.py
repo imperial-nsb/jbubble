@@ -103,6 +103,20 @@ class Pulse(eqx.Module, abc.ABC):
         """
         return self.t_start + 2.0 * self.duration
 
+    @property
+    def window_edges(self) -> jax.Array:
+        """Start and end times [s] of every active window in this pulse.
+
+        A leaf pulse returns `[t_start, t_stop]`.
+        [`Scaled`][jbubble.pulse.base.Scaled] and
+        [`Offset`][jbubble.pulse.base.Offset] return the edges of the pulse
+        they wrap, and [`Summed`][jbubble.pulse.base.Summed] returns its own
+        edges with those of every child, in ascending order. If you write a
+        pulse that wraps other pulses, override this property to include
+        their edges.
+        """
+        return jnp.stack([jnp.asarray(self.t_start), jnp.asarray(self.t_stop)])
+
     def __call__(self, t: jax.Array) -> jax.Array:
         """Evaluate the pressure [Pa] at time `t`, with the envelope applied."""
         tau = t - self.t_start
@@ -240,9 +254,10 @@ class Scaled(Pulse):
 
     where $k$ is `factor`. `Scaled` is transparent: it delegates to the
     child pulse's `__call__`, which already applies the child's envelope,
-    and it takes its active window (`t_start`, `t_stop`, `duration`, and
-    `t_end`) from the child. It has no start time or envelope of its own,
-    so `windowed` passes the new envelope down to the child pulse.
+    and it takes its active window (`t_start`, `t_stop`, `duration`,
+    `t_end`, and `window_edges`) from the child. It has no start time or
+    envelope of its own, so `windowed` passes the new envelope down to the
+    child pulse.
 
     Parameters
     ----------
@@ -285,6 +300,11 @@ class Scaled(Pulse):
         """Suggested simulation end time of the wrapped pulse [s]."""
         return self.pulse.t_end
 
+    @property
+    def window_edges(self) -> jax.Array:
+        """Window edges of the wrapped pulse [s]."""
+        return self.pulse.window_edges
+
     def _evaluate(self, t: jax.Array) -> jax.Array:
         return self.factor * self.pulse(t)
 
@@ -314,7 +334,8 @@ class Offset(Pulse):
 
     `Offset` is transparent: it delegates to the child pulse's `__call__`,
     which already applies the child's envelope, and it takes its active
-    window (`t_start`, `t_stop`, `duration`, and `t_end`) from the child.
+    window (`t_start`, `t_stop`, `duration`, `t_end`, and `window_edges`)
+    from the child.
     It has no start time or envelope of its own, so `windowed` passes the
     new envelope down to the child pulse and leaves the constant offset
     unwindowed.
@@ -360,6 +381,11 @@ class Offset(Pulse):
     def t_end(self) -> float | jax.Array:
         """Suggested simulation end time of the wrapped pulse [s]."""
         return self.pulse.t_end
+
+    @property
+    def window_edges(self) -> jax.Array:
+        """Window edges of the wrapped pulse [s]."""
+        return self.pulse.window_edges
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
         return self.pulse(t) + self.offset
@@ -450,6 +476,12 @@ class Summed(Pulse):
     def t_end(self) -> float | jax.Array:
         """Suggested simulation end time [s]: the latest child `t_end`."""
         return jnp.max(jnp.stack([jnp.asarray(p.t_end) for p in self.pulses]))
+
+    @property
+    def window_edges(self) -> jax.Array:
+        """Window edges [s] of the sum and of every child, in ascending order."""
+        edges = [super().window_edges, *(p.window_edges for p in self.pulses)]
+        return jnp.sort(jnp.concatenate(edges))
 
     def _evaluate(self, t: jax.Array) -> jax.Array:
         # Each p(t) includes the child's own envelope.

@@ -415,6 +415,57 @@ class TestActiveWindow:
         assert jnp.allclose(got, want, rtol=1e-12, atol=1e-9)
 
 
+class TestWindowEdges:
+    """`window_edges` lists the start and end of every active window."""
+
+    def test_leaf_edges(self, tone_late):
+        edges = np.asarray(tone_late.window_edges)
+        np.testing.assert_allclose(edges, [6e-6, 12e-6], rtol=1e-12)
+
+    @pytest.mark.parametrize(
+        "wrap",
+        [lambda p: 0.5 * p, lambda p: -p, lambda p: p + 1000.0, lambda p: 1.0 - p],
+        ids=["scaled", "neg", "offset", "rsub"],
+    )
+    def test_wrappers_delegate_the_edges(self, tone_late, wrap):
+        got = np.asarray(wrap(tone_late).window_edges)
+        np.testing.assert_array_equal(got, np.asarray(tone_late.window_edges))
+
+    def test_sum_lists_every_child_in_ascending_order(self, tone_early, tone_late):
+        later = ToneBurst(
+            freq=1e6, pressure=50e3, shape=Sine(), cycle_num=4, initial_time=20e-6
+        )
+        summed = tone_early + 0.5 * (tone_late + 1000.0) + later
+        edges = np.asarray(summed.window_edges)
+        want = [0.0, 0.0, 5e-6, 6e-6, 12e-6, 20e-6, 24e-6, 24e-6]
+        np.testing.assert_allclose(edges, want, rtol=1e-12, atol=0.0)
+
+    def test_windowed_sum_keeps_its_children_edges(self, tone_early, tone_late):
+        windowed = (tone_early + tone_late).windowed(HannEnvelope())
+        later = ToneBurst(
+            freq=1e6, pressure=50e3, shape=Sine(), cycle_num=4, initial_time=20e-6
+        )
+        edges = np.asarray((windowed + later).window_edges)
+        assert {0.0, 5e-6, 6e-6, 20e-6} <= {round(float(e), 12) for e in edges}
+
+    def test_sampled_pulse_edges_are_its_first_and_last_samples(self):
+        ts = jnp.linspace(30e-6, 35e-6, 11)
+        pulse = SampledPulse(ts=ts, pressures=jnp.ones(11))
+        edges = np.asarray(pulse.window_edges)
+        np.testing.assert_allclose(edges, [30e-6, 35e-6], rtol=1e-12)
+
+    def test_edges_under_jit_and_vmap(self, tone_early):
+        def edges(t0):
+            late = ToneBurst(
+                freq=1e6, pressure=1.0, shape=Sine(), cycle_num=2, initial_time=t0
+            )
+            return (tone_early + late).window_edges
+
+        got = jax.jit(jax.vmap(edges))(jnp.array([10e-6, 1e-6]))
+        np.testing.assert_allclose(got[0], [0.0, 0.0, 5e-6, 10e-6, 12e-6, 12e-6])
+        np.testing.assert_allclose(got[1], [0.0, 0.0, 1e-6, 3e-6, 5e-6, 5e-6])
+
+
 class TestDelayedChildInSum:
     """A delayed child wrapped in Scaled or Offset survives a sum."""
 
