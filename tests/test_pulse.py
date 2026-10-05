@@ -706,6 +706,60 @@ class TestTransparentSum:
         assert peaks[1] == pytest.approx(peaks[0], rel=1e-3)
 
 
+class TestOffsetsStayOutsideSums:
+    """Addition lifts constant offsets out of sums, in any order."""
+
+    C = 1000.0
+
+    @pytest.mark.parametrize(
+        ("build", "b_sign", "c_sign"),
+        [
+            (lambda a, b, c: (a + b) + c, 1.0, 1.0),
+            (lambda a, b, c: (a + c) + b, 1.0, 1.0),
+            (lambda a, b, c: b + (a + c), 1.0, 1.0),
+            (lambda a, b, c: c + a + b, 1.0, 1.0),
+            (lambda a, b, c: (a + c) - b, -1.0, 1.0),
+            (lambda a, b, c: a - (c - b), 1.0, -1.0),
+        ],
+        ids=["(a+b)+c", "(a+c)+b", "b+(a+c)", "c+a+b", "(a+c)-b", "a-(c-b)"],
+    )
+    def test_windowing_never_gates_the_constant(
+        self, tone_early, tone_late, build, b_sign, c_sign
+    ):
+        pulse = build(tone_early, tone_late, self.C)
+        assert isinstance(pulse, Offset)
+        assert isinstance(pulse.pulse, Summed)
+        windowed = pulse.windowed(HannEnvelope())
+        want = (tone_early + b_sign * tone_late).windowed(HannEnvelope())
+        got = jax.vmap(windowed)(TS_GRID)
+        expected = jax.vmap(want)(TS_GRID) + c_sign * self.C
+        assert jnp.allclose(got, expected, rtol=0.0, atol=1e-9)
+
+    def test_scaled_offset_contributes_a_scaled_constant(self, tone_early, tone_late):
+        pulse = 2.0 * (tone_early + self.C) + tone_late
+        assert isinstance(pulse, Offset)
+        assert float(pulse.offset) == 2.0 * self.C
+        windowed = pulse.windowed(HannEnvelope())
+        want = (2.0 * tone_early + tone_late).windowed(HannEnvelope())
+        assert float(windowed(jnp.asarray(-1e-6))) == pytest.approx(2.0 * self.C)
+        assert float(windowed(T_EDGE)) == pytest.approx(
+            float(want(T_EDGE)) + 2.0 * self.C, rel=1e-12
+        )
+
+    def test_offsets_on_both_sides_add_up(self, tone_early, tone_late):
+        pulse = (tone_early + 300.0) + (tone_late - 100.0)
+        assert isinstance(pulse, Offset)
+        assert float(pulse.offset) == pytest.approx(200.0)
+        assert len(pulse.pulse.pulses) == 2
+
+    def test_traced_constant_stays_outside_the_window(self, tone_early, tone_late):
+        def value(c):
+            pulse = ((tone_early + c) + tone_late).windowed(HannEnvelope())
+            return pulse(jnp.asarray(-1e-6))
+
+        assert float(jax.grad(value)(jnp.asarray(10.0))) == pytest.approx(1.0)
+
+
 class TestSampledPulseWindow:
     """A SampledPulse's window starts at its first sample time."""
 

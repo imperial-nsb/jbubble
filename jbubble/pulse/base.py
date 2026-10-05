@@ -109,9 +109,15 @@ class Pulse(eqx.Module, abc.ABC):
         return self._evaluate(t) * self.envelope(tau, self.duration)
 
     def __add__(self, other: Pulse | ArrayLike) -> Pulse:
-        """Add another pulse or a constant offset: `pulse_a + pulse_b` or `pulse + 1.0`."""
+        """Add another pulse or a constant offset: `pulse_a + pulse_b` or `pulse + 1.0`.
+
+        Adding two pulses gives one flat [`Summed`][jbubble.pulse.base.Summed].
+        A constant offset in either operand moves outside the sum, so
+        `(pulse_a + c) + pulse_b` gives
+        `Offset(pulse=pulse_a + pulse_b, offset=c)`.
+        """
         if isinstance(other, Pulse):
-            return Summed(pulses=_summands(self) + _summands(other))
+            return _add_pulses(self, other)
         offset = _operand(other)
         if offset is None:
             return NotImplemented
@@ -203,6 +209,9 @@ class Pulse(eqx.Module, abc.ABC):
           own, so they pass `envelope` to the wrapped pulse. The constant of
           an `Offset` stays outside the window:
           `(pulse + c).windowed(env)` equals `pulse.windowed(env) + c`.
+          Addition keeps constants outside sums, so
+          `((pulse_a + c) + pulse_b).windowed(env)` also equals
+          `(pulse_a + pulse_b).windowed(env) + c`.
 
         Parameters
         ----------
@@ -298,6 +307,10 @@ class Offset(Pulse):
 
     where $c$ is `offset`, a constant pressure added at all times. It
     doesn't delay the pulse; to delay a pulse, set `initial_time` on it.
+    Adding pulses keeps the constant outside the sum, so a window that you
+    apply to the sum never gates it: `(pulse_a + c) + pulse_b` gives
+    `Offset(pulse=pulse_a + pulse_b, offset=c)`, and `k * (pulse_a + c)`
+    contributes `k * c`.
 
     `Offset` is transparent: it delegates to the child pulse's `__call__`,
     which already applies the child's envelope, and it takes its active
@@ -518,6 +531,43 @@ def _summands(pulse: Pulse) -> tuple[Pulse, ...]:
     if type(pulse) is Summed and type(pulse.envelope) is NoEnvelope:
         return pulse.pulses
     return (pulse,)
+
+
+def _split_offset(pulse: Pulse) -> tuple[Pulse, float | jax.Array | None]:
+    """Split `pulse` into a pulse without an outer constant offset, and that constant.
+
+    Looks through `Offset` and `Scaled`, so `k * (p + c)` splits into
+    `k * p` and `k * c`. The constant is `None` when there is no offset to
+    lift.
+    """
+    if type(pulse) is Offset:
+        inner, constant = _split_offset(pulse.pulse)
+        if constant is None:
+            return inner, pulse.offset
+        return inner, constant + pulse.offset
+    if type(pulse) is Scaled:
+        inner, constant = _split_offset(pulse.pulse)
+        if constant is None:
+            return pulse, None
+        scaled = eqx.tree_at(lambda s: s.pulse, pulse, inner)
+        return scaled, pulse.factor * constant
+    return pulse, None
+
+
+def _add_pulses(a: Pulse, b: Pulse) -> Pulse:
+    """Return `a + b` as one flat `Summed`, with constant offsets lifted out.
+
+    A constant inside a sum would be gated by a window applied to the sum
+    later, so it goes on an `Offset` around the sum instead.
+    """
+    a, offset_a = _split_offset(a)
+    b, offset_b = _split_offset(b)
+    total = Summed(pulses=_summands(a) + _summands(b))
+    if offset_a is None:
+        return total if offset_b is None else Offset(pulse=total, offset=offset_b)
+    if offset_b is None:
+        return Offset(pulse=total, offset=offset_a)
+    return Offset(pulse=total, offset=offset_a + offset_b)
 
 
 def _check_transparent(pulse: Scaled | Offset) -> None:
