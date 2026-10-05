@@ -482,7 +482,8 @@ def gradient_climb(out: pathlib.Path, quick: bool) -> list[pathlib.Path]:
             )
             bar = fig.colorbar(mesh, ax=ax_m, pad=0.02, fraction=0.06)
             bar.outline.set_visible(False)
-            bar.set_label("peak R / R₀")
+            # The map shows the smooth objective, a little below the hard peak.
+            bar.set_label("smooth peak R / R₀")
             ax_m.grid(False)
             ax_m.set_xlabel("drive frequency (MHz)")
             ax_m.set_ylabel("R₀ (µm)")
@@ -514,7 +515,9 @@ def gradient_climb(out: pathlib.Path, quick: bool) -> list[pathlib.Path]:
                 trail.set_data(path[: k + 1, 0] / 1e6, path[: k + 1, 1] * 1e6)
                 head.set_data([path[k, 0] / 1e6], [path[k, 1] * 1e6])
                 line.set_data(ts, traces[k])
-                title.set_text(f"Step {k + 1}: peak R/R₀ = {values[k]:.2f}")
+                # The hard maximum of the drawn trace, not the smooth objective,
+                # which sits a little below it.
+                title.set_text(f"Step {k + 1}: peak R/R₀ = {traces[k].max():.2f}")
 
             paths.append(
                 # More colours than the default, so the map's gradient doesn't band.
@@ -693,7 +696,9 @@ def neural_sigma(out: pathlib.Path, quick: bool) -> list[pathlib.Path]:
             ax_s.set_xlabel("R / R₀")
             ax_s.set_ylabel("σ (mN/m)")
             title = ax_s.set_title(" ")
-            ax_s.legend(loc="center left")
+            # Lower right stays empty at every step. Short handles keep the
+            # legend clear of the steep rise at R/R0 = 1.
+            ax_s.legend(loc="lower right", handlelength=1.2, handletextpad=0.5)
 
             def update(
                 k: int, artists=(loss_line, loss_dot, lines, sig_line, title)
