@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import base64
 import concurrent.futures
+import contextlib
 import hashlib
 import importlib.metadata
 import json
@@ -38,6 +39,7 @@ import shutil
 import sys
 import tempfile
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 import jupytext
@@ -140,14 +142,28 @@ def kernel_spec() -> dict:
     }
 
 
-def register_kernel(directory: pathlib.Path) -> None:
-    """Register the private kernelspec from `kernel_spec` in `directory`."""
-    spec = directory / "kernels" / KERNEL
-    spec.mkdir(parents=True)
-    (spec / "kernel.json").write_text(json.dumps(kernel_spec()))
-    os.environ["JUPYTER_PATH"] = os.pathsep.join(
-        [str(directory), *filter(None, [os.environ.get("JUPYTER_PATH")])]
-    )
+@contextlib.contextmanager
+def private_kernel() -> Iterator[None]:
+    """Register the kernelspec from `kernel_spec` while the block runs.
+
+    Jupyter finds the spec through `JUPYTER_PATH`, which this function
+    restores afterwards.
+    """
+    previous = os.environ.get("JUPYTER_PATH")
+    with tempfile.TemporaryDirectory() as directory:
+        spec = pathlib.Path(directory) / "kernels" / KERNEL
+        spec.mkdir(parents=True)
+        (spec / "kernel.json").write_text(json.dumps(kernel_spec()))
+        os.environ["JUPYTER_PATH"] = os.pathsep.join(
+            [directory, *filter(None, [previous])]
+        )
+        try:
+            yield
+        finally:
+            if previous is None:
+                os.environ.pop("JUPYTER_PATH", None)
+            else:
+                os.environ["JUPYTER_PATH"] = previous
 
 
 def execute(nb: nbformat.NotebookNode, timeout: int) -> nbformat.NotebookNode:
@@ -491,24 +507,25 @@ def main(argv: list[str] | None = None) -> int:
     print(f"jbubble {version}; install cell: {settings.pip_spec}", flush=True)
     entries: list[Entry] = []
     failures: list[str] = []
-    with tempfile.TemporaryDirectory() as kernels:
-        register_kernel(pathlib.Path(kernels))
-        with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
-            futures = {pool.submit(build_one, s, settings): s for s in scripts}
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    entry = future.result()
-                except ExampleError as error:
-                    failures.append(str(error))
-                    continue
-                except Exception as error:  # report every failing example
-                    failures.append(f"{futures[future]}: {error}")
-                    continue
-                entries.append(entry)
-                print(
-                    f"{entry.name:<36s} {entry.status:<13s} {entry.seconds:7.1f} s",
-                    flush=True,
-                )
+    with (
+        private_kernel(),
+        concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool,
+    ):
+        futures = {pool.submit(build_one, s, settings): s for s in scripts}
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                entry = future.result()
+            except ExampleError as error:
+                failures.append(str(error))
+                continue
+            except Exception as error:  # report every failing example
+                failures.append(f"{futures[future]}: {error}")
+                continue
+            entries.append(entry)
+            print(
+                f"{entry.name:<36s} {entry.status:<13s} {entry.seconds:7.1f} s",
+                flush=True,
+            )
 
     if failures:
         print(f"\n{len(failures)} example(s) failed:\n", file=sys.stderr)

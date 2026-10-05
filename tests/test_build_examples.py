@@ -6,6 +6,7 @@ tests skip themselves without it.
 
 import base64
 import importlib.util
+import os
 import pathlib
 import re
 import sys
@@ -202,7 +203,7 @@ def test_build_executes_examples_and_writes_the_gallery(tmp_path, monkeypatch):
     (examples / "01_small.py").write_text(SCRIPT)
     # The kernelspec must override an inherited non-interactive backend.
     monkeypatch.setenv("MPLBACKEND", "Agg")
-    # main() registers its kernelspec through JUPYTER_PATH; restore it after.
+    # main() registers its kernelspec through JUPYTER_PATH, and unsets it after.
     monkeypatch.delenv("JUPYTER_PATH", raising=False)
     out = tmp_path / "docs" / "examples"
     code = build_examples.main(
@@ -218,6 +219,7 @@ def test_build_executes_examples_and_writes_the_gallery(tmp_path, monkeypatch):
         ]
     )
     assert code == 0
+    assert "JUPYTER_PATH" not in os.environ
     page = (out / "01_small.md").read_text()
     # The figure has at least twice the pixels of its display size, so it
     # stays sharp on high-density screens.
@@ -256,7 +258,9 @@ def test_examples_without_a_figure_fail(tmp_path, monkeypatch, capsys):
     examples = tmp_path / "examples"
     examples.mkdir()
     (examples / "01_quiet.py").write_text('# %%\nprint("no figure")\n')
-    monkeypatch.delenv("JUPYTER_PATH", raising=False)
+    # main() restores a JUPYTER_PATH that was set before it ran.
+    jupyter_path = str(tmp_path / "jupyter")
+    monkeypatch.setenv("JUPYTER_PATH", jupyter_path)
     out = tmp_path / "docs" / "examples"
     code = build_examples.main(
         [
@@ -271,6 +275,7 @@ def test_examples_without_a_figure_fail(tmp_path, monkeypatch, capsys):
         ]
     )
     assert code == 1
+    assert os.environ["JUPYTER_PATH"] == jupyter_path
     assert "01_quiet.py: the example shows no PNG figure." in capsys.readouterr().err
     assert not (out / "01_quiet.md").exists()
     assert not (out / "index.md").exists()
