@@ -24,7 +24,7 @@ __all__ = ["FitResult", "fit_parameters"]
 
 
 def _format_params(params: PyTree) -> str:
-    """Format a params pytree for logging — scalars shown as values, arrays as shapes."""
+    """Format a params pytree for logging: scalars as values, arrays as shapes."""
     parts = []
     for path, x in jax.tree_util.tree_leaves_with_path(params):
         name = jax.tree_util.keystr(path)
@@ -35,12 +35,13 @@ def _format_params(params: PyTree) -> str:
 
 @dataclasses.dataclass
 class FitResult:
-    """Output of :func:`fit_parameters`.
+    """Output of [`fit_parameters`][jbubble.fitting.fit_parameters].
 
     Attributes
     ----------
     params : PyTree
-        Fitted parameter values — same type and structure as ``params0``.
+        Fitted parameter values, with the same type and structure as
+        `params0`.
     loss_history : jax.Array, shape (n_steps,)
         Loss value recorded at each optimisation step.
     result : SimulationResult
@@ -68,73 +69,87 @@ def fit_parameters(
 ) -> FitResult:
     """Fit model parameters by differentiating through the ODE integration.
 
-    ``make_model`` maps the current ``params`` to an ``(eom, pulse)`` pair,
-    so anything that affects either the bubble physics or the acoustic drive
-    can be optimised jointly from a single params pytree.  Examples::
-
-        # Single parameter as a dict
-        fit_parameters(
-            make_model=lambda p: (make_eom(p), my_pulse),
-            params0={'kappa_s': 2.4e-9},
-            ...
-        )
-
-        # Joint frequency + radius optimisation
-        fit_parameters(
-            make_model=lambda p: (make_eom(p['R0']), make_pulse(p['freq'])),
-            params0={'R0': 5e-6, 'freq': 1e6},
-            ...
-        )
-
-        # Heterogeneous — neural surface tension + scalar kappa_s + neural pulse
-        fit_parameters(
-            make_model=lambda p: (
-                KellerMiksis(shell=LipidShell(sigma=p.sigma, kappa_s=p.kappa_s), ...),
-                p.pulse,
-            ),
-            params0=LearnedParams(sigma=NeuralProperty(...), kappa_s=2.4e-9, pulse=NeuralPulse(...)),
-            ...
-        )
+    `make_model` maps the current `params` to an `(eom, pulse)` pair, so
+    you can jointly optimise anything that affects either the bubble
+    physics or the acoustic drive from a single params pytree.
 
     Parameters
     ----------
     make_model : callable
-        ``params → (EquationOfMotion, Pulse)``.  Must be JAX-traceable.
+        `params -> (EquationOfMotion, Pulse)`. Must be JAX-traceable.
     params0 : PyTree
-        Initial parameter values — any JAX-compatible pytree (scalar,
-        array, dict, tuple, or ``eqx.Module``).
+        Initial parameter values: any JAX-compatible pytree (scalar,
+        array, dict, tuple, or `eqx.Module`).
     save_spec : SaveSpec
         Output sampling specification.
     t_max : float, optional
-        Integration end time [s].  ``None`` uses ``pulse.t_end``.
+        Integration end time [s]. `None` uses `pulse.t_end`.
     loss_fn : callable
-        ``(result: SimulationResult) → scalar``.  Receives the full
-        :class:`~jbubble.simulation.SimulationResult`; close over any
-        target data and reference constants.
+        `(result: SimulationResult) -> scalar`. Receives the full
+        [`SimulationResult`][jbubble.simulation.SimulationResult]; close
+        over any target data and reference constants.
     optimizer : optax.GradientTransformation
-        Gradient-based optimiser, e.g. ``optax.adam(1e-2)``.
+        Gradient-based optimiser, for example `optax.adam(1e-2)`.
     n_steps : int
-        Number of optimisation steps.  Default: 200.
+        Number of optimisation steps. Default: `200`.
     config : SolverConfig, optional
-        ODE solver settings.  Default: Dopri5 with PID(rtol=1e-4, atol=1e-8),
-        10 000 max steps.
+        ODE solver settings. `None` uses `Dopri5` with
+        `PIDController(rtol=1e-4, atol=1e-8)`, `dt0=1e-9`, and at most
+        10,000 steps.
     adjoint : diffrax.AbstractAdjoint, optional
-        Adjoint method.  Default: ``RecursiveCheckpointAdjoint()``
-        (checkpoints the forward pass for stable gradients).
+        Adjoint method. `None` uses `RecursiveCheckpointAdjoint()`, which
+        checkpoints the forward pass for stable gradients.
     step_callback : callable, optional
-        ``(step: int, params: PyTree, loss: float) → None``.  Called after
-        each optimisation step in the Python loop (outside JIT), so Python
-        side-effects like appending to a list work correctly.  Useful for
+        `(step: int, params: PyTree, loss: float) -> None`. Called after
+        each optimisation step in the Python loop, outside JIT, so Python
+        side effects such as appending to a list work. Useful for
         recording parameter trajectories.
     log_every : int
-        Print loss and current parameters every this many steps.
-        Set to 0 to disable logging.  Default: 25.
+        Print the loss and current parameters every `log_every` steps.
+        Set it to `0` to turn off logging. Default: `25`.
 
     Returns
     -------
     FitResult
         Fitted parameters, full loss history, and a final
-        :class:`~jbubble.simulation.SimulationResult`.
+        [`SimulationResult`][jbubble.simulation.SimulationResult].
+
+    Raises
+    ------
+    RuntimeError
+        If the ODE solver doesn't converge during fitting, for example
+        because the bubble enters inertial cavitation. JAX raises it as
+        `jax.errors.JaxRuntimeError`, a `RuntimeError` subclass.
+
+    Examples
+    --------
+    ```python
+    # Single parameter as a dict
+    fit_parameters(
+        make_model=lambda p: (make_eom(p), my_pulse),
+        params0={"kappa_s": 2.4e-9},
+        ...,
+    )
+
+    # Joint frequency and radius optimisation
+    fit_parameters(
+        make_model=lambda p: (make_eom(p["R0"]), make_pulse(p["freq"])),
+        params0={"R0": 5e-6, "freq": 1e6},
+        ...,
+    )
+
+    # Heterogeneous: neural surface tension, scalar kappa_s, and neural pulse
+    fit_parameters(
+        make_model=lambda p: (
+            KellerMiksis(shell=LipidShell(sigma=p.sigma, kappa_s=p.kappa_s), ...),
+            p.pulse,
+        ),
+        params0=LearnedParams(
+            sigma=NeuralProperty(...), kappa_s=2.4e-9, pulse=NeuralPulse(...)
+        ),
+        ...,
+    )
+    ```
     """
     if config is None:
         config = SolverConfig(

@@ -22,29 +22,44 @@ class SaveSpec(eqx.Module):
     Parameters
     ----------
     num_samples : int
-        Number of evenly-spaced time points to record.  Default: 1024.
+        Number of evenly spaced time points to record. Default: `1024`.
     """
 
     num_samples: int = eqx.field(default=1024, static=True)
 
     def build(self, t0: jax.Array, t1: jax.Array) -> diffrax.SaveAt:
+        """Return a `diffrax.SaveAt` with `num_samples` times from `t0` to `t1`.
+
+        Parameters
+        ----------
+        t0 : jax.Array
+            First saved time [s].
+        t1 : jax.Array
+            Last saved time [s].
+
+        Returns
+        -------
+        diffrax.SaveAt
+            Save specification for `diffrax.diffeqsolve`.
+        """
         ts = jnp.linspace(t0, t1, self.num_samples)
         return diffrax.SaveAt(ts=ts)
 
 
 class SolverConfig(eqx.Module):
-    """Numerical integration settings for :func:`solve_eom`.
+    """Numerical integration settings for [`solve_eom`][jbubble.solver.solve_eom].
 
-    Fields
-    ------
+    Parameters
+    ----------
     solver : diffrax.AbstractSolver
-        ODE solver.  Default: ``Dopri5()``.
+        ODE solver. Default: `diffrax.Dopri5()`.
     stepsize_controller : diffrax.AbstractStepSizeController
-        Step-size controller.  Default: ``PIDController(rtol=1e-6, atol=1e-9)``.
+        Step-size controller. Default:
+        `diffrax.PIDController(rtol=1e-6, atol=1e-9)`.
     dt0 : float
-        Initial step size [s].  Default: 1e-9.
+        Initial step size [s]. Default: `1e-9`.
     max_steps : int
-        Maximum solver steps per integration.  Default: 10 000.
+        Maximum number of solver steps per integration. Default: `10_000`.
     """
 
     solver: diffrax.AbstractSolver = eqx.field(default_factory=diffrax.Dopri5)
@@ -66,36 +81,41 @@ def solve_eom(
     adjoint: diffrax.AbstractAdjoint | None = None,
     progress: bool = False,
 ) -> diffrax.Solution:
-    """Solve bubble dynamics for an ``EquationOfMotion``.
+    """Solve the bubble dynamics for an equation of motion.
+
+    The integration runs from `t = 0` to `t_max` and doesn't raise when the
+    solver fails (`throw=False`); check `diffrax.is_successful` on the
+    solution's `result`.
 
     Parameters
     ----------
     eom : EquationOfMotion
-        Assembled equation of motion (e.g. ``KellerMiksis``).
+        Assembled equation of motion, such as
+        [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis].
     pulse : Pulse
         Driving acoustic pulse.
     y0 : BubbleState, optional
-        Initial state (dimensionless).  If *None*, derived from
-        ``eom.initial_state()``.
+        Initial state in SI units. `None` uses `eom.initial_state()`.
     t_max : float, optional
-        Integration end time [s].  If *None*, derived from ``pulse.t_end``.
+        Integration end time [s]. `None` uses `pulse.t_end`.
     save_spec : SaveSpec, optional
-        Output sampling specification.  Default: 1024 evenly-spaced
-        time points.
+        Output sampling specification. `None` uses 1024 evenly spaced time
+        points.
     config : SolverConfig, optional
-        Numerical integration settings.  Default: ``SolverConfig()``, that
-        is, Dopri5 with PIDController(rtol=1e-6, atol=1e-9).
+        Numerical integration settings. `None` uses
+        [`SolverConfig()`][jbubble.solver.SolverConfig], that is, `Dopri5`
+        with `PIDController(rtol=1e-6, atol=1e-9)`.
     adjoint : diffrax.AbstractAdjoint, optional
-        Adjoint method for gradient computation.  Default: diffrax built-in
-        (``RecursiveCheckpointAdjoint``).  For gradient-based fitting through
-        an explicit solver use ``diffrax.BacksolveAdjoint()``.
+        Adjoint method for gradient computation. `None` uses the diffrax
+        default, `RecursiveCheckpointAdjoint()`. For gradient-based fitting
+        through an explicit solver, use `diffrax.BacksolveAdjoint()`.
     progress : bool
-        Show a text progress meter.
+        Whether to show a text progress meter. Default: `False`.
 
     Returns
     -------
     diffrax.Solution
-        Solution object with ``ts`` and ``ys``.
+        Solution object with `ts` and `ys`.
     """
     if save_spec is None:
         save_spec = SaveSpec(num_samples=1024)

@@ -1,4 +1,14 @@
-"""jbubble: differentiable microbubble dynamics primitives."""
+"""jbubble: differentiable microbubble dynamics primitives.
+
+The package root exports only the top-level orchestration API:
+[`run_simulation`][jbubble.simulation.run_simulation],
+[`solve_eom`][jbubble.solver.solve_eom],
+[`SaveSpec`][jbubble.solver.SaveSpec],
+[`SolverConfig`][jbubble.solver.SolverConfig],
+[`fit_parameters`][jbubble.fitting.fit_parameters], and
+[`FitResult`][jbubble.fitting.FitResult]. Import model classes from their
+subpackages, such as `jbubble.bubble.eom` and `jbubble.pulse`.
+"""
 
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _pkg_version
