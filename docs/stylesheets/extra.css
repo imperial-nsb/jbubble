@@ -47,6 +47,18 @@
 }
 
 /*
+ * Material for MkDocs, the emergency fallback for building this site, fills
+ * the header with the primary colour, which hides the azure logo. A backdrop
+ * in the page colour keeps the logo visible there. Zensical's header has the
+ * page colour, so the backdrop doesn't show.
+ */
+.md-header__button.md-logo img {
+  background-color: var(--md-default-bg-color);
+  border-radius: 0.3rem;
+  padding: 0.1rem;
+}
+
+/*
  * KaTeX's auto-render wraps display math in an inline <span>, which adds an
  * empty line above and below each equation. Make the wrapper a block.
  */
