@@ -326,7 +326,7 @@ class GompertzSurfaceTension(Property):
 
     $$
     \chi\left[\left(\frac{1}{r_b}\right)^2 - 1\right] < \sigma_r,
-    \qquad r_b = \texttt{R\_buckle\_ratio}.
+    \qquad r_b = \mathtt{R\_buckle\_ratio}.
     $$
 
     A common mistake is to set `R_buckle_ratio` too small, for example

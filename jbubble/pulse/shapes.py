@@ -74,8 +74,8 @@ class FourierPulseShape(PulseShape):
     `norm_factor`, and adds `dc_offset`:
 
     $$
-    s(t) = \frac{1}{\text{norm\_factor}}
-        \sum_{m=1}^{10} \text{term}(m, t - t_0, f, \phi) + \text{dc\_offset}
+    s(t) = \frac{1}{\mathrm{norm\_factor}}
+        \sum_{m=1}^{10} \mathrm{term}(m, t - t_0, f, \phi) + \mathrm{dc\_offset}
     $$
     """
 

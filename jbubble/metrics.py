@@ -118,7 +118,7 @@ def peak_expansion_error(
     r"""Squared error in the peak expansion ratio.
 
     $$
-    \left(\frac{R_\text{max}}{R_0} - \text{target\_expansion}\right)^2
+    \left(\frac{R_\text{max}}{R_0} - \mathrm{target\_expansion}\right)^2
     $$
 
     Useful when only the maximum oscillation amplitude matters rather
