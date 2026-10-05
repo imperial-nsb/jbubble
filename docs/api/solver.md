@@ -32,7 +32,7 @@ config = SolverConfig(
 )
 ```
 
-`GridSweep` with `parallel=True` supports only explicit solvers, so set `parallel=False` when you sweep with an implicit solver.
+`GridSweep` runs implicit solvers such as `Kvaerno5` on its worker threads, like explicit ones.
 
 For gradient-based fitting, consider using the `RecursiveCheckpointAdjoint` to reduce memory usage during backpropagation:
 
