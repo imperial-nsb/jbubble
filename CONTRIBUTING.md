@@ -171,12 +171,6 @@ the newest releases.
    For a quick check of the pages alone, the gallery from
    `scripts/build_examples.py --no-execute` is enough.
 
-Each example is a [jupytext](https://jupytext.readthedocs.io/) percent-format
-script: start each code cell with `# %%` and each Markdown cell with
-`# %% [markdown]`, and create, draw, and show each figure within one cell. The
-gallery script rejects a script without cells and an example that shows no
-figure.
-
 CI also runs the code blocks in `README.md` and `docs/guide/`. To run them
 yourself, use this command:
 
@@ -195,6 +189,42 @@ To change the colours of jbubble figures, edit the style sheets in
 repeat the first two colours of each style sheet and both surfaces, so
 update them too. `tests/test_docs_theme.py` checks that they match, and that
 links and the accent colour keep at least 4.5:1 contrast.
+
+`scripts/make_readme_assets.py` generates the animated figures in
+`docs/assets/readme/` that the README shows; its docstring explains how to run
+it. The README links to these files by absolute URL on `main`, so keep their
+names: a released README on PyPI still points to them.
+
+### Write an example
+
+Each example in `examples/` is a [jupytext](https://jupytext.readthedocs.io/)
+percent-format script that also runs as a plain Python script. The gallery
+script turns it into a page and a Colab notebook, and rejects a script without
+cells or an example that shows no figure. To write an example, follow these
+conventions:
+
+- Start each code cell with `# %%` and each Markdown cell with
+  `# %% [markdown]`. Create, draw, and show each figure within one cell, and
+  end the cell with `plt.show()`.
+- Make the example self-contained, and write the narrative so that it reads
+  well without the rest of the docs.
+- Load the jbubble style after you import Matplotlib:
+  `plt.style.use("jbubble.style.light")`.
+- Colour by role: `C0` for the bubble, `C1` to `C3` for comparisons, and the
+  driving pulse in grey on its own axes. Plot at most four categorical series
+  on one set of axes.
+- Keep the default runtime under about 60 seconds on a laptop CPU. If the
+  example does heavy work, shrink it when the `JBUBBLE_QUICK` environment
+  variable is `1`, for quick checks.
+- Print a short summary of the key numbers.
+- Don't hard-code output paths or save files, unless the example is about file
+  input and output. In that case, write to a temporary directory.
+
+To run an example without opening figure windows, set `MPLBACKEND=Agg`:
+
+```bash
+MPLBACKEND=Agg uv run python examples/01_first_simulation.py
+```
 
 ### Change dependencies
 
@@ -217,9 +247,12 @@ tests, so raise one only when jbubble needs a newer release.
   make the docstring raw (`r"""..."""`) so Python keeps the backslashes; ruff
   rule D301 checks this. Link jbubble objects with cross-references, such as
   ``[`KellerMiksis`][jbubble.bubble.eom.KellerMiksis]``, and put code samples
-  in fenced ```` ```python ```` blocks.
-- **Public names:** list each module's public names in its `__all__`.
-- **Use `jnp`** (not `np`) throughout — keep everything JAX-traceable.
+  in fenced ```` ```python ```` blocks. Cite the source of every physical
+  default value.
+- **Public names:** list each module's public names in its `__all__`, and add
+  a `::: dotted.path` directive for each one to the matching page in
+  `docs/api/`. `tests/test_docs_api_coverage.py` fails when one is missing.
+- **Use `jnp`** (not `np`) in model code — keep everything JAX-traceable.
 
 ### Architecture conventions
 
@@ -232,13 +265,22 @@ If you're adding a new model (gas, shell, medium, EoM), follow the existing patt
   default to zero derivative.
 - Use `jax.grad` for all derivatives inside EoMs; never hand-code analytical
   derivatives.
+- Don't call `jax.debug.callback` or any other host callback in code that runs
+  under tracing. A callback that runs JAX operations can deadlock batched
+  runs. To validate parameters, check concrete values at construction in plain
+  Python or NumPy, and skip traced values.
+- Test new physics against an independent reference, such as an analytic
+  limit or a published value, not only against the code's own output.
 
 ## Submitting a pull request
 
 1. Push your branch to your fork.
 2. Open a pull request against `main` on [imperial-nsb/jbubble](https://github.com/imperial-nsb/jbubble).
 3. Describe what your change does and why. Link to any relevant issues.
-4. CI runs the linters, the type checker, the tests, and a build check. All
+4. If your change affects users, add an entry to the top, unreleased section
+   of [`CHANGELOG.md`](CHANGELOG.md). For a breaking change, also say what
+   users need to change.
+5. CI runs the linters, the type checker, the tests, and a build check. All
    checks must pass.
 
 ## Reporting bugs and requesting features

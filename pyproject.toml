@@ -63,7 +63,7 @@ Homepage = "https://github.com/imperial-nsb/jbubble"
 Documentation = "https://imperial-nsb.github.io/jbubble/"
 Source = "https://github.com/imperial-nsb/jbubble"
 Issues = "https://github.com/imperial-nsb/jbubble/issues"
-Changelog = "https://github.com/imperial-nsb/jbubble/releases"
+Changelog = "https://github.com/imperial-nsb/jbubble/blob/main/CHANGELOG.md"
 
 # PEP 735 groups: local development only, never published.
 # `uv sync` installs the `dev` group by default.
@@ -108,7 +108,7 @@ source = "vcs"
 raw-options = { version_scheme = "no-guess-dev", local_scheme = "no-local-version", fallback_version = "0.0.0" }
 
 [tool.hatch.build.targets.sdist]
-include = ["/jbubble", "/tests", "/README.md", "/LICENSE"]
+include = ["/jbubble", "/tests", "/README.md", "/LICENSE", "/CITATION.cff"]
 
 [tool.hatch.build.targets.wheel]
 # Ships every file under jbubble/ that git doesn't ignore, including non-Python
