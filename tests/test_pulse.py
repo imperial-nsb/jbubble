@@ -250,6 +250,26 @@ class TestPulseComposition:
         assert isinstance(s2, Summed)
         assert len(s2.pulses) == 3
 
+    def test_builtin_sum_gives_one_flat_sum(self, p1, p2):
+        p3 = ToneBurst(freq=3e6, pressure=30e3, shape=Sine(), cycle_num=15)
+        total = sum([p1, p2, p3])
+        assert isinstance(total, Summed)
+        assert len(total.pulses) == 3
+        t = jnp.asarray(0.3e-6)
+        want = float(p1(t)) + float(p2(t)) + float(p3(t))
+        assert float(total(t)) == pytest.approx(want, rel=1e-12)
+
+    @pytest.mark.parametrize(
+        "zero", [0, 0.0, np.float64(0.0)], ids=["int", "float", "numpy"]
+    )
+    def test_zero_plus_a_pulse_is_the_pulse(self, p1, zero):
+        assert (zero + p1) is p1
+
+    def test_jax_zero_plus_a_pulse_gives_offset(self, p1):
+        shifted = jnp.asarray(0.0) + p1
+        assert isinstance(shifted, Offset)
+        assert float(shifted.offset) == 0.0
+
 
 # Near the pulse start the Hann window is about 0.02 while the default
 # soft-rectangular envelope is about 1, so windowing is clearly visible.

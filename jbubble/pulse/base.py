@@ -141,9 +141,19 @@ class Pulse(eqx.Module, abc.ABC):
         return Offset(pulse=self, offset=offset)
 
     def __radd__(self, other: Pulse | ArrayLike) -> Pulse:
-        """Right addition, `other + self`. If `other` is a `Pulse`, delegate to its `__add__`."""
+        """Right addition, `other + self`. If `other` is a `Pulse`, delegate to its `__add__`.
+
+        `0 + pulse`, with a Python or NumPy scalar zero, returns `pulse`
+        itself, so Python's `sum(pulses)`, which starts from `0`, gives the
+        same flat [`Summed`][jbubble.pulse.base.Summed] as
+        `pulses[0] + pulses[1] + ...`. A JAX zero still gives an `Offset`,
+        so the result's structure doesn't depend on whether the value is
+        traced.
+        """
         if isinstance(other, Pulse):
             return other.__add__(self)
+        if isinstance(other, numbers.Real) and other == 0:
+            return self
         offset = _operand(other)
         if offset is None:
             return NotImplemented
