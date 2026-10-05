@@ -21,13 +21,6 @@ pytestmark = [
     pytest.mark.skipif(
         not DOCS_API.is_dir(), reason="needs docs/api/ from a repository checkout"
     ),
-    # TODO(v0.2.0): remove this mark once the API changes for the release have
-    # merged, so that a missing or stale directive fails the suite.
-    pytest.mark.xfail(
-        strict=False,
-        reason="the v0.2.0 API changes are still merging, and docs/api/ "
-        "catches up with them before the release",
-    ),
 ]
 # The packages that the optional extras install. Both tests skip a module
 # that fails to import because one of them is missing.
