@@ -397,6 +397,22 @@ class TestInitialStateFilling:
         expected = 101325.0 + 2.0 * 0.072 / 3e-6
         assert jnp.allclose(sol.ys.P_gas0, expected, rtol=1e-14, atol=0)
 
+    def test_integer_zero_is_filled_without_truncation(self, simple_eom, sine_pulse):
+        """An integer `R0=0` or `P_gas0=0` fills like a float zero."""
+        R = jnp.asarray(1.2 * simple_eom.R0)
+
+        def solve(y0):
+            return solve_eom(
+                simple_eom, sine_pulse, y0=y0, save_spec=SaveSpec(10), t_max=1e-6
+            )
+
+        expected = solve(BubbleState(R=R))
+        sol = solve(BubbleState(R=R, R0=0, P_gas0=0))
+        assert diffrax.is_successful(sol.result)
+        assert jnp.array_equal(sol.ys.R0, expected.ys.R0)
+        assert jnp.array_equal(sol.ys.P_gas0, expected.ys.P_gas0)
+        assert jnp.array_equal(sol.ys.R, expected.ys.R)
+
     def test_works_under_jit(self, simple_eom, sine_pulse):
         @jax.jit
         def final_radius(R):

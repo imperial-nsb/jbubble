@@ -313,13 +313,20 @@ def _guarded_vector_field(t: Any, z: Any, args: tuple) -> Any:
     return jtu.tree_map(lambda d: jnp.where(ok, d, jnp.nan), dz)
 
 
+def _as_inexact(x: Any) -> jax.Array:
+    """Return `x` as an array, promoting an integer or boolean dtype to float."""
+    x = jnp.asarray(x)
+    return x.astype(jnp.result_type(x, float))
+
+
 def _with_equilibrium(eom: EquationOfMotion, y0: Any) -> Any:
     """Fill a zero (unset) `R0` or `P_gas0` in `y0` from the EoM.
 
     A zero `R0` becomes `eom.R0`, and a zero `P_gas0` becomes the
-    Laplace-equilibrium gas pressure for the (filled) `R0`.
+    Laplace-equilibrium gas pressure for the (filled) `R0`. An integer field,
+    such as `R0=0`, becomes floating point first, so the fill isn't truncated.
     """
-    R0_in, P_gas0_in = jnp.asarray(y0.R0), jnp.asarray(y0.P_gas0)
+    R0_in, P_gas0_in = _as_inexact(y0.R0), _as_inexact(y0.P_gas0)
     R0 = jnp.where(R0_in == 0, jnp.asarray(eom.R0, dtype=R0_in.dtype), R0_in)
     equilibrium = eqx.tree_at(lambda e: e.R0, eom, R0).initial_state()
     P_gas0 = jnp.where(P_gas0_in == 0, equilibrium.P_gas0, P_gas0_in)
