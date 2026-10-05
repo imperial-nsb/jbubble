@@ -1,8 +1,11 @@
-"""Shell / coating models.
+"""Shell and coating models.
 
-Computes the total inward stress from the bubble shell, including
-Laplace pressure from surface tension, viscous dissipation, and
-elastic restoring forces.
+Each model computes the total inward stress from the bubble shell,
+including Laplace pressure from surface tension, viscous dissipation, and
+elastic restoring forces. The module also defines the state-dependent
+surface tension laws
+[`MarmottantSurfaceTension`][jbubble.bubble.shell.MarmottantSurfaceTension]
+and [`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension].
 """
 
 from __future__ import annotations
@@ -27,38 +30,47 @@ __all__ = [
 
 
 class ShellModel(eqx.Module, abc.ABC):
-    """Bubble shell / coating model.
+    r"""Bubble shell or coating model.
 
     Computes the total inward stress from the shell, including:
 
-    - Laplace pressure from surface tension:  2 sigma(R) / R
-    - Shell viscous dissipation  (e.g. 4 kappa_s Rdot / R^2)
-    - Shell elastic restoring forces  (for thick shells)
+    - Laplace pressure from surface tension, $2\sigma(R)/R$.
+    - Shell viscous dissipation, for example $4\kappa_s\dot{R}/R^2$.
+    - Shell elastic restoring forces, for thick shells.
 
-    Every ``ShellModel`` holds a ``Property`` as its ``sigma`` field.
-    A plain float is accepted and auto-converted to a ``Property``
-    in ``__post_init__``.
+    Every `ShellModel` holds a [`Property`][jbubble.bubble.property.Property]
+    as its `sigma` field. The field's
+    [`as_property`][jbubble.bubble.property.as_property] converter turns a
+    plain float into a `Property`.
 
+    Parameters
+    ----------
+    sigma : float or Property
+        Surface tension law [N/m].
     """
 
     sigma: Property = eqx.field(converter=as_property)
 
     def p_laplace(self, state: BubbleState) -> jax.Array:
-        """Laplace pressure contribution from surface tension."""
+        r"""Return the Laplace pressure from surface tension, $2\sigma(R)/R$ [Pa]."""
         return 2.0 * self.sigma(state) / state.R
 
     @abc.abstractmethod
     def p_elastic(self, state: BubbleState) -> jax.Array:
-        """Elastic contribution from the shell."""
+        """Return the elastic contribution from the shell [Pa]."""
         ...
 
     @abc.abstractmethod
     def p_viscous(self, state: BubbleState) -> jax.Array:
-        """Viscous contribution from the shell."""
+        """Return the viscous contribution from the shell [Pa]."""
         ...
 
     def __call__(self, state: BubbleState) -> jax.Array:
-        """Compute total shell pressure p_shell(state).
+        r"""Compute the total shell pressure, $p_\text{shell}(\text{state})$.
+
+        $$
+        p_\text{shell} = p_\text{Laplace} + p_\text{elastic} + p_\text{viscous}
+        $$
 
         Parameters
         ----------
@@ -67,24 +79,26 @@ class ShellModel(eqx.Module, abc.ABC):
 
         Returns
         -------
-        scalar
-            Total inward shell pressure.
+        jax.Array
+            Scalar total inward shell pressure [Pa].
         """
         return self.p_laplace(state) + self.p_elastic(state) + self.p_viscous(state)
 
 
 class NoShell(ShellModel):
-    """No shell coating — only Laplace pressure.
+    r"""No shell coating, only Laplace pressure.
 
-    p_shell = 2 sigma(R) / R
+    $$
+    p_\text{shell} = \frac{2\sigma(R)}{R}
+    $$
 
-    Suitable for uncoated gas bubbles.  Accepts a plain float for
-    ``sigma`` (e.g. 72e-3 for water).
+    Suitable for uncoated gas bubbles. Accepts a plain float for `sigma`,
+    for example `72e-3` for water.
 
-    Fields
-    ------
+    Parameters
+    ----------
     sigma : float or Property
-        Surface tension law.
+        Surface tension law [N/m].
     """
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
@@ -95,31 +109,34 @@ class NoShell(ShellModel):
 
 
 class LipidShell(ShellModel):
-    """Thin lipid shell with surface viscosity.
+    r"""Thin lipid shell with surface viscosity.
 
-    p_shell = 2 sigma(R) / R  +  4 kappa_s Rdot / R^2
+    $$
+    p_\text{shell} = \frac{2\sigma(R)}{R} + \frac{4\kappa_s\dot{R}}{R^2}
+    $$
 
-    This is the shell model used by Marmottant (2005) and most
-    Gompertz-smoothed variants.
+    This is the shell model that Marmottant (2005) and most
+    Gompertz-smoothed variants use.
 
-    Note on elastic contributions
-    -----------------------------
-    ``p_elastic`` returns zero for this model.  The shell elasticity is
-    not absent — it is encoded entirely in the surface tension Property
-    ``sigma``.  When ``sigma`` is state-dependent (e.g.
-    ``MarmottantSurfaceTension``, ``GompertzSurfaceTension``), the
-    area-elasticity term χ((R/Rb)² − 1) enters through ``p_laplace =
-    2 σ(R) / R``, not through a separate ``p_elastic`` term.  This is
-    consistent with how the Marmottant model is written in the
-    literature: the elastic and ruptured regimes modify σ(R) rather than
-    adding an independent stress contribution.
-
-    Fields
-    ------
+    Parameters
+    ----------
     sigma : float or Property
-        Surface tension law.
+        Surface tension law [N/m].
     kappa_s : float or Property
-        Shell surface-dilatational viscosity  [N s/m].
+        Shell surface-dilatational viscosity [N s/m].
+
+    Notes
+    -----
+    `p_elastic` returns zero for this model. The shell elasticity isn't
+    absent: the surface tension law `sigma` encodes all of it. When `sigma`
+    is state-dependent, as with
+    [`MarmottantSurfaceTension`][jbubble.bubble.shell.MarmottantSurfaceTension]
+    or [`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension],
+    the area-elasticity term $\chi\left[(R/R_b)^2 - 1\right]$ enters
+    through the Laplace pressure $2\sigma(R)/R$, not through a separate
+    `p_elastic` term. This matches how the literature writes the
+    Marmottant model: the elastic and ruptured regimes modify $\sigma(R)$
+    rather than adding an independent stress contribution.
     """
 
     kappa_s: Property = eqx.field(converter=as_property)
@@ -132,30 +149,37 @@ class LipidShell(ShellModel):
 
 
 class ThickShell(ShellModel):
-    """Church (1995) thick viscoelastic shell.
+    r"""Church (1995) thick viscoelastic shell.
 
     In addition to Laplace pressure, this model includes thick-shell
-    elastic and viscous contributions::
+    elastic and viscous contributions:
 
-        p_elastic    = (4/3) G_s (d_s / R0) (1 - (R0/R)^3)
-        p_shell_visc = 4 mu_s d_s Rdot / R^2
+    $$
+    \begin{aligned}
+    p_\text{elastic} &= \frac{4}{3} G_s \frac{d_s}{R_0}
+        \left[1 - \left(\frac{R_0}{R}\right)^3\right], \\
+    p_\text{viscous} &= \frac{4\mu_s d_s \dot{R}}{R^2}.
+    \end{aligned}
+    $$
 
-    Total shell pressure::
+    The total shell pressure is
 
-        p_shell = 2 sigma(R) / R  +  p_elastic  +  p_shell_visc
+    $$
+    p_\text{shell} = \frac{2\sigma(R)}{R} + p_\text{elastic} + p_\text{viscous}.
+    $$
 
-    Fields
-    ------
+    Parameters
+    ----------
     sigma : float or Property
-        Surface tension law.
+        Surface tension law [N/m].
     d_s : float or Property
-        Shell thickness  [m].
+        Shell thickness [m].
     G_s : float or Property
-        Shell shear modulus  [Pa].  May be state-dependent (e.g. strain-
-        stiffening / strain-softening).
+        Shell shear modulus [Pa]. It can be state-dependent, for example to
+        model strain stiffening or strain softening.
     mu_s : float or Property
-        Shell viscosity  [Pa s].  May be state-dependent (e.g. shear-
-        thinning).
+        Shell viscosity [Pa s]. It can be state-dependent, for example to
+        model shear thinning.
     """
 
     d_s: Property = eqx.field(converter=as_property)
@@ -176,29 +200,40 @@ class ThickShell(ShellModel):
 
 
 class MarmottantSurfaceTension(Property):
-    """Piecewise Marmottant surface tension law.
+    r"""Piecewise Marmottant surface tension law.
 
-    Three regimes based on the ratio R / R_buckle::
+    Three regimes, based on the radius $R$ relative to the buckling radius
+    $R_b$ and the rupture radius $R_r$:
 
-        R <= R_buckle                :  sigma = 0               (buckled)
-        R_buckle < R < R_rupture     :  sigma = chi ((R/R_b)^2 - 1)  (elastic)
-        R >= R_rupture               :  sigma = sigma_rupture   (ruptured)
+    $$
+    \sigma(R) =
+    \begin{cases}
+    0 & R \le R_b \quad \text{(buckled)}, \\
+    \chi\left[(R/R_b)^2 - 1\right] & R_b < R < R_r \quad \text{(elastic)}, \\
+    \sigma_r & R \ge R_r \quad \text{(ruptured)},
+    \end{cases}
+    $$
 
-    where R_buckle = R_buckle_ratio * state.R0 and R_rupture is derived
-    from continuity of sigma at the elastic-to-ruptured transition.
+    where $R_b$ is `R_buckle_ratio * state.R0`, $\sigma_r$ is
+    `sigma_rupture`, and continuity of $\sigma$ at the elastic-to-ruptured
+    transition gives $R_r = R_b\sqrt{1 + \sigma_r/\chi}$.
 
-    Note: sigma(R) has discontinuous first derivatives at the regime
-    boundaries.  For applications requiring smooth gradients (e.g.
-    gradient-based optimisation), use ``GompertzSurfaceTension`` instead.
-
-    Fields
-    ------
+    Parameters
+    ----------
     R_buckle_ratio : float
-        Buckling radius as a fraction of R0  (dimensionless).
-    chi : float or Property
-        Shell elasticity  [N/m].
-    sigma_rupture : float or Property
-        Surface tension (post-rupture value)  [N/m].
+        Buckling radius as a fraction of `R0` (dimensionless).
+    chi : float
+        Shell elasticity [N/m].
+    sigma_rupture : float
+        Surface tension after rupture [N/m].
+
+    Notes
+    -----
+    $\sigma(R)$ has discontinuous first derivatives at the regime
+    boundaries. For applications that need smooth gradients, such as
+    gradient-based optimisation, use
+    [`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension]
+    instead.
     """
 
     R_buckle_ratio: float
@@ -226,53 +261,75 @@ class MarmottantSurfaceTension(Property):
 
 
 class GompertzSurfaceTension(Property):
-    """Smooth Gompertz surface tension law.
+    r"""Smooth Gompertz surface tension law.
+
+    This class is being redesigned for a later release, so its parameters
+    and defaults may change.
 
     A differentiable Gompertz function approximates the piecewise
-    Marmottant surface tension, enabling robust automatic
-    differentiation::
+    Marmottant surface tension, which keeps automatic differentiation
+    robust:
 
-        sigma(R) = a exp(-b exp(c (1 - R / R_buckle)))
+    $$
+    \sigma(R) = a \exp\left[-b \exp\left(c\left(1 - \frac{R}{R_b}\right)\right)\right]
+    $$
 
-    where R_buckle = R_buckle_ratio * state.R0.
+    where $R_b$ is `R_buckle_ratio * state.R0`. The code derives the
+    Gompertz parameters from $\chi$ (`chi`), $\sigma_r$ (`sigma_rupture`),
+    and the dimensionless `sharpness` factor $s$:
 
-    The Gompertz parameters b and c are derived from chi and sigma_rupture
-    such that sigma(R0) matches the elastic regime and sigma -> sigma_rupture
-    as R -> infinity.  R0 is read from the state so this model stays
-    consistent when R0 evolves (e.g. rectified diffusion).
+    $$
+    \begin{aligned}
+    a &= \sigma_r, \\
+    c &= s \, \frac{2\chi}{\sigma_r} \sqrt{1 + \frac{\sigma_r}{2\chi}}, \\
+    b &= -\ln\left(\frac{\sigma_0}{\sigma_r}\right)
+        \exp\left[-c\left(1 - \frac{R_0}{R_b}\right)\right],
+    \qquad
+    \sigma_0 = \chi\left[\left(\frac{R_0}{R_b}\right)^2 - 1\right].
+    \end{aligned}
+    $$
 
-    Steepness of the transition is set by c, which is scaled by the
-    dimensionless ``sharpness`` factor.  The base c (sharpness = 1) matches
-    the Marmottant *elastic slope at R0*, which gives a poor global fit to
-    the piecewise curve.  The default ``sharpness = 3.3`` is the mean
-    least-squares optimum over the elastic regime across the typical
-    parameter range, giving a markedly tighter match to Marmottant.
-    Scaling c leaves both anchors fixed: b is re-solved so sigma(R0) is
-    unchanged, and sigma -> sigma_rupture as R -> infinity regardless.
+    So $\sigma(R_0) = \sigma_0$ matches the Marmottant elastic regime, and
+    $\sigma \to \sigma_r$ as $R \to \infty$. The model reads $R_0$ from
+    the state, so it stays consistent when $R_0$ evolves, for example
+    through rectified diffusion.
 
-    Well-posedness constraint
-    -------------------------
-    The Gompertz fit requires that the initial surface tension at R0 lies
-    strictly below the rupture threshold::
+    The `sharpness` factor sets the steepness of the transition through
+    $c$. Scaling $c$ leaves both anchors fixed: $b$ is re-solved so
+    $\sigma(R_0)$ is unchanged, and $\sigma \to \sigma_r$ as
+    $R \to \infty$ regardless.
 
-        chi * ((1 / R_buckle_ratio)^2 - 1) < sigma_rupture
-
-    Construction raises ``ValueError`` if this is violated.  A common
-    mistake is setting R_buckle_ratio too small (e.g. 0.9), which inflates
-    sigma(R0) above sigma_rupture.  Values around 0.95–0.99 are typical.
-
-    Fields
-    ------
+    Parameters
+    ----------
     R_buckle_ratio : float
-        Buckling radius as a fraction of R0  (dimensionless).
-    chi : float or Property
-        Shell elasticity  [N/m].
-    sigma_rupture : float or Property
-        Asymptotic (ruptured) surface tension  [N/m].
+        Buckling radius as a fraction of `R0` (dimensionless).
+    chi : float
+        Shell elasticity [N/m].
+    sigma_rupture : float
+        Asymptotic (ruptured) surface tension [N/m].
     sharpness : float
-        Dimensionless multiplier on the transition rate c.  Default 3.3
-        (least-squares fit to Marmottant); 1.0 recovers the elastic-slope
-        match at R0.
+        Dimensionless multiplier on the transition rate $c$.
+        Default: `1.0`.
+
+    Raises
+    ------
+    ValueError
+        If $\sigma_0 \ge \sigma_r$ at construction, that is, the bubble
+        starts in the ruptured regime.
+
+    Notes
+    -----
+    The Gompertz fit requires the initial surface tension at $R_0$ to lie
+    strictly below the rupture threshold:
+
+    $$
+    \chi\left[\left(\frac{1}{r_b}\right)^2 - 1\right] < \sigma_r,
+    \qquad r_b = \texttt{R\_buckle\_ratio}.
+    $$
+
+    A common mistake is to set `R_buckle_ratio` too small, for example
+    `0.9`, which inflates $\sigma(R_0)$ above `sigma_rupture`. Values
+    around 0.95 to 0.99 are typical.
     """
 
     R_buckle_ratio: float

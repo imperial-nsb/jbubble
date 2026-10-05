@@ -1,11 +1,14 @@
-"""Gas pressure models.
+r"""Gas pressure models.
 
-Computes the outward gas pressure p_gas as a function of the
-instantaneous bubble state.  All models read ``state.R0`` and
-``state.P_gas0`` directly from the state, so they need no separate
-storage of equilibrium parameters.  The ``EquationOfMotion`` seeds
-these fields in ``initial_state()`` and the ODE carries them forward
-(frozen at zero derivative in the standard case).
+Each model computes the outward gas pressure $p_\text{gas}$ as a function
+of the instantaneous bubble state. All models read `state.R0` and
+`state.P_gas0` directly from the state, so they need no separate storage
+of equilibrium parameters. The
+[`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion] seeds these
+fields in
+[`initial_state`][jbubble.bubble.eom.EquationOfMotion.initial_state], and
+the ODE carries them forward, frozen at zero derivative in the standard
+case.
 """
 
 from __future__ import annotations
@@ -22,44 +25,48 @@ __all__ = ["GasModel", "PolytropicGas", "VanDerWaalsGas"]
 
 
 class GasModel(eqx.Module, abc.ABC):
-    """Internal gas pressure model.
+    r"""Internal gas pressure model.
 
-    Computes the outward gas pressure p_gas as a function of the
-    instantaneous state.  The equilibrium configuration (``R0``,
-    ``P_gas0``) is read directly from ``state``, so gas models only
-    store their intrinsic physical parameters (e.g. the polytropic
-    exponent).
+    Computes the outward gas pressure $p_\text{gas}$ as a function of the
+    instantaneous state. The model reads the equilibrium configuration,
+    `R0` and `P_gas0`, directly from `state`, so gas models store only
+    their intrinsic physical parameters, such as the polytropic exponent.
 
-    Examples: polytropic law, van der Waals corrected gas.
+    Concrete models include the polytropic law
+    ([`PolytropicGas`][jbubble.bubble.gas.PolytropicGas]) and the
+    van der Waals corrected gas
+    ([`VanDerWaalsGas`][jbubble.bubble.gas.VanDerWaalsGas]).
     """
 
     @abc.abstractmethod
     def __call__(self, state: BubbleState) -> jax.Array:
-        """Compute gas pressure p_gas(state).
+        r"""Compute the gas pressure, $p_\text{gas}(\text{state})$.
 
         Parameters
         ----------
         state : BubbleState
-            Current bubble state.  Uses ``state.R``, ``state.R0``,
-            and ``state.P_gas0``.
+            Current bubble state. The model uses `state.R`, `state.R0`,
+            and `state.P_gas0`.
 
         Returns
         -------
-        scalar
-            Gas pressure.
+        jax.Array
+            Scalar gas pressure [Pa].
         """
         ...
 
 
 class PolytropicGas(GasModel):
-    """Polytropic gas law.
+    r"""Polytropic gas law.
 
-    p_gas(R) = P_gas0 (R0 / R)^(3 gamma)
+    $$
+    p_\text{gas}(R) = P_{\text{gas},0}\left(\frac{R_0}{R}\right)^{3\gamma}
+    $$
 
-    Fields
-    ------
-    gamma : float
-        Polytropic exponent  (1.0 = isothermal, 1.4 = adiabatic air).
+    Parameters
+    ----------
+    gamma : float or Property
+        Polytropic exponent: `1.0` is isothermal and `1.4` is adiabatic air.
     """
 
     gamma: Property = eqx.field(converter=as_property)
@@ -69,18 +76,21 @@ class PolytropicGas(GasModel):
 
 
 class VanDerWaalsGas(GasModel):
-    """Hard-core corrected polytropic gas (van der Waals).
+    r"""Hard-core corrected polytropic gas (van der Waals).
 
-    p_gas(R) = P_gas0 ((R0^3 - h^3) / (R^3 - h^3))^gamma
+    $$
+    p_\text{gas}(R) = P_{\text{gas},0}
+        \left(\frac{R_0^3 - h^3}{R^3 - h^3}\right)^{\gamma}
+    $$
 
-    where *h = h_frac * R0* is the van der Waals hard-core radius.
+    where $h = h_\text{frac} R_0$ is the van der Waals hard-core radius.
 
-    Fields
-    ------
-    gamma : float
+    Parameters
+    ----------
+    gamma : float or Property
         Polytropic exponent.
-    h_frac : float
-        Hard-core radius as a fraction of R0  (dimensionless).
+    h_frac : float or Property
+        Hard-core radius as a fraction of `R0` (dimensionless).
         A common value for lipid shells is 1/5.61 ≈ 0.178.
     """
 
