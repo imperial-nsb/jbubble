@@ -11,6 +11,8 @@ This module needs the optional `h5py` dependency. To install it, run
 from __future__ import annotations
 
 import json
+import os
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -48,26 +50,29 @@ def export_hdf5(
 ) -> None:
     """Save named arrays and optional metadata to an HDF5 file.
 
-    `export_hdf5` serialises the metadata and converts the arrays before it
-    opens the file, so an unserialisable value raises without creating or
-    overwriting anything.
+    `export_hdf5` writes a temporary file in the same directory and moves it
+    to `path` only when every write succeeds. So a value that it can't save
+    raises without creating `path` or changing an existing file.
 
     Parameters
     ----------
     path : str or Path
-        Output `.h5` file path. `export_hdf5` overwrites an existing file.
+        Output `.h5` file path. `export_hdf5` replaces an existing file.
     metadata : dict, optional
         JSON-serialisable metadata, stored as an attribute on the root group.
         NumPy and JAX scalars become Python numbers, and arrays become
         nested lists.
     **arrays
         Each keyword argument becomes a dataset. `np.asarray` converts the
-        values to NumPy arrays.
+        values to NumPy arrays. To save a dict of arrays, such as the
+        result of `GridSweep.run()` for an `fn` that returns a dict, unpack
+        it: `export_hdf5(path, **grid)`.
 
     Raises
     ------
     TypeError
-        If `metadata` contains a value that isn't JSON-serialisable.
+        If `metadata` contains a value that isn't JSON-serialisable, or an
+        array value converts to a NumPy object array, as a dict does.
 
     Examples
     --------
@@ -88,13 +93,28 @@ def export_hdf5(
     """
     path = Path(path)
     encoded = None if metadata is None else json.dumps(metadata, default=_json_default)
-    datasets = {name: np.asarray(arr) for name, arr in arrays.items()}
+    datasets = {}
+    for name, arr in arrays.items():
+        data = np.asarray(arr)
+        if data.dtype.kind == "O":
+            raise TypeError(
+                f"export_hdf5: {name}={type(arr).__name__} isn't an array of "
+                "numbers. To save each entry of a dict as its own dataset, "
+                "unpack it, as in export_hdf5(path, **grid)."
+            )
+        datasets[name] = data
 
-    with h5py.File(path, "w") as f:
-        if encoded is not None:
-            f.attrs["metadata"] = encoded
-        for name, data in datasets.items():
-            f.create_dataset(name, data=data)
+    tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        with h5py.File(tmp, "x") as f:
+            if encoded is not None:
+                f.attrs["metadata"] = encoded
+            for name, data in datasets.items():
+                f.create_dataset(name, data=data)
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 def load_hdf5(path: str | Path) -> tuple[dict[str, np.ndarray], dict[str, Any]]:

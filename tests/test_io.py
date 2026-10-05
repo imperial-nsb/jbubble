@@ -130,3 +130,28 @@ class TestMetadataTypes:
         with pytest.raises(TypeError):
             export_hdf5(path, metadata={"bad": {1, 2}}, x=jnp.array([1.0]))
         assert not path.exists()
+
+    def test_dict_array_leaves_existing_file_untouched(self, tmp_path):
+        path = tmp_path / "test.h5"
+        export_hdf5(path, metadata={"R0": 2e-6}, R=jnp.ones(3))
+
+        with pytest.raises(TypeError, match=r"grid=dict.*\*\*grid"):
+            export_hdf5(path, R=jnp.ones(3), grid={"ratio": np.ones(3)})
+
+        arrays, metadata = load_hdf5(path)
+        assert set(arrays) == {"R"}
+        assert metadata == {"R0": 2e-6}
+        assert [p.name for p in tmp_path.iterdir()] == ["test.h5"]
+
+    def test_failed_write_leaves_existing_file_untouched(self, tmp_path):
+        # h5py can't store NumPy unicode strings, so the write fails part way.
+        path = tmp_path / "test.h5"
+        export_hdf5(path, metadata={"run": 1}, x=jnp.array([1.0]))
+
+        with pytest.raises(TypeError):
+            export_hdf5(path, y=jnp.array([2.0]), labels=np.array(["a", "b"]))
+
+        arrays, metadata = load_hdf5(path)
+        assert set(arrays) == {"x"}
+        assert metadata == {"run": 1}
+        assert [p.name for p in tmp_path.iterdir()] == ["test.h5"]
