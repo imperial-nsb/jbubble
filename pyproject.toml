@@ -10,7 +10,14 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
-authors = [{ name = "Callum Rhys Tilbury" }]
+authors = [
+    { name = "Callum Rhys Tilbury" },
+    { name = "Shima Mohammed" },
+    { name = "Anthea MacIntosh-LaRocque" },
+    { name = "Rui Xu" },
+    { name = "Ben Moseley" },
+    { name = "James J. Choi" },
+]
 keywords = [
     "jax",
     "microbubbles",

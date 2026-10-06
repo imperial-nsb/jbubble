@@ -16,10 +16,24 @@ abstract: >-
   with jax.grad through an adaptive ODE solver. jbubble uses these gradients
   to fit model parameters and neural shell laws to measured radius curves or
   acoustic emissions, and computes the pressure that a bubble radiates.
-# Other contributors are listed once the maintainer confirms them.
 authors:
   - given-names: Callum Rhys
     family-names: Tilbury
+    affiliation: Imperial College London
+  - given-names: Shima
+    family-names: Mohammed
+    affiliation: Imperial College London
+  - given-names: Anthea
+    family-names: MacIntosh-LaRocque
+    affiliation: Imperial College London
+  - given-names: Rui
+    family-names: Xu
+    affiliation: Imperial College London
+  - given-names: Ben
+    family-names: Moseley
+    affiliation: Imperial College London
+  - given-names: James J.
+    family-names: Choi
     affiliation: Imperial College London
 version: 0.2.0
 license: MIT
