@@ -96,10 +96,10 @@ def test_gallery_thumbnails_fill_with_the_light_surface():
     assert re.findall(r"background-color:\s*(#[0-9a-f]{6});", rule) == [surface]
 
 
-def test_logo_uses_the_first_two_light_colours():
+def test_logo_uses_the_first_light_colour():
     _, colors = palette("light")
     fills = re.findall(r'fill="(#[0-9a-f]{6})"', LOGO.read_text())
-    assert set(colors[:2]) <= set(fills)
+    assert fills == [colors[0]]
 
 
 @pytest.mark.parametrize(("scheme", "theme"), [("default", "light"), ("slate", "dark")])
