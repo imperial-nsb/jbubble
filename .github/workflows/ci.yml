@@ -42,7 +42,7 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       # ty resolves imports from the environment, so it needs the runtime
       # dependencies and extras, not only the lint group.
       - run: uv sync --locked
@@ -59,11 +59,9 @@ jobs:
           # Oldest supported Python with the declared lower bounds. The Python
           # pin matters: without it, uv picks the newest Python, where the
           # lower bounds have no wheels.
-          - { os: ubuntu-latest, python: "3.12", deps: lowest-direct }
+          - { os: ubuntu-latest, python: "3.13", deps: lowest-direct }
           # The committed lockfile, which is what contributors get from `uv sync`.
-          - { os: ubuntu-latest, python: "3.12", deps: locked }
-          # Google Colab's Python, newest releases.
-          - { os: ubuntu-latest, python: "3.13", deps: highest }
+          - { os: ubuntu-latest, python: "3.13", deps: locked }
           # Newest supported Python, newest releases.
           - { os: ubuntu-latest, python: "3.14", deps: highest }
           - { os: macos-latest, python: "3.14", deps: highest }
@@ -128,7 +126,7 @@ jobs:
         # wheel, not ./jbubble. Every module must import with the core
         # dependencies alone.
         run: |
-          uv run --isolated --no-project --python 3.12 --with dist/*.whl python -P - <<'EOF'
+          uv run --isolated --no-project --python 3.13 --with dist/*.whl python -P - <<'EOF'
           import importlib
           import pkgutil
 

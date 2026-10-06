@@ -1,6 +1,6 @@
 # Installation
 
-jbubble needs Python 3.12 or later. It installs JAX as a dependency, in its
+jbubble needs Python 3.13 or later. It installs JAX as a dependency, in its
 CPU-only build. A GPU is optional; it speeds up large parameter sweeps (see
 [Run on a GPU](#run-on-a-gpu)).
 

@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         # Oldest and newest supported Python, with the committed lockfile.
-        python: ["3.12", "3.14"]
+        python: ["3.13", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -67,7 +67,7 @@ jobs:
         # wheel, not ./jbubble. Every module must import with the core
         # dependencies alone.
         run: |
-          uv run --isolated --no-project --python 3.12 --with dist/*.whl python -P - <<'EOF'
+          uv run --isolated --no-project --python 3.13 --with dist/*.whl python -P - <<'EOF'
           import importlib
           import pkgutil
 

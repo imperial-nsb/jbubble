@@ -9,7 +9,7 @@ description = "Differentiable microbubble dynamics in JAX"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 authors = [
     { name = "Callum Rhys Tilbury" },
     { name = "Shima Mohammed" },
@@ -32,7 +32,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Physics",
@@ -55,13 +54,15 @@ dependencies = [
     # already requires optimistix>=0.1.0.
     "optimistix>=0.1.0",
     "optax>=0.2.3",
-    "numpy>=2.0",
+    # 2.1.0 is the first release with Python 3.13 wheels.
+    "numpy>=2.1",
     "tqdm>=4.65",
 ]
 
 [project.optional-dependencies]
 # Plotting for the example scripts and notebooks.
-examples = ["matplotlib>=3.9"]
+# 3.9.2 is the first release with Python 3.13 wheels.
+examples = ["matplotlib>=3.9.2"]
 
 [project.urls]
 Homepage = "https://github.com/imperial-nsb/jbubble"
@@ -104,7 +105,7 @@ docs = [
 # scripts/make_readme_assets.py: render the README animations and images.
 # imageio-ffmpeg bundles an ffmpeg binary that encodes the GIFs. Install with
 # `uv sync --group assets`.
-assets = ["matplotlib>=3.9", "imageio-ffmpeg>=0.6"]
+assets = ["matplotlib>=3.9.2", "imageio-ffmpeg>=0.6"]
 
 [tool.hatch.version]
 source = "vcs"

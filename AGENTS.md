@@ -17,7 +17,7 @@ Set `MPLBACKEND=Agg` when you run an example. Every example calls `plt.show()`,
 which otherwise opens a window and blocks until someone closes it.
 
 Don't use the old `bubbles` conda environment: it runs Python 3.11, and jbubble
-needs Python 3.12 or later.
+needs Python 3.13 or later.
 
 After you change dependencies in `pyproject.toml`, run `uv lock` and commit
 `uv.lock` with the change.
