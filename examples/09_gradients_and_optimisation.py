@@ -56,11 +56,9 @@ def simulate(freq, R0, pressure, mu=1e-3):
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=1.4),
         shell=NoShell(sigma=0.072),
-        medium=NewtonianMedium(mu=mu),
+        medium=NewtonianMedium(mu=mu, rho_L=998.0, c_L=1500.0),
         R0=R0,
         P_amb=101325.0,
-        rho_L=998.0,
-        c_L=1500.0,
     )
     pulse = ToneBurst(
         freq=freq, pressure=pressure, shape=Sine(), cycle_num=6, envelope=HannEnvelope()

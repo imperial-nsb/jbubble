@@ -152,11 +152,9 @@ def free_bubble(
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=gamma),
         shell=NoShell(sigma=sigma),
-        medium=NewtonianMedium(mu=mu),
+        medium=NewtonianMedium(mu=mu, rho_L=rho_L, c_L=c_L),
         R0=R0,
         P_amb=P_amb,
-        rho_L=rho_L,
-        c_L=c_L,
     )
     pulse = ToneBurst(freq=freq, pressure=pressure, shape=Sine(), cycle_num=cycle_num)
     return BubblePreset(eom=eom, pulse=pulse)
@@ -283,11 +281,9 @@ def lipid_bubble(
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=gamma),
         shell=shell,
-        medium=NewtonianMedium(mu=mu),
+        medium=NewtonianMedium(mu=mu, rho_L=rho_L, c_L=c_L),
         R0=R0,
         P_amb=P_amb,
-        rho_L=rho_L,
-        c_L=c_L,
     )
     pulse = ToneBurst(freq=freq, pressure=pressure, shape=Sine(), cycle_num=cycle_num)
     return BubblePreset(eom=eom, pulse=pulse)
@@ -404,11 +400,9 @@ def thick_shell_bubble(
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=gamma),
         shell=ThickShell(sigma=sigma, d_s=d_s, G_s=G_s, mu_s=mu_s),
-        medium=NewtonianMedium(mu=mu),
+        medium=NewtonianMedium(mu=mu, rho_L=rho_L, c_L=c_L),
         R0=R0,
         P_amb=P_amb,
-        rho_L=rho_L,
-        c_L=c_L,
     )
     pulse = ToneBurst(freq=freq, pressure=pressure, shape=Sine(), cycle_num=cycle_num)
     return BubblePreset(eom=eom, pulse=pulse)

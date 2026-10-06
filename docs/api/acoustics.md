@@ -2,12 +2,12 @@
 
 The `jbubble.acoustics` module provides models for computing the acoustic pressure radiated by a bubble, given a solved trajectory.
 
-Emission models are **not** `Property` subclasses (they depend on the full trajectory, not just instantaneous state), and **not** part of the EoM (they are pure post-processing). They take a `SimulationResult` and a field-point distance `r` and return the pressure time series.
+Emission models are **not** `Property` subclasses (they depend on the full trajectory, not just instantaneous state), and **not** part of the EoM (they are pure post-processing). They take a `SimulationResult` and a field-point distance `r` and return the pressure time series. They read the liquid density and speed of sound from a `MediumModel`, so pass the medium of the simulated equation of motion:
 
 ```python
 from jbubble.acoustics import IncompressibleMonopole
 
-emission = IncompressibleMonopole(rho_L=998.0)
+emission = IncompressibleMonopole(medium=eom.medium)
 p_rad = emission(result, r=1e-2)  # pressure [Pa] at 1 cm, shape (num_samples,)
 ```
 

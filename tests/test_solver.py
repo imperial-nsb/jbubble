@@ -55,11 +55,9 @@ def _lipid_bubble(kappa_s, *, gamma=1.07, R0=2e-6):
     return KellerMiksis(
         gas=PolytropicGas(gamma=gamma),
         shell=_marmottant(kappa_s),
-        medium=NewtonianMedium(mu=1e-3),
+        medium=NewtonianMedium(mu=1e-3, rho_L=998.0, c_L=1500.0),
         R0=R0,
         P_amb=101325.0,
-        rho_L=998.0,
-        c_L=1500.0,
     )
 
 
@@ -67,11 +65,9 @@ def _free_bubble(mu, *, R0=2e-6):
     return KellerMiksis(
         gas=PolytropicGas(gamma=1.4),
         shell=NoShell(sigma=0.072),
-        medium=NewtonianMedium(mu=mu),
+        medium=NewtonianMedium(mu=mu, rho_L=998.0, c_L=1500.0),
         R0=R0,
         P_amb=101325.0,
-        rho_L=998.0,
-        c_L=1500.0,
     )
 
 
@@ -79,11 +75,9 @@ def _vdw_bubble(mu):
     return KellerMiksis(
         gas=VanDerWaalsGas(gamma=1.4, h_frac=1 / 5.61),
         shell=NoShell(sigma=0.072),
-        medium=NewtonianMedium(mu=mu),
+        medium=NewtonianMedium(mu=mu, rho_L=998.0, c_L=1500.0),
         R0=2e-6,
         P_amb=101325.0,
-        rho_L=998.0,
-        c_L=1500.0,
     )
 
 
@@ -91,11 +85,9 @@ def _tissue_bubble(G):
     return KellerMiksis(
         gas=PolytropicGas(gamma=1.4),
         shell=NoShell(sigma=0.056),
-        medium=KelvinVoigtMedium(mu=0.015, G=G),
+        medium=KelvinVoigtMedium(mu=0.015, G=G, rho_L=1060.0, c_L=1540.0),
         R0=1e-6,
         P_amb=101325.0,
-        rho_L=1060.0,
-        c_L=1540.0,
     )
 
 
@@ -265,11 +257,9 @@ class TestScaledState:
             eom = KellerMiksis(
                 gas=PolytropicGas(gamma=1.4),
                 shell=NoShell(sigma=0.0),
-                medium=NewtonianMedium(mu=0.0),
+                medium=NewtonianMedium(mu=0.0, rho_L=998.0, c_L=1500.0),
                 R0=2e-6 * scale,
                 P_amb=101325.0,
-                rho_L=998.0,
-                c_L=1500.0,
             )
             pulse = _tone(150e3, cycles=3, freq=1e6 / scale)
             config = SolverConfig(dt0=1e-9 * scale)
@@ -317,11 +307,9 @@ class TestScaledState:
             eom = KellerMiksis(
                 gas=PolytropicGas(gamma=1.4),
                 shell=NoShell(sigma=0.072),
-                medium=NewtonianMedium(mu=1e-3),
+                medium=NewtonianMedium(mu=1e-3, rho_L=theta[2], c_L=1500.0),
                 R0=theta[0],
                 P_amb=theta[1],
-                rho_L=theta[2],
-                c_L=1500.0,
             )
             sol = solve_eom(eom, pulse, save_spec=SaveSpec(400), config=config)
             return jnp.mean((sol.ys.R / 2e-6) ** 2)

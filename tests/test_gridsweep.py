@@ -65,11 +65,9 @@ def _keller_miksis(R0, pressure):
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=1.4),
         shell=NoShell(sigma=0.072),
-        medium=NewtonianMedium(mu=1e-3),
+        medium=NewtonianMedium(mu=1e-3, rho_L=998.0, c_L=1500.0),
         R0=R0,
         P_amb=101325.0,
-        rho_L=998.0,
-        c_L=1500.0,
     )
     pulse = ToneBurst(freq=1e6, pressure=pressure, shape=Sine(), cycle_num=5)
     return eom, pulse

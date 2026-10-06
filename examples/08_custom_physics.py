@@ -122,6 +122,9 @@ class MooneyRivlinMedium(MediumModel):
         Small-strain shear modulus [Pa].
     alpha : float
         Weight of the second-invariant term, from 0 (neo-Hookean) to 1.
+    rho_L, c_L : float
+        Density [kg/m³] and speed of sound [m/s] of the surrounding
+        liquid, inherited from `MediumModel` as keyword-only fields.
     """
 
     G: float
@@ -149,10 +152,11 @@ class MooneyRivlinMedium(MediumModel):
 
 # %%
 G_TISSUE, MU_TISSUE = 100e3, 0.015  # shear modulus [Pa] and viscosity [Pa s]
+TISSUE = {"rho_L": 1060.0, "c_L": 1540.0}  # density [kg/m³] and sound speed [m/s]
 stretch = jnp.linspace(0.5, 4.0, 200)  # R / R0
 
 custom = MooneyRivlinMedium(mu=MU_TISSUE, G=G_TISSUE, alpha=0.0)
-built_in = NeoHookeanMedium(mu=MU_TISSUE, G=G_TISSUE)
+built_in = NeoHookeanMedium(mu=MU_TISSUE, G=G_TISSUE, **TISSUE)
 gap = jnp.max(
     jnp.abs(evaluate(custom.p_elastic, stretch) - evaluate(built_in.p_elastic, stretch))
 )
@@ -232,8 +236,6 @@ def tissue_bubble(medium, kappa_s=thinning):
         medium=medium,
         R0=2e-6,
         P_amb=101325.0,
-        rho_L=1060.0,  # soft tissue [kg/m³]
-        c_L=1540.0,  # soft tissue [m/s]
     )
 
 
@@ -242,11 +244,11 @@ media = {
     "NeoHookean (built in)": ("C1", built_in),
     "Mooney-Rivlin, alpha = 0.5": (
         "C0",
-        MooneyRivlinMedium(mu=MU_TISSUE, G=G_TISSUE, alpha=0.5),
+        MooneyRivlinMedium(mu=MU_TISSUE, G=G_TISSUE, alpha=0.5, **TISSUE),
     ),
     "Mooney-Rivlin, alpha = 1": (
         "C2",
-        MooneyRivlinMedium(mu=MU_TISSUE, G=G_TISSUE, alpha=1.0),
+        MooneyRivlinMedium(mu=MU_TISSUE, G=G_TISSUE, alpha=1.0, **TISSUE),
     ),
 }
 results = {

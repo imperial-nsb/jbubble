@@ -267,11 +267,9 @@ def hero_bubble(out: pathlib.Path, quick: bool) -> list[pathlib.Path]:
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=1.4),
         shell=NoShell(sigma=SIGMA_WATER),
-        medium=NewtonianMedium(mu=MU),
+        medium=NewtonianMedium(mu=MU, rho_L=RHO_L, c_L=C_L),
         R0=R0,
         P_amb=P_AMB,
-        rho_L=RHO_L,
-        c_L=C_L,
     )
     pulse = ToneBurst(
         freq=freq,
@@ -385,11 +383,9 @@ def _climb_sim(freq, R0):
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=1.4),
         shell=NoShell(sigma=SIGMA_WATER),
-        medium=NewtonianMedium(mu=MU),
+        medium=NewtonianMedium(mu=MU, rho_L=RHO_L, c_L=C_L),
         R0=R0,
         P_amb=P_AMB,
-        rho_L=RHO_L,
-        c_L=C_L,
     )
     # The transducer delivers less pressure away from its centre frequency, so
     # the map has one peak instead of an unbounded resonance ridge.
@@ -547,10 +543,9 @@ def _shell_model(sigma, pressure):
     eom = RayleighPlesset(
         gas=PolytropicGas(gamma=1.07),
         shell=LipidShell(sigma=sigma, kappa_s=5e-9),
-        medium=NewtonianMedium(mu=MU),
+        medium=NewtonianMedium(mu=MU, rho_L=RHO_L),
         R0=SIGMA_R0,
         P_amb=P_AMB,
-        rho_L=RHO_L,
     )
     pulse = ToneBurst(
         freq=1e6, pressure=pressure, shape=Sine(), cycle_num=5, envelope=HannEnvelope()
@@ -746,11 +741,9 @@ def _emission_map(quick: bool) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.n
     eom = KellerMiksis(
         gas=VanDerWaalsGas(gamma=1.4, h_frac=1 / 8.86),
         shell=NoShell(sigma=SIGMA_WATER),
-        medium=NewtonianMedium(mu=MU),
+        medium=NewtonianMedium(mu=MU, rho_L=RHO_L, c_L=C_L),
         R0=SPEC_R0,
         P_amb=P_AMB,
-        rho_L=RHO_L,
-        c_L=C_L,
     )
     dt = SPEC_T_MAX / (n_samples - 1)
     n_fft = 4 * n_samples  # zero padding interpolates the plotted spectrum

@@ -87,13 +87,12 @@ class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
     shell : ShellModel
         Shell or coating model.
     medium : MediumModel
-        Surrounding medium model.
+        Surrounding medium model. It also holds the liquid density
+        $\rho_L$ (`medium.rho_L`) and speed of sound $c_L$ (`medium.c_L`).
     R0 : float or jax.Array
         Equilibrium bubble radius [m].
     P_amb : float or jax.Array
         Ambient (far-field) pressure [Pa].
-    rho_L : float or jax.Array
-        Liquid density [kg/m³].
     """
 
     gas: GasModel
@@ -102,7 +101,6 @@ class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
 
     R0: ArrayLike
     P_amb: ArrayLike
-    rho_L: ArrayLike
 
     def p_L(self, state: BubbleState) -> jax.Array:
         r"""Liquid-side boundary pressure.
@@ -204,7 +202,8 @@ class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
 
         - `R` and `R0`: the equilibrium radius `state.R0` [m].
         - `R_dot`: the velocity scale $\sqrt{P_\text{amb}/\rho_L}$
-          [m/s], about 10 m/s in water at atmospheric pressure. It's the
+          [m/s], with $\rho_L$ from `medium.rho_L`, about 10 m/s in water
+          at atmospheric pressure. It's the
           natural velocity of bubble dynamics: $R_0\omega_0 \approx
           \sqrt{3\kappa P_\text{amb}/\rho_L}$ for the Minnaert frequency
           $\omega_0$.
@@ -230,7 +229,7 @@ class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
             Scale for each field, with the same structure as `state`.
         """
         P_amb = jnp.asarray(self.P_amb)
-        velocity = jnp.sqrt(P_amb / jnp.asarray(self.rho_L))
+        velocity = jnp.sqrt(P_amb / jnp.asarray(self.medium.rho_L))
         R0 = jnp.asarray(state.R0)
         P_gas0 = jnp.asarray(state.P_gas0)
         pressure = jnp.where(P_gas0 > 0, P_gas0, P_amb)
@@ -285,7 +284,8 @@ class RayleighPlesset(EquationOfMotion[BubbleState]):
 
     The simplest bubble dynamics EoM, which assumes an incompressible
     surrounding liquid. It takes only the parameters of
-    [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion].
+    [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion], and reads
+    $\rho_L$ from `medium.rho_L`.
     """
 
     def __call__(
@@ -297,7 +297,9 @@ class RayleighPlesset(EquationOfMotion[BubbleState]):
         R, R_dot = state.R, state.R_dot
         p_L_val = self.p_L(state)
         p_ac = p_ac_fn(t)
-        R_ddot = ((p_L_val - self.P_amb - p_ac) / self.rho_L - 1.5 * R_dot**2) / R
+        R_ddot = (
+            (p_L_val - self.P_amb - p_ac) / self.medium.rho_L - 1.5 * R_dot**2
+        ) / R
         return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
@@ -316,16 +318,10 @@ class ModifiedRayleighPlesset(EquationOfMotion[BubbleState]):
     where autodiff computes
     $\mathrm{d}p_\text{gas}/\mathrm{d}t = (\partial p_\text{gas}/\partial R)\,\dot{R}$.
 
-    It takes the parameters of
-    [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion] plus `c_L`.
-
-    Parameters
-    ----------
-    c_L : float or jax.Array
-        Speed of sound in the liquid [m/s].
+    It takes only the parameters of
+    [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion], and reads
+    $\rho_L$ and $c_L$ from `medium.rho_L` and `medium.c_L`.
     """
-
-    c_L: ArrayLike
 
     def __call__(
         self,
@@ -343,8 +339,9 @@ class ModifiedRayleighPlesset(EquationOfMotion[BubbleState]):
         dp_gas_dR = gas_tangent.R
         dp_gas_dt = dp_gas_dR * R_dot
 
-        forces = p_L_val + (R / self.c_L) * dp_gas_dt - self.P_amb - p_ac
-        R_ddot = (forces / self.rho_L - 1.5 * R_dot**2) / R
+        rho_L, c_L = self.medium.rho_L, self.medium.c_L
+        forces = p_L_val + (R / c_L) * dp_gas_dt - self.P_amb - p_ac
+        R_ddot = (forces / rho_L - 1.5 * R_dot**2) / R
         return BubbleState(R=R_dot, R_dot=R_ddot)
 
 
@@ -375,16 +372,10 @@ class KellerMiksis(EquationOfMotion[BubbleState]):
     any combination of gas, shell, and medium models without hand-coded
     derivatives.
 
-    It takes the parameters of
-    [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion] plus `c_L`.
-
-    Parameters
-    ----------
-    c_L : float or jax.Array
-        Speed of sound in the liquid [m/s].
+    It takes only the parameters of
+    [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion], and reads
+    $\rho_L$ and $c_L$ from `medium.rho_L` and `medium.c_L`.
     """
-
-    c_L: ArrayLike
 
     def __call__(
         self,
@@ -393,7 +384,8 @@ class KellerMiksis(EquationOfMotion[BubbleState]):
         p_ac_fn: Callable,
     ) -> BubbleState:
         R, R_dot = state.R, state.R_dot
-        M = R_dot / self.c_L  # Mach number
+        rho_L, c_L = self.medium.rho_L, self.medium.c_L
+        M = R_dot / c_L  # Mach number
 
         # -- boundary pressure and its partial derivatives (autodiff) ------
         p_L_val = self.p_L(state)
@@ -413,11 +405,11 @@ class KellerMiksis(EquationOfMotion[BubbleState]):
         #
         # denom * Rddot = numer
 
-        denom = (1.0 - M) * R - (R / (self.rho_L * self.c_L)) * dp_L_dRdot
+        denom = (1.0 - M) * R - (R / (rho_L * c_L)) * dp_L_dRdot
 
         numer = (
-            (1.0 / self.rho_L) * (1.0 + M) * (p_L_val - self.P_amb - p_ac)
-            + (R / (self.rho_L * self.c_L)) * (dp_L_dR * R_dot - dp_ac_dt)
+            (1.0 / rho_L) * (1.0 + M) * (p_L_val - self.P_amb - p_ac)
+            + (R / (rho_L * c_L)) * (dp_L_dR * R_dot - dp_ac_dt)
             - 1.5 * (1.0 - M / 3.0) * R_dot**2
         )
 

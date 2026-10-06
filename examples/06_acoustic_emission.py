@@ -44,11 +44,9 @@ FREQ = 1e6  # drive frequency [Hz]
 eom = KellerMiksis(
     gas=VanDerWaalsGas(gamma=1.4, h_frac=1 / 8.86),
     shell=NoShell(sigma=0.072),
-    medium=NewtonianMedium(mu=1e-3),
+    medium=NewtonianMedium(mu=1e-3, rho_L=RHO_L, c_L=C_L),
     R0=R0,
     P_amb=101325.0,
-    rho_L=RHO_L,
-    c_L=C_L,
 )
 
 # %% [markdown]
@@ -75,8 +73,9 @@ t_max = pulse.t_end + delay
 
 result = run_simulation(eom, pulse, save_spec=SaveSpec(num_samples=8192), t_max=t_max)
 
-incompressible = IncompressibleMonopole(rho_L=RHO_L)
-quasi = QuasiAcoustic(rho_L=RHO_L, c_L=C_L)
+# Radiate into the same water that the simulation uses.
+incompressible = IncompressibleMonopole(medium=eom.medium)
+quasi = QuasiAcoustic(medium=eom.medium)
 p_inc = incompressible(result, r)
 p_quasi = quasi(result, r)
 t_arrival = quasi.observer_time(result, r)

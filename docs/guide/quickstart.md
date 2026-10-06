@@ -57,11 +57,13 @@ sigma = SmoothMarmottantSurfaceTension(
 eom = KellerMiksis(
     gas=PolytropicGas(gamma=1.095),  # SF6
     shell=LipidShell(sigma=sigma, kappa_s=7.5e-9),  # kappa_s [N s/m]
-    medium=NewtonianMedium(mu=1e-3),  # water viscosity [Pa s]
+    medium=NewtonianMedium(
+        mu=1e-3,  # water viscosity [Pa s]
+        rho_L=998.0,  # liquid density [kg/m³]
+        c_L=1500.0,  # speed of sound [m/s]
+    ),
     R0=2e-6,  # equilibrium radius [m]
     P_amb=101325.0,  # ambient pressure [Pa]
-    rho_L=998.0,  # liquid density [kg/m³]
-    c_L=1500.0,  # speed of sound [m/s]
 )
 pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
 
@@ -144,12 +146,12 @@ the bubble.
 [`IncompressibleMonopole`][jbubble.acoustics.emission.IncompressibleMonopole]
 gives the pressure without the travel time;
 [`QuasiAcoustic`][jbubble.acoustics.emission.QuasiAcoustic] gives the same
-values on the arrival-time axis `result.ts + r / c_L`:
+values on the arrival-time axis `result.ts + r / c_L`. Both take the medium of the equation of motion, so the radiated pressure uses the same liquid density and speed of sound as the simulation:
 
 ```{.python continuation}
 from jbubble.acoustics import QuasiAcoustic
 
-emission = QuasiAcoustic(rho_L=998.0, c_L=1500.0)
+emission = QuasiAcoustic(medium=eom.medium)  # radiate into the same water
 r = 10e-3  # 10 mm from the bubble centre [m]
 p_rad = emission(result, r)  # [Pa]
 t_arrival = emission.observer_time(result, r)  # [s]

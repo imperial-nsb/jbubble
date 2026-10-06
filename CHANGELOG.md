@@ -32,6 +32,10 @@ Installation:
 
 Models:
 
+- The liquid density `rho_L` and speed of sound `c_L` move from the equation of motion to the medium, so `RayleighPlesset`, `ModifiedRayleighPlesset`, and `KellerMiksis` no longer accept them. `KellerMiksis(..., medium=NewtonianMedium(mu=1e-3), rho_L=998.0, c_L=1500.0)` becomes `KellerMiksis(..., medium=NewtonianMedium(mu=1e-3, rho_L=998.0, c_L=1500.0))`. Both default to water at 20 °C, so you can omit them for water. `P_amb` and `R0` stay on the equation of motion.
+- Paths to the liquid properties change: `eqx.tree_at(lambda e: e.rho_L, eom, x)` becomes `eqx.tree_at(lambda e: e.medium.rho_L, eom, x)`, and `eom.c_L` becomes `eom.medium.c_L`. Update the paths in your fits, sweeps, and `make_model` functions.
+- `IncompressibleMonopole` and `QuasiAcoustic` take a `medium` instead of `rho_L` and `c_L`. `QuasiAcoustic(rho_L=998.0, c_L=1500.0)` becomes `QuasiAcoustic(medium=eom.medium)`, which radiates into the same liquid as the simulation.
+- A custom `MediumModel` subclass inherits the keyword-only fields `rho_L` and `c_L`. A custom equation of motion reads them as `self.medium.rho_L` and `self.medium.c_L`.
 - `LeightonTube`, `SphericalConfinement`, and `ConfinedBubbleState` are
   removed, with no replacement in this release, and so are the
   `SimulationResult.has_vessel`, `vessel_radius`, and `vessel_velocity`
@@ -163,6 +167,7 @@ Fitting:
 
 ### Changed
 
+- `MediumModel` holds the liquid density `rho_L` and speed of sound `c_L`, as keyword-only fields that default to water at 20 °C (998.0 kg/m³ and 1500 m/s). The equations of motion and the emission models read them from the medium, so the simulation and the radiated pressure use the same liquid.
 - `GridSweep` runs grid chunks in parallel on worker threads, by default one
   per CPU core available to the process, up to 31 per CPU device. You no
   longer need `JAX_NUM_CPU_DEVICES` or `XLA_FLAGS` to use several cores. On a

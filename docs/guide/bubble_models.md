@@ -37,25 +37,25 @@ from jbubble.bubble.shell import NoShell
 from jbubble.pulse import ToneBurst
 from jbubble.pulse.shapes import Sine
 
-water = {"P_amb": 101325.0, "rho_L": 998.0}  # [Pa], [kg/m³]
+water = NewtonianMedium(mu=1e-3, rho_L=998.0, c_L=1500.0)  # [Pa s], [kg/m³], [m/s]
 parts = {
     "gas": PolytropicGas(gamma=1.4),
     "shell": NoShell(sigma=0.072),  # [N/m]
-    "medium": NewtonianMedium(mu=1e-3),  # [Pa s]
+    "medium": water,
     "R0": 2e-6,  # [m]
+    "P_amb": 101325.0,  # [Pa]
 }
 ```
 
 ## Equations of motion
 
-Every equation of motion takes `gas`, `shell`, `medium`, `R0`, `P_amb`, and
-`rho_L`. Some take more:
+Every equation of motion takes the same parameters: `gas`, `shell`, `medium`, `R0`, and `P_amb`. The medium holds the liquid's density `rho_L` and speed of sound `c_L`, which default to water at 20 °C; see [Medium models](#medium-models).
 
-| Equation of motion | Extra parameters | Use it for |
+| Equation of motion | Liquid properties it uses | Use it for |
 |---|---|---|
-| [`RayleighPlesset`][jbubble.bubble.eom.RayleighPlesset] | none | Weak driving in an incompressible liquid |
-| [`ModifiedRayleighPlesset`][jbubble.bubble.eom.ModifiedRayleighPlesset] | `c_L` | Coated bubbles at low Mach number, as in Marmottant et al. (2005) |
-| [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis] | `c_L` | Most work: the default of every preset |
+| [`RayleighPlesset`][jbubble.bubble.eom.RayleighPlesset] | `medium.rho_L` | Weak driving in an incompressible liquid |
+| [`ModifiedRayleighPlesset`][jbubble.bubble.eom.ModifiedRayleighPlesset] | `medium.rho_L`, `medium.c_L` | Coated bubbles at low Mach number, as in Marmottant et al. (2005) |
+| [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis] | `medium.rho_L`, `medium.c_L` | Most work: the default of every preset |
 
 ### Rayleigh-Plesset
 
@@ -98,9 +98,9 @@ an inertial collapse, with three equations of motion:
 ```{.python continuation}
 pulse = ToneBurst(freq=1e6, pressure=400e3, shape=Sine(), cycle_num=3)
 eoms = {
-    "Rayleigh-Plesset": RayleighPlesset(**parts, **water),
-    "modified Rayleigh-Plesset": ModifiedRayleighPlesset(**parts, **water, c_L=1500.0),
-    "Keller-Miksis": KellerMiksis(**parts, **water, c_L=1500.0),
+    "Rayleigh-Plesset": RayleighPlesset(**parts),
+    "modified Rayleigh-Plesset": ModifiedRayleighPlesset(**parts),
+    "Keller-Miksis": KellerMiksis(**parts),
 }
 for name, eom in eoms.items():
     result = run_simulation(eom, pulse)
@@ -246,17 +246,19 @@ neo-Hookean law holds at finite strain. For a power-law liquid, `mu` is the
 consistency index $K$ in Pa sⁿ, and `eps` regularises the shear rate where
 $\dot R$ changes sign.
 
+Every medium also holds the liquid's density `rho_L` [kg/m³] and speed of sound `c_L` [m/s], which the equations of motion and the [emission models][jbubble.acoustics.emission.EmissionModel] read. They're keyword-only and default to water at 20 °C: `rho_L=998.0` and `c_L=1500.0`. They're plain constants, not `Property` fields, because the equations of motion assume a liquid of constant density and sound speed.
+
 ```{.python continuation}
 from jbubble.bubble.medium import NeoHookeanMedium, PowerLawMedium
 
-tissue = NeoHookeanMedium(mu=5e-3, G=10e3)  # [Pa s], [Pa]
+tissue = NeoHookeanMedium(mu=5e-3, G=10e3, rho_L=1060.0, c_L=1540.0)  # [Pa s], [Pa], [kg/m³], [m/s]
 shear_thinning = PowerLawMedium(mu=1.5e-2, n_exp=0.7)  # K [Pa s^n]
 ```
 
 ## Properties: constant, state-dependent, or learned
 
 Every physical coefficient of a gas, shell, or medium model, such as `sigma`,
-`kappa_s`, `G`, or `gamma`, is a [`Property`][jbubble.bubble.property.Property]:
+`kappa_s`, `G`, or `gamma`, except the liquid's `rho_L` and `c_L`, is a [`Property`][jbubble.bubble.property.Property]:
 a function from the bubble state to a scalar. A plain number becomes a
 [`ConstantProperty`][jbubble.bubble.property.ConstantProperty]. Pass any
 other `Property` to make the coefficient depend on the state, for example a
@@ -318,7 +320,7 @@ releases a bubble at rest from 1.5 times its equilibrium radius, with no
 drive:
 
 ```{.python continuation}
-eom = KellerMiksis(**parts, **water, c_L=1500.0)
+eom = KellerMiksis(**parts)
 silence = ToneBurst(freq=1e6, pressure=0.0, shape=Sine(), cycle_num=5)
 state0 = eom.initial_state(R=1.5 * eom.R0)  # R_dot defaults to 0
 result = run_simulation(eom, silence, state0=state0)

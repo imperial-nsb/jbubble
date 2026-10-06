@@ -71,8 +71,8 @@ class TestBubblePreset:
         eom, _ = factory()
         assert _val(eom.medium.mu) == 1e-3
         assert float(eom.P_amb) == 101325.0
-        assert float(eom.rho_L) == 998.0
-        assert float(eom.c_L) == 1500.0
+        assert float(eom.medium.rho_L) == 998.0
+        assert float(eom.medium.c_L) == 1500.0
 
     @pytest.mark.parametrize("factory", [free_bubble, lipid_bubble, thick_shell_bubble])
     def test_presets_start_at_equilibrium(self, factory):
@@ -218,3 +218,51 @@ class TestThickShellBubble:
         f0_free, _ = _linear_response(free_bubble()[0])
         assert f0_free == pytest.approx(2.0e6, rel=0.03)
         assert _peak_expansion(*thick_shell_bubble()) == pytest.approx(0.01, rel=0.5)
+
+
+# R(t) at nine evenly spaced samples of a two-cycle, 150 kPa burst, computed
+# before rho_L and c_L moved from the equation of motion into the medium.
+_REFERENCE_RADII = {
+    "free_bubble": [
+        2e-06,
+        1.888000962659306e-06,
+        3.5966354189638586e-06,
+        3.0223795890683425e-06,
+        2.6276529229773803e-06,
+        2.4516764071230792e-06,
+        2.327117839693008e-06,
+        2.240887105383954e-06,
+        2.179373432506515e-06,
+    ],
+    "lipid_bubble": [
+        2e-06,
+        1.8802661507783911e-06,
+        3.1166934238121285e-06,
+        1.9788063428015786e-06,
+        3.0228744470863885e-06,
+        2.187120994874586e-06,
+        2.0480652342633047e-06,
+        1.9845630853780285e-06,
+        2.0044497588249687e-06,
+    ],
+    "thick_shell_bubble": [
+        2e-06,
+        1.9922908773533887e-06,
+        2.0085910852049967e-06,
+        1.9922908806107585e-06,
+        2.0076306756428307e-06,
+        2.000000000382788e-06,
+        1.999999999983933e-06,
+        1.9999999999537883e-06,
+        1.9999999999932846e-06,
+    ],
+}
+
+
+@pytest.mark.parametrize("factory", [free_bubble, lipid_bubble, thick_shell_bubble])
+def test_presets_match_reference_trajectory(factory):
+    """Moving the liquid into the medium leaves the preset results unchanged."""
+    eom, pulse = factory(cycle_num=2, pressure=150e3)
+    result = run_simulation(eom, pulse, save_spec=SaveSpec(num_samples=9))
+    expected = jnp.asarray(_REFERENCE_RADII[factory.__name__])
+    assert jnp.allclose(result.state.R, expected, rtol=1e-8, atol=0)

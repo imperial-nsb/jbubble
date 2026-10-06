@@ -144,10 +144,9 @@ class TestThickShell:
         return RayleighPlesset(
             gas=PolytropicGas(gamma=self.GAMMA),
             shell=ThickShell(sigma=self.SIGMA, d_s=d_s, G_s=self.G_S, mu_s=self.MU_S),
-            medium=NewtonianMedium(mu=self.MU),
+            medium=NewtonianMedium(mu=self.MU, rho_L=self.RHO),
             R0=R0,
             P_amb=self.P_AMB,
-            rho_L=self.RHO,
         )
 
     def _hoff(self, d_s):
@@ -580,11 +579,9 @@ class TestSmoothMarmottantDynamics:
             eom = KellerMiksis(
                 gas=PolytropicGas(gamma=1.4),
                 shell=LipidShell(sigma=law, kappa_s=2.4e-9),
-                medium=NewtonianMedium(mu=1e-3),
+                medium=NewtonianMedium(mu=1e-3, rho_L=998.0, c_L=1500.0),
                 R0=R0,
                 P_amb=101325.0,
-                rho_L=998.0,
-                c_L=1500.0,
             )
             return float(jnp.max(run_simulation(eom, pulse).radius)) / R0 - 1.0
 

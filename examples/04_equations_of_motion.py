@@ -42,23 +42,21 @@ QUICK = os.environ.get("JBUBBLE_QUICK") == "1"  # a smaller sweep for CI
 #
 # The bubble is a 2 µm air bubble in water. A van der Waals gas keeps the
 # collapse physical: the gas can't be compressed below the volume of its
-# molecules, a hard core of radius $R_0 / 8.86$. The liquid is water at 20 °C, with a density of 998 kg/m³ and the conventional speed of sound of 1500 m/s.
+# molecules, a hard core of radius $R_0 / 8.86$. The liquid is water at 20 °C: `NewtonianMedium` defaults to a density of 998 kg/m³ and the conventional speed of sound of 1500 m/s.
 
 # %%
 parts = dict(
     gas=VanDerWaalsGas(gamma=1.4, h_frac=1 / 8.86),
     shell=NoShell(sigma=0.072),
-    medium=NewtonianMedium(mu=1e-3),
+    medium=NewtonianMedium(mu=1e-3),  # water: rho_L = 998 kg/m³, c_L = 1500 m/s
     R0=2e-6,
     P_amb=101325.0,
-    rho_L=998.0,
 )
-c_water = 1500.0  # speed of sound in water [m/s]
 
 models = {
-    "Keller-Miksis": KellerMiksis(**parts, c_L=c_water),
+    "Keller-Miksis": KellerMiksis(**parts),
     "Rayleigh-Plesset": RayleighPlesset(**parts),
-    "modified Rayleigh-Plesset": ModifiedRayleighPlesset(**parts, c_L=c_water),
+    "modified Rayleigh-Plesset": ModifiedRayleighPlesset(**parts),
 }
 
 # %% [markdown]

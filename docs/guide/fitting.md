@@ -43,11 +43,9 @@ def make_eom(kappa_s, chi=0.5):
     return KellerMiksis(
         gas=PolytropicGas(gamma=1.095),
         shell=LipidShell(sigma=sigma, kappa_s=kappa_s),
-        medium=NewtonianMedium(mu=1e-3),
+        medium=NewtonianMedium(mu=1e-3, rho_L=998.0, c_L=1500.0),
         R0=R0,
         P_amb=101325.0,
-        rho_L=998.0,
-        c_L=1500.0,
     )
 
 
@@ -253,7 +251,7 @@ To fit the radiated pressure at a hydrophone, compute the emission inside
 from jbubble.acoustics import IncompressibleMonopole
 from jbubble.metrics import normalised_mse_emission
 
-emission = IncompressibleMonopole(rho_L=998.0)
+emission = IncompressibleMonopole(medium=make_eom(3e-9).medium)  # same water
 r_hydrophone = 10e-3  # [m]
 measured_p = emission(  # stand-in for a measured hydrophone signal [Pa]
     run_simulation(
@@ -294,11 +292,9 @@ def make_neural_model(sigma, condition):
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=1.095),
         shell=LipidShell(sigma=sigma, kappa_s=3e-9),
-        medium=NewtonianMedium(mu=1e-3),
+        medium=NewtonianMedium(mu=1e-3, rho_L=998.0, c_L=1500.0),
         R0=R0,
         P_amb=101325.0,
-        rho_L=998.0,
-        c_L=1500.0,
     )
     return eom, make_pulse(condition["pressure"])
 

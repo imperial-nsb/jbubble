@@ -21,17 +21,16 @@ from jbubble.pulse.shapes import Sine
 
 RHO_L = 998.0
 C_L = 1500.0
+WATER = NewtonianMedium(mu=1e-3, rho_L=RHO_L, c_L=C_L)
 
 
 def _simulate(num_samples, pressure=100e3, t_max=5e-6, config=None):
     eom = KellerMiksis(
         gas=PolytropicGas(gamma=1.4),
         shell=NoShell(sigma=0.072),
-        medium=NewtonianMedium(mu=1e-3),
+        medium=WATER,
         R0=2e-6,
         P_amb=101325.0,
-        rho_L=RHO_L,
-        c_L=C_L,
     )
     pulse = ToneBurst(freq=1e6, pressure=pressure, shape=Sine(), cycle_num=3)
     return eqx.filter_jit(run_simulation)(
@@ -61,7 +60,7 @@ def dense_result():
 
 class TestIncompressibleMonopole:
     def test_output_shape(self, simulation_result):
-        emission = IncompressibleMonopole(rho_L=RHO_L)
+        emission = IncompressibleMonopole(medium=WATER)
         p_rad = emission(simulation_result, r=1e-2)
         assert p_rad.shape == (200,)
 
@@ -72,7 +71,7 @@ class TestIncompressibleMonopole:
         acceleration that the model itself uses.
         """
         r = 1e-2
-        p_rad = np.asarray(IncompressibleMonopole(rho_L=RHO_L)(dense_result, r))
+        p_rad = np.asarray(IncompressibleMonopole(medium=WATER)(dense_result, r))
         ts = np.asarray(dense_result.ts)
         flux = np.asarray(dense_result.state.R**2 * dense_result.state.R_dot)
         expected = RHO_L / r * np.gradient(flux, ts, edge_order=2)
@@ -82,7 +81,7 @@ class TestIncompressibleMonopole:
     def test_time_integral_recovers_volume_flux(self, dense_result):
         """(r / rho) integral_0^t p dt' = R^2 Rdot(t) - R^2 Rdot(0) (trapezoid)."""
         r = 5e-3
-        p_rad = np.asarray(IncompressibleMonopole(rho_L=RHO_L)(dense_result, r))
+        p_rad = np.asarray(IncompressibleMonopole(medium=WATER)(dense_result, r))
         ts = np.asarray(dense_result.ts)
         flux = np.asarray(dense_result.state.R**2 * dense_result.state.R_dot)
         dt = np.diff(ts)
@@ -94,18 +93,18 @@ class TestIncompressibleMonopole:
         )
 
     def test_inversely_proportional_to_r(self, simulation_result):
-        emission = IncompressibleMonopole(rho_L=RHO_L)
+        emission = IncompressibleMonopole(medium=WATER)
         p1 = emission(simulation_result, r=1e-2)
         p2 = emission(simulation_result, r=2e-2)
         assert jnp.allclose(p1, 2.0 * p2, rtol=1e-12, atol=0.0)
 
     def test_observer_time_is_emission_time(self, simulation_result):
-        emission = IncompressibleMonopole(rho_L=RHO_L)
+        emission = IncompressibleMonopole(medium=WATER)
         t_obs = emission.observer_time(simulation_result, 1e-2)
         assert jnp.array_equal(t_obs, simulation_result.ts)
 
     def test_vmap_over_distances(self, simulation_result):
-        emission = IncompressibleMonopole(rho_L=RHO_L)
+        emission = IncompressibleMonopole(medium=WATER)
         distances = jnp.array([1e-3, 5e-3, 1e-2])
         p_all = jax.vmap(lambda r: emission(simulation_result, r))(distances)
         assert p_all.shape == (3, 200)
@@ -113,18 +112,18 @@ class TestIncompressibleMonopole:
 
 class TestQuasiAcoustic:
     def test_is_an_emission_model(self):
-        assert isinstance(QuasiAcoustic(rho_L=RHO_L, c_L=C_L), EmissionModel)
+        assert isinstance(QuasiAcoustic(medium=WATER), EmissionModel)
 
     def test_values_equal_monopole(self, simulation_result):
         """The delayed series carries the monopole values unchanged."""
         r = 1.37e-3  # not a whole number of samples of delay
-        p_quasi = QuasiAcoustic(rho_L=RHO_L, c_L=C_L)(simulation_result, r)
-        p_mono = IncompressibleMonopole(rho_L=RHO_L)(simulation_result, r)
+        p_quasi = QuasiAcoustic(medium=WATER)(simulation_result, r)
+        p_mono = IncompressibleMonopole(medium=WATER)(simulation_result, r)
         assert jnp.array_equal(p_quasi, p_mono)
 
     def test_observer_time_is_shifted_by_travel_time(self, simulation_result):
         r = 1e-2
-        t_obs = QuasiAcoustic(rho_L=RHO_L, c_L=C_L).observer_time(simulation_result, r)
+        t_obs = QuasiAcoustic(medium=WATER).observer_time(simulation_result, r)
         assert jnp.allclose(t_obs, simulation_result.ts + r / C_L, rtol=0, atol=1e-18)
 
     def test_peak_is_preserved_at_any_distance(self):
@@ -134,13 +133,13 @@ class TestQuasiAcoustic:
         is the same at every distance.
         """
         result = _simulate(2048, pressure=300e3, t_max=10e-6)
-        model = QuasiAcoustic(rho_L=RHO_L, c_L=C_L)
+        model = QuasiAcoustic(medium=WATER)
         peaks = [float(jnp.max(model(result, r)) * r) for r in (1e-3, 1.37e-3, 1e-2)]
         assert peaks[0] == pytest.approx(peaks[1], rel=1e-12)
         assert peaks[0] == pytest.approx(peaks[2], rel=1e-12)
 
     def test_vmap_over_distances(self, simulation_result):
-        emission = QuasiAcoustic(rho_L=RHO_L, c_L=C_L)
+        emission = QuasiAcoustic(medium=WATER)
         distances = jnp.array([1e-3, 5e-3, 1e-2])
         p_all = jax.vmap(lambda r: emission(simulation_result, r))(distances)
         t_all = jax.vmap(lambda r: emission.observer_time(simulation_result, r))(
@@ -149,3 +148,41 @@ class TestQuasiAcoustic:
         assert p_all.shape == (3, 200)
         assert t_all.shape == (3, 200)
         assert jnp.allclose(t_all[:, 0], distances / C_L)
+
+
+class TestMediumLiquid:
+    """The emission models read rho_L and c_L from their medium."""
+
+    def test_pressure_scales_with_medium_density(self, simulation_result):
+        r = 0.01
+        dense = NewtonianMedium(mu=1e-3, rho_L=2 * RHO_L, c_L=C_L)
+        for model in (IncompressibleMonopole, QuasiAcoustic):
+            p_water = model(medium=WATER)(simulation_result, r)
+            p_dense = model(medium=dense)(simulation_result, r)
+            assert jnp.allclose(p_dense, 2 * p_water, rtol=1e-12, atol=0)
+
+    def test_observer_time_uses_medium_sound_speed(self, simulation_result):
+        r = 0.01
+        tissue = NewtonianMedium(mu=1e-3, rho_L=1060.0, c_L=1540.0)
+        t_obs = QuasiAcoustic(medium=tissue).observer_time(simulation_result, r)
+        assert jnp.allclose(
+            t_obs, simulation_result.ts + r / 1540.0, rtol=0, atol=1e-18
+        )
+
+    def test_eom_medium_reaches_emission(self, simulation_result):
+        """Passing `eom.medium` radiates into the simulated liquid."""
+        eom = KellerMiksis(
+            gas=PolytropicGas(gamma=1.4),
+            shell=NoShell(sigma=0.072),
+            medium=NewtonianMedium(mu=1e-3, rho_L=1060.0, c_L=1540.0),
+            R0=2e-6,
+            P_amb=101325.0,
+        )
+        model = QuasiAcoustic(medium=eom.medium)
+        r = 0.01
+        t_obs = model.observer_time(simulation_result, r)
+        assert jnp.allclose(t_obs - simulation_result.ts, r / 1540.0)
+        expected = IncompressibleMonopole(medium=WATER)(simulation_result, r) * (
+            1060.0 / RHO_L
+        )
+        assert jnp.allclose(model(simulation_result, r), expected, rtol=1e-12, atol=0)
