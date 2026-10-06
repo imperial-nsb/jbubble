@@ -14,6 +14,15 @@ release date. For what each release contains, see the
   a rigid tube and a bubble inside a spherical cavity, which 0.2.0 removes.
   Confinement models are planned to return with validated equations and
   tests.
+- **A σ0 constructor for the surface tension laws.** The Marmottant-type laws
+  place the elastic regime with `R_buckle_ratio`, so changing `chi` also
+  changes the resting tension σ0 = χ(1/r² − 1), where r is `R_buckle_ratio`.
+  A planned `from_sigma0` constructor, for example
+  `SmoothMarmottantSurfaceTension.from_sigma0(sigma0=0.020, chi=0.5,
+  sigma_rupture=0.072)`, takes σ0 instead and derives the buckling ratio from
+  `chi`, as in Marmottant et al. (2005) and Gümmer et al. (2021). Fitting or
+  sweeping `chi` then keeps the bubble's resting state fixed.
+  `R_buckle_ratio` stays for compatibility.
 
 ## Simulation and sweeps
 
