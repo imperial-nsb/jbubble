@@ -14,6 +14,37 @@
  * as light panels in both schemes.
  */
 
+/*
+ * Typography: Source Serif 4 for page text (set as the theme's text font in
+ * mkdocs.yml) and Source Sans 3, its companion sans, for the navigation,
+ * header, tabs, search, and footer, where short labels read better without
+ * serifs.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&display=swap");
+
+.md-header,
+.md-tabs,
+.md-nav,
+.md-search,
+.md-footer,
+.md-source,
+.md-typeset .md-button {
+  font-family: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.md-typeset {
+  font-optical-sizing: auto;
+  line-height: 1.65;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
 [data-md-color-scheme="default"] {
   --md-primary-fg-color: #0d77ca;
   --md-primary-fg-color--light: #3e96ea;

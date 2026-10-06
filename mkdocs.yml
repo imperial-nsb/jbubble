@@ -14,6 +14,11 @@ theme:
   # The modern variant draws the header on the page background, which the
   # logo colours and docs/stylesheets/extra.css assume.
   variant: modern
+  # Source Serif 4 (Adobe, SIL Open Font License) for reading, which suits the
+  # KaTeX maths; docs/stylesheets/extra.css sets the navigation in Source Sans 3.
+  font:
+    text: Source Serif 4
+    code: JetBrains Mono
   logo: assets/images/logo.svg
   favicon: assets/images/logo.svg
   icon:
