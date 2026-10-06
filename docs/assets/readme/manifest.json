@@ -51,25 +51,25 @@
       "quick": false
     },
     "hero-bubble-dark.gif": {
-      "bytes": 1129410,
+      "bytes": 1120416,
       "width": 1600,
       "height": 660,
       "frames": 150,
       "duration_s": 7.5,
-      "input_hash": "8783ba2cbb607d588d052f4dd7787cd2388bda1577e85b56fcaa6384dcdb1ed6",
-      "jbubble_version": "0.1.1.post1.dev190",
-      "git_sha": "29c8942c22bb3df4e9817509e5a978badcb6af17",
+      "input_hash": "e18d45e546275beb267773b5182d65d6e7df4901b568342f80bf51822910ff54",
+      "jbubble_version": "0.1.1.post1.dev252",
+      "git_sha": "64f8714824165f87f47e67f9c9a1992629e00a53+dirty",
       "quick": false
     },
     "hero-bubble-light.gif": {
-      "bytes": 1152026,
+      "bytes": 1153614,
       "width": 1600,
       "height": 660,
       "frames": 150,
       "duration_s": 7.5,
-      "input_hash": "8783ba2cbb607d588d052f4dd7787cd2388bda1577e85b56fcaa6384dcdb1ed6",
-      "jbubble_version": "0.1.1.post1.dev190",
-      "git_sha": "29c8942c22bb3df4e9817509e5a978badcb6af17",
+      "input_hash": "e18d45e546275beb267773b5182d65d6e7df4901b568342f80bf51822910ff54",
+      "jbubble_version": "0.1.1.post1.dev252",
+      "git_sha": "64f8714824165f87f47e67f9c9a1992629e00a53+dirty",
       "quick": false
     },
     "neural-sigma-dark.gif": {

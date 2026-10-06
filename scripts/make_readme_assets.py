@@ -298,11 +298,12 @@ def hero_bubble(out: pathlib.Path, quick: bool) -> list[pathlib.Path]:
             c0 = pal.series[0]
             fig = plt.figure(figsize=(FIG_WIDTH, 3.3))
             gs = fig.add_gridspec(
-                2, 2, width_ratios=[1.0, 2.5], height_ratios=[2.2, 1.0]
+                2, 2, width_ratios=[1.0, 2.5], height_ratios=[1.0, 2.2]
             )
             ax_b = fig.add_subplot(gs[:, 0])
-            ax_r = fig.add_subplot(gs[0, 1])
-            ax_p = fig.add_subplot(gs[1, 1], sharex=ax_r)
+            # The drive on top and the response below, as in a pulse-echo plot.
+            ax_p = fig.add_subplot(gs[0, 1])
+            ax_r = fig.add_subplot(gs[1, 1], sharex=ax_p)
 
             # The bubble, in micrometres, with the equilibrium radius dashed.
             lim = 1.12 * r.max()
@@ -340,16 +341,16 @@ def hero_bubble(out: pathlib.Path, quick: bool) -> list[pathlib.Path]:
             (dot,) = ax_r.plot([], [], "o", ms=7, mfc=c0, mec=pal.surface, mew=1.8)
             ax_r.set_ylabel("R (µm)")
             ax_r.set_ylim(0, 1.08 * r.max())
-            ax_r.set_title(
-                f"Free {r0:.0f} µm bubble, {freq / 1e6:.0f} MHz, "
-                f"{pressure / 1e3:.0f} kPa (Keller–Miksis)"
-            )
-            ax_r.tick_params(labelbottom=False)
+            ax_r.set_xlabel("time (µs)")
 
             ax_p.plot(t, p, color=pal.drive, lw=1.4)
             ax_p.set_ylabel("drive (kPa)")
-            ax_p.set_xlabel("time (µs)")
             ax_p.set_xlim(t[0], t[-1])
+            ax_p.set_title(
+                f"Free {r0:.0f} µm bubble, {freq / 1e6:.0f} MHz, "
+                f"{pressure / 1e3:.0f} kPa (Keller–Miksis)"
+            )
+            ax_p.tick_params(labelbottom=False)
             cursors = [ax.axvline(0, color=pal.ink2, lw=0.8) for ax in (ax_r, ax_p)]
 
             def update(
