@@ -1,7 +1,6 @@
 # utils
 
-Utility modules: quick-start presets, batched parameter sweeps, and Matplotlib
-styles for figures.
+Utility modules: quick-start presets, batched parameter sweeps, and Matplotlib styles for figures.
 
 ---
 
@@ -25,11 +24,7 @@ from jbubble.utils.presets import free_bubble, lipid_bubble, thick_shell_bubble
 
 ## GridSweep
 
-Batched Cartesian-product parameter sweeps. `GridSweep` runs chunks of the grid
-in parallel on worker threads, one per CPU core by default (up to 31 per CPU
-device), and returns NumPy arrays in grid order.
-The guide [Parameter sweeps](../guide/sweeps.md) explains how to choose
-workers and a batch size, and how to keep sweeps reproducible.
+Batched Cartesian-product parameter sweeps. `GridSweep` runs chunks of the grid in parallel on worker threads, one per CPU core by default (up to 31 per CPU device), and returns NumPy arrays in grid order. The guide [Parameter sweeps](../guide/sweeps.md) explains how to choose workers and a batch size, and how to keep sweeps reproducible.
 
 ```python
 from jbubble.utils.gridsweep import GridSweep
@@ -75,10 +70,8 @@ print(sweep.total_points)  # 80
 
 ## Figure styles
 
-Matplotlib style sheets in a light and a dark theme, with the colours of the
-jbubble docs and figures.
+Matplotlib style sheets in a light and a dark theme, with the colours of the jbubble docs and figures.
 
-![The jbubble figure palette in the light theme: eight colour swatches, four damped radius curves, a grey drive trace, and the Blues colour map](../assets/palette-light.png#only-light)
-![The jbubble figure palette in the dark theme: eight colour swatches, four damped radius curves, a grey drive trace, and the reversed Blues colour map](../assets/palette-dark.png#only-dark)
+![The jbubble figure palette in the light theme: eight colour swatches, four damped radius curves, a grey drive trace, and the Blues colour map](../assets/palette-light.png#only-light) ![The jbubble figure palette in the dark theme: eight colour swatches, four damped radius curves, a grey drive trace, and the reversed Blues colour map](../assets/palette-dark.png#only-dark)
 
 ::: jbubble.style

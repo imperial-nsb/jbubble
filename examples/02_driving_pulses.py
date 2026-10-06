@@ -1,14 +1,9 @@
 # %% [markdown]
 # # Driving pulses
 #
-# Shape the ultrasound that drives a bubble. You compare carrier shapes,
-# combine pulses with arithmetic, sweep the frequency with a chirp, and load
-# a pressure trace measured on a hydrophone. Then you drive the same bubble
-# with the chirp and with the measured trace.
+# Shape the ultrasound that drives a bubble. You compare carrier shapes, combine pulses with arithmetic, sweep the frequency with a chirp, and load a pressure trace measured on a hydrophone. Then you drive the same bubble with the chirp and with the measured trace.
 #
-# A pulse is a function of time: `pulse(t)` returns the pressure in pascals.
-# Every pulse is a JAX-compatible module, so you can evaluate it with
-# `jax.vmap` and differentiate through it.
+# A pulse is a function of time: `pulse(t)` returns the pressure in pascals. Every pulse is a JAX-compatible module, so you can evaluate it with `jax.vmap` and differentiate through it.
 
 # %%
 import jax
@@ -27,11 +22,7 @@ DRIVE = "#8c959f"  # neutral grey for the acoustic drive in the light theme
 # %% [markdown]
 # ## Choose a carrier shape
 #
-# A `ToneBurst` multiplies a periodic carrier shape by a peak pressure and an
-# envelope. It lasts `cycle_num / freq` seconds. The square, sawtooth, and
-# triangle shapes sum the first 10 terms of their Fourier series, which keeps
-# them smooth enough to differentiate, at the cost of a small ripple near
-# each jump.
+# A `ToneBurst` multiplies a periodic carrier shape by a peak pressure and an envelope. It lasts `cycle_num / freq` seconds. The square, sawtooth, and triangle shapes sum the first 10 terms of their Fourier series, which keeps them smooth enough to differentiate, at the cost of a small ripple near each jump.
 
 # %%
 ts = jnp.linspace(0.0, 3.5e-6, 1500)
@@ -61,14 +52,10 @@ plt.show()
 #
 # - `pulse_a + pulse_b` superposes two pulses, each with its own start time.
 # - `0.8 * pulse` scales the amplitude.
-# - `pulse.windowed(envelope)` replaces the envelope. On a sum, it tapers the
-#   whole sum.
-# - `pulse + 5e3` adds a constant pressure. It doesn't delay the pulse: to
-#   delay a pulse, set its `initial_time`.
+# - `pulse.windowed(envelope)` replaces the envelope. On a sum, it tapers the whole sum.
+# - `pulse + 5e3` adds a constant pressure. It doesn't delay the pulse: to delay a pulse, set its `initial_time`.
 #
-# Here a 3 MHz burst starts 2 µs into a 1 MHz burst, and a Hann window tapers
-# the scaled sum. A smooth taper avoids the abrupt start of a rectangular
-# gate.
+# Here a 3 MHz burst starts 2 µs into a 1 MHz burst, and a Hann window tapers the scaled sum. A smooth taper avoids the abrupt start of a rectangular gate.
 
 # %%
 low = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=6)
@@ -110,13 +97,9 @@ plt.show()
 # %% [markdown]
 # ## Sweep the frequency with a chirp
 #
-# A `ChirpPulse` sweeps its frequency from `freq_start` to `freq_end` over
-# `sweep_duration`, linearly by default. As the sweep passes through a
-# bubble's resonance, the bubble responds most strongly, so a chirp probes a
-# range of frequencies in one pulse.
+# A `ChirpPulse` sweeps its frequency from `freq_start` to `freq_end` over `sweep_duration`, linearly by default. As the sweep passes through a bubble's resonance, the bubble responds most strongly, so a chirp probes a range of frequencies in one pulse.
 #
-# The bubble below is the `free_bubble` preset: an uncoated 2 µm air bubble
-# in water, which resonates near 2 MHz.
+# The bubble below is the `free_bubble` preset: an uncoated 2 µm air bubble in water, which resonates near 2 MHz.
 
 # %%
 eom, _ = free_bubble(R0=2e-6)
@@ -137,12 +120,7 @@ print(f"       when the drive frequency is {f_peak / 1e6:.2f} MHz")
 # %% [markdown]
 # ## Load a measured pressure trace
 #
-# A `SampledPulse` interpolates pressure samples linearly, so you can drive a
-# simulation with a trace recorded by a hydrophone. This example makes a
-# stand-in for a measurement: a 1 MHz pulse whose positive peaks are taller
-# than its negative ones, as after nonlinear propagation, sampled every
-# 25 ns with added noise. `SampledPulse.from_uniform` takes evenly spaced
-# samples and the sample interval.
+# A `SampledPulse` interpolates pressure samples linearly, so you can drive a simulation with a trace recorded by a hydrophone. This example makes a stand-in for a measurement: a 1 MHz pulse whose positive peaks are taller than its negative ones, as after nonlinear propagation, sampled every 25 ns with added noise. `SampledPulse.from_uniform` takes evenly spaced samples and the sample interval.
 
 # %%
 rng = np.random.default_rng(seed=0)
@@ -161,9 +139,7 @@ print(
 print(f"                peak R/R0 = {measured_run.radius.max() / eom.R0:.2f}")
 
 # %% [markdown]
-# Plot each drive above the bubble's response. The top axis of the chirp
-# panel shows the frequency of the sweep: the bubble responds most strongly
-# just after the sweep passes its resonance.
+# Plot each drive above the bubble's response. The top axis of the chirp panel shows the frequency of the sweep: the bubble responds most strongly just after the sweep passes its resonance.
 
 # %% tags=["thumbnail"]
 fig, axes = plt.subplots(2, 2, figsize=(8.0, 4.4), sharex="col", height_ratios=[1, 1.6])

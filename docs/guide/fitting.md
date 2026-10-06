@@ -1,21 +1,12 @@
 # Fit model parameters to data
 
-jbubble differentiates through the ODE solve, so you can estimate model
-parameters from measured bubble dynamics: shell elasticity and viscosity, the
-equilibrium radius, a trigger delay, or the weights of a neural
-surface-tension law. [`fit_parameters`][jbubble.fitting.fit_parameters]
-minimises a loss that you define with any
-[optax](https://optax.readthedocs.io) optimiser.
+jbubble differentiates through the ODE solve, so you can estimate model parameters from measured bubble dynamics: shell elasticity and viscosity, the equilibrium radius, a trigger delay, or the weights of a neural surface-tension law. [`fit_parameters`][jbubble.fitting.fit_parameters] minimises a loss that you define with any [optax](https://optax.readthedocs.io) optimiser.
 
 Every code block on this page runs as written, in order.
 
 ## Fit one parameter
 
-The following example estimates the shell viscosity `kappa_s` of a
-lipid-coated bubble from one radius trace. The shell's surface tension
-follows
-[`SmoothMarmottantSurfaceTension`][jbubble.bubble.shell.SmoothMarmottantSurfaceTension],
-the Marmottant law with rounded corners, which keeps gradients smooth:
+The following example estimates the shell viscosity `kappa_s` of a lipid-coated bubble from one radius trace. The shell's surface tension follows [`SmoothMarmottantSurfaceTension`][jbubble.bubble.shell.SmoothMarmottantSurfaceTension], the Marmottant law with rounded corners, which keeps gradients smooth:
 
 ```python
 import jax.numpy as jnp
@@ -70,8 +61,7 @@ fit = fit_parameters(
 print(fit.params["kappa_s"])  # about 3e-9
 ```
 
-Each step runs the forward model and differentiates the loss with respect to
-the parameters:
+Each step runs the forward model and differentiates the loss with respect to the parameters:
 
 ```
 params -> make_model(params) -> (eom, pulse) -> run_simulation -> loss_fn -> scalar
@@ -79,28 +69,17 @@ params -> make_model(params) -> (eom, pulse) -> run_simulation -> loss_fn -> sca
 
 The result is a [`FitResult`][jbubble.fitting.FitResult]:
 
-- `fit.params`: the fitted values in physical units, with the structure of
-  `params0`.
+- `fit.params`: the fitted values in physical units, with the structure of `params0`.
 - `fit.loss_history`: the loss at `params0` and after each step.
-- `fit.result`: the [`SimulationResult`][jbubble.simulation.SimulationResult]
-  at the fitted values.
-- `fit.num_rejected`, `fit.stopped_early`, and `fit.message`: what happened
-  during the fit. For details, see [Handle failed solves](#handle-failed-solves).
+- `fit.result`: the [`SimulationResult`][jbubble.simulation.SimulationResult] at the fitted values.
+- `fit.num_rejected`, `fit.stopped_early`, and `fit.message`: what happened during the fit. For details, see [Handle failed solves](#handle-failed-solves).
 
 !!! note
-    The stand-in trace is simulated with the same solver settings as the
-    fit, so the loss can reach zero. With real data, the loss stops at the
-    noise level.
+    The stand-in trace is simulated with the same solver settings as the fit, so the loss can reach zero. With real data, the loss stops at the noise level.
 
 ## Declare what to fit
 
-Physical parameters span many orders of magnitude: `kappa_s` is about
-$10^{-9}$ N s/m, `chi` about 0.5 N/m, and `R0` about $10^{-6}$ m. An optimiser
-such as Adam steps by about the learning rate in each value's own units, so
-no single learning rate suits raw values. Wrap each physical value in a
-[`Parameter`][jbubble.fitting.Parameter] instead. The optimiser then updates a
-coordinate of order one, and the learning rate becomes a relative step size:
-`optax.adam(0.05)` changes each value by about 5 % per step at first.
+Physical parameters span many orders of magnitude: `kappa_s` is about $10^{-9}$ N s/m, `chi` about 0.5 N/m, and `R0` about $10^{-6}$ m. An optimiser such as Adam steps by about the learning rate in each value's own units, so no single learning rate suits raw values. Wrap each physical value in a [`Parameter`][jbubble.fitting.Parameter] instead. The optimiser then updates a coordinate of order one, and the learning rate becomes a relative step size: `optax.adam(0.05)` changes each value by about 5 % per step at first.
 
 | To fit | Put this in `params0` |
 |---|---|
@@ -111,47 +90,25 @@ coordinate of order one, and the learning rate becomes a relative step size:
 | A value that you want to switch off for now | `Parameter(2e-6, fixed=True)` |
 | The weights of a neural network | the module, for example a [`NeuralProperty`][jbubble.bubble.property.NeuralProperty] |
 
-With bounds, a parameter can't leave the open interval, so a fit never tries
-a negative viscosity. Bounds are scalars: one bound applies to every element
-of an array `Parameter`. `make_model` always receives physical values.
+With bounds, a parameter can't leave the open interval, so a fit never tries a negative viscosity. Bounds are scalars: one bound applies to every element of an array `Parameter`. `make_model` always receives physical values.
 
 `fit_parameters` decides what to fit from the type of each leaf of `params0`:
 
 - A `Parameter` is fitted on its scaled coordinate, unless `fixed=True`.
-- A Python float, or `np.float64`, in `params0` or in a dict, list, or tuple
-  inside it, is shorthand for `Parameter(value)`.
-- A floating-point array, such as a network weight, is fitted in its own
-  units. So is a NumPy scalar of another type, such as `np.float32`, or a 0-d
-  array, for example a value that `np.load` reads from a `.npy` file.
-- Everything else is held fixed: integers, booleans, strings, callables, and
-  Python floats inside an Equinox module.
+- A Python float, or `np.float64`, in `params0` or in a dict, list, or tuple inside it, is shorthand for `Parameter(value)`.
+- A floating-point array, such as a network weight, is fitted in its own units. So is a NumPy scalar of another type, such as `np.float32`, or a 0-d array, for example a value that `np.load` reads from a `.npy` file.
+- Everything else is held fixed: integers, booleans, strings, callables, and Python floats inside an Equinox module.
 
 !!! warning "Raw arrays are fitted in their own units"
-    `params0=jnp.array(1e-9)` is fitted in N s/m, so `optax.adam(1e-2)`
-    proposes a first step ten million times larger than the value. If the
-    first step is larger than a raw value, or smaller than a millionth of it,
-    `fit_parameters` warns. Use `Parameter` for physical values.
+    `params0=jnp.array(1e-9)` is fitted in N s/m, so `optax.adam(1e-2)` proposes a first step ten million times larger than the value. If the first step is larger than a raw value, or smaller than a millionth of it, `fit_parameters` warns. Use `Parameter` for physical values.
 
-A Python float inside an Equinox module isn't an array, so the optimiser
-doesn't update it. If you set one, for example `MyParams(kappa_s=1e-9, ...)`,
-`fit_parameters` warns and names it. Floats that keep their field's default,
-such as a pulse's `initial_time=0.0`, don't trigger the warning. To fit such a
-value, wrap it in `Parameter`. To hold it fixed without the warning, use
-`Parameter(value, fixed=True)`, or declare the field with
-`eqx.field(static=True)`.
+A Python float inside an Equinox module isn't an array, so the optimiser doesn't update it. If you set one, for example `MyParams(kappa_s=1e-9, ...)`, `fit_parameters` warns and names it. Floats that keep their field's default, such as a pulse's `initial_time=0.0`, don't trigger the warning. To fit such a value, wrap it in `Parameter`. To hold it fixed without the warning, use `Parameter(value, fixed=True)`, or declare the field with `eqx.field(static=True)`.
 
-Optimiser transformations that read the parameters, such as the weight decay
-in `optax.adamw`, act on the optimiser's coordinates, not on the physical
-values. Weight decay pulls an unbounded `Parameter` toward zero, but a
-lower-bounded one toward its initial value.
+Optimiser transformations that read the parameters, such as the weight decay in `optax.adamw`, act on the optimiser's coordinates, not on the physical values. Weight decay pulls an unbounded `Parameter` toward zero, but a lower-bounded one toward its initial value.
 
 ## Fit several recordings at once
 
-Recordings at several driving pressures constrain shared parameters far
-better than one recording does. Pass one entry per recording in
-`conditions`. Each entry can be any pytree, such as a dict. `fit_parameters`
-passes it to `make_model` and `loss_fn` as a second argument and averages the
-loss over the recordings:
+Recordings at several driving pressures constrain shared parameters far better than one recording does. Pass one entry per recording in `conditions`. Each entry can be any pytree, such as a dict. `fit_parameters` passes it to `make_model` and `loss_fn` as a second argument and averages the loss over the recordings:
 
 ```{.python continuation}
 pressures = [50e3, 100e3, 150e3]  # [Pa]
@@ -192,33 +149,17 @@ print(fit.params)  # kappa_s about 3e-9, chi about 0.5
 print(len(fit.result))  # 3: one SimulationResult per recording
 ```
 
-When every condition has the same structure and the same array shapes, the
-conditions run in parallel with `jax.vmap`, which is several times faster
-than running them one after another. Otherwise, for example when recordings
-have different numbers of frames, they run one after another, and the
-compile time grows with the number of conditions. To keep many such
-recordings in parallel, pad them to a common length and pass a mask in each
-condition.
+When every condition has the same structure and the same array shapes, the conditions run in parallel with `jax.vmap`, which is several times faster than running them one after another. Otherwise, for example when recordings have different numbers of frames, they run one after another, and the compile time grows with the number of conditions. To keep many such recordings in parallel, pad them to a common length and pass a mask in each condition.
 
-When the conditions run in parallel, each number in a condition, including a
-Python int, reaches `make_model` and `loss_fn` as a traced array. Use it in
-`jnp.where` or `jax.lax.cond`, not in an `if` or as a slice bound. A
-condition that holds a Python bool or a string runs one after another, so
-you can use these as configuration flags, for example
-`if condition["with_shell"]:`.
+When the conditions run in parallel, each number in a condition, including a Python int, reaches `make_model` and `loss_fn` as a traced array. Use it in `jnp.where` or `jax.lax.cond`, not in an `if` or as a slice bound. A condition that holds a Python bool or a string runs one after another, so you can use these as configuration flags, for example `if condition["with_shell"]:`.
 
-To fit a value per recording, such as each bubble's equilibrium radius, use
-an array `Parameter` and an index in each condition:
-`Parameter(jnp.full(3, 2e-6), lower=0.0)` in `params0`, `"index": i` in each
-condition, and `params["R0"][condition["index"]]` in `make_model`.
+To fit a value per recording, such as each bubble's equilibrium radius, use an array `Parameter` and an index in each condition: `Parameter(jnp.full(3, 2e-6), lower=0.0)` in `params0`, `"index": i` in each condition, and `params["R0"][condition["index"]]` in `make_model`.
 
 ## Compare with camera frames or hydrophone signals
 
-`loss_fn` receives the full `SimulationResult`, so you can compare any
-differentiable quantity with your data.
+`loss_fn` receives the full `SimulationResult`, so you can compare any differentiable quantity with your data.
 
-To compare with camera frames, simulate on a fine time grid and interpolate
-onto the frame times:
+To compare with camera frames, simulate on a fine time grid and interpolate onto the frame times:
 
 ```{.python continuation}
 frame_times = jnp.linspace(0.5e-6, 7.5e-6, 71)  # a 10 Mfps camera [s]
@@ -244,8 +185,7 @@ fit = fit_parameters(
 )
 ```
 
-To fit the radiated pressure at a hydrophone, compute the emission inside
-`loss_fn`:
+To fit the radiated pressure at a hydrophone, compute the emission inside `loss_fn`:
 
 ```{.python continuation}
 from jbubble.acoustics import IncompressibleMonopole
@@ -276,10 +216,7 @@ fit = fit_parameters(
 
 ## Learn a constitutive law with a neural network
 
-`params0` can be any Equinox module. The following
-[`NeuralProperty`][jbubble.bubble.property.NeuralProperty] learns the surface
-tension $\sigma(R/R_0)$ with a small network. Its final activation bounds the
-output to $(0, 0.072)$ N/m, and `fit_parameters` fits the network weights:
+`params0` can be any Equinox module. The following [`NeuralProperty`][jbubble.bubble.property.NeuralProperty] learns the surface tension $\sigma(R/R_0)$ with a small network. Its final activation bounds the output to $(0, 0.072)$ N/m, and `fit_parameters` fits the network weights:
 
 ```{.python continuation}
 import equinox as eqx
@@ -321,15 +258,11 @@ fit = fit_parameters(
 learned_sigma = fit.params  # a NeuralProperty with fitted weights
 ```
 
-The example [Learn a shell law](../examples/11_learn_shell_law.md) runs this
-recipe to convergence and compares the learned law with the true one.
+The example [Learn a shell law](../examples/11_learn_shell_law.md) runs this recipe to convergence and compares the learned law with the true one.
 
 ## Monitor and stop a fit
 
-`step_callback(step, params, loss)` runs outside JIT for `params0`
-(`step == 0`) and after every accepted step, with `params` in physical units.
-Use it to record a trajectory, plot progress, save checkpoints, or stop early
-by raising `StopIteration`:
+`step_callback(step, params, loss)` runs outside JIT for `params0` (`step == 0`) and after every accepted step, with `params` in physical units. Use it to record a trajectory, plot progress, save checkpoints, or stop early by raising `StopIteration`:
 
 ```{.python continuation}
 history = []
@@ -355,42 +288,23 @@ fit = fit_parameters(
 print(fit.stopped_early, fit.message)
 ```
 
-Any other exception from the callback, or a keyboard interrupt, ends the fit
-without a `FitResult`. For a long fit, save the parameters from the callback
-so that you can restart from them.
+Any other exception from the callback, or a keyboard interrupt, ends the fit without a `FitResult`. For a long fit, save the parameters from the callback so that you can restart from them.
 
 ## Handle failed solves
 
-A trial step can make the bubble collapse so violently that the solver
-exceeds `SolverConfig.max_steps`, or make the loss or its gradient
-non-finite. `fit_parameters` never raises from inside a solve. Instead, it
-does the following:
+A trial step can make the bubble collapse so violently that the solver exceeds `SolverConfig.max_steps`, or make the loss or its gradient non-finite. `fit_parameters` never raises from inside a solve. Instead, it does the following:
 
-- If a solve fails at `params0`, `fit_parameters` raises `RuntimeError`
-  before the first step and names the failing condition. Start from a better
-  initial guess, or raise `SolverConfig.max_steps`.
-- If a step fails during the fit, `fit_parameters` halves the step and tries
-  again, up to `max_backtracks` times (default 5). `fit.num_rejected` counts
-  the halved steps.
-- If every halved step fails, the fit warns, stops, and returns the last
-  accepted parameters, with `fit.stopped_early` set to `True`.
+- If a solve fails at `params0`, `fit_parameters` raises `RuntimeError` before the first step and names the failing condition. Start from a better initial guess, or raise `SolverConfig.max_steps`.
+- If a step fails during the fit, `fit_parameters` halves the step and tries again, up to `max_backtracks` times (default 5). `fit.num_rejected` counts the halved steps.
+- If every halved step fails, the fit warns, stops, and returns the last accepted parameters, with `fit.stopped_early` set to `True`.
 
-Frequent rejections mean that the learning rate is too large or that a
-parameter needs bounds. For example, the shell elasticity `chi` must be
-positive, so fit it as `Parameter(..., lower=0.0)`.
-[`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension] also
-needs `chi * ((1 / R_buckle_ratio)**2 - 1) < sigma_rupture`, so with that law,
-bound `chi` from above too.
+Frequent rejections mean that the learning rate is too large or that a parameter needs bounds. For example, the shell elasticity `chi` must be positive, so fit it as `Parameter(..., lower=0.0)`. [`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension] also needs `chi * ((1 / R_buckle_ratio)**2 - 1) < sigma_rupture`, so with that law, bound `chi` from above too.
 
-If the loss keeps falling toward a region where the solver fails, the fit
-stops at the edge of that region. That's the expected result, not a bug:
-`fit.params` holds the best parameters that the solver can simulate.
+If the loss keeps falling toward a region where the solver fails, the fit stops at the edge of that region. That's the expected result, not a bug: `fit.params` holds the best parameters that the solver can simulate.
 
 ## Choose solver settings and an adjoint
 
-By default `fit_parameters` uses [`SolverConfig()`][jbubble.solver.SolverConfig],
-the same settings as [`run_simulation`][jbubble.simulation.run_simulation],
-so the model that you fit is the model that you simulate.
+By default `fit_parameters` uses [`SolverConfig()`][jbubble.solver.SolverConfig], the same settings as [`run_simulation`][jbubble.simulation.run_simulation], so the model that you fit is the model that you simulate.
 
 | Setting | When to use it |
 |---|---|
@@ -403,11 +317,7 @@ so the model that you fit is the model that you simulate.
 
 ## Use a least-squares solver
 
-For a few physical parameters and data with a known noise level,
-Levenberg-Marquardt from [optimistix](https://docs.kidger.site/optimistix/)
-usually converges in tens of iterations instead of hundreds. Optimistix is
-installed with diffrax. Levenberg-Marquardt needs residuals rather than a
-scalar loss, and forward-mode derivatives through the solve:
+For a few physical parameters and data with a known noise level, Levenberg-Marquardt from [optimistix](https://docs.kidger.site/optimistix/) usually converges in tens of iterations instead of hundreds. Optimistix is installed with diffrax. Levenberg-Marquardt needs residuals rather than a scalar loss, and forward-mode derivatives through the solve:
 
 ```{.python continuation}
 import diffrax
@@ -442,9 +352,7 @@ print(unwrap(solution.value))  # kappa_s about 3e-9, chi about 0.5
 
 ## Estimate uncertainties
 
-When the residuals are scaled by the measurement noise, the linearised
-covariance of the fitted values follows from the Jacobian $J$ of the
-residuals at the optimum:
+When the residuals are scaled by the measurement noise, the linearised covariance of the fitted values follows from the Jacobian $J$ of the residuals at the optimum:
 
 $$
 \operatorname{cov}(u) = (J^\top J)^{-1}, \qquad
@@ -465,18 +373,11 @@ stderr = jnp.sqrt(jnp.diag(covariance))  # same order as ravel_pytree: chi, kapp
 print(dict(zip(["chi", "kappa_s"], stderr.tolist(), strict=True)))
 ```
 
-These standard errors assume Gaussian noise with the stated `NOISE` and a
-model that is close to linear near the optimum. Treat them with caution when
-a value sits at a bound or when parameters are strongly correlated.
+These standard errors assume Gaussian noise with the stated `NOISE` and a model that is close to linear near the optimum. Treat them with caution when a value sits at a bound or when parameters are strongly correlated.
 
 ## Write your own training loop
 
-`fit_parameters` runs a Python loop, so you can't call it under `jax.jit` or
-`jax.vmap`, and each call compiles its functions again. For many fits, such as
-multi-start fits or Monte Carlo studies, or for custom schedules and
-regularisation terms, write the loop yourself. Compile the step once and
-reuse it. [`unwrap`][jbubble.fitting.unwrap] turns a pytree of `Parameter`s
-into physical values:
+`fit_parameters` runs a Python loop, so you can't call it under `jax.jit` or `jax.vmap`, and each call compiles its functions again. For many fits, such as multi-start fits or Monte Carlo studies, or for custom schedules and regularisation terms, write the loop yourself. Compile the step once and reuse it. [`unwrap`][jbubble.fitting.unwrap] turns a pytree of `Parameter`s into physical values:
 
 ```{.python continuation}
 params = {"kappa_s": Parameter(1e-9, lower=0.0)}
@@ -504,17 +405,9 @@ for _ in range(50):
 print(unwrap(eqx.combine(trainable, static)))
 ```
 
-A hand-written loop doesn't retry failed steps. Check `result.converged`, or
-check that `value` is finite, before you apply an update.
+A hand-written loop doesn't retry failed steps. Check `result.converged`, or check that `value` is finite, before you apply an update.
 
-Build each `Parameter` outside `jax.jit` and `jax.vmap`, because its
-constructor checks the value and bounds on concrete numbers. To start several
-fits from different guesses, build one `params` per guess and call the
-compiled `train_step` on each. Give every guess the same explicit `scale`,
-for example `Parameter(guess, lower=0.0, scale=1e-9)`. `scale` is a static
-field, and by default it comes from the initial value, so guesses with
-different default scales have different pytree structures. They don't match
-the `static` that `train_step` closes over, and `eqx.combine` raises.
+Build each `Parameter` outside `jax.jit` and `jax.vmap`, because its constructor checks the value and bounds on concrete numbers. To start several fits from different guesses, build one `params` per guess and call the compiled `train_step` on each. Give every guess the same explicit `scale`, for example `Parameter(guess, lower=0.0, scale=1e-9)`. `scale` is a static field, and by default it comes from the initial value, so guesses with different default scales have different pytree structures. They don't match the `static` that `train_step` closes over, and `eqx.combine` raises.
 
 ## Migrate from jbubble 0.1
 

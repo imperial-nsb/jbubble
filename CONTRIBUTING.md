@@ -4,8 +4,7 @@ Thank you for your interest in contributing to jbubble. This guide explains how 
 
 ## Set up a development environment
 
-jbubble uses [uv](https://docs.astral.sh/uv/) to manage its development
-environment. To install uv, follow the [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+jbubble uses [uv](https://docs.astral.sh/uv/) to manage its development environment. To install uv, follow the [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/).
 
 1. Fork the repository on [GitHub](https://github.com/imperial-nsb/jbubble).
 
@@ -92,8 +91,7 @@ On each pull request, CI runs the fast suite on Python 3.13 with the oldest vers
    uv sync --group docs
    ```
 
-2. Run the examples, and write the gallery and the notebooks to
-   `docs/examples/`:
+2. Run the examples, and write the gallery and the notebooks to `docs/examples/`:
 
    ```bash
    uv run python scripts/build_examples.py
@@ -161,6 +159,7 @@ To add or change a dependency, edit `pyproject.toml`, run `uv lock`, and commit 
 ### Code style
 
 - **Formatter:** [ruff](https://docs.astral.sh/ruff/) with a line length of 88.
+- **Markdown:** don't hard-wrap prose. Write each paragraph or list item on one line, in Markdown files and in the Markdown cells of examples. Code blocks, tables, and HTML keep their own line breaks.
 - **Imports:** sorted by ruff (isort rules). No barrel re-exports of subpackage classes from `jbubble/__init__.py` — users import from their subpackage directly.
 - **Type annotations:** use standard Python types; JAX arrays are `jax.Array`.
 - **Docstrings:** use Markdown-flavoured [numpy style](https://numpydoc.readthedocs.io/en/latest/format.html), which the API reference renders with mkdocstrings. Document `eqx.Module` fields in a `Parameters` section, with units in square brackets. Where applicable, write the governing equation as `$$` LaTeX display math (`$...$` inline), and make the docstring raw (`r"""..."""`) so Python keeps the backslashes; ruff rule D301 checks this. Link jbubble objects with cross-references, such as ``[`KellerMiksis`][jbubble.bubble.eom.KellerMiksis]``, and put code samples in fenced ```` ```python ```` blocks. Cite the source of every physical default value.

@@ -1,14 +1,9 @@
 # %% [markdown]
 # # Shells, gases, and media
 #
-# Compare the physical parts of a bubble model. You drive an uncoated bubble,
-# a lipid-coated contrast agent, and a polymer-shelled agent with the same
-# pulse, and you see how the lipid shell's surface tension changes with the
-# radius. Then you swap the gas law and the surrounding medium.
+# Compare the physical parts of a bubble model. You drive an uncoated bubble, a lipid-coated contrast agent, and a polymer-shelled agent with the same pulse, and you see how the lipid shell's surface tension changes with the radius. Then you swap the gas law and the surrounding medium.
 #
-# An equation of motion combines a gas model, a shell model, and a medium
-# model. Each lives in its own module: `jbubble.bubble.gas`,
-# `jbubble.bubble.shell`, and `jbubble.bubble.medium`.
+# An equation of motion combines a gas model, a shell model, and a medium model. Each lives in its own module: `jbubble.bubble.gas`, `jbubble.bubble.shell`, and `jbubble.bubble.medium`.
 
 # %%
 import os
@@ -39,16 +34,11 @@ QUICK = os.environ.get("JBUBBLE_QUICK") == "1"  # smaller sweeps for CI
 # %% [markdown]
 # ## Compare three shells
 #
-# The three presets share the liquid (water), the radius (2 µm), and the
-# pulse (five cycles at 1 MHz and 100 kPa). They differ in the coating:
+# The three presets share the liquid (water), the radius (2 µm), and the pulse (five cycles at 1 MHz and 100 kPa). They differ in the coating:
 #
 # - `free_bubble` has no shell, only the surface tension of water.
-# - `lipid_bubble` has a lipid monolayer, as in SonoVue. Its surface tension
-#   follows the Marmottant law: zero when the shell buckles under
-#   compression, elastic over a narrow range of radii, and the surface
-#   tension of water once the shell ruptures under expansion.
-# - `thick_shell_bubble` has a stiff, viscous polymer shell of finite
-#   thickness (the Church model), which damps the motion heavily.
+# - `lipid_bubble` has a lipid monolayer, as in SonoVue. Its surface tension follows the Marmottant law: zero when the shell buckles under compression, elastic over a narrow range of radii, and the surface tension of water once the shell ruptures under expansion.
+# - `thick_shell_bubble` has a stiff, viscous polymer shell of finite thickness (the Church model), which damps the motion heavily.
 
 # %%
 presets = {
@@ -64,13 +54,7 @@ for name, run in runs.items():
     )
 
 # %% [markdown]
-# Evaluate the lipid shell's surface tension law directly. A surface tension
-# law is a `Property`: a function of the bubble state, which you call with a
-# `BubbleState`, here one that holds 600 radii at once. The preset uses
-# `SmoothMarmottantSurfaceTension`, which rounds the corners of the piecewise
-# Marmottant law so that gradients stay smooth. The shaded band marks the
-# radii that the lipid bubble reaches in the simulation. Most of that range
-# lies outside the narrow elastic region between buckling and rupture.
+# Evaluate the lipid shell's surface tension law directly. A surface tension law is a `Property`: a function of the bubble state, which you call with a `BubbleState`, here one that holds 600 radii at once. The preset uses `SmoothMarmottantSurfaceTension`, which rounds the corners of the piecewise Marmottant law so that gradients stay smooth. The shaded band marks the radii that the lipid bubble reaches in the simulation. Most of that range lies outside the narrow elastic region between buckling and rupture.
 
 # %%
 lipid = presets["lipid shell"].eom
@@ -133,28 +117,17 @@ ax_s.legend(loc="upper left", fontsize=8)
 plt.show()
 
 # %% [markdown]
-# The polymer shell barely moves: its peak expansion is about 1% at this
-# drive. The lipid-coated bubble oscillates less than the free bubble, mostly
-# because the shell's surface viscosity damps it. Its response is also
-# asymmetric: the shell buckles under compression, where its surface tension
-# drops to zero, so the bubble compresses further (to about 0.74 $R_0$) than
-# it expands (to about 1.23 $R_0$).
+# The polymer shell barely moves: its peak expansion is about 1% at this drive. The lipid-coated bubble oscillates less than the free bubble, mostly because the shell's surface viscosity damps it. Its response is also asymmetric: the shell buckles under compression, where its surface tension drops to zero, so the bubble compresses further (to about 0.74 $R_0$) than it expands (to about 1.23 $R_0$).
 #
 # ## Swap the gas and the medium
 #
-# The shell is one part; the gas and the medium are the other two. Start from
-# the uncoated bubble and replace one part at a time with `eqx.tree_at`.
+# The shell is one part; the gas and the medium are the other two. Start from the uncoated bubble and replace one part at a time with `eqx.tree_at`.
 #
 # For the gas, compare three laws during a violent collapse at 300 kPa:
 #
-# - An adiabatic polytropic gas, with exponent 1.4 for air, heats up as it
-#   compresses, which cushions the collapse.
-# - An isothermal gas, with exponent 1.0, doesn't heat up, so the bubble
-#   collapses much further.
-# - A van der Waals gas adds a hard core of radius $h$, because the gas
-#   molecules can't be compressed below their own volume. Here
-#   $h = R_0 / 8.86$, with the same isothermal exponent, so the core alone
-#   stops the collapse.
+# - An adiabatic polytropic gas, with exponent 1.4 for air, heats up as it compresses, which cushions the collapse.
+# - An isothermal gas, with exponent 1.0, doesn't heat up, so the bubble collapses much further.
+# - A van der Waals gas adds a hard core of radius $h$, because the gas molecules can't be compressed below their own volume. Here $h = R_0 / 8.86$, with the same isothermal exponent, so the core alone stops the collapse.
 
 # %%
 base, _ = free_bubble(R0=2e-6)
@@ -174,18 +147,13 @@ for name, gas in gases.items():
     print(f"{name:24s} smallest R/R0 = {gas_runs[name].radius.min() / base.R0:.3f}")
 
 # %% [markdown]
-# For the medium, compare the peak radius over a range of drive pressures in
-# four surrounding materials:
+# For the medium, compare the peak radius over a range of drive pressures in four surrounding materials:
 #
 # - Water, a Newtonian liquid with a viscosity of 1 mPa s.
-# - A soft viscoelastic solid with a shear modulus of 50 kPa, in two models.
-#   The Kelvin-Voigt model is linear in the strain; the neo-Hookean model
-#   also holds at large strains.
-# - A shear-thinning liquid, whose viscosity falls as the shear rate rises:
-#   a power law with exponent 0.5.
+# - A soft viscoelastic solid with a shear modulus of 50 kPa, in two models. The Kelvin-Voigt model is linear in the strain; the neo-Hookean model also holds at large strains.
+# - A shear-thinning liquid, whose viscosity falls as the shear rate rises: a power law with exponent 0.5.
 #
-# `jax.vmap` runs all the pressures for one medium in a single call. Example
-# 05 covers sweeps in depth.
+# `jax.vmap` runs all the pressures for one medium in a single call. Example 05 covers sweeps in depth.
 
 # %%
 media = {
@@ -238,10 +206,4 @@ ax_m.legend(loc="upper left", fontsize=8)
 plt.show()
 
 # %% [markdown]
-# In water, the peak radius jumps near 200 kPa, where the bubble starts to
-# grow several-fold and collapse violently (example 04). An elastic solid
-# holds the bubble back. Its elastic stress levels off at large expansions,
-# at $4G/3$ in the Kelvin-Voigt model and at $5G/2$ in the neo-Hookean one,
-# so the strongest drives overcome it, the Kelvin-Voigt solid first. The
-# shear-thinning liquid is viscous only at low shear rates; a microbubble
-# shears it so fast that it behaves almost like water.
+# In water, the peak radius jumps near 200 kPa, where the bubble starts to grow several-fold and collapse violently (example 04). An elastic solid holds the bubble back. Its elastic stress levels off at large expansions, at $4G/3$ in the Kelvin-Voigt model and at $5G/2$ in the neo-Hookean one, so the strongest drives overcome it, the Kelvin-Voigt solid first. The shear-thinning liquid is viscous only at low shear rates; a microbubble shears it so fast that it behaves almost like water.
