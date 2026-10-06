@@ -75,11 +75,9 @@ def simple_eom():
     return KellerMiksis(
         gas=PolytropicGas(gamma=GAMMA),
         shell=NoShell(sigma=SIGMA),
-        medium=NewtonianMedium(mu=MU),
+        medium=NewtonianMedium(mu=MU, rho_L=RHO_L, c_L=C_L),
         R0=R0,
         P_amb=P_AMB,
-        rho_L=RHO_L,
-        c_L=C_L,
     )
 
 
@@ -89,10 +87,9 @@ def rp_eom():
     return RayleighPlesset(
         gas=PolytropicGas(gamma=GAMMA),
         shell=NoShell(sigma=SIGMA),
-        medium=NewtonianMedium(mu=MU),
+        medium=NewtonianMedium(mu=MU, rho_L=RHO_L),
         R0=R0,
         P_amb=P_AMB,
-        rho_L=RHO_L,
     )
 
 

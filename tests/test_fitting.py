@@ -46,10 +46,9 @@ def _eom(mu=1e-3, sigma=0.072, R0_=R0):
     return RayleighPlesset(
         gas=PolytropicGas(gamma=1.4),
         shell=NoShell(sigma=sigma),
-        medium=NewtonianMedium(mu=mu),
+        medium=NewtonianMedium(mu=mu, rho_L=998.0),
         R0=R0_,
         P_amb=101325.0,
-        rho_L=998.0,
     )
 
 
@@ -604,10 +603,9 @@ def test_neural_property_weights_are_fitted(target):
         eom = RayleighPlesset(
             gas=PolytropicGas(gamma=1.4),
             shell=NoShell(sigma=sigma),
-            medium=NewtonianMedium(mu=1e-3),
+            medium=NewtonianMedium(mu=1e-3, rho_L=998.0),
             R0=R0,
             P_amb=101325.0,
-            rho_L=998.0,
         )
         return eom, _pulse()
 

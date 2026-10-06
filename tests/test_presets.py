@@ -71,8 +71,8 @@ class TestBubblePreset:
         eom, _ = factory()
         assert _val(eom.medium.mu) == 1e-3
         assert float(eom.P_amb) == 101325.0
-        assert float(eom.rho_L) == 998.0
-        assert float(eom.c_L) == 1500.0
+        assert float(eom.medium.rho_L) == 998.0
+        assert float(eom.medium.c_L) == 1500.0
 
     @pytest.mark.parametrize("factory", [free_bubble, lipid_bubble, thick_shell_bubble])
     def test_presets_start_at_equilibrium(self, factory):
@@ -218,3 +218,7 @@ class TestThickShellBubble:
         f0_free, _ = _linear_response(free_bubble()[0])
         assert f0_free == pytest.approx(2.0e6, rel=0.03)
         assert _peak_expansion(*thick_shell_bubble()) == pytest.approx(0.01, rel=0.5)
+
+
+# R(t) at nine evenly spaced samples of a two-cycle, 150 kPa burst, computed
+# before rho_L and c_L moved from the equation of motion into the medium.

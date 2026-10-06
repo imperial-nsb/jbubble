@@ -1,11 +1,14 @@
-"""Acoustic emission models for bubble dynamics.
+r"""Acoustic emission models for bubble dynamics.
 
 Each model computes the radiated acoustic pressure at a field point from a
 solved bubble trajectory, at a different level of physical fidelity:
 [`IncompressibleMonopole`][jbubble.acoustics.emission.IncompressibleMonopole]
 assumes an incompressible liquid, and
 [`QuasiAcoustic`][jbubble.acoustics.emission.QuasiAcoustic] adds the
-propagation delay $r/c_L$.
+propagation delay $r/c_L$. Both read the liquid density $\rho_L$ and speed
+of sound $c_L$ from a [`MediumModel`][jbubble.bubble.medium.MediumModel], so
+pass the medium of the simulated equation of motion to radiate into the same
+liquid.
 
 Every model returns the pressure series together with the time at which
 the field point receives each sample,
@@ -14,9 +17,16 @@ the field point receives each sample,
 Examples
 --------
 ```python
-from jbubble.acoustics import QuasiAcoustic
+import jax
 
-emission = QuasiAcoustic(rho_L=998.0, c_L=1500.0)
+from jbubble import run_simulation
+from jbubble.acoustics import QuasiAcoustic
+from jbubble.utils.presets import free_bubble
+
+eom, pulse = free_bubble()
+result = jax.jit(run_simulation)(eom, pulse)
+
+emission = QuasiAcoustic(medium=eom.medium)
 p_rad = emission(result, r=0.01)  # at 1 cm
 t_obs = emission.observer_time(result, r=0.01)  # result.ts + r / c_L
 ```
@@ -31,6 +41,7 @@ import jax
 import jax.numpy as jnp
 from jax.typing import ArrayLike
 
+from ..bubble.medium import MediumModel
 from ..simulation import SimulationResult
 
 __all__ = ["EmissionModel", "IncompressibleMonopole", "QuasiAcoustic"]
@@ -143,18 +154,20 @@ class IncompressibleMonopole(EmissionModel):
 
     Parameters
     ----------
-    rho_L : float or jax.Array
-        Liquid density [kg/m³].
+    medium : MediumModel
+        Surrounding medium. The model reads the liquid density $\rho_L$
+        from `medium.rho_L`. Pass the medium of the simulated equation of
+        motion, `eom.medium`.
     """
 
-    rho_L: ArrayLike
+    medium: MediumModel
 
     def __call__(
         self,
         result: SimulationResult,
         r: ArrayLike,
     ) -> jax.Array:
-        return _monopole(result, self.rho_L, r)
+        return _monopole(result, self.medium.rho_L, r)
 
 
 class QuasiAcoustic(EmissionModel):
@@ -187,24 +200,24 @@ class QuasiAcoustic(EmissionModel):
 
     Parameters
     ----------
-    rho_L : float or jax.Array
-        Liquid density [kg/m³].
-    c_L : float or jax.Array
-        Speed of sound in the liquid [m/s].
+    medium : MediumModel
+        Surrounding medium. The model reads the liquid density $\rho_L$
+        from `medium.rho_L` and the speed of sound $c_L$ from
+        `medium.c_L`. Pass the medium of the simulated equation of motion,
+        `eom.medium`.
     """
 
-    rho_L: ArrayLike
-    c_L: ArrayLike
+    medium: MediumModel
 
     def __call__(
         self,
         result: SimulationResult,
         r: ArrayLike,
     ) -> jax.Array:
-        return _monopole(result, self.rho_L, r)
+        return _monopole(result, self.medium.rho_L, r)
 
     def observer_time(self, result: SimulationResult, r: ArrayLike) -> jax.Array:
-        """Return `result.ts + r / c_L`, the arrival time of each sample [s].
+        """Return `result.ts + r / medium.c_L`, the arrival time of each sample [s].
 
         Parameters
         ----------
@@ -218,4 +231,4 @@ class QuasiAcoustic(EmissionModel):
         jax.Array, shape (N,)
             Observer times [s].
         """
-        return result.ts + jnp.asarray(r) / jnp.asarray(self.c_L)
+        return result.ts + jnp.asarray(r) / jnp.asarray(self.medium.c_L)

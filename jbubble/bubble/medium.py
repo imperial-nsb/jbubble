@@ -11,6 +11,7 @@ import abc
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 from .property import Property, as_property
 from .state import BubbleState
@@ -40,6 +41,13 @@ class MediumModel(eqx.Module, abc.ABC):
     converter turns a plain float into a
     [`Property`][jbubble.bubble.property.Property].
 
+    The medium also holds the liquid's density `rho_L` and speed of sound
+    `c_L`, which the equations of motion and the emission models read. They
+    are plain constants, not `Property` fields, because the equations of
+    motion assume a liquid of constant density and sound speed. Both are
+    keyword-only and default to water at 20 °C, so a subclass can add
+    required fields after them.
+
     Parameters
     ----------
     mu : float or Property
@@ -48,9 +56,24 @@ class MediumModel(eqx.Module, abc.ABC):
         [`PowerLawMedium`][jbubble.bubble.medium.PowerLawMedium] it is the
         consistency index $K$ [Pa sⁿ], which equals the dynamic viscosity
         when $n = 1$.
+    rho_L : float or jax.Array
+        Liquid density [kg/m³]. Keyword-only. Default: `998.0` (water at
+        20 °C: 998.2 kg/m³, NIST).
+    c_L : float or jax.Array
+        Speed of sound in the liquid [m/s]. Keyword-only. Default:
+        `1500.0`, the round value that ultrasound modelling commonly uses
+        for water (NIST gives 1482 m/s at 20 °C and 1497 m/s at 25 °C).
+
+    References
+    ----------
+    NIST Chemistry WebBook, NIST Standard Reference Database 69,
+    Thermophysical Properties of Fluid Systems: water at 0.101325 MPa.
+    [doi:10.18434/T4D303](https://doi.org/10.18434/T4D303)
     """
 
     mu: Property = eqx.field(converter=as_property)
+    rho_L: ArrayLike = eqx.field(kw_only=True, default=998.0)
+    c_L: ArrayLike = eqx.field(kw_only=True, default=1500.0)
 
     @abc.abstractmethod
     def p_viscous(self, state: BubbleState) -> jax.Array:
@@ -89,6 +112,13 @@ class NewtonianMedium(MediumModel):
     ----------
     mu : float or Property
         Dynamic viscosity [Pa s].
+    rho_L : float or jax.Array
+        Liquid density [kg/m³]. Keyword-only. Default: `998.0` (water at
+        20 °C: 998.2 kg/m³, NIST).
+    c_L : float or jax.Array
+        Speed of sound in the liquid [m/s]. Keyword-only. Default:
+        `1500.0`, the round value that ultrasound modelling commonly uses
+        for water (NIST gives 1482 m/s at 20 °C and 1497 m/s at 25 °C).
     """
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
@@ -131,6 +161,13 @@ class KelvinVoigtMedium(MediumModel):
     G : float or Property
         Shear modulus [Pa]. It can be state-dependent, for example to model
         strain stiffening.
+    rho_L : float or jax.Array
+        Liquid density [kg/m³]. Keyword-only. Default: `998.0` (water at
+        20 °C: 998.2 kg/m³, NIST).
+    c_L : float or jax.Array
+        Speed of sound in the liquid [m/s]. Keyword-only. Default:
+        `1500.0`, the round value that ultrasound modelling commonly uses
+        for water (NIST gives 1482 m/s at 20 °C and 1497 m/s at 25 °C).
 
     References
     ----------
@@ -194,6 +231,13 @@ class NeoHookeanMedium(MediumModel):
     G : float or Property
         Shear modulus [Pa]. Accepts a plain float. It can be
         state-dependent, for example to model strain stiffening.
+    rho_L : float or jax.Array
+        Liquid density [kg/m³]. Keyword-only. Default: `998.0` (water at
+        20 °C: 998.2 kg/m³, NIST).
+    c_L : float or jax.Array
+        Speed of sound in the liquid [m/s]. Keyword-only. Default:
+        `1500.0`, the round value that ultrasound modelling commonly uses
+        for water (NIST gives 1482 m/s at 20 °C and 1497 m/s at 25 °C).
     """
 
     G: Property = eqx.field(converter=as_property)
@@ -260,6 +304,13 @@ class PowerLawMedium(MediumModel):
         Power-law exponent (dimensionless, positive).
     eps : float
         Shear-rate regularisation $\varepsilon$ [s⁻¹]. Default: `1e2`.
+    rho_L : float or jax.Array
+        Liquid density [kg/m³]. Keyword-only. Default: `998.0` (water at
+        20 °C: 998.2 kg/m³, NIST).
+    c_L : float or jax.Array
+        Speed of sound in the liquid [m/s]. Keyword-only. Default:
+        `1500.0`, the round value that ultrasound modelling commonly uses
+        for water (NIST gives 1482 m/s at 20 °C and 1497 m/s at 25 °C).
 
     Notes
     -----

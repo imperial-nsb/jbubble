@@ -16,7 +16,7 @@ batch it with `jax.vmap`, and differentiate it with `jax.grad`.
 ## What you can do with jbubble
 
 - **Simulate** free, lipid-coated, and polymer-shelled bubbles with the
-  Rayleigh-Plesset, Keller-Miksis, and Gilmore equations, in Newtonian
+  Rayleigh-Plesset and Keller-Miksis equations, in Newtonian
   liquids or viscoelastic tissue.
 - **Drive** them with tone bursts, chirps, measured waveforms, or
   learned pulses, and combine pulses with `+` and `*`.

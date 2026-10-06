@@ -1,10 +1,10 @@
 """Tests for jbubble.bubble.eom."""
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 import pytest
 from jbubble.bubble.eom import (
-    Gilmore,
     KellerMiksis,
     ModifiedRayleighPlesset,
     RayleighPlesset,
@@ -26,14 +26,13 @@ def _zero_pulse(t):
     return t * 0.0
 
 
-def _common_args():
+def _common_args(c_L=C_L):
     return dict(
         gas=PolytropicGas(gamma=1.4),
         shell=NoShell(sigma=SIGMA),
-        medium=NewtonianMedium(mu=MU),
+        medium=NewtonianMedium(mu=MU, rho_L=RHO_L, c_L=c_L),
         R0=R0,
         P_amb=P_AMB,
-        rho_L=RHO_L,
     )
 
 
@@ -79,7 +78,7 @@ class TestIsAdmissible:
         ("R", "expected"), [(R0, True), (1e-12, True), (0.0, False), (-R0, False)]
     )
     def test_requires_a_positive_radius(self, R, expected):
-        eom = KellerMiksis(**_common_args(), c_L=C_L)
+        eom = KellerMiksis(**_common_args())
         s = eom.initial_state(R=R)
         assert bool(eom.is_admissible(s)) is expected
 
@@ -134,13 +133,13 @@ class TestRayleighPlesset:
 
 class TestModifiedRayleighPlesset:
     def test_returns_bubble_state(self):
-        eom = ModifiedRayleighPlesset(**_common_args(), c_L=C_L)
+        eom = ModifiedRayleighPlesset(**_common_args())
         s = eom.initial_state()
         result = eom(jnp.asarray(0.0), s, _zero_pulse)
         assert isinstance(result, BubbleState)
 
     def test_equilibrium_nearly_zero_accel(self):
-        eom = ModifiedRayleighPlesset(**_common_args(), c_L=C_L)
+        eom = ModifiedRayleighPlesset(**_common_args())
         s = eom.initial_state()
         result = eom(jnp.asarray(0.0), s, _zero_pulse)
         assert float(result.R_dot) == pytest.approx(0.0, abs=1e-2)
@@ -148,22 +147,21 @@ class TestModifiedRayleighPlesset:
 
 class TestKellerMiksis:
     def test_returns_bubble_state(self):
-        eom = KellerMiksis(**_common_args(), c_L=C_L)
+        eom = KellerMiksis(**_common_args())
         s = eom.initial_state()
         result = eom(jnp.asarray(0.0), s, _zero_pulse)
         assert isinstance(result, BubbleState)
 
     def test_equilibrium_nearly_zero_accel(self):
-        eom = KellerMiksis(**_common_args(), c_L=C_L)
+        eom = KellerMiksis(**_common_args())
         s = eom.initial_state()
         result = eom(jnp.asarray(0.0), s, _zero_pulse)
         assert float(result.R_dot) == pytest.approx(0.0, abs=1e-2)
 
     def test_large_c_L_approaches_RP(self):
         """As c_L → ∞, KellerMiksis should approach RayleighPlesset."""
-        args = _common_args()
-        rp = RayleighPlesset(**args)
-        km = KellerMiksis(**args, c_L=1e10)  # effectively infinite c_L
+        rp = RayleighPlesset(**_common_args())
+        km = KellerMiksis(**_common_args(c_L=1e10))  # effectively infinite c_L
 
         s = BubbleState(
             R=jnp.asarray(1.5 * R0),
@@ -176,7 +174,7 @@ class TestKellerMiksis:
         assert float(km_result.R_dot) == pytest.approx(float(rp_result.R_dot), rel=1e-4)
 
     def test_differentiable(self):
-        eom = KellerMiksis(**_common_args(), c_L=C_L)
+        eom = KellerMiksis(**_common_args())
         s = eom.initial_state()
 
         def loss(s):
@@ -186,37 +184,72 @@ class TestKellerMiksis:
         assert jnp.isfinite(grad.R)
 
 
-class TestGilmore:
-    def test_returns_bubble_state(self):
-        eom = Gilmore(**_common_args())
-        s = eom.initial_state()
-        result = eom(jnp.asarray(0.0), s, _zero_pulse)
-        assert isinstance(result, BubbleState)
+class TestMediumLiquid:
+    """The equations of motion read rho_L and c_L from the medium."""
 
-    def test_equilibrium_nearly_zero_accel(self):
-        eom = Gilmore(**_common_args())
-        s = eom.initial_state()
-        result = eom(jnp.asarray(0.0), s, _zero_pulse)
-        assert float(result.R_dot) == pytest.approx(0.0, abs=1e-2)
+    _moving = BubbleState(
+        R=jnp.asarray(1.2 * R0),
+        R_dot=jnp.asarray(0.5),
+        R0=jnp.asarray(R0),
+        P_gas0=jnp.asarray(P_AMB + 2 * SIGMA / R0),
+    )
 
-    def test_default_tait_constants(self):
-        """Water values of Gümmer, Schenke & Denner (2021)."""
-        eom = Gilmore(**_common_args())
-        assert eom.n_tait == 7.15
-        assert eom.B_tait == 3.046e8
+    @pytest.mark.parametrize(
+        "cls", [RayleighPlesset, ModifiedRayleighPlesset, KellerMiksis]
+    )
+    def test_no_liquid_fields_on_the_eom(self, cls):
+        eom = cls(**_common_args())
+        assert not hasattr(eom, "rho_L")
+        assert not hasattr(eom, "c_L")
 
-    def test_far_field_sound_speed(self):
-        """At rest, C = c_inf = sqrt(n (P_amb + B) / rho_L), about 1477 m/s."""
-        eom = Gilmore(**_common_args())
-        p = jnp.asarray(P_AMB)
-        H, C = eom._H_and_C(p, p)
-        c_inf = (7.15 * (P_AMB + 3.046e8) / RHO_L) ** 0.5
-        assert float(H) == pytest.approx(0.0, abs=1e-6)
-        assert float(C) == pytest.approx(c_inf, rel=1e-12)
-        assert c_inf == pytest.approx(1477.49, abs=0.01)
+    def test_rayleigh_plesset_uses_medium_density(self):
+        """At rest, R_ddot = (p_L - P_amb) / (rho_L R) scales as 1 / rho_L."""
+        state = BubbleState(
+            R=jnp.asarray(1.2 * R0),
+            R0=jnp.asarray(R0),
+            P_gas0=jnp.asarray(P_AMB + 2 * SIGMA / R0),
+        )
+        eom = RayleighPlesset(**_common_args())
+        dense = eqx.tree_at(lambda e: e.medium.rho_L, eom, 2 * RHO_L)
+        a = eom(jnp.asarray(0.0), state, _zero_pulse).R_dot
+        b = dense(jnp.asarray(0.0), state, _zero_pulse).R_dot
+        assert float(b) == pytest.approx(float(a) / 2, rel=1e-12)
 
-    def test_custom_tait_params(self):
-        eom = Gilmore(**_common_args(), n_tait=7.15, B_tait=300e6)
-        s = eom.initial_state()
-        result = eom(jnp.asarray(0.0), s, _zero_pulse)
-        assert jnp.isfinite(result.R_dot)
+    @pytest.mark.parametrize("cls", [ModifiedRayleighPlesset, KellerMiksis])
+    def test_sound_speed_comes_from_medium(self, cls):
+        eom = cls(**_common_args())
+        faster = eqx.tree_at(lambda e: e.medium.c_L, eom, 3000.0)
+        built = cls(**_common_args(c_L=3000.0))
+        a = faster(jnp.asarray(0.0), self._moving, _zero_pulse).R_dot
+        b = built(jnp.asarray(0.0), self._moving, _zero_pulse).R_dot
+        c = eom(jnp.asarray(0.0), self._moving, _zero_pulse).R_dot
+        assert float(a) == float(b)
+        assert float(a) != float(c)
+
+    def test_state_scale_uses_medium_density(self):
+        eom = KellerMiksis(**_common_args())
+        dense = eqx.tree_at(lambda e: e.medium.rho_L, eom, 4 * RHO_L)
+        v = eom.state_scale(self._moving).R_dot
+        v_dense = dense.state_scale(self._moving).R_dot
+        assert float(v) == pytest.approx((P_AMB / RHO_L) ** 0.5, rel=1e-12)
+        assert float(v_dense) == pytest.approx(float(v) / 2, rel=1e-12)
+
+    def test_tree_at_under_jit_and_grad(self):
+        eom = KellerMiksis(**_common_args())
+
+        @jax.jit
+        def accel(rho_L, c_L):
+            e = eqx.tree_at(lambda e: e.medium.rho_L, eom, rho_L)
+            e = eqx.tree_at(lambda e: e.medium.c_L, e, c_L)
+            return e(jnp.asarray(0.0), self._moving, _zero_pulse).R_dot
+
+        rho, c = jnp.asarray(RHO_L), jnp.asarray(C_L)
+        eager = eom(jnp.asarray(0.0), self._moving, _zero_pulse).R_dot
+        assert float(accel(rho, c)) == pytest.approx(float(eager), rel=1e-12)
+        d_rho, d_c = jax.grad(accel, argnums=(0, 1))(rho, c)
+        h_rho, h_c = 1e-3 * RHO_L, 1e-3 * C_L
+        fd_rho = (accel(rho + h_rho, c) - accel(rho - h_rho, c)) / (2 * h_rho)
+        fd_c = (accel(rho, c + h_c) - accel(rho, c - h_c)) / (2 * h_c)
+        assert float(d_rho) != 0.0 and float(d_c) != 0.0
+        assert float(d_rho) == pytest.approx(float(fd_rho), rel=1e-5)
+        assert float(d_c) == pytest.approx(float(fd_c), rel=1e-5)

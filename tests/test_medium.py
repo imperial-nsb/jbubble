@@ -272,3 +272,29 @@ class TestPowerLawMedium:
         grad = jax.grad(medium)(s)
         assert jnp.isfinite(grad.R)
         assert jnp.isfinite(grad.R_dot)
+
+
+class TestLiquidProperties:
+    """`rho_L` and `c_L` default to water at 20 °C and stay keyword-only."""
+
+    @pytest.mark.parametrize(
+        "medium",
+        [
+            NewtonianMedium(mu=1e-3),
+            KelvinVoigtMedium(mu=1e-3, G=1e3),
+            NeoHookeanMedium(mu=1e-3, G=1e3),
+            PowerLawMedium(mu=1e-3, n_exp=0.7),
+        ],
+        ids=lambda m: type(m).__name__,
+    )
+    def test_defaults_are_water(self, medium):
+        # NIST WebBook: 998.2 kg/m³ at 20 °C; 1500 m/s is the round value
+        # that ultrasound modelling uses.
+        assert medium.rho_L == 998.0
+        assert medium.c_L == 1500.0
+
+    def test_keyword_only(self):
+        with pytest.raises(TypeError):
+            NewtonianMedium(1e-3, 1000.0)  # ty: ignore[too-many-positional-arguments]
+        medium = KelvinVoigtMedium(mu=1e-3, G=1e3, rho_L=1060.0, c_L=1540.0)
+        assert (medium.rho_L, medium.c_L) == (1060.0, 1540.0)

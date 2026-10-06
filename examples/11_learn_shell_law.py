@@ -65,11 +65,9 @@ def make_eom(sigma):
     return KellerMiksis(
         gas=PolytropicGas(gamma=1.095),
         shell=LipidShell(sigma=sigma, kappa_s=KAPPA_S),
-        medium=NewtonianMedium(mu=1e-3),
+        medium=NewtonianMedium(mu=1e-3, rho_L=998.0, c_L=1500.0),
         R0=R0,
         P_amb=101325.0,
-        rho_L=998.0,
-        c_L=1500.0,
     )
 
 

@@ -86,11 +86,13 @@ from jbubble.pulse.shapes import Sine
 water = KellerMiksis(
     gas=PolytropicGas(gamma=1.4),  # air, compressed adiabatically
     shell=NoShell(sigma=0.072),  # surface tension of water [N/m]
-    medium=NewtonianMedium(mu=1e-3),  # viscosity of water [Pa s]
+    medium=NewtonianMedium(
+        mu=1e-3,  # viscosity of water [Pa s]
+        rho_L=998.0,  # liquid density [kg/m³]
+        c_L=1500.0,  # speed of sound in the liquid [m/s]
+    ),
     R0=2e-6,  # equilibrium radius [m]
     P_amb=101325.0,  # ambient pressure [Pa]
-    rho_L=998.0,  # liquid density [kg/m³]
-    c_L=1500.0,  # speed of sound in the liquid [m/s]
 )
 burst = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
 

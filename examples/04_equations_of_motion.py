@@ -1,12 +1,9 @@
 # %% [markdown]
 # # Equations of motion
 #
-# Solve one bubble with four equations of motion, from the incompressible
-# Rayleigh-Plesset equation to the Gilmore equation for violent collapses.
-# Then raise the drive pressure to see where stable oscillation gives way to
-# inertial cavitation.
+# Solve one bubble with three equations of motion, from the incompressible Rayleigh-Plesset equation to the Keller-Miksis equation, which accounts for the compressibility of the liquid. Then raise the drive pressure to see where stable oscillation gives way to inertial cavitation.
 #
-# All four equations share the same gas, shell, and medium models; they
+# All three equations share the same gas, shell, and medium models; they
 # differ in how they treat the liquid around the bubble.
 
 # %%
@@ -19,7 +16,6 @@ import matplotlib.pyplot as plt
 
 from jbubble import SaveSpec, run_simulation
 from jbubble.bubble.eom import (
-    Gilmore,
     KellerMiksis,
     ModifiedRayleighPlesset,
     RayleighPlesset,
@@ -35,7 +31,7 @@ DRIVE = "#8c959f"  # neutral grey for the acoustic drive in the light theme
 QUICK = os.environ.get("JBUBBLE_QUICK") == "1"  # a smaller sweep for CI
 
 # %% [markdown]
-# ## Build four equations of motion
+# ## Build three equations of motion
 #
 # - `RayleighPlesset` treats the liquid as incompressible. It has no way to
 #   lose energy to sound, so it overestimates violent growth and collapse.
@@ -43,35 +39,24 @@ QUICK = os.environ.get("JBUBBLE_QUICK") == "1"  # a smaller sweep for CI
 #   that the gas pressure radiates, as in Marmottant et al. (2005).
 # - `KellerMiksis` keeps the liquid's compressibility to first order in the
 #   Mach number of the bubble wall. The presets use it.
-# - `Gilmore` describes the liquid with the Tait equation of state, which
-#   stays accurate when the wall moves at a sizeable fraction of the speed
-#   of sound.
 #
 # The bubble is a 2 µm air bubble in water. A van der Waals gas keeps the
 # collapse physical: the gas can't be compressed below the volume of its
-# molecules, a hard core of radius $R_0 / 8.86$. Gilmore's Tait constants
-# set the speed of sound in water, so the other equations use the same value.
+# molecules, a hard core of radius $R_0 / 8.86$. The liquid is water at 20 °C: `NewtonianMedium` defaults to a density of 998 kg/m³ and the conventional speed of sound of 1500 m/s.
 
 # %%
 parts = dict(
     gas=VanDerWaalsGas(gamma=1.4, h_frac=1 / 8.86),
     shell=NoShell(sigma=0.072),
-    medium=NewtonianMedium(mu=1e-3),
+    medium=NewtonianMedium(mu=1e-3),  # water: rho_L = 998 kg/m³, c_L = 1500 m/s
     R0=2e-6,
     P_amb=101325.0,
-    rho_L=998.0,
 )
-gilmore = Gilmore(**parts)  # default Tait constants for water
-c_water = float(
-    jnp.sqrt(gilmore.n_tait * (gilmore.P_amb + gilmore.B_tait) / gilmore.rho_L)
-)
-print(f"Speed of sound from the Tait constants: {c_water:.0f} m/s")
 
 models = {
-    "Keller-Miksis": KellerMiksis(**parts, c_L=c_water),
+    "Keller-Miksis": KellerMiksis(**parts),
     "Rayleigh-Plesset": RayleighPlesset(**parts),
-    "modified Rayleigh-Plesset": ModifiedRayleighPlesset(**parts, c_L=c_water),
-    "Gilmore": gilmore,
+    "modified Rayleigh-Plesset": ModifiedRayleighPlesset(**parts),
 }
 
 # %% [markdown]
@@ -106,12 +91,12 @@ fig, (ax_p, ax_r) = plt.subplots(
 first = runs["Keller-Miksis"]
 ax_p.plot(first.ts * 1e6, first.driving_pressure / 1e3, color=DRIVE)
 ax_p.set_ylabel("drive (kPa)")
-ax_p.set_title("One bubble, four equations of motion: 1 MHz, 400 kPa")
+ax_p.set_title("One bubble, three equations of motion: 1 MHz, 400 kPa")
 ax_r.axhline(1.0, color=DRIVE, lw=0.8, ls="--")
-# Keller-Miksis is wide and underneath; Gilmore is dashed on top of it.
-styles = [dict(lw=3.0), dict(lw=1.4), dict(lw=1.4), dict(lw=1.4, ls="--")]
+# Keller-Miksis is wide and underneath; modified Rayleigh-Plesset is dashed on top.
+styles = [dict(lw=3.0), dict(lw=1.4), dict(lw=1.4, ls="--")]
 for colour, style, (name, run) in zip(
-    ["C0", "C1", "C2", "C3"], styles, runs.items(), strict=True
+    ["C0", "C1", "C2"], styles, runs.items(), strict=True
 ):
     ax_r.plot(run.ts * 1e6, run.radius / parts["R0"], color=colour, label=name, **style)
 ax_r.set_xlabel("time (µs)")
@@ -121,10 +106,7 @@ plt.show()
 
 # %% [markdown]
 # Rayleigh-Plesset lets the bubble grow furthest, because an incompressible
-# liquid can't carry energy away as sound. The three equations that radiate
-# sound agree closely at this pressure; they differ mainly in how deep each
-# collapse goes. As collapses grow more violent and the wall approaches the
-# speed of sound, Gilmore becomes the safer choice.
+# liquid can't carry energy away as sound. The two equations that radiate sound agree closely at this pressure; they differ mainly in how deep each collapse goes. Keller-Miksis keeps compressibility only to first order in the wall Mach number, so treat its results with care when the wall approaches the speed of sound.
 #
 # ## Find the onset of inertial cavitation
 #
