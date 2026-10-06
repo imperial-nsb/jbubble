@@ -86,7 +86,7 @@ print(f"Peak radius: {float(result.radius.max() / eom.R0):.2f} R0")
 
 The simulation is a JAX function, so you can batch it and differentiate it:
 
-```python
+```{.python continuation}
 import jax
 import jax.numpy as jnp
 
