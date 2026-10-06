@@ -1,11 +1,7 @@
 # %% [markdown]
 # # Parameter sweeps
 #
-# Run thousands of bubbles at once. `jax.vmap` simulates a row of bubbles of
-# different sizes in one call, and `GridSweep` maps the response over a grid
-# of radius, frequency, and pressure on every CPU core. The map is checked
-# against linear resonance theory, collected batch by batch, saved to a NumPy
-# file, and drawn from that file.
+# Run thousands of bubbles at once. `jax.vmap` simulates a row of bubbles of different sizes in one call, and `GridSweep` maps the response over a grid of radius, frequency, and pressure on every CPU core. The map is checked against linear resonance theory, collected batch by batch, saved to a NumPy file, and drawn from that file.
 
 # %%
 import os
@@ -32,10 +28,7 @@ QUICK = os.environ.get("JBUBBLE_QUICK", "0") == "1"
 # %% [markdown]
 # ## A row of bubbles with `jax.vmap`
 #
-# Write a function that simulates one bubble, then let `jax.vmap` run it for
-# a whole array of equilibrium radii. Every bubble feels the same 20 kPa,
-# 1 MHz tone burst, so only the bubbles near resonance at 1 MHz respond
-# strongly. `jax.jit` compiles the batched function once.
+# Write a function that simulates one bubble, then let `jax.vmap` run it for a whole array of equilibrium radii. Every bubble feels the same 20 kPa, 1 MHz tone burst, so only the bubbles near resonance at 1 MHz respond strongly. `jax.jit` compiles the batched function once.
 
 
 # %%
@@ -62,8 +55,7 @@ t_again = time.perf_counter() - t0
 print(f"{radii.size} bubbles: {t_first:.1f} s with compilation, {t_again:.2f} s after")
 
 # %% [markdown]
-# Linear theory predicts the resonance. For a gas bubble with polytropic
-# exponent $\kappa$ and surface tension $\sigma$, small oscillations ring at
+# Linear theory predicts the resonance. For a gas bubble with polytropic exponent $\kappa$ and surface tension $\sigma$, small oscillations ring at
 #
 # $$
 # f_0 = \frac{1}{2\pi R_0}\sqrt{\frac{1}{\rho_L}
@@ -71,8 +63,7 @@ print(f"{radii.size} bubbles: {t_first:.1f} s with compilation, {t_again:.2f} s 
 #     - \frac{2\sigma}{R_0}\right]},
 # $$
 #
-# the Minnaert frequency with a surface-tension correction. The values below
-# are the `free_bubble` preset's defaults.
+# the Minnaert frequency with a surface-tension correction. The values below are the `free_bubble` preset's defaults.
 
 # %%
 KAPPA, SIGMA, P_AMB, RHO_L = 1.4, 0.072, 101325.0, 998.0
@@ -97,10 +88,7 @@ print(f"Linear theory: resonant radius at 1 MHz = {R_res * 1e6:.2f} µm")
 print(f"Simulation:    largest response at R0   = {R_peak * 1e6:.2f} µm")
 
 # %% [markdown]
-# The simulated peak sits a few percent below the linear prediction. Viscous
-# and radiation damping lower the frequency of the largest response, and at
-# $R_\max/R_0 \approx 1.5$ the oscillation is already mildly nonlinear,
-# which lowers it further.
+# The simulated peak sits a few percent below the linear prediction. Viscous and radiation damping lower the frequency of the largest response, and at $R_\max/R_0 \approx 1.5$ the oscillation is already mildly nonlinear, which lowers it further.
 
 # %%
 show = [1.5e-6, 2.5e-6, R_peak, 5e-6]  # four radii to draw over time
@@ -139,15 +127,9 @@ plt.show()
 # %% [markdown]
 # ## A response map with `GridSweep`
 #
-# `GridSweep` evaluates a function on the Cartesian product of named
-# parameter axes. It compiles `jax.vmap` of the function once and runs
-# chunks of the grid on all CPU cores at the same time.
+# `GridSweep` evaluates a function on the Cartesian product of named parameter axes. It compiles `jax.vmap` of the function once and runs chunks of the grid on all CPU cores at the same time.
 #
-# Return more than the metric. A batch under `jax.vmap` runs until its
-# slowest member finishes, and a solve that reaches `max_steps` stops early,
-# so return `converged` and the solver's step count as well, and mask the
-# points that didn't converge. `solve_eom` gives both, through
-# `sol.result` and `sol.stats`.
+# Return more than the metric. A batch under `jax.vmap` runs until its slowest member finishes, and a solve that reaches `max_steps` stops early, so return `converged` and the solver's step count as well, and mask the points that didn't converge. `solve_eom` gives both, through `sol.result` and `sol.stats`.
 
 
 # %%
@@ -177,11 +159,7 @@ print(
 # %% [markdown]
 # ## Collect batches, save, then load
 #
-# `GridSweep.run` returns the whole grid at once. For a sweep too large for
-# memory, iterate over `GridSweep.batches` instead: each batch holds the
-# parameter values and outputs of up to `batch_size` grid points, in grid
-# order. Here the batches are collected into flat columns, written to one
-# `.npz` file with `np.savez`, and read back with `np.load`.
+# `GridSweep.run` returns the whole grid at once. For a sweep too large for memory, iterate over `GridSweep.batches` instead: each batch holds the parameter values and outputs of up to `batch_size` grid points, in grid order. Here the batches are collected into flat columns, written to one `.npz` file with `np.savez`, and read back with `np.load`.
 
 # %%
 columns: dict[str, list[np.ndarray]] = {}
@@ -211,11 +189,7 @@ print(
 )
 
 # %% [markdown]
-# Draw the map from the loaded file. At 20 kPa the ridge of strong response
-# follows the linear resonance curve $f_0(R_0)$. At 150 kPa the bubble is
-# nonlinear: the main ridge broadens and leans to lower frequencies, and new
-# ridges appear, such as the subharmonic resonance near $2f_0$, where the
-# bubble oscillates at half the drive frequency.
+# Draw the map from the loaded file. At 20 kPa the ridge of strong response follows the linear resonance curve $f_0(R_0)$. At 150 kPa the bubble is nonlinear: the main ridge broadens and leans to lower frequencies, and new ridges appear, such as the subharmonic resonance near $2f_0$, where the bubble oscillates at half the drive frequency.
 
 # %% tags=["thumbnail"]
 expansion = np.where(loaded["converged"], loaded["expansion"], np.nan)

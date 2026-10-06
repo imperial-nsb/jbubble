@@ -1,12 +1,7 @@
 # %% [markdown]
 # # Learn a shell law with a neural network
 #
-# When you don't know the form of a constitutive law, you can learn it from
-# data. In this example, a small neural network takes the place of the
-# surface tension $\sigma(R)$ of a lipid shell, and `fit_parameters` trains
-# its weights on radius curves recorded at six driving pressures. The network
-# recovers the buckling, elastic, and ruptured regimes of the Marmottant law
-# without being told that they exist.
+# When you don't know the form of a constitutive law, you can learn it from data. In this example, a small neural network takes the place of the surface tension $\sigma(R)$ of a lipid shell, and `fit_parameters` trains its weights on radius curves recorded at six driving pressures. The network recovers the buckling, elastic, and ruptured regimes of the Marmottant law without being told that they exist.
 
 # %%
 import os
@@ -43,14 +38,7 @@ N_STEPS = 100 if QUICK else 1000
 # %% [markdown]
 # ## Make stand-in measurements
 #
-# The stand-in bubble is a 2 µm SF6 bubble with a lipid shell that follows
-# the piecewise
-# [`MarmottantSurfaceTension`](https://imperial-nsb.github.io/jbubble/api/bubble/#jbubble.bubble.shell.MarmottantSurfaceTension)
-# law, driven by five-cycle, Hann-windowed 1 MHz tone bursts from 30 to
-# 180 kPa. The low pressures probe the shell near its equilibrium radius,
-# and the high pressures drive it through buckling and rupture. The shell
-# viscosity and every other model input are known; only $\sigma(R)$ is
-# unknown.
+# The stand-in bubble is a 2 µm SF6 bubble with a lipid shell that follows the piecewise [`MarmottantSurfaceTension`](https://imperial-nsb.github.io/jbubble/api/bubble/#jbubble.bubble.shell.MarmottantSurfaceTension) law, driven by five-cycle, Hann-windowed 1 MHz tone bursts from 30 to 180 kPa. The low pressures probe the shell near its equilibrium radius, and the high pressures drive it through buckling and rupture. The shell viscosity and every other model input are known; only $\sigma(R)$ is unknown.
 
 # %%
 R0 = 2e-6  # equilibrium radius [m]
@@ -112,19 +100,9 @@ plt.show()
 # %% [markdown]
 # ## Put a network in the shell
 #
-# [`NeuralProperty`](https://imperial-nsb.github.io/jbubble/api/bubble/#jbubble.bubble.property.NeuralProperty)
-# wraps any Equinox network as a
-# [`Property`](https://imperial-nsb.github.io/jbubble/api/bubble/#jbubble.bubble.property.Property):
-# it passes the normalised radius $R/R_0$ to the network and returns its
-# output. Any model input that accepts a `Property` accepts it, here the
-# shell's surface tension.
+# [`NeuralProperty`](https://imperial-nsb.github.io/jbubble/api/bubble/#jbubble.bubble.property.NeuralProperty) wraps any Equinox network as a [`Property`](https://imperial-nsb.github.io/jbubble/api/bubble/#jbubble.bubble.property.Property): it passes the normalised radius $R/R_0$ to the network and returns its output. Any model input that accepts a `Property` accepts it, here the shell's surface tension.
 #
-# The network's `final_activation` bounds its output to
-# $(0, \sigma_\text{max})$ with a scaled sigmoid. The bound encodes what you
-# know about the physics: a surface tension is never negative and never
-# exceeds that of clean water. It also keeps every law that the optimiser
-# tries during training physical, so the solver never meets a negative
-# surface tension.
+# The network's `final_activation` bounds its output to $(0, \sigma_\text{max})$ with a scaled sigmoid. The bound encodes what you know about the physics: a surface tension is never negative and never exceeds that of clean water. It also keeps every law that the optimiser tries during training physical, so the solver never meets a negative surface tension.
 
 
 # %%
@@ -149,14 +127,9 @@ print(f"The network has {n_weights} weights")
 # %% [markdown]
 # ## Train it with `fit_parameters`
 #
-# `params0` can be any Equinox module: `fit_parameters` fits every
-# floating-point array inside it, here the network's weights, and passes the
-# module to `make_model`. Each recording is one entry of `conditions`, and
-# the six recordings run in parallel with `jax.vmap`. A cosine-decay
-# learning rate lets the fit settle at the end of training.
+# `params0` can be any Equinox module: `fit_parameters` fits every floating-point array inside it, here the network's weights, and passes the module to `make_model`. Each recording is one entry of `conditions`, and the six recordings run in parallel with `jax.vmap`. A cosine-decay learning rate lets the fit settle at the end of training.
 #
-# `step_callback` keeps a few snapshots of the network, so that you can
-# watch the law take shape.
+# `step_callback` keeps a few snapshots of the network, so that you can watch the law take shape.
 
 
 # %%
@@ -195,8 +168,7 @@ print(f"Training took {time.perf_counter() - start:.0f} s: {fit.message}")
 # %% [markdown]
 # ## Compare the learned law with the truth
 #
-# A `Property` is a function of the bubble state, so you can evaluate the
-# learned law, and the true one, on any grid of radii.
+# A `Property` is a function of the bubble state, so you can evaluate the learned law, and the true one, on any grid of radii.
 
 # %%
 x = jnp.linspace(0.3, 2.0, 400)
@@ -283,25 +255,10 @@ ax_high.set_xlabel("time (µs)")
 plt.show()
 
 # %% [markdown]
-# For the first few hundred steps, the loss sits on a plateau. The network
-# first settles on a nearly constant surface tension close to
-# $\sigma_\text{max}$, the best that a flat law can do. Once it bends the
-# curve near $R_0$, the loss falls by two orders of magnitude.
+# For the first few hundred steps, the loss sits on a plateau. The network first settles on a nearly constant surface tension close to $\sigma_\text{max}$, the best that a flat law can do. Once it bends the curve near $R_0$, the loss falls by two orders of magnitude.
 #
-# Within the recorded range, the network reproduces the three regimes: zero
-# tension when the shell buckles, a steep elastic rise near $R_0$, and the
-# tension of clean water once the shell ruptures. The lowest pressure is the
-# hardest recording to match, because there the radius depends mostly on the
-# slope of $\sigma$ near $R_0$, the shell elasticity. More training steps
-# tighten it; see `N_STEPS` at the top of the example.
+# Within the recorded range, the network reproduces the three regimes: zero tension when the shell buckles, a steep elastic rise near $R_0$, and the tension of clean water once the shell ruptures. The lowest pressure is the hardest recording to match, because there the radius depends mostly on the slope of $\sigma$ near $R_0$, the shell elasticity. More training steps tighten it; see `N_STEPS` at the top of the example.
 #
-# Outside the recorded range, the data say nothing, so the network's values
-# there are a guess. Here, the saturated sigmoid happens to continue the
-# right trend, but nothing guarantees it. Record at the amplitudes where you
-# want to know the law.
+# Outside the recorded range, the data say nothing, so the network's values there are a guess. Here, the saturated sigmoid happens to continue the right trend, but nothing guarantees it. Record at the amplitudes where you want to know the law.
 #
-# To turn the learned curve into numbers, such as the buckling radius or the
-# elasticity, fit a parametric law to it, or fit that law to the data
-# directly, as in example 10. For more on neural laws, failed trial steps,
-# and solver settings for training, see the
-# [fitting guide](https://imperial-nsb.github.io/jbubble/guide/fitting/).
+# To turn the learned curve into numbers, such as the buckling radius or the elasticity, fit a parametric law to it, or fit that law to the data directly, as in example 10. For more on neural laws, failed trial steps, and solver settings for training, see the [fitting guide](https://imperial-nsb.github.io/jbubble/guide/fitting/).

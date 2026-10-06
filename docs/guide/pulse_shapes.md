@@ -1,25 +1,18 @@
 # Pulse shapes
 
-A pulse is the acoustic pressure $p_\text{ac}(t)$ that drives the bubble.
-Every pulse is a callable [Equinox](https://docs.kidger.site/equinox/)
-module: `pulse(t)` returns the pressure in pascals at time `t` in seconds.
-Because pulses are JAX PyTrees, you can compile, batch, and differentiate
-through their parameters, such as the amplitude, the frequency, or the
-weights of a neural network.
+A pulse is the acoustic pressure $p_\text{ac}(t)$ that drives the bubble. Every pulse is a callable [Equinox](https://docs.kidger.site/equinox/) module: `pulse(t)` returns the pressure in pascals at time `t` in seconds. Because pulses are JAX PyTrees, you can compile, batch, and differentiate through their parameters, such as the amplitude, the frequency, or the weights of a neural network.
 
 Every code block on this page runs as written, in order.
 
 ## Tone bursts
 
-A [`ToneBurst`][jbubble.pulse.tone_burst.ToneBurst] is a periodic carrier
-shape, multiplied by a peak pressure and gated by an envelope:
+A [`ToneBurst`][jbubble.pulse.tone_burst.ToneBurst] is a periodic carrier shape, multiplied by a peak pressure and gated by an envelope:
 
 $$
 p(t) = P\, s(t - t_0; f, \phi)\, w(t - t_0, T), \qquad T = \frac{N}{f},
 $$
 
-where $P$ is `pressure`, $s$ is `shape`, $f$ is `freq`, $\phi$ is `phase`,
-$t_0$ is `initial_time`, $N$ is `cycle_num`, and $w$ is `envelope`.
+where $P$ is `pressure`, $s$ is `shape`, $f$ is `freq`, $\phi$ is `phase`, $t_0$ is `initial_time`, $N$ is `cycle_num`, and $w$ is `envelope`.
 
 ```python
 import jax
@@ -69,11 +62,7 @@ monopolar = ToneBurst(
 
 ### Envelopes
 
-The envelope gates the carrier to the active window. A single pulse, such as
-a tone burst, defaults to
-[`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope],
-and a sum of pulses to
-[`NoEnvelope`][jbubble.pulse.envelope.NoEnvelope].
+The envelope gates the carrier to the active window. A single pulse, such as a tone burst, defaults to [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope], and a sum of pulses to [`NoEnvelope`][jbubble.pulse.envelope.NoEnvelope].
 
 | Envelope | Window |
 |---|---|
@@ -83,8 +72,7 @@ and a sum of pulses to
 | [`TukeyEnvelope`][jbubble.pulse.envelope.TukeyEnvelope] | Flat in the middle with cosine tapers; `alpha` is the fraction of the window in the tapers |
 | [`NoEnvelope`][jbubble.pulse.envelope.NoEnvelope] | 1 at all times: the default of a sum of pulses |
 
-To change the envelope of an existing pulse, call
-[`windowed`][jbubble.pulse.base.Pulse.windowed]:
+To change the envelope of an existing pulse, call [`windowed`][jbubble.pulse.base.Pulse.windowed]:
 
 ```{.python continuation}
 from jbubble.pulse import TukeyEnvelope
@@ -94,12 +82,7 @@ tapered = pulse.windowed(TukeyEnvelope(alpha=0.2))
 
 ## Timing: start, stop, and end
 
-Each pulse has an active window, from
-[`t_start`][jbubble.pulse.base.Pulse.t_start] to
-[`t_stop`][jbubble.pulse.base.Pulse.t_stop]. To delay a pulse, set its
-keyword-only `initial_time`. [`t_end`][jbubble.pulse.base.Pulse.t_end],
-the stop time of a simulation that doesn't set `t_max`, is the start time
-plus twice the duration, so the bubble has time to ring down:
+Each pulse has an active window, from [`t_start`][jbubble.pulse.base.Pulse.t_start] to [`t_stop`][jbubble.pulse.base.Pulse.t_stop]. To delay a pulse, set its keyword-only `initial_time`. [`t_end`][jbubble.pulse.base.Pulse.t_end], the stop time of a simulation that doesn't set `t_max`, is the start time plus twice the duration, so the bubble has time to ring down:
 
 ```{.python continuation}
 delayed = ToneBurst(
@@ -109,16 +92,11 @@ print(f"start {delayed.t_start * 1e6:.1f} µs, stop {delayed.t_stop * 1e6:.1f} �
       f"end {delayed.t_end * 1e6:.1f} µs")
 ```
 
-The solver steps to every edge in
-[`window_edges`][jbubble.pulse.base.Pulse.window_edges], so it can't step
-over a pulse that starts late.
+The solver steps to every edge in [`window_edges`][jbubble.pulse.base.Pulse.window_edges], so it can't step over a pulse that starts late.
 
 ## Chirps
 
-A [`ChirpPulse`][jbubble.pulse.chirp.ChirpPulse] sweeps its frequency from
-`freq_start` to `freq_end` over `sweep_duration`. The sweep law is linear by
-default; [`ExponentialSweep`][jbubble.pulse.chirp.ExponentialSweep] sweeps
-geometrically, with equal time per octave:
+A [`ChirpPulse`][jbubble.pulse.chirp.ChirpPulse] sweeps its frequency from `freq_start` to `freq_end` over `sweep_duration`. The sweep law is linear by default; [`ExponentialSweep`][jbubble.pulse.chirp.ExponentialSweep] sweeps geometrically, with equal time per octave:
 
 ```{.python continuation}
 from jbubble.pulse import ChirpPulse
@@ -136,11 +114,7 @@ chirp = ChirpPulse(
 
 ## Measured waveforms
 
-A [`SampledPulse`][jbubble.pulse.sampled.SampledPulse] interpolates a
-sampled pressure trace, such as a hydrophone recording, linearly between the
-samples. The sample times are absolute: the active window runs from the
-first sample to the last. The following code builds a stand-in for a
-measured trace, sampled at 100 MHz:
+A [`SampledPulse`][jbubble.pulse.sampled.SampledPulse] interpolates a sampled pressure trace, such as a hydrophone recording, linearly between the samples. The sample times are absolute: the active window runs from the first sample to the last. The following code builds a stand-in for a measured trace, sampled at 100 MHz:
 
 ```{.python continuation}
 from jbubble.pulse import RectangularEnvelope, SampledPulse
@@ -155,18 +129,11 @@ recorded = SampledPulse.from_uniform(measured, dt=dt)
 print(f"window: {recorded.t_start * 1e6:.2f} to {recorded.t_stop * 1e6:.2f} µs")
 ```
 
-The default soft envelope halves the first and last samples. If the trace
-already starts and ends at zero, as here, that changes nothing. Otherwise,
-pass `envelope=RectangularEnvelope()` to keep them, or
-`envelope=HannEnvelope()` to taper a trace that's cut off mid-signal.
+The default soft envelope halves the first and last samples. If the trace already starts and ends at zero, as here, that changes nothing. Otherwise, pass `envelope=RectangularEnvelope()` to keep them, or `envelope=HannEnvelope()` to taper a trace that's cut off mid-signal.
 
 ## Neural pulses
 
-A [`NeuralPulse`][jbubble.pulse.neural.NeuralPulse] lets a neural network
-define the waveform: the network maps the normalised time
-$(t - t_0)/T$, from 0 to 1 across the window, to the pressure in units of
-`pressure_scale`. Its weights are parameters that you can optimise, for
-example to design a drive that maximises a bubble response:
+A [`NeuralPulse`][jbubble.pulse.neural.NeuralPulse] lets a neural network define the waveform: the network maps the normalised time $(t - t_0)/T$, from 0 to 1 across the window, to the pressure in units of `pressure_scale`. Its weights are parameters that you can optimise, for example to design a drive that maximises a bubble response:
 
 ```{.python continuation}
 import equinox as eqx
@@ -177,9 +144,7 @@ net = eqx.nn.MLP(in_size=1, out_size=1, width_size=32, depth=2, key=jax.random.k
 learned = NeuralPulse(net=net, pulse_duration=5e-6, pressure_scale=100e3)
 ```
 
-`pulse_duration` and `pressure_scale` are fixed configuration, not
-trainable parameters. To scale a neural pulse by a traced value, multiply
-it, as in the next section.
+`pulse_duration` and `pressure_scale` are fixed configuration, not trainable parameters. To scale a neural pulse by a traced value, multiply it, as in the next section.
 
 ## Combine pulses
 
@@ -200,15 +165,11 @@ smooth_dual = dual.windowed(HannEnvelope())  # windows the sum
 print(type(dual).__name__, type(half).__name__, f"{float(dual.duration) * 1e6:.0f} µs")
 ```
 
-Each part of a sum keeps its own envelope and timing, so a delayed part
-starts on time. A sum has no window of its own until you call `windowed`.
+Each part of a sum keeps its own envelope and timing, so a delayed part starts on time. A sum has no window of its own until you call `windowed`.
 
 ## Simulate with a pulse and differentiate it
 
-Any pulse drives any equation of motion. Because the pulse is part of the
-model, `jax.grad` differentiates a simulated quantity with respect to its
-parameters. The following code computes how the peak radius of a 2 µm
-lipid-coated bubble responds to the drive amplitude:
+Any pulse drives any equation of motion. Because the pulse is part of the model, `jax.grad` differentiates a simulated quantity with respect to its parameters. The following code computes how the peak radius of a 2 µm lipid-coated bubble responds to the drive amplitude:
 
 ```{.python continuation}
 from jbubble import run_simulation
@@ -226,6 +187,4 @@ value, slope = jax.value_and_grad(peak_ratio)(1.0)
 print(f"peak R/R0 = {value:.3f}, d(peak R/R0)/dk = {slope:.3f}")
 ```
 
-For the pulse shapes, the algebra, and simulations under each kind of
-pulse, with plots, see the example
-[Driving pulses](../examples/02_driving_pulses.md).
+For the pulse shapes, the algebra, and simulations under each kind of pulse, with plots, see the example [Driving pulses](../examples/02_driving_pulses.md).

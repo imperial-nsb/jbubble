@@ -4,81 +4,43 @@ Instructions for AI coding agents working on jbubble.
 
 ## Environment
 
-Use uv. `uv sync` creates `.venv/` from `uv.lock` with Python 3.13, the `io`
-and `examples` extras, and the `dev` dependency group. Prefix every Python
-command, test run, and example with `uv run`:
+Use uv. `uv sync` creates `.venv/` from `uv.lock` with Python 3.13, the `examples` extra, and the `dev` dependency group. Prefix every Python command, test run, and example with `uv run`:
 
 ```bash
 uv sync
 MPLBACKEND=Agg uv run python examples/01_first_simulation.py
 ```
 
-Set `MPLBACKEND=Agg` when you run an example. Every example calls `plt.show()`,
-which otherwise opens a window and blocks until someone closes it.
+Set `MPLBACKEND=Agg` when you run an example. Every example calls `plt.show()`, which otherwise opens a window and blocks until someone closes it.
 
-Don't use the old `bubbles` conda environment: it runs Python 3.11, and jbubble
-needs Python 3.13 or later.
+Don't use the old `bubbles` conda environment: it runs Python 3.11, and jbubble needs Python 3.13 or later.
 
-After you change dependencies in `pyproject.toml`, run `uv lock` and commit
-`uv.lock` with the change.
+After you change dependencies in `pyproject.toml`, run `uv lock` and commit `uv.lock` with the change.
 
 ## Coding conventions
 
-- **JAX-only numerics:** use `jnp` (not `np`) in model code. Keep everything
-  JAX-traceable.
-- **No host callbacks in traced code:** never call `jax.debug.callback`,
-  `jax.pure_callback`, or `jax.experimental.io_callback` in library code that
-  runs under tracing. A callback that runs JAX operations can deadlock batched
-  runs. To validate parameters, check concrete values at construction in plain
-  Python or NumPy, and skip traced values. Tests assert that the jaxpr of
-  `run_simulation` contains no `debug_callback`.
-- **Property fields:** all `Property` fields use `eqx.field(converter=as_property)` —
-  accepts plain `float` or a `Property` instance.
-- **EoM return type:** `__call__` always returns
-  `BubbleState(R=R_dot, R_dot=R_ddot)`. Omitted fields (R0, P_gas0) default to
-  zero derivative.
-- **Autodiff for derivatives:** use `jax.grad` inside EoMs; never hand-code
-  analytical derivatives.
-- **Field ordering:** fields with defaults must follow fields without defaults
-  (standard dataclass rule).
-- **Docstrings:** Markdown-flavoured numpy style. Document `eqx.Module`
-  fields in a `Parameters` section, with units in square brackets. Write
-  the governing equation as `$$` LaTeX display math (`$...$` inline) in a
-  raw docstring, `r"""..."""`; ruff rule D301 flags a docstring that
-  contains a backslash and isn't raw. Link jbubble objects with autorefs,
-  such as ``[`KellerMiksis`][jbubble.bubble.eom.KellerMiksis]``; write
-  third-party objects in plain backticks. Use fenced ```` ```python ````
-  blocks for code samples, not reST `::` blocks or roles. Cite the source of
-  every physical default value, such as a preset parameter.
-- **Public names:** list each module's public names in its `__all__`, and add
-  a `::: dotted.path` directive for each one to the matching page in
-  `docs/api/`. `tests/test_docs_api_coverage.py` fails when one is missing.
-- **No barrel re-exports:** subpackage classes are NOT re-exported from
-  `jbubble/__init__.py`. Users import from their subpackage
-  (`jbubble.bubble.eom`, `jbubble.pulse`, etc.). Only top-level orchestration
-  functions (`run_simulation`, `fit_parameters`, `SaveSpec`, etc.) live at the
-  package root.
+- **JAX-only numerics:** use `jnp` (not `np`) in model code. Keep everything JAX-traceable.
+- **No host callbacks in traced code:** never call `jax.debug.callback`, `jax.pure_callback`, or `jax.experimental.io_callback` in library code that runs under tracing. A callback that runs JAX operations can deadlock batched runs. To validate parameters, check concrete values at construction in plain Python or NumPy, and skip traced values. Tests assert that the jaxpr of `run_simulation` contains no `debug_callback`.
+- **Property fields:** all `Property` fields use `eqx.field(converter=as_property)` — accepts plain `float` or a `Property` instance.
+- **EoM return type:** `__call__` always returns `BubbleState(R=R_dot, R_dot=R_ddot)`. Omitted fields (R0, P_gas0) default to zero derivative.
+- **Autodiff for derivatives:** use `jax.grad` inside EoMs; never hand-code analytical derivatives.
+- **Field ordering:** fields with defaults must follow fields without defaults (standard dataclass rule).
+- **Docstrings:** Markdown-flavoured numpy style. Document `eqx.Module` fields in a `Parameters` section, with units in square brackets. Write the governing equation as `$$` LaTeX display math (`$...$` inline) in a raw docstring, `r"""..."""`; ruff rule D301 flags a docstring that contains a backslash and isn't raw. Link jbubble objects with autorefs, such as ``[`KellerMiksis`][jbubble.bubble.eom.KellerMiksis]``; write third-party objects in plain backticks. Use fenced ```` ```python ```` blocks for code samples, not reST `::` blocks or roles. Cite the source of every physical default value, such as a preset parameter.
+- **Public names:** list each module's public names in its `__all__`, and add a `::: dotted.path` directive for each one to the matching page in `docs/api/`. `tests/test_docs_api_coverage.py` fails when one is missing.
+- **No barrel re-exports:** subpackage classes are NOT re-exported from `jbubble/__init__.py`. Users import from their subpackage (`jbubble.bubble.eom`, `jbubble.pulse`, etc.). Only top-level orchestration functions (`run_simulation`, `fit_parameters`, `SaveSpec`, etc.) live at the package root.
+
+- **Markdown prose:** don't hard-wrap. Write each paragraph or list item on one line, in Markdown files and in the Markdown cells of examples. Code blocks, tables, and HTML keep their own line breaks.
 
 ## Examples
 
-Each file in `examples/` is a self-contained
-[jupytext](https://jupytext.readthedocs.io/) percent-format script that also
-runs as a plain Python script. `scripts/build_examples.py` turns each one into
-a gallery page and a Colab notebook.
+Each file in `examples/` is a self-contained [jupytext](https://jupytext.readthedocs.io/) percent-format script that also runs as a plain Python script. `scripts/build_examples.py` turns each one into a gallery page and a Colab notebook.
 
-- Start each code cell with `# %%` and each narrative cell with
-  `# %% [markdown]`. Create, draw, and show each figure in one cell, ending
-  with `plt.show()`.
+- Start each code cell with `# %%` and each narrative cell with `# %% [markdown]`. Create, draw, and show each figure in one cell, ending with `plt.show()`.
 - Call `plt.style.use("jbubble.style.light")` after you import Matplotlib.
-- Colour by role: `C0` for the bubble, `C1` to `C3` for comparisons, and the
-  driving pulse in grey on its own axes. Plot at most four categorical series
-  on one set of axes.
-- Keep the default runtime under about 60 s on a laptop CPU. When an example
-  does heavy work, read the `JBUBBLE_QUICK` environment variable, and shrink
-  the work when it's `1`, for quick checks.
+- Colour by role: `C0` for the bubble, `C1` to `C3` for comparisons, and the driving pulse in grey on its own axes. Plot at most four categorical series on one set of axes.
+- Keep the default runtime under about 60 s on a laptop CPU. When an example does heavy work, read the `JBUBBLE_QUICK` environment variable, and shrink the work when it's `1`, for quick checks.
 - Print a short summary of the key numbers.
-- Don't hard-code output paths or save files, unless the example is about file
-  input and output; then write to a temporary directory.
+- Don't hard-code output paths or save files, unless the example is about file input and output; then write to a temporary directory.
 
 ## Docs
 
@@ -96,17 +58,11 @@ uv run zensical build --clean --strict
 uv run pytest --markdown-docs --markdown-docs-syntax=superfences README.md docs/guide
 ```
 
-`scripts/make_readme_assets.py` generates the README figures in
-`docs/assets/readme/`. The README links to them by absolute URL on `main`, so
-never rename a file that a released README references.
+`scripts/make_readme_assets.py` generates the README figures in `docs/assets/readme/`. The README links to them by absolute URL on `main`, so never rename a file that a released README references.
 
 ## Changelog and commits
 
-Add each user-visible change to the top, unreleased section of `CHANGELOG.md`,
-in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. List
-each breaking change under "Upgrading" with what users need to change. Write
-commit messages as [Conventional Commits](https://www.conventionalcommits.org/),
-such as `fix(pulse): ...` or `feat(solver)!: ...`.
+Add each user-visible change to the top, unreleased section of `CHANGELOG.md`, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. List each breaking change under "Upgrading" with what users need to change. Write commit messages as [Conventional Commits](https://www.conventionalcommits.org/), such as `fix(pulse): ...` or `feat(solver)!: ...`.
 
 ## Testing
 

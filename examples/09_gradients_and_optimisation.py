@@ -1,11 +1,7 @@
 # %% [markdown]
 # # Gradients and optimisation
 #
-# Every jbubble simulation is a JAX function, so `jax.grad` differentiates any
-# scalar result with respect to any model input, straight through the ODE
-# solve. In this example, you check a gradient against finite differences,
-# compute a whole sensitivity curve in one `jax.vmap(jax.grad(...))` call, and
-# use the gradient to climb a response map with an optax optimiser.
+# Every jbubble simulation is a JAX function, so `jax.grad` differentiates any scalar result with respect to any model input, straight through the ODE solve. In this example, you check a gradient against finite differences, compute a whole sensitivity curve in one `jax.vmap(jax.grad(...))` call, and use the gradient to climb a response map with an optax optimiser.
 
 # %%
 import os
@@ -36,16 +32,9 @@ QUICK = os.environ.get("JBUBBLE_QUICK") == "1"
 # %% [markdown]
 # ## A differentiable response
 #
-# The model is a free air bubble in water, solved with the Keller-Miksis
-# equation and driven by a six-cycle, Hann-windowed tone burst. The response
-# is the peak expansion $R_\text{max}/R_0$.
+# The model is a free air bubble in water, solved with the Keller-Miksis equation and driven by a six-cycle, Hann-windowed tone burst. The response is the peak expansion $R_\text{max}/R_0$.
 #
-# `jnp.max` passes its gradient through one saved sample only, so the
-# gradient jumps whenever a different sample becomes the largest. A soft
-# maximum, $\frac{1}{\beta}\log\frac{1}{N}\sum_i e^{\beta r_i}$, blends the
-# samples near the peak and gives a smoother objective. It sits slightly
-# below the true maximum, by at most $\log(N)/\beta$: about 0.1 for
-# $N = 256$ samples and $\beta = 50$.
+# `jnp.max` passes its gradient through one saved sample only, so the gradient jumps whenever a different sample becomes the largest. A soft maximum, $\frac{1}{\beta}\log\frac{1}{N}\sum_i e^{\beta r_i}$, blends the samples near the peak and gives a smoother objective. It sits slightly below the true maximum, by at most $\log(N)/\beta$: about 0.1 for $N = 256$ samples and $\beta = 50$.
 
 # %%
 SAVE_SPEC = SaveSpec(256)
@@ -80,11 +69,7 @@ def response(params):
 # %% [markdown]
 # ## Check a gradient against finite differences
 #
-# `jax.grad(response)` returns a dict with the same keys as its input, one
-# derivative per model input. The following cell compares each derivative
-# with a central finite difference. To compare inputs with different units,
-# it prints the relative sensitivity $x\,\partial y/\partial x$: the change in
-# $R_\text{max}/R_0$ for a 100 % change in $x$.
+# `jax.grad(response)` returns a dict with the same keys as its input, one derivative per model input. The following cell compares each derivative with a central finite difference. To compare inputs with different units, it prints the relative sensitivity $x\,\partial y/\partial x$: the change in $R_\text{max}/R_0$ for a 100 % change in $x$.
 
 # %%
 params = {"freq": 1.5e6, "R0": 2e-6, "pressure": 80e3, "mu": 1e-3}
@@ -106,16 +91,11 @@ for name, x in params.items():
     )
 
 # %% [markdown]
-# The two agree to about $10^{-4}$, within the accuracy that the default
-# solver tolerances allow. One `jax.grad` call returns every derivative at
-# once, whereas finite differences need two simulations per input.
+# The two agree to about $10^{-4}$, within the accuracy that the default solver tolerances allow. One `jax.grad` call returns every derivative at once, whereas finite differences need two simulations per input.
 #
 # ## Map sensitivities with `vmap(grad)`
 #
-# `jax.vmap` maps the gradient over a batch of inputs. The following cell
-# computes the response and its derivative with respect to the driving
-# frequency at once, for every frequency in the sweep. The derivative crosses
-# zero at the resonance peak.
+# `jax.vmap` maps the gradient over a batch of inputs. The following cell computes the response and its derivative with respect to the driving frequency at once, for every frequency in the sweep. The derivative crosses zero at the resonance peak.
 
 # %%
 freqs = jnp.linspace(0.5e6, 3.0e6, 40 if QUICK else 120)
@@ -160,19 +140,13 @@ plt.show()
 # %% [markdown]
 # ## Climb a response map with optax
 #
-# Suppose you want the bubble size and driving frequency that give the
-# largest expansion. Over frequency $f$ and radius $R_0$ at a fixed pressure,
-# the response has no single peak: the resonance ridge keeps rising toward
-# large bubbles at low frequency. A real transducer delivers its rated pressure
-# only within its passband, here a Gaussian centred on 1.5 MHz:
+# Suppose you want the bubble size and driving frequency that give the largest expansion. Over frequency $f$ and radius $R_0$ at a fixed pressure, the response has no single peak: the resonance ridge keeps rising toward large bubbles at low frequency. A real transducer delivers its rated pressure only within its passband, here a Gaussian centred on 1.5 MHz:
 #
 # $$
 # p(f) = p_0 \exp\left[-\frac{1}{2}\left(\frac{f - f_c}{\Delta f}\right)^2\right].
 # $$
 #
-# The passband turns the ridge into a single peak. The following cell maps the
-# objective with [`GridSweep`](https://imperial-nsb.github.io/jbubble/api/utils/#jbubble.utils.gridsweep.GridSweep),
-# which evaluates `objective` over the grid in parallel batches.
+# The passband turns the ridge into a single peak. The following cell maps the objective with [`GridSweep`](https://imperial-nsb.github.io/jbubble/api/utils/#jbubble.utils.gridsweep.GridSweep), which evaluates `objective` over the grid in parallel batches.
 
 # %%
 P0, F_CENTRE, BANDWIDTH = 80e3, 1.5e6, 0.45e6  # [Pa], [Hz], [Hz]
@@ -206,14 +180,7 @@ print(
 )
 
 # %% [markdown]
-# The climb starts from a poor guess, a 4.2 µm bubble at 2.7 MHz, far up the
-# flat shoulder of the map. Each [`Parameter`](https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.Parameter)
-# keeps its value inside the map's range. The optimiser updates an
-# unconstrained coordinate of order one, and
-# [`unwrap`](https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.unwrap) turns it
-# back into physical units, so one learning rate suits both a frequency in
-# hertz and a radius in metres. `eqx.partition` separates the arrays that the
-# optimiser updates from the bounds, which stay fixed.
+# The climb starts from a poor guess, a 4.2 µm bubble at 2.7 MHz, far up the flat shoulder of the map. Each [`Parameter`](https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.Parameter) keeps its value inside the map's range. The optimiser updates an unconstrained coordinate of order one, and [`unwrap`](https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.unwrap) turns it back into physical units, so one learning rate suits both a frequency in hertz and a radius in metres. `eqx.partition` separates the arrays that the optimiser updates from the bounds, which stay fixed.
 
 # %%
 start_point = {
@@ -304,15 +271,6 @@ ax_h.legend(loc="lower right")
 plt.show()
 
 # %% [markdown]
-# The objective barely changes for the first 20 steps, yet the path crosses
-# the flat shoulder of the map at a steady pace: Adam divides each step by
-# the recent size of the gradient, so even a tiny gradient moves it. The path
-# then turns along the ridge and reaches the peak after a few dozen
-# simulations and their gradients, whereas the map needs one simulation per
-# grid point. With a constant learning rate, Adam keeps oscillating slightly
-# about the peak; a decaying learning rate, such as
-# `optax.cosine_decay_schedule`, settles it.
+# The objective barely changes for the first 20 steps, yet the path crosses the flat shoulder of the map at a steady pace: Adam divides each step by the recent size of the gradient, so even a tiny gradient moves it. The path then turns along the ridge and reaches the peak after a few dozen simulations and their gradients, whereas the map needs one simulation per grid point. With a constant learning rate, Adam keeps oscillating slightly about the peak; a decaying learning rate, such as `optax.cosine_decay_schedule`, settles it.
 #
-# To fit model parameters to measured data instead of maximising a response,
-# use [`fit_parameters`](https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.fit_parameters),
-# which wraps this loop and retries failed steps. Examples 10 and 11 use it.
+# To fit model parameters to measured data instead of maximising a response, use [`fit_parameters`](https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.fit_parameters), which wraps this loop and retries failed steps. Examples 10 and 11 use it.

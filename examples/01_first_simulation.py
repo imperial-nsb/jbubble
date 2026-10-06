@@ -1,14 +1,9 @@
 # %% [markdown]
 # # Your first bubble simulation
 #
-# Simulate a gas microbubble driven by a short ultrasound pulse. You run a
-# preset in five lines, build the same model from its parts, and then compile
-# the simulation once so that every later run takes milliseconds.
+# Simulate a gas microbubble driven by a short ultrasound pulse. You run a preset in five lines, build the same model from its parts, and then compile the simulation once so that every later run takes milliseconds.
 #
-# Each example in this series runs as a plain Python script or as a notebook.
-# The figures use jbubble's Matplotlib style: the bubble is blue, comparisons
-# use the next colours in the cycle, and the acoustic drive is grey on its
-# own axes.
+# Each example in this series runs as a plain Python script or as a notebook. The figures use jbubble's Matplotlib style: the bubble is blue, comparisons use the next colours in the cycle, and the acoustic drive is grey on its own axes.
 
 # %%
 import time
@@ -24,11 +19,7 @@ DRIVE = "#8c959f"  # neutral grey for the acoustic drive in the light theme
 # %% [markdown]
 # ## Run a preset
 #
-# A preset returns an equation of motion, `eom`, and a driving pulse.
-# `free_bubble` describes an uncoated 2 µm air bubble in water with the
-# Keller-Miksis equation, driven by a five-cycle, 1 MHz, 100 kPa tone burst.
-# `run_simulation` integrates the equation of motion and returns the
-# trajectory in SI units.
+# A preset returns an equation of motion, `eom`, and a driving pulse. `free_bubble` describes an uncoated 2 µm air bubble in water with the Keller-Miksis equation, driven by a five-cycle, 1 MHz, 100 kPa tone burst. `run_simulation` integrates the equation of motion and returns the trajectory in SI units.
 
 # %%
 from jbubble import run_simulation
@@ -39,18 +30,9 @@ result = run_simulation(eom, pulse)
 print(f"Peak radius: {result.radius.max() * 1e6:.2f} µm from R0 = 2 µm")
 
 # %% [markdown]
-# The result holds the sample times `result.ts`, the radius `result.radius`,
-# the wall velocity `result.radial_velocity`, and the pressure that drives
-# the bubble, `result.driving_pressure`. By default, `run_simulation` records
-# 1024 samples from $t = 0$ to `pulse.t_end`, which is twice the pulse
-# duration after the pulse starts, so you also see the bubble ring down after
-# the drive stops.
+# The result holds the sample times `result.ts`, the radius `result.radius`, the wall velocity `result.radial_velocity`, and the pressure that drives the bubble, `result.driving_pressure`. By default, `run_simulation` records 1024 samples from $t = 0$ to `pulse.t_end`, which is twice the pulse duration after the pulse starts, so you also see the bubble ring down after the drive stops.
 #
-# Plot the drive above the radius, which you divide by the equilibrium
-# radius $R_0$. The radius doesn't follow the drive like a sine wave. A 2 µm
-# bubble in water resonates near 2 MHz, so the 1 MHz drive also excites its
-# second harmonic, and the bubble keeps ringing at its resonance frequency
-# after the pulse ends.
+# Plot the drive above the radius, which you divide by the equilibrium radius $R_0$. The radius doesn't follow the drive like a sine wave. A 2 µm bubble in water resonates near 2 MHz, so the 1 MHz drive also excites its second harmonic, and the bubble keeps ringing at its resonance frequency after the pulse ends.
 
 # %%
 t_us = result.ts * 1e6
@@ -69,11 +51,7 @@ plt.show()
 # %% [markdown]
 # ## Build the same model from parts
 #
-# An equation of motion combines three physical parts: a gas model for the
-# pressure inside the bubble, a shell model for the coating at its wall, and
-# a medium model for the liquid around it. A pulse combines a carrier shape
-# with a frequency, an amplitude, and a number of cycles. The preset above
-# assembles exactly these parts.
+# An equation of motion combines three physical parts: a gas model for the pressure inside the bubble, a shell model for the coating at its wall, and a medium model for the liquid around it. A pulse combines a carrier shape with a frequency, an amplitude, and a number of cycles. The preset above assembles exactly these parts.
 
 # %%
 from jbubble.bubble.eom import KellerMiksis
@@ -103,10 +81,7 @@ print(
 print(water)
 
 # %% [markdown]
-# Models are immutable [Equinox](https://docs.kidger.site/equinox/) modules,
-# so you change a part by building a new model. `eqx.tree_at` copies a model
-# with one part replaced. Here the liquid becomes four times as viscous as
-# water, which damps the oscillation and lowers the peak radius.
+# Models are immutable [Equinox](https://docs.kidger.site/equinox/) modules, so you change a part by building a new model. `eqx.tree_at` copies a model with one part replaced. Here the liquid becomes four times as viscous as water, which damps the oscillation and lowers the peak radius.
 
 # %%
 viscous = eqx.tree_at(lambda m: m.medium, water, NewtonianMedium(mu=4e-3))
@@ -130,14 +105,9 @@ plt.show()
 # %% [markdown]
 # ## Compile once, run many times
 #
-# `jax.jit` compiles a function the first time you call it and reuses the
-# compiled code for every later call whose arguments have the same structure:
-# the same model classes and the same array shapes. Parameter values, such as
-# the pressure, can change freely. A different structure, such as a `Square`
-# carrier in place of `Sine`, triggers a new compilation.
+# `jax.jit` compiles a function the first time you call it and reuses the compiled code for every later call whose arguments have the same structure: the same model classes and the same array shapes. Parameter values, such as the pressure, can change freely. A different structure, such as a `Square` carrier in place of `Sine`, triggers a new compilation.
 #
-# JAX runs asynchronously, so call `block_until_ready()` before you stop the
-# clock.
+# JAX runs asynchronously, so call `block_until_ready()` before you stop the clock.
 
 # %%
 sim = jax.jit(run_simulation)

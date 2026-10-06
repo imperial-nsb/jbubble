@@ -1,11 +1,7 @@
 # %% [markdown]
 # # Fit shell parameters to radius curves
 #
-# Estimate the elasticity and the dilatational viscosity of a lipid shell from
-# noisy radius-time curves recorded at three driving pressures. In this
-# example, you declare the unknowns with `Parameter` bounds, fit all three
-# recordings at once with `fit_parameters`, and look at the loss landscape
-# that the optimiser walks across.
+# Estimate the elasticity and the dilatational viscosity of a lipid shell from noisy radius-time curves recorded at three driving pressures. In this example, you declare the unknowns with `Parameter` bounds, fit all three recordings at once with `fit_parameters`, and look at the loss landscape that the optimiser walks across.
 
 # %%
 import os
@@ -31,14 +27,7 @@ QUICK = os.environ.get("JBUBBLE_QUICK") == "1"
 # %% [markdown]
 # ## Make stand-in measurements
 #
-# In a real study, an ultra-high-speed camera records the radius of one
-# bubble at several driving pressures. Here, the
-# [`lipid_bubble`](https://imperial-nsb.github.io/jbubble/api/utils/#jbubble.utils.presets.lipid_bubble)
-# preset plays the bubble: a 2 µm SF6 bubble with a smoothed Marmottant lipid
-# shell, driven by a five-cycle 1 MHz tone burst. Its shell elasticity
-# `chi` and dilatational viscosity `kappa_s` are the values to recover.
-# Gaussian noise of 20 nm, 1 % of the radius, stands in for the camera's
-# measurement error.
+# In a real study, an ultra-high-speed camera records the radius of one bubble at several driving pressures. Here, the [`lipid_bubble`](https://imperial-nsb.github.io/jbubble/api/utils/#jbubble.utils.presets.lipid_bubble) preset plays the bubble: a 2 µm SF6 bubble with a smoothed Marmottant lipid shell, driven by a five-cycle 1 MHz tone burst. Its shell elasticity `chi` and dilatational viscosity `kappa_s` are the values to recover. Gaussian noise of 20 nm, 1 % of the radius, stands in for the camera's measurement error.
 
 # %%
 R0 = 2e-6  # equilibrium radius, measured optically [m]
@@ -60,22 +49,12 @@ for i, pressure in enumerate(PRESSURES):
 # %% [markdown]
 # ## Describe the model and the loss
 #
-# [`fit_parameters`](https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.fit_parameters)
-# needs two functions. Both receive one entry of `conditions`, that is, one
-# recording, as their second argument:
+# [`fit_parameters`](https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.fit_parameters) needs two functions. Both receive one entry of `conditions`, that is, one recording, as their second argument:
 #
-# - `make_model(params, condition)` returns the `(eom, pulse)` pair to
-#   simulate. `lipid_bubble` returns exactly such a pair, so the preset is
-#   the whole model.
-# - `loss_fn(result, condition)` compares the simulation with the recording.
-#   [`normalised_mse_radius`](https://imperial-nsb.github.io/jbubble/api/metrics/#jbubble.metrics.normalised_mse_radius)
-#   divides the mean squared error by $R_0^2$, so the loss is dimensionless.
-#   With a perfect model, it settles at the noise level,
-#   $(\sigma_\text{noise}/R_0)^2 = 10^{-4}$.
+# - `make_model(params, condition)` returns the `(eom, pulse)` pair to simulate. `lipid_bubble` returns exactly such a pair, so the preset is the whole model.
+# - `loss_fn(result, condition)` compares the simulation with the recording. [`normalised_mse_radius`](https://imperial-nsb.github.io/jbubble/api/metrics/#jbubble.metrics.normalised_mse_radius) divides the mean squared error by $R_0^2$, so the loss is dimensionless. With a perfect model, it settles at the noise level, $(\sigma_\text{noise}/R_0)^2 = 10^{-4}$.
 #
-# `fit_parameters` averages the loss over the recordings. Recordings at
-# several pressures constrain the shared shell parameters far better than one
-# recording does.
+# `fit_parameters` averages the loss over the recordings. Recordings at several pressures constrain the shared shell parameters far better than one recording does.
 
 
 # %%
@@ -95,18 +74,9 @@ def loss_fn(result, condition):
 # %% [markdown]
 # ## Declare the parameters and fit
 #
-# `chi` is about 0.5 N/m and `kappa_s` about $10^{-8}$ N s/m, so no single
-# learning rate suits both raw values. Wrap each in a
-# [`Parameter`](https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.Parameter)
-# instead. The optimiser then updates a coordinate of order one, so a
-# learning rate of 0.1 changes each value by about 10 % per step at first,
-# and a cosine-decay schedule shrinks the steps so that the fit settles. The
-# bounds keep both values physical: `kappa_s` stays positive, and `chi` stays
-# between 0 and 2 N/m.
+# `chi` is about 0.5 N/m and `kappa_s` about $10^{-8}$ N s/m, so no single learning rate suits both raw values. Wrap each in a [`Parameter`](https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.Parameter) instead. The optimiser then updates a coordinate of order one, so a learning rate of 0.1 changes each value by about 10 % per step at first, and a cosine-decay schedule shrinks the steps so that the fit settles. The bounds keep both values physical: `kappa_s` stays positive, and `chi` stays between 0 and 2 N/m.
 #
-# The fit starts from a poor guess, with `chi` three times too small and
-# `kappa_s` almost three times too large. `step_callback` records the
-# parameters after every step, in physical units.
+# The fit starts from a poor guess, with `chi` three times too small and `kappa_s` almost three times too large. `step_callback` records the parameters after every step, in physical units.
 
 # %%
 params0 = {
@@ -144,15 +114,11 @@ print(
 )
 
 # %% [markdown]
-# Both values come back to within 1 %, and the final loss sits at the noise
-# level: the model explains everything in the data except the noise.
+# Both values come back to within 1 %, and the final loss sits at the noise level: the model explains everything in the data except the noise.
 #
 # ## Look at the loss landscape
 #
-# The following cell evaluates the same loss, averaged over the three
-# recordings, on a grid of `chi` and `kappa_s` values with
-# [`GridSweep`](https://imperial-nsb.github.io/jbubble/api/utils/#jbubble.utils.gridsweep.GridSweep),
-# and draws the optimiser's path on it.
+# The following cell evaluates the same loss, averaged over the three recordings, on a grid of `chi` and `kappa_s` values with [`GridSweep`](https://imperial-nsb.github.io/jbubble/api/utils/#jbubble.utils.gridsweep.GridSweep), and draws the optimiser's path on it.
 
 # %%
 radii = jnp.stack([c["radius"] for c in conditions])
@@ -235,15 +201,11 @@ ax_h.set_title("Convergence")
 plt.show()
 
 # %% [markdown]
-# The valley is longer along `chi` than along `kappa_s`, so these
-# recordings pin down the viscosity more tightly than the elasticity. The
-# path overshoots and circles the minimum before the decaying learning rate
-# lets it settle.
+# The valley is longer along `chi` than along `kappa_s`, so these recordings pin down the viscosity more tightly than the elasticity. The path overshoots and circles the minimum before the decaying learning rate lets it settle.
 #
 # ## Compare the fitted curves with the data
 #
-# `fit.result` holds one `SimulationResult` per recording, simulated with the
-# fitted parameters.
+# `fit.result` holds one `SimulationResult` per recording, simulated with the fitted parameters.
 
 # %%
 guess = {name: p.value for name, p in params0.items()}
@@ -265,20 +227,10 @@ plt.show()
 # %% [markdown]
 # ## Fit other kinds of data
 #
-# `loss_fn` receives the full simulation result, so the same recipe fits any
-# differentiable quantity:
+# `loss_fn` receives the full simulation result, so the same recipe fits any differentiable quantity:
 #
-# - **Hydrophone signals.** Compute the radiated pressure inside `loss_fn`
-#   with an emission model such as
-#   [`IncompressibleMonopole`](https://imperial-nsb.github.io/jbubble/api/acoustics/#jbubble.acoustics.emission.IncompressibleMonopole),
-#   and compare it with the measured signal with
-#   [`normalised_mse_emission`](https://imperial-nsb.github.io/jbubble/api/metrics/#jbubble.metrics.normalised_mse_emission).
-# - **Camera frames at their own times.** Interpolate the simulated radius
-#   onto the frame times with `jnp.interp`.
-# - **Per-bubble values.** Fit each bubble's own `R0` with an array
-#   `Parameter` and an index in each condition.
+# - **Hydrophone signals.** Compute the radiated pressure inside `loss_fn` with an emission model such as [`IncompressibleMonopole`](https://imperial-nsb.github.io/jbubble/api/acoustics/#jbubble.acoustics.emission.IncompressibleMonopole), and compare it with the measured signal with [`normalised_mse_emission`](https://imperial-nsb.github.io/jbubble/api/metrics/#jbubble.metrics.normalised_mse_emission).
+# - **Camera frames at their own times.** Interpolate the simulated radius onto the frame times with `jnp.interp`.
+# - **Per-bubble values.** Fit each bubble's own `R0` with an array `Parameter` and an index in each condition.
 #
-# The [fitting guide](https://imperial-nsb.github.io/jbubble/guide/fitting/)
-# shows each of these, plus Levenberg-Marquardt fits and uncertainty
-# estimates. To learn a whole surface-tension law instead of two numbers,
-# see example 11.
+# The [fitting guide](https://imperial-nsb.github.io/jbubble/guide/fitting/) shows each of these, plus Levenberg-Marquardt fits and uncertainty estimates. To learn a whole surface-tension law instead of two numbers, see example 11.

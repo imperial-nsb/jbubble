@@ -1,16 +1,8 @@
 # Examples
 
-These 11 scripts take you from a first simulation to learning a shell law
-from data. Each one is self-contained, prints a short summary of its key
-numbers, and draws its figures with jbubble's Matplotlib style.
+These 11 scripts take you from a first simulation to learning a shell law from data. Each one is self-contained, prints a short summary of its key numbers, and draws its figures with jbubble's Matplotlib style.
 
-The scripts use the [Jupytext](https://jupytext.readthedocs.io/) percent
-format: a `# %%` line starts a code cell, and a `# %% [markdown]` line starts
-a cell of narrative text. You can run a script with `python`, step through its
-cells in an editor that supports them, such as VS Code or PyCharm, or open it
-as a notebook in Google Colab. The
-[example gallery](https://imperial-nsb.github.io/jbubble/examples/) shows
-every example with its output.
+The scripts use the [Jupytext](https://jupytext.readthedocs.io/) percent format: a `# %%` line starts a code cell, and a `# %% [markdown]` line starts a cell of narrative text. You can run a script with `python`, step through its cells in an editor that supports them, such as VS Code or PyCharm, or open it as a notebook in Google Colab. The [example gallery](https://imperial-nsb.github.io/jbubble/examples/) shows every example with its output.
 
 ## Run an example
 
@@ -30,28 +22,21 @@ every example with its output.
 
    In a uv project, prefix the command with `uv run`.
 
-Each figure opens in a window, and the script continues when you close it.
-To run an example without windows, for example over SSH or in continuous
-integration (CI), set the environment variable `MPLBACKEND=Agg`.
+Each figure opens in a window, and the script continues when you close it. To run an example without windows, for example over SSH or in continuous integration (CI), set the environment variable `MPLBACKEND=Agg`.
 
 ## Run a quick version
 
-The heavier examples read the environment variable `JBUBBLE_QUICK`. To shrink
-their sweeps and training loops so that they finish sooner, set it
-to `1`:
+The heavier examples read the environment variable `JBUBBLE_QUICK`. To shrink their sweeps and training loops so that they finish sooner, set it to `1`:
 
 ```bash
 JBUBBLE_QUICK=1 MPLBACKEND=Agg python examples/11_learn_shell_law.py
 ```
 
-The quick results are coarser, so use the default settings to reproduce the
-figures in the gallery.
+The quick results are coarser, so use the default settings to reproduce the figures in the gallery.
 
 ## All examples
 
-Runtimes are approximate, measured on a laptop CPU with the default
-settings, and include JAX compilation. The Colab notebooks run on a CPU
-runtime.
+Runtimes are approximate, measured on a laptop CPU with the default settings, and include JAX compilation. The Colab notebooks run on a CPU runtime.
 
 | # | Example | What you learn | Runtime | Notebook |
 |---|---------|----------------|---------|----------|

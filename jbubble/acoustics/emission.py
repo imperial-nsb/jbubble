@@ -67,13 +67,12 @@ class EmissionModel(eqx.Module, abc.ABC):
     Notes
     -----
     The radiated pressure of an inertial collapse is a very short spike.
-    For a 2 µm air bubble driven at 300 kPa and 1 MHz, the collapse peak
+    e.g., For a 2 µm air bubble driven at 300 kPa and 1 MHz, the collapse peak
     has a full width at half maximum of about 0.4 ns, and the default
     [`SaveSpec`][jbubble.solver.SaveSpec], 1024 samples over the 10 µs of
     a 5-cycle pulse, captures only about a tenth of its height. To resolve
     such peaks, sample the trajectory every 0.1 ns or more finely, for
-    example with `SaveSpec(num_samples=100_001)` over 10 µs. The solver
-    accuracy isn't the limit here: the sampling is.
+    example with `SaveSpec(num_samples=100_001)` over 10 µs.
     """
 
     @abc.abstractmethod

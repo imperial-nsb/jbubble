@@ -3,8 +3,7 @@
 #
 # Solve one bubble with three equations of motion, from the incompressible Rayleigh-Plesset equation to the Keller-Miksis equation, which accounts for the compressibility of the liquid. Then raise the drive pressure to see where stable oscillation gives way to inertial cavitation.
 #
-# All three equations share the same gas, shell, and medium models; they
-# differ in how they treat the liquid around the bubble.
+# All three equations share the same gas, shell, and medium models; they differ in how they treat the liquid around the bubble.
 
 # %%
 import os
@@ -33,16 +32,11 @@ QUICK = os.environ.get("JBUBBLE_QUICK") == "1"  # a smaller sweep for CI
 # %% [markdown]
 # ## Build three equations of motion
 #
-# - `RayleighPlesset` treats the liquid as incompressible. It has no way to
-#   lose energy to sound, so it overestimates violent growth and collapse.
-# - `ModifiedRayleighPlesset` adds a first-order correction for the sound
-#   that the gas pressure radiates, as in Marmottant et al. (2005).
-# - `KellerMiksis` keeps the liquid's compressibility to first order in the
-#   Mach number of the bubble wall. The presets use it.
+# - `RayleighPlesset` treats the liquid as incompressible. It has no way to lose energy to sound, so it overestimates violent growth and collapse.
+# - `ModifiedRayleighPlesset` adds a first-order correction for the sound that the gas pressure radiates, as in Marmottant et al. (2005).
+# - `KellerMiksis` keeps the liquid's compressibility to first order in the Mach number of the bubble wall. The presets use it.
 #
-# The bubble is a 2 µm air bubble in water. A van der Waals gas keeps the
-# collapse physical: the gas can't be compressed below the volume of its
-# molecules, a hard core of radius $R_0 / 8.86$. The liquid is water at 20 °C: `NewtonianMedium` defaults to a density of 998 kg/m³ and the conventional speed of sound of 1500 m/s.
+# The bubble is a 2 µm air bubble in water. A van der Waals gas keeps the collapse physical: the gas can't be compressed below the volume of its molecules, a hard core of radius $R_0 / 8.86$. The liquid is water at 20 °C: `NewtonianMedium` defaults to a density of 998 kg/m³ and the conventional speed of sound of 1500 m/s.
 
 # %%
 parts = dict(
@@ -62,10 +56,7 @@ models = {
 # %% [markdown]
 # ## Compare them at 400 kPa
 #
-# Drive the bubble with three cycles at 1 MHz and 400 kPa under a Hann
-# window. At this pressure the bubble grows to several times its size and
-# then collapses, which is where the equations disagree most. Record 4000
-# samples, because each collapse lasts only a few nanoseconds.
+# Drive the bubble with three cycles at 1 MHz and 400 kPa under a Hann window. At this pressure the bubble grows to several times its size and then collapses, which is where the equations disagree most. Record 4000 samples, because each collapse lasts only a few nanoseconds.
 
 # %%
 pulse = ToneBurst(
@@ -105,21 +96,13 @@ ax_r.legend(loc="upper left")
 plt.show()
 
 # %% [markdown]
-# Rayleigh-Plesset lets the bubble grow furthest, because an incompressible
-# liquid can't carry energy away as sound. The two equations that radiate sound agree closely at this pressure; they differ mainly in how deep each collapse goes. Keller-Miksis keeps compressibility only to first order in the wall Mach number, so treat its results with care when the wall approaches the speed of sound.
+# Rayleigh-Plesset lets the bubble grow furthest, because an incompressible liquid can't carry energy away as sound. The two equations that radiate sound agree closely at this pressure; they differ mainly in how deep each collapse goes. Keller-Miksis keeps compressibility only to first order in the wall Mach number, so treat its results with care when the wall approaches the speed of sound.
 #
 # ## Find the onset of inertial cavitation
 #
-# At low pressures the bubble oscillates gently around its equilibrium
-# radius for as long as the drive lasts: stable cavitation. Above a
-# threshold it grows to several times its size and collapses violently under
-# the inertia of the liquid that rushes in: inertial cavitation. A common
-# rule of thumb calls a collapse inertial when the bubble first grows to at
-# least twice its equilibrium radius.
+# At low pressures the bubble oscillates gently around its equilibrium radius for as long as the drive lasts: stable cavitation. Above a threshold it grows to several times its size and collapses violently under the inertia of the liquid that rushes in: inertial cavitation. A common rule of thumb calls a collapse inertial when the bubble first grows to at least twice its equilibrium radius.
 #
-# `jax.vmap` runs the Keller-Miksis model at every pressure in one compiled
-# call. A sweep function returns the peak radius together with the solver's
-# `converged` flag, so you can discard any run that failed.
+# `jax.vmap` runs the Keller-Miksis model at every pressure in one compiled call. A sweep function returns the peak radius together with the solver's `converged` flag, so you can discard any run that failed.
 
 # %%
 keller_miksis = models["Keller-Miksis"]
@@ -150,8 +133,7 @@ threshold = (
 print(f"Peak R/R0 first reaches 2 at about {threshold / 1e3:.0f} kPa")
 
 # %% [markdown]
-# Plot two runs on either side of the threshold beside the peak radius at
-# every pressure.
+# Plot two runs on either side of the threshold beside the peak radius at every pressure.
 
 # %%
 examples = {"stable, 60 kPa": 60e3, "inertial, 300 kPa": 300e3}

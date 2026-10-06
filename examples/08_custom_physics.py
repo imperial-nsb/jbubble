@@ -1,11 +1,7 @@
 # %% [markdown]
 # # Custom physics
 #
-# Add your own laws without touching jbubble. Subclass `Property` for a
-# state-dependent coefficient, subclass `MediumModel` for a new surrounding
-# medium, and plug both into `KellerMiksis`. Then replace a law that you
-# don't know with a neural network through `NeuralProperty`, and
-# differentiate a simulation with respect to its weights.
+# Add your own laws without touching jbubble. Subclass `Property` for a state-dependent coefficient, subclass `MediumModel` for a new surrounding medium, and plug both into `KellerMiksis`. Then replace a law that you don't know with a neural network through `NeuralProperty`, and differentiate a simulation with respect to its weights.
 
 # %%
 import equinox as eqx
@@ -31,16 +27,9 @@ DRIVE_COLOUR = "#8c959f"  # the light theme's neutral grey for the drive
 # %% [markdown]
 # ## A custom `Property`: a shear-thinning shell viscosity
 #
-# A `Property` is an Equinox module that maps a `BubbleState` to a scalar.
-# Every model field that takes a property, such as a shell's surface
-# tension `sigma` or its dilatational viscosity `kappa_s`, accepts your
-# subclass. Its fields are ordinary pytree leaves, so `jax.grad` reaches
-# them.
+# A `Property` is an Equinox module that maps a `BubbleState` to a scalar. Every model field that takes a property, such as a shell's surface tension `sigma` or its dilatational viscosity `kappa_s`, accepts your subclass. Its fields are ordinary pytree leaves, so `jax.grad` reaches them.
 #
-# Doinikov, Haac, and Dayton (2009) found that a lipid shell's viscosity
-# falls as the shell deforms faster. Their shear-thinning law depends on the
-# wall strain rate $\dot{R}/R$, so it reads both `state.R` and
-# `state.R_dot`. The parameter values here are illustrative.
+# Doinikov, Haac, and Dayton (2009) found that a lipid shell's viscosity falls as the shell deforms faster. Their shear-thinning law depends on the wall strain rate $\dot{R}/R$, so it reads both `state.R` and `state.R_dot`. The parameter values here are illustrative.
 
 
 # %%
@@ -86,13 +75,7 @@ def evaluate(law, R_ratio=1.0, strain_rate=0.0, R0=1e-6):
 # %% [markdown]
 # ## A custom `MediumModel`: Mooney-Rivlin tissue
 #
-# A medium returns the stress that the surroundings exert on the bubble
-# wall, split into a viscous and an elastic part. The built-in
-# `NeoHookeanMedium` saturates at $5G/2$ when the bubble grows. A
-# Mooney-Rivlin solid adds a term from the second strain invariant that
-# keeps stiffening, as in the nonlinear tissue models of Gaudron, Warnez,
-# and Johnsen (2015). With $C_1 = (1-\alpha)G/2$ and $C_2 = \alpha G/2$,
-# integrating its stress through the incompressible solid gives
+# A medium returns the stress that the surroundings exert on the bubble wall, split into a viscous and an elastic part. The built-in `NeoHookeanMedium` saturates at $5G/2$ when the bubble grows. A Mooney-Rivlin solid adds a term from the second strain invariant that keeps stiffening, as in the nonlinear tissue models of Gaudron, Warnez, and Johnsen (2015). With $C_1 = (1-\alpha)G/2$ and $C_2 = \alpha G/2$, integrating its stress through the incompressible solid gives
 #
 # $$
 # p_\text{elastic} = (1-\alpha)\,\frac{G}{2}\left[5 - 4\frac{R_0}{R}
@@ -100,8 +83,7 @@ def evaluate(law, R_ratio=1.0, strain_rate=0.0, R0=1e-6):
 #     + \alpha G\left[2\frac{R}{R_0} - 1 - \left(\frac{R_0}{R}\right)^2\right].
 # $$
 #
-# `alpha = 0` is the neo-Hookean solid, and every `alpha` has the same
-# small-strain modulus $G$.
+# `alpha = 0` is the neo-Hookean solid, and every `alpha` has the same small-strain modulus $G$.
 
 
 # %%
@@ -143,11 +125,7 @@ class MooneyRivlinMedium(MediumModel):
 
 
 # %% [markdown]
-# Check the new class before you trust it. With `alpha = 0` it must
-# reproduce the built-in `NeoHookeanMedium`, and for any `alpha` it must
-# match a numerical quadrature of the stress integral
-# $2\int_1^{R/R_0} 2(C_1 + C_2\lambda^2)(\lambda^3 + 1)\lambda^{-5}\,
-# \mathrm{d}\lambda$.
+# Check the new class before you trust it. With `alpha = 0` it must reproduce the built-in `NeoHookeanMedium`, and for any `alpha` it must match a numerical quadrature of the stress integral $2\int_1^{R/R_0} 2(C_1 + C_2\lambda^2)(\lambda^3 + 1)\lambda^{-5}\, \mathrm{d}\lambda$.
 
 
 # %%
@@ -221,11 +199,7 @@ plt.show()
 # %% [markdown]
 # ## Plug them into an equation of motion
 #
-# An equation of motion takes any gas, shell, and medium. Build a 2 µm
-# lipid-shelled bubble with the shear-thinning shell, put it in tissue, and
-# drive it hard enough to stretch the tissue several times. The
-# Mooney-Rivlin tissue stiffens as the bubble grows, so the bubble expands
-# less than in neo-Hookean tissue with the same small-strain modulus.
+# An equation of motion takes any gas, shell, and medium. Build a 2 µm lipid-shelled bubble with the shear-thinning shell, put it in tissue, and drive it hard enough to stretch the tissue several times. The Mooney-Rivlin tissue stiffens as the bubble grows, so the bubble expands less than in neo-Hookean tissue with the same small-strain modulus.
 
 
 # %%
@@ -282,16 +256,9 @@ plt.show()
 # %% [markdown]
 # ## Learn a law you don't know: `NeuralProperty`
 #
-# When the law itself is the unknown, put a neural network in its place.
-# `NeuralProperty` feeds $R/R_0$ to an Equinox network and returns its
-# single output. Choose the `final_activation` to keep the output physical:
-# here a scaled sigmoid bounds the surface tension between 0, a buckled
-# shell, and 72 mN/m, bare water.
+# When the law itself is the unknown, put a neural network in its place. `NeuralProperty` feeds $R/R_0$ to an Equinox network and returns its single output. Choose the `final_activation` to keep the output physical: here a scaled sigmoid bounds the surface tension between 0, a buckled shell, and 72 mN/m, bare water.
 #
-# `eqx.tree_at` swaps the network into the `lipid_bubble` preset in place of
-# its surface tension law. The untrained network gives a wrong radius curve,
-# and `eqx.filter_value_and_grad` differentiates the mismatch with respect
-# to every weight, through the ODE solve.
+# `eqx.tree_at` swaps the network into the `lipid_bubble` preset in place of its surface tension law. The untrained network gives a wrong radius curve, and `eqx.filter_value_and_grad` differentiates the mismatch with respect to every weight, through the ODE solve.
 
 # %%
 SIGMA_MAX = 0.072  # surface tension of water [N/m]
@@ -346,14 +313,9 @@ ax.legend(loc="upper left", bbox_to_anchor=(0.0, 0.9))
 plt.show()
 
 # %% [markdown]
-# Example 11 trains a network like this one with `fit_parameters` to
-# recover the Marmottant law from radius curves alone.
+# Example 11 trains a network like this one with `fit_parameters` to recover the Marmottant law from radius curves alone.
 #
 # ## References
 #
-# - Doinikov, A. A., Haac, J. F., & Dayton, P. A. (2009). Modeling of
-#   nonlinear viscous stress in encapsulating shells of lipid-coated
-#   contrast agent microbubbles. *Ultrasonics*, 49(2), 269-275.
-# - Gaudron, R., Warnez, M. T., & Johnsen, E. (2015). Bubble dynamics in a
-#   viscoelastic medium with nonlinear elasticity. *Journal of Fluid
-#   Mechanics*, 766, 54-75.
+# - Doinikov, A. A., Haac, J. F., & Dayton, P. A. (2009). Modeling of nonlinear viscous stress in encapsulating shells of lipid-coated contrast agent microbubbles. *Ultrasonics*, 49(2), 269-275.
+# - Gaudron, R., Warnez, M. T., & Johnsen, E. (2015). Bubble dynamics in a viscoelastic medium with nonlinear elasticity. *Journal of Fluid Mechanics*, 766, 54-75.

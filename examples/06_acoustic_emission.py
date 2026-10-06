@@ -1,11 +1,7 @@
 # %% [markdown]
 # # Acoustic emission
 #
-# A hydrophone measures the pressure that a bubble radiates, not its radius.
-# Compute that pressure with `IncompressibleMonopole` and `QuasiAcoustic`,
-# turn it into a Hann-windowed spectrum without aliasing, and map how the
-# spectrum changes with drive pressure: harmonics at low pressure, then
-# broadband noise once the bubble collapses inertially.
+# A hydrophone measures the pressure that a bubble radiates, not its radius. Compute that pressure with `IncompressibleMonopole` and `QuasiAcoustic`, turn it into a Hann-windowed spectrum without aliasing, and map how the spectrum changes with drive pressure: harmonics at low pressure, then broadband noise once the bubble collapses inertially.
 
 # %%
 import os
@@ -33,8 +29,7 @@ DRIVE_COLOUR = "#8c959f"  # the light theme's neutral grey for the drive
 QUICK = os.environ.get("JBUBBLE_QUICK", "0") == "1"
 
 # %% [markdown]
-# The bubble is a 2 µm air bubble in water. A van der Waals gas with a hard
-# core keeps violent collapses finite.
+# The bubble is a 2 µm air bubble in water. A van der Waals gas with a hard core keeps violent collapses finite.
 
 # %%
 R0 = 2e-6  # equilibrium radius [m]
@@ -52,18 +47,9 @@ eom = KellerMiksis(
 # %% [markdown]
 # ## Two emission models
 #
-# Both models radiate the monopole pressure
-# $p = \rho_L (2R\dot{R}^2 + R^2\ddot{R})/r$. `IncompressibleMonopole`
-# assumes that sound travels instantly, which holds only within a small
-# fraction of a wavelength, $r \ll c_L/f$ (1.5 mm at 1 MHz).
-# `QuasiAcoustic` adds the travel time $r/c_L$: sample `i` reaches the
-# hydrophone at `observer_time(result, r)[i] = result.ts[i] + r / c_L`.
+# Both models radiate the monopole pressure $p = \rho_L (2R\dot{R}^2 + R^2\ddot{R})/r$. `IncompressibleMonopole` assumes that sound travels instantly, which holds only within a small fraction of a wavelength, $r \ll c_L/f$ (1.5 mm at 1 MHz). `QuasiAcoustic` adds the travel time $r/c_L$: sample `i` reaches the hydrophone at `observer_time(result, r)[i] = result.ts[i] + r / c_L`.
 #
-# A hydrophone 1 cm away hears the bubble 6.7 µs late. To record the whole
-# signal on the simulation's clock, extend `t_max` past the end of the pulse
-# by at least $r/c_L$. To put the delayed series on that clock, interpolate
-# the radiated pressure itself, as the `QuasiAcoustic` documentation
-# recommends.
+# A hydrophone 1 cm away hears the bubble 6.7 µs late. To record the whole signal on the simulation's clock, extend `t_max` past the end of the pulse by at least $r/c_L$. To put the delayed series on that clock, interpolate the radiated pressure itself, as the `QuasiAcoustic` documentation recommends.
 
 # %%
 r = 0.01  # hydrophone distance [m]
@@ -126,18 +112,9 @@ plt.show()
 # %% [markdown]
 # ## A spectrum without aliasing
 #
-# The spectrum of the radiated pressure shows what the bubble adds to the
-# drive. Drive it with a 20-cycle tone burst whose flat top (a Tukey
-# envelope) holds the pressure steady, record 24 µs, and apply a Hann window
-# before the fast Fourier transform (FFT). The levels are in dB re 1 Pa at
-# 1 m: the radiated pressure times the distance.
+# The spectrum of the radiated pressure shows what the bubble adds to the drive. Drive it with a 20-cycle tone burst whose flat top (a Tukey envelope) holds the pressure steady, record 24 µs, and apply a Hann window before the fast Fourier transform (FFT). The levels are in dB re 1 Pa at 1 m: the radiated pressure times the distance.
 #
-# An inertial collapse radiates a spike less than a nanosecond wide. The
-# saved samples are point values, so content above the Nyquist frequency
-# folds back into the band you look at. With 4096 samples over 24 µs, one
-# every 5.9 ns, the folded spike energy fills the spectrum with false
-# broadband noise. With 131 072 samples, one every 0.18 ns, the spectrum up
-# to 8 MHz changes by less than 1 dB when you double the sample count.
+# An inertial collapse radiates a spike less than a nanosecond wide. The saved samples are point values, so content above the Nyquist frequency folds back into the band you look at. With 4096 samples over 24 µs, one every 5.9 ns, the folded spike energy fills the spectrum with false broadband noise. With 131 072 samples, one every 0.18 ns, the spectrum up to 8 MHz changes by less than 1 dB when you double the sample count.
 
 # %%
 T_RECORD = 24e-6  # record length [s]
@@ -213,17 +190,9 @@ plt.show()
 # %% [markdown]
 # ## Spectrum map against drive pressure
 #
-# Sweep the drive pressure with `GridSweep`, keeping only the bins up to
-# 8 MHz from each simulation. Each one stores 131 072 samples, so a small
-# `batch_size` keeps few of them in memory at a time.
+# Sweep the drive pressure with `GridSweep`, keeping only the bins up to 8 MHz from each simulation. Each one stores 131 072 samples, so a small `batch_size` keeps few of them in memory at a time.
 #
-# The broadband floor is the median level between the spectral lines, at
-# odd multiples of $f/4$ (0.25, 0.75, 1.25 MHz, and so on), which lie
-# between the harmonics, the subharmonic $f/2$, and the ultraharmonics
-# $3f/2, 5f/2, \ldots$ Take the broadband threshold as the lowest pressure
-# at which the floor comes within 10 dB of its level under the strongest
-# drives. Compare it with the radial criterion for inertial cavitation,
-# $R_\max/R_0 \geq 2$.
+# The broadband floor is the median level between the spectral lines, at odd multiples of $f/4$ (0.25, 0.75, 1.25 MHz, and so on), which lie between the harmonics, the subharmonic $f/2$, and the ultraharmonics $3f/2, 5f/2, \ldots$ Take the broadband threshold as the lowest pressure at which the floor comes within 10 dB of its level under the strongest drives. Compare it with the radial criterion for inertial cavitation, $R_\max/R_0 \geq 2$.
 
 # %%
 pressures = jnp.linspace(20e3, 400e3, 32 if QUICK else 96)
@@ -252,10 +221,7 @@ print(f"Broadband threshold:           {p_broadband:.0f} kPa")
 print(f"First pressure with R_max/R0 >= 2: {p_inertial:.0f} kPa")
 
 # %% [markdown]
-# The spectral and the radial criteria agree to within one pressure step:
-# broadband emission starts where the bubble first expands to twice its
-# equilibrium radius. Above that pressure, the gaps between the spectral
-# lines fill with noise.
+# The spectral and the radial criteria agree to within one pressure step: broadband emission starts where the bubble first expands to twice its equilibrium radius. Above that pressure, the gaps between the spectral lines fill with noise.
 
 # %% tags=["thumbnail"]
 fig, (ax_map, ax_floor, ax_exp) = plt.subplots(
