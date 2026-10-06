@@ -38,6 +38,10 @@ release date. For what each release contains, see the
   samples. Planned support for arbitrary sample times lets you compare a
   simulation with measurements at their own times, such as camera frames at
   an irregular frame rate.
+- **Saving and loading results.** jbubble 0.1 had HDF5 helpers,
+  `export_hdf5` and `load_hdf5`, which 0.2.0 removes. A designed export for
+  simulations and sweeps, in HDF5 or another format, is planned. A
+  prototype is kept on the `feature/hdf5-io` branch.
 
 ## Fitting
 
