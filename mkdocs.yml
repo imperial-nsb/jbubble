@@ -1,55 +1,156 @@
+# Zensical builds the site from this file, which uses the Material for MkDocs
+# configuration format. CONTRIBUTING.md explains how to build the docs and the
+# example gallery locally.
 site_name: jbubble
-site_description: Differentiable microbubble dynamics primitives in JAX
+site_description: Differentiable microbubble dynamics in JAX
+site_url: https://imperial-nsb.github.io/jbubble/
 repo_url: https://github.com/imperial-nsb/jbubble
 repo_name: imperial-nsb/jbubble
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2026 Noninvasive Surgery &amp; Biopsy Laboratory
 
 theme:
   name: material
+  # The modern variant draws the header on the page background, which the
+  # logo colours and docs/stylesheets/extra.css assume.
+  variant: modern
+  # Source Serif 4 (Adobe, SIL Open Font License) for reading, which suits the
+  # KaTeX maths; docs/stylesheets/extra.css sets the navigation in Source Sans 3.
+  font:
+    text: Source Serif 4
+    code: JetBrains Mono
+  logo: assets/images/logo.svg
+  favicon: assets/images/logo.svg
+  icon:
+    repo: fontawesome/brands/github
   palette:
-    primary: blue
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
   features:
-    - navigation.tabs
-    - navigation.sections
-    - toc.integrate
+    - content.action.edit
     - content.code.copy
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - search.highlight
+    - toc.follow
+
+extra_css:
+  - stylesheets/extra.css
+  - https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.css
+
+# KaTeX renders the math. Keep the version pinned: jsDelivr serves an exact
+# npm version unchanged, and KaTeX 0.19 changed its strict-mode defaults.
+extra_javascript:
+  - javascripts/katex.js
+  - https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.js
+  - https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/contrib/auto-render.min.js
 
 plugins:
   - search
+  - autorefs:
+      resolve_closest: true
   - mkdocstrings:
       handlers:
         python:
+          paths: [.]
+          inventories:
+            - https://docs.python.org/3/objects.inv
+            - https://numpy.org/doc/stable/objects.inv
+            - https://docs.jax.dev/en/latest/objects.inv
+            - https://docs.kidger.site/equinox/objects.inv
+            - https://docs.kidger.site/diffrax/objects.inv
+            - https://optax.readthedocs.io/en/latest/objects.inv
           options:
+            extensions:
+              - scripts/griffe_extensions.py:DropValueTypeDocstrings
+              - scripts/griffe_extensions.py:CrossReferenceBases
+              - scripts/griffe_extensions.py:NamedTupleFields
+              - scripts/griffe_extensions.py:FactoryDefaults
+            # Import jbubble instead of only parsing its source, so that the
+            # signatures that Equinox generates for eqx.Module classes appear.
+            force_inspection: true
             docstring_style: numpy
-            show_source: true
-            show_root_heading: true
+            docstring_options:
+              ignore_init_summary: true
+            filters: ["!^_"]
             merge_init_into_class: true
             members_order: source
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            show_signature_annotations: true
+            separate_signature: true
+            signature_crossrefs: true
+            line_length: 80
+            show_source: true
 
 markdown_extensions:
   - admonition
-  - pymdownx.arithmatex:
-      generic: true
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
   - tables
   - toc:
       permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.details
+  # No links on line numbers: mkdocstrings highlights each "Source code"
+  # block on its own, so blocks on one page repeat the same line anchors, and
+  # a link could jump to another file's source.
+  - pymdownx.highlight:
+      anchor_linenums: false
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  # docs/changelog.md includes the repository's CHANGELOG.md. The base path
+  # is the repository root, where Zensical runs.
+  - pymdownx.snippets:
+      base_path: ["."]
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
 
-extra_javascript:
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
-  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
-
+# scripts/build_examples.py generates examples/ from the example scripts. The
+# nav lists only the gallery, so a new example needs no entry here; each
+# generated page links to the previous and the next example and to the
+# gallery instead.
 nav:
   - Home: index.md
-  - Guide:
+  - Getting started:
     - Installation: guide/installation.md
     - Quickstart: guide/quickstart.md
+  - Guide:
     - Bubble models: guide/bubble_models.md
     - Pulse shapes: guide/pulse_shapes.md
+    - Solvers and stiffness: guide/solvers.md
+    - Parameter sweeps: guide/sweeps.md
+    - Fitting: guide/fitting.md
     - JAX tips: guide/jax_tips.md
+  - Examples: examples/index.md
   - API reference:
     - Overview: api/index.md
     - bubble: api/bubble.md
@@ -61,3 +162,5 @@ nav:
     - metrics: api/metrics.md
     - fitting: api/fitting.md
     - utils: api/utils.md
+  - Citing: citing.md
+  - Changelog: changelog.md

@@ -1,7 +1,7 @@
-"""Surrounding medium (fluid / tissue) models.
+"""Surrounding medium (fluid or tissue) models.
 
-Computes the total inward viscous and elastic stresses exerted by the
-surrounding medium on the bubble wall.
+Each model computes the total inward viscous and elastic stresses that
+the surrounding medium exerts on the bubble wall.
 """
 
 from __future__ import annotations
@@ -15,45 +15,55 @@ import jax.numpy as jnp
 from .property import Property, as_property
 from .state import BubbleState
 
+__all__ = [
+    "MediumModel",
+    "NewtonianMedium",
+    "KelvinVoigtMedium",
+    "NeoHookeanMedium",
+    "PowerLawMedium",
+]
+
 
 class MediumModel(eqx.Module, abc.ABC):
-    """Surrounding medium (fluid / tissue) model.
+    r"""Surrounding medium (fluid or tissue) model.
 
-    Computes the total inward viscous and elastic stresses exerted by the
-    surrounding medium on the bubble wall.  For a Newtonian liquid this is
-    just 4 mu Rdot / R.  Viscoelastic media (Kelvin-Voigt, Neo-Hookean, etc.)
-    add elastic restoring forces.
+    Computes the total inward viscous and elastic stresses that the
+    surrounding medium exerts on the bubble wall. For a Newtonian liquid
+    this is $4\mu\dot{R}/R$. Viscoelastic media, such as Kelvin-Voigt and
+    neo-Hookean media, add elastic restoring forces.
 
-    Subclasses must implement separate methods for the viscous and elastic
-    contributions, which are then summed in the default ``__call__`` to get
-    the total medium pressure p_medium(state).
+    Subclasses implement separate methods for the viscous and elastic
+    contributions, and the default `__call__` sums them to get the total
+    medium pressure $p_\text{medium}(\text{state})$.
 
-    A plain float is accepted for ``mu`` and auto-converted to a
-    ``Property`` in ``__post_init__``.
+    The `mu` field's [`as_property`][jbubble.bubble.property.as_property]
+    converter turns a plain float into a
+    [`Property`][jbubble.bubble.property.Property].
 
-    Fields
-    ------
+    Parameters
+    ----------
     mu : float or Property
-        Viscous scaling parameter.  For Newtonian, Kelvin-Voigt, and
-        Neo-Hookean media this is the dynamic viscosity [Pa s].  For
-        ``PowerLawMedium`` it is the consistency index K [Pa·s^n],
-        which reduces to dynamic viscosity when n = 1.
+        Viscous scaling parameter. For Newtonian, Kelvin-Voigt, and
+        neo-Hookean media this is the dynamic viscosity [Pa s]. For
+        [`PowerLawMedium`][jbubble.bubble.medium.PowerLawMedium] it is the
+        consistency index $K$ [Pa sⁿ], which equals the dynamic viscosity
+        when $n = 1$.
     """
 
     mu: Property = eqx.field(converter=as_property)
 
     @abc.abstractmethod
     def p_viscous(self, state: BubbleState) -> jax.Array:
-        """Viscous contribution to the medium pressure."""
+        """Return the viscous contribution to the medium pressure [Pa]."""
         ...
 
     @abc.abstractmethod
     def p_elastic(self, state: BubbleState) -> jax.Array:
-        """Elastic contribution to the medium pressure."""
+        """Return the elastic contribution to the medium pressure [Pa]."""
         ...
 
     def __call__(self, state: BubbleState) -> jax.Array:
-        """Compute total medium pressure p_medium(state).
+        r"""Compute the total medium pressure, $p_\text{medium}(\text{state})$.
 
         Parameters
         ----------
@@ -62,21 +72,23 @@ class MediumModel(eqx.Module, abc.ABC):
 
         Returns
         -------
-        scalar
-            Total inward medium pressure (viscous + elastic).
+        jax.Array
+            Scalar total inward medium pressure (viscous plus elastic) [Pa].
         """
         return self.p_viscous(state) + self.p_elastic(state)
 
 
 class NewtonianMedium(MediumModel):
-    """Newtonian liquid medium.
+    r"""Newtonian liquid medium.
 
-    p_medium = 4 mu Rdot / R
+    $$
+    p_\text{medium} = \frac{4\mu\dot{R}}{R}
+    $$
 
-    Fields
-    ------
+    Parameters
+    ----------
     mu : float or Property
-        Dynamic viscosity  [Pa s].
+        Dynamic viscosity [Pa s].
     """
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
@@ -87,18 +99,48 @@ class NewtonianMedium(MediumModel):
 
 
 class KelvinVoigtMedium(MediumModel):
-    """Kelvin-Voigt viscoelastic medium.
+    r"""Kelvin-Voigt viscoelastic medium (Yang & Church 2005).
 
-    p_medium = 4 mu Rdot / R  +  (4 G / 3) ((R / R0)^3 - 1)
+    $$
+    p_\text{medium} = \frac{4\mu\dot{R}}{R}
+        + \frac{4G}{3}\left[1 - \left(\frac{R_0}{R}\right)^3\right]
+    $$
 
-    Fields
-    ------
+    The elastic term integrates a linear (Hookean) elastic stress through
+    the incompressible surrounding solid. Yang and Church take the
+    displacement field $u(r) = (R^3 - R_0^3)/(3r^2)$ of the incompressible
+    radial motion, so the deviatoric stress difference is
+    $\tau_{rr} - \tau_{\theta\theta} = -2G(R^3 - R_0^3)/r^3$, and
+
+    $$
+    p_\text{elastic} = -2\int_R^\infty
+        \frac{\tau_{rr} - \tau_{\theta\theta}}{r}\,\mathrm{d}r
+        = \frac{4G}{3}\left[1 - \left(\frac{R_0}{R}\right)^3\right].
+    $$
+
+    The model reads $R_0$ from `state.R0`. The elastic term is zero at
+    $R = R_0$, linearises to $4G(R - R_0)/R_0$, which is the same small-strain
+    limit as [`NeoHookeanMedium`][jbubble.bubble.medium.NeoHookeanMedium],
+    and stays bounded by $4G/3$ under expansion. For large strains, prefer
+    the neo-Hookean model, whose constitutive law holds at finite strain.
+
+    Parameters
+    ----------
     mu : float or Property
-        Dynamic viscosity  [Pa s].
-    R0 : float
-        Equilibrium bubble radius  [m].
+        Dynamic viscosity [Pa s].
     G : float or Property
-        Shear modulus  [Pa].  May be state-dependent (e.g. strain-stiffening).
+        Shear modulus [Pa]. It can be state-dependent, for example to model
+        strain stiffening.
+
+    References
+    ----------
+    Yang, X., & Church, C. C. (2005). A model for the dynamics of gas
+    bubbles in soft tissue. *The Journal of the Acoustical Society of
+    America*, 118(6), 3595-3606. <https://doi.org/10.1121/1.2118307>
+
+    Warnez, M. T., & Johnsen, E. (2015). Numerical modeling of bubble
+    dynamics in viscoelastic media with relaxation. *Physics of Fluids*,
+    27(6), 063103, Eq. 42. <https://doi.org/10.1063/1.4922598>
     """
 
     G: Property = eqx.field(converter=as_property)
@@ -107,41 +149,51 @@ class KelvinVoigtMedium(MediumModel):
         return 4.0 * self.mu(state) * state.R_dot / state.R
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
-        return (4.0 / 3.0) * self.G(state) * ((state.R / state.R0) ** 3 - 1.0)
+        return (4.0 / 3.0) * self.G(state) * (1.0 - (state.R0 / state.R) ** 3)
 
 
 class NeoHookeanMedium(MediumModel):
-    """Neo-Hookean finite-strain viscoelastic medium.
+    r"""Neo-Hookean finite-strain viscoelastic medium.
 
-    Correctly captures finite-strain behaviour at large oscillation
-    amplitudes where the Kelvin-Voigt linear approximation breaks down.
+    Captures finite-strain behaviour at large oscillation amplitudes, where
+    the Kelvin-Voigt linear approximation breaks down.
 
-    The elastic pressure is derived by integrating the deviatoric stress
-    difference (σ_θθ − σ_rr) through the surrounding incompressible
-    neo-Hookean solid.  With the substitution v = r₀/r the integral
-    collapses exactly to 2G ∫(1 + v³) dv, giving::
+    The elastic pressure comes from integrating the deviatoric stress
+    difference $\sigma_{\theta\theta} - \sigma_{rr}$ through the
+    surrounding incompressible neo-Hookean solid. With the substitution
+    $v = r_0/r$, the integral collapses exactly to
+    $2G\int_{R_0/R}^{1} (1 + v^3)\,\mathrm{d}v$, which gives
 
-        p_elastic = G (5/2 − 2 (R0/R) − (1/2) (R0/R)^4)
+    $$
+    p_\text{elastic} = G\left[\frac{5}{2} - 2\frac{R_0}{R}
+        - \frac{1}{2}\left(\frac{R_0}{R}\right)^4\right].
+    $$
 
     Key behaviour:
 
-    - Zero at R = R0  (no elastic stress at equilibrium).
-    - Reduces to 4G(R − R0)/R0 for small strains  (identical to KV).
-    - Saturates to 5G/2 as R → ∞  (physical: material density near
-      bubble thins to zero so elastic pressure plateaus).
-    - Diverges to −∞ for R → 0  (strong restoring when compressed).
+    - Zero at $R = R_0$: no elastic stress at equilibrium.
+    - Reduces to $4G(R - R_0)/R_0$ for small strains, identical to
+      Kelvin-Voigt.
+    - Saturates to $5G/2$ as $R \to \infty$. Physically, the material
+      near the bubble thins to zero, so the elastic pressure plateaus.
+    - Diverges to $-\infty$ as $R \to 0$: strong restoring force under
+      compression.
 
-    Total medium pressure::
+    The total medium pressure is
 
-        p_medium = 4 mu Rdot / R  +  G (5/2 − 2 (R0/R) − (1/2) (R0/R)^4)
+    $$
+    p_\text{medium} = \frac{4\mu\dot{R}}{R}
+        + G\left[\frac{5}{2} - 2\frac{R_0}{R}
+        - \frac{1}{2}\left(\frac{R_0}{R}\right)^4\right].
+    $$
 
-    Fields
-    ------
+    Parameters
+    ----------
     mu : float or Property
-        Dynamic viscosity  [Pa s].  A plain float is auto-converted.
+        Dynamic viscosity [Pa s]. Accepts a plain float.
     G : float or Property
-        Shear modulus  [Pa].  A plain float is auto-converted.  May be
-        state-dependent (e.g. strain-stiffening).
+        Shear modulus [Pa]. Accepts a plain float. It can be
+        state-dependent, for example to model strain stiffening.
     """
 
     G: Property = eqx.field(converter=as_property)
@@ -155,50 +207,102 @@ class NeoHookeanMedium(MediumModel):
 
 
 class PowerLawMedium(MediumModel):
-    """Power-law (generalised Newtonian) surrounding medium.
+    r"""Power-law (generalised Newtonian) surrounding medium.
 
-    The effective viscosity depends on the shear rate at the bubble wall:
+    The viscosity depends on the local shear rate,
+    $\eta = K\dot{\gamma}^{\,n-1}$, where
+    $\dot{\gamma} = \sqrt{2\mathbf{D}:\mathbf{D}}$ is the rheometric
+    shear rate, the convention under which rheometers report $K$ and $n$.
+    For the incompressible radial flow $u = R^2\dot{R}/r^2$ the shear rate
+    is $\dot{\gamma}(r) = 2\sqrt{3}\,|R^2\dot{R}|/r^3$, which is
+    $\dot{\gamma}_w = 2\sqrt{3}\,|\dot{R}|/R$ at the bubble wall.
+    Integrating the viscous stress through the liquid,
 
-        η_eff = mu · |2 Ṙ/R|^(n-1)
+    $$
+    p_\text{viscous} = -2\int_R^\infty
+        \frac{\tau_{rr} - \tau_{\theta\theta}}{r}\,\mathrm{d}r
+        = \frac{4K}{n}\,\dot{\gamma}_w^{\,n-1}\,\frac{\dot{R}}{R}.
+    $$
 
-    Integrating the resulting stress field over the incompressible flow
-    surrounding the bubble (Ting 1975) gives the viscous pressure:
+    The factor $1/n$ comes from the radial variation of $\eta$. For
+    $n = 1$ this is exactly the Newtonian result $4K\dot{R}/R$.
 
-        p_visc = (4 mu / n) · (2|Ṙ/R|)^(n-1) · Ṙ/R
+    The pure power law has an infinite viscosity at zero shear rate when
+    $n < 1$, which makes the right-hand side non-smooth whenever
+    $\dot{R}$ changes sign. The model regularises the wall shear rate
+    smoothly:
 
-    The factor 1/n arises from the spatial variation of η with radius.
-    For n = 1 this reduces exactly to the Newtonian result 4 mu Ṙ/R.
+    $$
+    \dot{\gamma}_\text{eff}
+        = \sqrt{12\left(\frac{\dot{R}}{R}\right)^2 + \varepsilon^2},
+    \qquad
+    p_\text{viscous} = \frac{4K}{n}\,\dot{\gamma}_\text{eff}^{\,n-1}\,
+        \frac{\dot{R}}{R}.
+    $$
 
     Special cases:
 
-        n < 1   shear-thinning  (biological tissue, blood, polymer gels)
-        n = 1   Newtonian (recovers ``NewtonianMedium`` with viscosity mu)
-        n > 1   shear-thickening
+    - $n < 1$: shear-thinning (biological tissue, blood, polymer gels).
+    - $n = 1$: Newtonian; recovers
+      [`NewtonianMedium`][jbubble.bubble.medium.NewtonianMedium] with
+      viscosity $K$.
+    - $n > 1$: shear-thickening.
 
-    Note: power-law fluids have unbounded viscosity at zero shear rate
-    when n < 1.  A small floor ``eps`` on |2 Ṙ/R| prevents numerical
-    divergence near turnaround points without affecting dynamics.
-
-    Fields
-    ------
+    Parameters
+    ----------
     mu : float or Property
-        Consistency index K  [Pa·s^n].  Stored as ``mu`` (inherited field
-        name) but has dimensions [Pa·s^n], not [Pa·s].  Equals the
-        dynamic viscosity when n = 1.
+        Consistency index $K$ [Pa sⁿ], in the rheometric convention
+        $\eta = K\dot{\gamma}^{\,n-1}$ with
+        $\dot{\gamma} = \sqrt{2\mathbf{D}:\mathbf{D}}$. The inherited field
+        name is `mu`, but its dimensions are [Pa sⁿ], not [Pa s]. It equals
+        the dynamic viscosity when $n = 1$.
     n_exp : float or Property
-        Power-law exponent  (dimensionless, positive).
+        Power-law exponent (dimensionless, positive).
     eps : float
-        Floor applied to |2 Ṙ/R|  [s⁻¹].  Default 1e-6.
+        Shear-rate regularisation $\varepsilon$ [s⁻¹]. Default: `1e2`.
+
+    Notes
+    -----
+    The default $\varepsilon = 10^2$ s⁻¹ is three or more orders of
+    magnitude below the wall shear rates of a driven microbubble (a 1 %
+    oscillation at 1 MHz gives
+    $\dot{\gamma}_w \approx 2\sqrt{3}\,(2\pi \cdot 10^6)(0.01)
+    \approx 2 \times 10^5$ s⁻¹), so it changes the viscous pressure only
+    near the instants where $\dot{R}$ reverses. For a 2 µm bubble in a
+    shear-thinning liquid ($n = 0.7$) at 100 kPa, the radius differs from
+    the $\varepsilon \to 0$ solution by less than $10^{-7} R_0$.
+
+    $\varepsilon$ also sets the viscosity at zero shear rate,
+    $K\varepsilon^{\,n-1}$, which plays the part of the finite zero-shear
+    viscosity of a real shear-thinning liquid. A smaller $\varepsilon$
+    raises it when $n < 1$, so the right-hand side changes faster where
+    $\dot{R}$ reverses and the solver takes more steps there. The smooth
+    floor keeps the right-hand side differentiable for any
+    $\varepsilon > 0$. jbubble 0.1 instead floored the shear rate with a
+    `max`, whose kink at the floor made tight-tolerance solves at 300 kPa
+    fail.
+
+    The earlier jbubble convention used the wall velocity gradient
+    $2|\dot{R}|/R$ as the shear rate, which overestimates the viscous
+    pressure by $\sqrt{3}^{\,1-n}$ for a $K$ measured on a rheometer.
+
+    References
+    ----------
+    Kaykanat, S. I., & Uguz, K. (2024). Shape stability of a microbubble in
+    a power-law liquid. *The European Physical Journal Special Topics*,
+    Eq. 17, with $M = 2m(2\sqrt{3})^{k-1}$.
+    <https://doi.org/10.1140/epjs/s11734-024-01174-7>
     """
 
     n_exp: Property = eqx.field(converter=as_property)
-    eps: float = 1e-6
+    eps: float = 1e2
 
     def p_viscous(self, state: BubbleState) -> jax.Array:
         n_val = self.n_exp(state)
         K_val = self.mu(state)
-        gamma_dot = jnp.maximum(2.0 * jnp.abs(state.R_dot / state.R), self.eps)
-        return 4.0 * K_val / n_val * gamma_dot ** (n_val - 1.0) * state.R_dot / state.R
+        strain_rate = state.R_dot / state.R
+        gamma_dot = jnp.sqrt(12.0 * strain_rate**2 + self.eps**2)
+        return 4.0 * K_val / n_val * gamma_dot ** (n_val - 1.0) * strain_rate
 
     def p_elastic(self, state: BubbleState) -> jax.Array:
         return state.R * 0.0

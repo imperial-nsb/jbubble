@@ -1,15 +1,18 @@
 """Macroscopic equations of motion for bubble dynamics.
 
-Each concrete ``EquationOfMotion`` assembles a ``GasModel``,
-``ShellModel``, and ``MediumModel`` into a complete ODE right-hand side
-that returns a ``BubbleState`` (time derivative).
+Each concrete [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion]
+assembles a [`GasModel`][jbubble.bubble.gas.GasModel], a
+[`ShellModel`][jbubble.bubble.shell.ShellModel], and a
+[`MediumModel`][jbubble.bubble.medium.MediumModel] into a complete ODE
+right-hand side that returns the time derivative as a
+[`BubbleState`][jbubble.bubble.state.BubbleState].
 """
 
 from __future__ import annotations
 
 import abc
 from collections.abc import Callable
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 import equinox as eqx
 import jax
@@ -19,56 +22,79 @@ from jax.typing import ArrayLike
 from .gas import GasModel
 from .medium import MediumModel
 from .shell import ShellModel
-from .state import BubbleState, ConfinedBubbleState
+from .state import BubbleState
 
-StateType = TypeVar("StateType", bound=BubbleState)
+__all__ = [
+    "EquationOfMotion",
+    "RayleighPlesset",
+    "ModifiedRayleighPlesset",
+    "KellerMiksis",
+    "Gilmore",
+]
 
 
-class EquationOfMotion(eqx.Module, abc.ABC, Generic[StateType]):
-    """Macroscopic equation of motion for bubble dynamics.
+class EquationOfMotion[StateType: BubbleState](eqx.Module, abc.ABC):
+    r"""Macroscopic equation of motion for bubble dynamics.
 
-    Assembles a ``GasModel``, ``ShellModel``, and ``MediumModel`` into a
-    complete ODE right-hand side.  Concrete subclasses encode different
-    EoM formulations (Rayleigh-Plesset, Keller-Miksis, ...) which differ
-    in how they relate p_L to the radial acceleration Rddot.
+    Assembles a [`GasModel`][jbubble.bubble.gas.GasModel], a
+    [`ShellModel`][jbubble.bubble.shell.ShellModel], and a
+    [`MediumModel`][jbubble.bubble.medium.MediumModel] into a complete ODE
+    right-hand side. Concrete subclasses encode different formulations
+    (Rayleigh-Plesset, Keller-Miksis, and others), which differ in how they
+    relate the liquid-side boundary pressure $p_L$ to the radial
+    acceleration $\ddot{R}$.
 
-    The type parameter ``StateType`` binds each EoM to the state it operates
-    on — standard EoMs use ``BubbleState``, confined models use
-    ``ConfinedBubbleState``.  Passing the wrong state type is caught by
-    the type checker rather than failing at runtime deep inside a JAX
-    trace.
+    The type parameter `StateType` binds each equation of motion (EoM) to
+    the state it operates on. The built-in EoMs use
+    [`BubbleState`][jbubble.bubble.state.BubbleState]; an EoM that carries
+    extra degrees of freedom binds a `BubbleState` subclass, so the type
+    checker catches a wrong state type before it fails at runtime deep
+    inside a JAX trace.
 
-    The liquid-side boundary pressure is computed by the concrete helper
-    ``p_L`` as::
+    The concrete helper [`p_L`][jbubble.bubble.eom.EquationOfMotion.p_L]
+    computes the liquid-side boundary pressure:
 
-        p_L = gas(state) - shell(state) - medium(state)
+    $$
+    p_L = p_\text{gas}(\text{state}) - p_\text{shell}(\text{state})
+        - p_\text{medium}(\text{state})
+    $$
 
-    Because ``p_L`` is a regular method on an Equinox module, JAX can
-    differentiate through it automatically.  EoMs that require dp_L/dt
-    (e.g. Keller-Miksis) can use ``jax.grad(self.p_L)`` instead of
-    hand-coding analytical derivatives for every component combination.
+    Because `p_L` is a regular method on an Equinox module, JAX
+    differentiates through it automatically. EoMs that need
+    $\mathrm{d}p_L/\mathrm{d}t$, such as Keller-Miksis, use
+    `jax.grad(self.p_L)` instead of hand-coding analytical derivatives for
+    every combination of components.
 
-    The driving acoustic pressure is received as a callable ``p_ac_fn``
-    so that EoMs needing dp_ac/dt can compute it via ``jax.grad``.
+    The EoM receives the driving acoustic pressure as a callable `p_ac_fn`,
+    so EoMs that need $\mathrm{d}p_\text{ac}/\mathrm{d}t$ compute it with
+    `jax.grad`.
 
-    ``R0`` and ``P_gas0`` (equilibrium configuration) are seeded into the
-    state by ``initial_state()`` and carried as frozen constants by the
-    ODE (zero time derivatives in the standard case).
+    [`initial_state`][jbubble.bubble.eom.EquationOfMotion.initial_state]
+    seeds the equilibrium configuration, `R0` and `P_gas0`, into the state.
+    The ODE carries them as frozen constants, with zero time derivatives in
+    the standard case.
 
-    Fields
-    ------
+    Two hooks tell [`solve_eom`][jbubble.solver.solve_eom] about the state:
+    [`is_admissible`][jbubble.bubble.eom.EquationOfMotion.is_admissible]
+    marks the states where the right-hand side is defined, and
+    [`state_scale`][jbubble.bubble.eom.EquationOfMotion.state_scale] gives
+    the magnitude of each state field, which sets the meaning of the
+    solver tolerances. Override them in a subclass that adds state fields.
+
+    Parameters
+    ----------
     gas : GasModel
         Internal gas pressure model.
     shell : ShellModel
-        Shell / coating model.
+        Shell or coating model.
     medium : MediumModel
         Surrounding medium model.
     R0 : float or jax.Array
-        Equilibrium bubble radius  [m].
+        Equilibrium bubble radius [m].
     P_amb : float or jax.Array
-        Ambient (far-field) pressure  [Pa].
+        Ambient (far-field) pressure [Pa].
     rho_L : float or jax.Array
-        Liquid density  [kg/m^3].
+        Liquid density [kg/m³].
     """
 
     gas: GasModel
@@ -80,24 +106,147 @@ class EquationOfMotion(eqx.Module, abc.ABC, Generic[StateType]):
     rho_L: ArrayLike
 
     def p_L(self, state: BubbleState) -> jax.Array:
-        """Liquid-side boundary pressure.
+        r"""Liquid-side boundary pressure.
 
-        p_L = p_gas(state) - p_shell(state) - p_medium(state)
+        $$
+        p_L = p_\text{gas}(\text{state}) - p_\text{shell}(\text{state})
+            - p_\text{medium}(\text{state})
+        $$
+
+        Parameters
+        ----------
+        state : BubbleState
+            Current bubble state.
+
+        Returns
+        -------
+        jax.Array
+            Boundary pressure [Pa].
         """
         return self.gas(state) - self.shell(state) - self.medium(state)
 
-    def initial_state(self) -> BubbleState:
-        """Default initial state: equilibrium radius, zero velocity.
+    def initial_state(
+        self,
+        *,
+        R: ArrayLike | None = None,
+        R_dot: ArrayLike | None = None,
+    ) -> BubbleState:
+        r"""Return an initial state seeded with the equilibrium configuration.
 
-        Seeds ``R0`` and ``P_gas0`` (Laplace equilibrium) into the state.
-        Override for coupled systems with a larger state vector.
+        By default the bubble starts at rest at its equilibrium radius. Seeds
+        `R0` and the Laplace-equilibrium gas pressure into the state:
+
+        $$
+        P_{\text{gas},0} = P_\text{amb} + \frac{2\sigma(R_0)}{R_0}
+        $$
+
+        Pass `R` or `R_dot` to start away from equilibrium, for example
+        `eom.initial_state(R=1.2 * eom.R0)` for a bubble released from rest
+        at 1.2 times its equilibrium radius. `R0` and `P_gas0` stay at their
+        equilibrium values, so the gas pressure at `R` follows the gas law.
+
+        Override this method for coupled systems with a larger state vector.
+        An override must accept the same keyword arguments.
+
+        Parameters
+        ----------
+        R : float or jax.Array, optional
+            Initial radius [m]. `None` uses `R0`.
+        R_dot : float or jax.Array, optional
+            Initial wall velocity [m/s]. `None` uses `0`.
+
+        Returns
+        -------
+        BubbleState
+            State with `R`, `R_dot`, `R0`, and `P_gas0` set.
         """
         R0 = jnp.asarray(self.R0)
         P_gas0 = (
             jnp.asarray(self.P_amb)
             + 2.0 * self.shell.sigma(BubbleState(R=R0, R0=R0)) / R0
         )
-        return BubbleState(R=R0, R0=R0, P_gas0=P_gas0)
+        R_init = R0 if R is None else jnp.asarray(R)
+        R_dot_init = jnp.zeros_like(R0) if R_dot is None else jnp.asarray(R_dot)
+        return BubbleState(R=R_init, R_dot=R_dot_init, R0=R0, P_gas0=P_gas0)
+
+    def is_admissible(self, state: StateType) -> jax.Array:
+        """Return whether the right-hand side is defined at `state`.
+
+        [`solve_eom`][jbubble.solver.solve_eom] never evaluates the equation
+        of motion at an inadmissible state, so its gradients stay finite
+        when an adaptive solver tries, and then rejects, a trial step that
+        leaves the physical domain. The default requires `R > 0` and defers
+        to [`GasModel.is_admissible`][jbubble.bubble.gas.GasModel.is_admissible],
+        which also excludes, for example, the van der Waals hard core.
+
+        Override this method in a subclass whose state has other fields with
+        a restricted domain, and combine the result with
+        `super().is_admissible(state)`.
+
+        Parameters
+        ----------
+        state : StateType
+            State to check. Its leaves may be NaN or infinite.
+
+        Returns
+        -------
+        jax.Array
+            Boolean scalar.
+        """
+        return (state.R > 0) & self.gas.is_admissible(state)
+
+    def state_scale(self, state: StateType) -> StateType:
+        r"""Return the characteristic magnitude of each state field.
+
+        [`solve_eom`][jbubble.solver.solve_eom] integrates the dimensionless
+        state `state / state_scale(state)`, so the step-size controller's
+        `rtol` and `atol` mean the same thing for a 50 nm bubble as for a
+        50 µm one. The default scales are:
+
+        - `R` and `R0`: the equilibrium radius `state.R0` [m].
+        - `R_dot`: the velocity scale $\sqrt{P_\text{amb}/\rho_L}$
+          [m/s], about 10 m/s in water at atmospheric pressure. It's the
+          natural velocity of bubble dynamics: $R_0\omega_0 \approx
+          \sqrt{3\kappa P_\text{amb}/\rho_L}$ for the Minnaert frequency
+          $\omega_0$.
+        - `P_gas0`: its own value `state.P_gas0` [Pa], or `P_amb` if that
+          value isn't positive.
+        - Any other field of a `BubbleState` subclass: `1`, that is, SI
+          units.
+
+        Because `R0` and `P_gas0` are scaled by their own values, the solver
+        sees them exactly: `(x / x) * x == x` in floating point.
+
+        Override this method to give extra state fields a scale. The scale
+        must be positive and finite; the solver treats it as a constant.
+
+        Parameters
+        ----------
+        state : StateType
+            Initial state, with a positive `R0`.
+
+        Returns
+        -------
+        StateType
+            Scale for each field, with the same structure as `state`.
+        """
+        P_amb = jnp.asarray(self.P_amb)
+        velocity = jnp.sqrt(P_amb / jnp.asarray(self.rho_L))
+        R0 = jnp.asarray(state.R0)
+        P_gas0 = jnp.asarray(state.P_gas0)
+        pressure = jnp.where(P_gas0 > 0, P_gas0, P_amb)
+        ones = jax.tree_util.tree_map(jnp.ones_like, state)
+        values = (R0, velocity, R0, pressure)
+        return eqx.tree_at(
+            lambda s: (s.R, s.R_dot, s.R0, s.P_gas0),
+            ones,
+            tuple(
+                jnp.broadcast_to(v, jnp.shape(leaf)).astype(jnp.result_type(leaf))
+                for v, leaf in zip(
+                    values, (state.R, state.R_dot, state.R0, state.P_gas0), strict=True
+                )
+            ),
+        )
 
     @abc.abstractmethod
     def __call__(
@@ -106,33 +255,38 @@ class EquationOfMotion(eqx.Module, abc.ABC, Generic[StateType]):
         state: StateType,
         p_ac_fn: Callable,
     ) -> StateType:
-        """Compute the ODE right-hand side  d(state)/dt.
+        r"""Compute the ODE right-hand side, $\mathrm{d}(\text{state})/\mathrm{d}t$.
 
         Parameters
         ----------
-        t : scalar
-            Current time.
+        t : float or jax.Array
+            Current time [s].
         state : StateType
-            Current bubble state (type matches the EoM's state parameter).
-        p_ac_fn : callable  (t -> scalar)
-            Driving acoustic pressure as a function of time.
+            Current bubble state. Its type matches the EoM's state parameter.
+        p_ac_fn : callable
+            Driving acoustic pressure [Pa] as a function of time,
+            `t -> scalar`.
 
         Returns
         -------
         StateType
-            Time derivative of the state.  ``R0`` and ``P_gas0``
-            derivatives are zero in the standard case.
+            Time derivative of the state. The `R0` and `P_gas0` derivatives
+            are zero in the standard case.
         """
         ...
 
 
 class RayleighPlesset(EquationOfMotion[BubbleState]):
-    """Rayleigh-Plesset equation of motion (incompressible liquid).
+    r"""Rayleigh-Plesset equation of motion (incompressible liquid).
 
-    R Rddot + 3/2 Rdot^2 = (1/rho) (p_L - P_amb - p_ac)
+    $$
+    R\ddot{R} + \frac{3}{2}\dot{R}^2
+        = \frac{1}{\rho_L}\left(p_L - P_\text{amb} - p_\text{ac}\right)
+    $$
 
-    The simplest bubble dynamics EoM, assuming an incompressible
-    surrounding liquid.  No additional fields beyond the base class.
+    The simplest bubble dynamics EoM, which assumes an incompressible
+    surrounding liquid. It takes only the parameters of
+    [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion].
     """
 
     def __call__(
@@ -149,20 +303,27 @@ class RayleighPlesset(EquationOfMotion[BubbleState]):
 
 
 class ModifiedRayleighPlesset(EquationOfMotion[BubbleState]):
-    """Modified Rayleigh-Plesset with gas radiation damping.
+    r"""Modified Rayleigh-Plesset equation with gas radiation damping.
 
     Adds a first-order compressibility correction to the gas pressure
-    term only, as used by Marmottant et al. (2005)::
+    term only, as used by Marmottant et al. (2005):
 
-        R Rddot + 3/2 Rdot^2
-            = (1/rho) (p_L + (R/c) dp_gas/dt - P_amb - p_ac)
+    $$
+    R\ddot{R} + \frac{3}{2}\dot{R}^2
+        = \frac{1}{\rho_L}\left(p_L + \frac{R}{c_L}\frac{\mathrm{d}p_\text{gas}}{\mathrm{d}t}
+        - P_\text{amb} - p_\text{ac}\right)
+    $$
 
-    where dp_gas/dt = (dp_gas/dR) Rdot is computed via autodiff.
+    where autodiff computes
+    $\mathrm{d}p_\text{gas}/\mathrm{d}t = (\partial p_\text{gas}/\partial R)\,\dot{R}$.
 
-    Fields
-    ------
+    It takes the parameters of
+    [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion] plus `c_L`.
+
+    Parameters
+    ----------
     c_L : float or jax.Array
-        Speed of sound in the liquid  [m/s].
+        Speed of sound in the liquid [m/s].
     """
 
     c_L: ArrayLike
@@ -189,24 +350,39 @@ class ModifiedRayleighPlesset(EquationOfMotion[BubbleState]):
 
 
 class KellerMiksis(EquationOfMotion[BubbleState]):
-    """Keller-Miksis equation of motion (first-order compressibility).
+    r"""Keller-Miksis equation of motion (first-order compressibility).
 
     Accounts for liquid compressibility up to first order in the Mach
-    number M = Rdot / c_L::
+    number $M = \dot{R}/c_L$:
 
-        (1-M) R Rddot + 3/2 (1 - M/3) Rdot^2
-            = (1/rho) (1+M) (p_L - P_amb - p_ac)
-              + R / (rho c) (dp_L/dt - dp_ac/dt)
+    $$
+    (1 - M) R\ddot{R} + \frac{3}{2}\left(1 - \frac{M}{3}\right)\dot{R}^2
+        = \frac{1 + M}{\rho_L}\left(p_L - P_\text{amb} - p_\text{ac}\right)
+        + \frac{R}{\rho_L c_L}\left(\frac{\mathrm{d}p_L}{\mathrm{d}t}
+        - \frac{\mathrm{d}p_\text{ac}}{\mathrm{d}t}\right)
+    $$
 
-    The time derivative dp_L/dt is computed **automatically** via JAX
-    autodiff (chain rule through ``p_L``), so this EoM works with any
-    combination of gas, shell, and medium models without hand-coded
+    JAX autodiff computes the time derivative
+    $\mathrm{d}p_L/\mathrm{d}t$ **automatically**, through the chain rule
+    on `p_L`:
+
+    $$
+    \frac{\mathrm{d}p_L}{\mathrm{d}t}
+        = \frac{\partial p_L}{\partial R}\dot{R}
+        + \frac{\partial p_L}{\partial \dot{R}}\ddot{R}
+    $$
+
+    The $\ddot{R}$ term moves to the left-hand side, so this EoM works with
+    any combination of gas, shell, and medium models without hand-coded
     derivatives.
 
-    Fields
-    ------
+    It takes the parameters of
+    [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion] plus `c_L`.
+
+    Parameters
+    ----------
     c_L : float or jax.Array
-        Speed of sound in the liquid  [m/s].
+        Speed of sound in the liquid [m/s].
     """
 
     c_L: ArrayLike
@@ -251,36 +427,86 @@ class KellerMiksis(EquationOfMotion[BubbleState]):
 
 
 class Gilmore(EquationOfMotion[BubbleState]):
-    """Gilmore equation of motion (Kirkwood-Bethe hypothesis).
+    r"""Gilmore equation of motion (Kirkwood-Bethe hypothesis).
 
     Improves on Keller-Miksis by treating liquid compressibility through
-    the Tait equation of state rather than a linear approximation.  The
-    enthalpy H and local speed of sound C at the bubble wall are exact
-    functions of the wall pressure, giving accurate results at high Mach
-    numbers::
+    the Tait equation of state rather than a linear approximation. The
+    enthalpy $H$ and local speed of sound $C$ at the bubble wall are exact
+    functions of the wall pressure, which gives accurate results at high
+    Mach numbers:
 
-        (1 - Ṙ/C) R R̈  +  3/2 (1 - Ṙ/(3C)) Ṙ²
-            = (1 + Ṙ/C) H  +  (R/C)(1 - Ṙ/C) Ḣ
+    $$
+    \left(1 - \frac{\dot{R}}{C}\right) R\ddot{R}
+        + \frac{3}{2}\left(1 - \frac{\dot{R}}{3C}\right)\dot{R}^2
+        = \left(1 + \frac{\dot{R}}{C}\right) H
+        + \frac{R}{C}\left(1 - \frac{\dot{R}}{C}\right)\dot{H}
+    $$
 
-    where the enthalpy difference between bubble wall and far field is::
+    where the enthalpy difference between the bubble wall and the far field
+    is
 
-        H = n/(n-1) · K · [(p_L+B)^((n-1)/n) − (p∞+B)^((n-1)/n)]
-        K = (P_amb+B)^(1/n) / ρ_L
+    $$
+    \begin{aligned}
+    H &= \frac{n}{n-1} K \left[(p_L + B)^{(n-1)/n}
+        - (p_\infty + B)^{(n-1)/n}\right], \\
+    K &= \frac{(P_\text{amb} + B)^{1/n}}{\rho_L},
+    \end{aligned}
+    $$
 
-    and the local sound speed satisfies::
+    and the local sound speed satisfies
 
-        C² = n·K·(p∞+B)^((n-1)/n)  +  (n-1)·H
+    $$
+    C^2 = n K (p_\infty + B)^{(n-1)/n} + (n - 1) H,
+    $$
 
-    with p∞ = P_amb + p_ac.
+    with $p_\infty = P_\text{amb} + p_\text{ac}$. The code clamps $C^2$ to
+    at least 1 m²/s² before it takes the square root.
 
-    Ḣ is expanded analytically via the chain rule: ∂H/∂p_L and ∂H/∂p∞
-    come from the Tait formula; dp_L/dt is obtained via
-    ``jax.grad(self.p_L)`` and dp_ac/dt via ``jax.grad(p_ac_fn)``.
-    The resulting coupling of R̈ through dp_L/dṘ is absorbed into the
-    denominator, following the same algebraic pattern as ``KellerMiksis``.
+    The chain rule expands $\dot{H}$:
 
-    Default Tait parameters correspond to water (Gilmore 1952):
-    n = 7, B = 304.9 MPa.
+    $$
+    \dot{H} = \frac{\partial H}{\partial p_L}\frac{\mathrm{d}p_L}{\mathrm{d}t}
+        + \frac{\partial H}{\partial p_\infty}\frac{\mathrm{d}p_\text{ac}}{\mathrm{d}t},
+    \qquad
+    \frac{\partial H}{\partial p_L} = K (p_L + B)^{-1/n},
+    \qquad
+    \frac{\partial H}{\partial p_\infty} = -K (p_\infty + B)^{-1/n}.
+    $$
+
+    The partial derivatives of $H$ come from the Tait formula.
+    `jax.grad(self.p_L)` gives $\partial p_L/\partial R$ and
+    $\partial p_L/\partial \dot{R}$, from which the chain rule builds
+    $\mathrm{d}p_L/\mathrm{d}t$; `jax.grad(p_ac_fn)` gives
+    $\mathrm{d}p_\text{ac}/\mathrm{d}t$. The $\ddot{R}$ coupling through
+    $\partial p_L/\partial \dot{R}$ moves into the denominator, in the
+    same way as in [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis].
+
+    The default Tait parameters for water, $n = 7.15$ and
+    $B = 3.046 \times 10^8$ Pa, are those of Gümmer, Schenke & Denner
+    (2021). Gilmore (1952) quotes the rounder "$B \approx 3000$ atm and
+    $n \approx 7$". The Tait parameters fix the far-field sound speed of the
+    liquid at rest,
+
+    $$
+    c_\infty = \sqrt{\frac{n\,(P_\text{amb} + B)}{\rho_L}},
+    $$
+
+    which is 1477 m/s for the defaults with $P_\text{amb} = 101\,325$ Pa and
+    $\rho_L = 998$ kg/m³. This EoM has no `c_L` field: to compare it with
+    [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis], give the Keller-Miksis
+    model $c_L = c_\infty$, or choose `B_tait` so that $c_\infty$ matches
+    your `c_L`.
+
+    It takes the parameters of
+    [`EquationOfMotion`][jbubble.bubble.eom.EquationOfMotion] plus
+    `n_tait` and `B_tait`.
+
+    Parameters
+    ----------
+    n_tait : float or jax.Array
+        Tait exponent (dimensionless). Default: `7.15`.
+    B_tait : float or jax.Array
+        Tait pressure constant [Pa]. Default: `3.046e8`.
 
     References
     ----------
@@ -288,25 +514,23 @@ class Gilmore(EquationOfMotion[BubbleState]):
     in a viscous compressible liquid.* Hydrodynamics Laboratory Report
     26-4, California Institute of Technology.
 
-    Fields
-    ------
-    n_tait : float or jax.Array
-        Tait exponent (dimensionless).  Default 7.0.
-    B_tait : float or jax.Array
-        Tait pressure constant  [Pa].  Default 304.9e6.
+    Gümmer, J., Schenke, S., & Denner, F. (2021). Modelling lipid-coated
+    microbubbles in focused ultrasound applications at subresonance
+    frequencies. *Ultrasound in Medicine & Biology*, 47(10), 2958-2979,
+    Eqs. 2-6. <https://doi.org/10.1016/j.ultrasmedbio.2021.06.012>
     """
 
-    n_tait: ArrayLike = 7.0
-    B_tait: ArrayLike = 304.9e6
+    n_tait: ArrayLike = 7.15
+    B_tait: ArrayLike = 3.046e8
 
     def _tait_K(self) -> jax.Array:
-        """Tait EOS prefactor: (P_amb + B)^(1/n) / rho_L."""
+        r"""Return the Tait prefactor, $K = (P_\text{amb} + B)^{1/n} / \rho_L$."""
         return jnp.asarray(
             (self.P_amb + self.B_tait) ** (1.0 / self.n_tait) / self.rho_L
         )
 
     def _H_and_C(self, p_L: jax.Array, p_inf: jax.Array) -> tuple[jax.Array, jax.Array]:
-        """Enthalpy H [m²/s²] and bubble-wall sound speed C [m/s]."""
+        """Return the enthalpy $H$ [m²/s²] and bubble-wall sound speed $C$ [m/s]."""
         n, B = jnp.asarray(self.n_tait), jnp.asarray(self.B_tait)
         K = self._tait_K()
         exp = (n - 1.0) / n
@@ -362,212 +586,3 @@ class Gilmore(EquationOfMotion[BubbleState]):
 
         R_ddot = numer / denom
         return BubbleState(R=R_dot, R_dot=R_ddot)
-
-
-class LeightonTube(EquationOfMotion[BubbleState]):
-    """Leighton model for a bubble confined in a rigid-walled tube.
-
-    .. warning::
-
-        **Work in progress.**  Like ``SphericalConfinement``, this model is
-        not yet validated.  The geometry factor ``beta`` is also unverified
-        against the reference (see the ``TODO`` in ``__call__``): the code
-        currently uses ``beta = 2 alpha - 1`` while the documented form is
-        ``beta = 2 alpha``.  Use with caution.
-
-    Modifies the inertia terms of the standard Rayleigh-Plesset equation
-    to account for the added mass effect of a rigid cylindrical tube::
-
-        R Rddot [1 + (R/Gamma) beta]  +  3/2 Rdot^2 [1 + 4R/(3 Gamma) beta]
-            = (1/rho) (p_L_damped - P_amb - p_ac)
-
-    where ``beta = 2 alpha`` with
-    ``alpha = (zeta/Gamma)(1 + 8 Gamma / (3 pi zeta)) - 1`` encodes
-    the tube geometry (Gamma = tube radius, zeta = half-length).
-
-    Fields
-    ------
-    c_L : float or jax.Array
-        Speed of sound in the liquid  [m/s].
-    tube_radius : float or jax.Array
-        Inner radius of the confining tube  [m].
-    tube_length : float or jax.Array
-        Length of the confining tube  [m].
-    """
-
-    c_L: ArrayLike
-    tube_radius: ArrayLike
-    tube_length: ArrayLike
-
-    def __call__(
-        self,
-        t: Any,
-        state: BubbleState,
-        p_ac_fn: Callable,
-    ) -> BubbleState:
-        R, R_dot = state.R, state.R_dot
-
-        p_L_val = self.p_L(state)
-        p_ac = p_ac_fn(t)
-
-        # Gas radiation damping: dp_gas/dt = (dp_gas/dR) * Rdot
-        gas_tangent = jax.grad(self.gas)(state)
-        dp_gas_dt = gas_tangent.R * R_dot
-        radiation_damping = (R / self.c_L) * dp_gas_dt
-
-        # Tube geometry factors
-        Gamma = self.tube_radius
-        zeta = self.tube_length / 2.0
-        alpha = (zeta / Gamma) * (1.0 + (8.0 * Gamma) / (3.0 * jnp.pi * zeta)) - 1.0
-        beta = 2.0 * alpha - 1.0  # TODO: check the -1.0
-
-        rhs = (p_L_val + radiation_damping - self.P_amb - p_ac) / self.rho_L
-
-        # Modified inertia: R Rddot [1 + (R/Gamma) beta]
-        #                 + 3/2 Rdot^2 [1 + 4R/(3 Gamma) beta] = rhs
-        denom = R * (1.0 + (R / Gamma) * beta)
-        inertia = 1.5 * R_dot**2 * (1.0 + (4.0 * R) / (3.0 * Gamma) * beta)
-
-        R_ddot = (rhs - inertia) / denom
-        return BubbleState(R=R_dot, R_dot=R_ddot)
-
-
-class SphericalConfinement(EquationOfMotion[ConfinedBubbleState]):
-    """Bubble confined inside a thin elastic spherical vessel.
-
-    .. warning::
-
-        **Work in progress.**  The confinement models
-        (``SphericalConfinement`` and ``LeightonTube``) are not yet
-        validated against reference solutions and their physics is still
-        being checked.  In particular, this model assumes a **Newtonian
-        lumen liquid**: only ``medium.mu`` is used, so the elastic and
-        non-Newtonian contributions of viscoelastic media
-        (``KelvinVoigtMedium``, ``NeoHookeanMedium``, ``PowerLawMedium``)
-        are **ignored** here.  Surrounding-tissue elasticity is represented
-        by the vessel wall, not by the medium model.  Use with caution.
-
-    Couples the bubble wall dynamics to the vessel wall motion, producing
-    a 4-DOF state (``ConfinedBubbleState``) where *a* is the vessel wall
-    radius.
-
-    The coupled 2x2 system is::
-
-        A Rddot + B a_ddot = E   (liquid continuity)
-        C Rddot + D a_ddot = F   (momentum / vessel inertia)
-
-    solved via Cramer's rule at each time step.  Row 1 is the
-    incompressible-lumen constraint d/dt(R^2 Rdot - a^2 adot) = 0; row 2
-    is the radial momentum balance carrying the vessel + tissue inertia D.
-
-    Fields
-    ------
-    c_L : float or jax.Array
-        Speed of sound in the liquid  [m/s].
-    vessel_radius : float or jax.Array
-        Equilibrium vessel wall radius  [m].
-    vessel_rho : float or jax.Array
-        Vessel wall density  [kg/m^3].
-    vessel_E : float or jax.Array
-        Vessel Young's modulus  [Pa].
-    vessel_nu : float or jax.Array
-        Vessel Poisson's ratio  (dimensionless).
-    vessel_d : float or jax.Array
-        Vessel wall thickness  [m].
-    tissue_rho : float or jax.Array
-        Surrounding tissue density  [kg/m^3].
-    tissue_d : float or jax.Array
-        Surrounding tissue thickness  [m].
-    """
-
-    c_L: ArrayLike
-    vessel_radius: ArrayLike
-    vessel_rho: ArrayLike
-    vessel_E: ArrayLike
-    vessel_nu: ArrayLike
-    vessel_d: ArrayLike
-    tissue_rho: ArrayLike
-    tissue_d: ArrayLike
-
-    def initial_state(self) -> ConfinedBubbleState:
-        R0 = jnp.asarray(self.R0)
-        s0 = ConfinedBubbleState(
-            R=R0,
-            R_dot=jnp.zeros(()),
-            R0=R0,
-            P_gas0=jnp.zeros(()),
-            a=jnp.asarray(self.vessel_radius),
-            a_dot=jnp.zeros(()),
-        )
-        P_gas0 = jnp.asarray(self.P_amb) + 2.0 * self.shell.sigma(s0) / R0
-        return ConfinedBubbleState(
-            R=R0,
-            R_dot=jnp.zeros(()),
-            R0=R0,
-            P_gas0=P_gas0,
-            a=jnp.asarray(self.vessel_radius),
-            a_dot=jnp.zeros(()),
-        )
-
-    def __call__(
-        self,
-        t: Any,
-        state: ConfinedBubbleState,
-        p_ac_fn: Callable,
-    ) -> ConfinedBubbleState:
-        R, R_dot = state.R, state.R_dot
-        a, a_dot = state.a, state.a_dot
-        p_ac = p_ac_fn(t)
-
-        p_gas = self.gas(state)
-        # Shell and medium contributions at the bubble wall.
-        #
-        # Shell: the full shell pressure (Laplace + elastic + surface
-        #   viscosity) enters via -p_shell below; do not re-add any shell
-        #   term separately or it will be double-counted.
-        #
-        # Medium: WIP limitation — only the Newtonian viscous part is
-        #   modelled here.  The liquid viscosity acts at both the bubble
-        #   wall (4μṘ/R) and the moving vessel wall (4μȧ/a), so it is
-        #   hand-rolled as 4μ(Ṙ/R + ȧ/a) rather than calling
-        #   ``self.medium(state)``.  Consequently any elastic / non-Newtonian
-        #   contribution from a viscoelastic medium is NOT included — the
-        #   confined model assumes a Newtonian lumen (see class docstring).
-        p_shell = self.shell(state)
-        mu = self.medium.mu(state)
-
-        # Vessel wall pressure (thin shell, nearly-incompressible)
-        nu = self.vessel_nu
-        a0 = self.vessel_radius
-        P_wall = self.vessel_E * self.vessel_d * (a - a0) / ((1.0 - nu**2) * a**2)
-
-        # 2x2 coupled system coefficients
-        A = R**2
-        B = -(a**2)
-        C = self.rho_L * R**2 * (1.0 / R - 1.0 / a)
-        D = self.vessel_rho * self.vessel_d + self.tissue_rho * self.tissue_d
-
-        E = 2.0 * a * a_dot**2 - 2.0 * R * R_dot**2
-
-        F = (
-            p_gas
-            - 2.0 * self.rho_L * R * R_dot**2 * (1.0 / R - 1.0 / a)
-            - p_shell
-            - 4.0 * mu * (R_dot / R + a_dot / a)
-            - P_wall
-            - self.P_amb
-            - p_ac
-        )
-
-        Delta = A * D - B * C
-        Delta = jnp.where(jnp.abs(Delta) < 1e-14, 1e-14, Delta)
-
-        R_ddot = (E * D - B * F) / Delta
-        a_ddot = (A * F - C * E) / Delta
-
-        return ConfinedBubbleState(
-            R=R_dot,
-            R_dot=R_ddot,
-            a=a_dot,
-            a_dot=a_ddot,
-        )

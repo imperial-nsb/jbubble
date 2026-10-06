@@ -2,163 +2,187 @@
 <p align="center"><strong>Differentiable microbubble dynamics in JAX.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/imperial-nsb/jbubble/actions/workflows/ci.yml"><img src="https://github.com/imperial-nsb/jbubble/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://pypi.org/project/jbubble/"><img src="https://badge.fury.io/py/jbubble.svg" alt="PyPI"></a>
-  <a href="https://pypi.org/project/jbubble/"><img src="https://img.shields.io/pypi/pyversions/jbubble.svg" alt="Python"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://github.com/imperial-nsb/jbubble/actions/workflows/ci.yml"><img src="https://github.com/imperial-nsb/jbubble/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+  <a href="https://pypi.org/project/jbubble/"><img src="https://img.shields.io/pypi/v/jbubble.svg" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/jbubble/"><img src="https://img.shields.io/pypi/pyversions/jbubble.svg" alt="Supported Python versions"></a>
+  <a href="https://github.com/imperial-nsb/jbubble/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://imperial-nsb.github.io/jbubble/"><img src="https://img.shields.io/badge/docs-imperial--nsb.github.io-blue.svg" alt="Documentation"></a>
+  <a href="https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/01_first_simulation.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open the first example in Colab"></a>
 </p>
 
-> [!WARNING]
-> **Alpha release.** jbubble is under active development. APIs may change without deprecation. Please reach out if you'd like to use or contribute to the project!
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/readme/hero-bubble-dark.gif">
+  <img src="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/readme/hero-bubble-light.gif" alt="A microbubble, drawn to scale, grows and collapses under a six-cycle, 120 kPa ultrasound pulse, next to its radius-time curve and the driving pressure." width="100%">
+</picture>
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/bubble_coating_comparison.png" alt="Comparison of R(t) curves, with and without a lipid coating." width="100%">
-</p>
-<p align="center">
-  <em>Comparison of R(t) curves, with and without a lipid coating.</em>
-</p>
+> **Beta.** jbubble 0.2 is a beta release, and its APIs may still change
+> between minor releases without a deprecation period. To use jbubble in your
+> research or to contribute, get in touch by
+> [opening an issue](https://github.com/imperial-nsb/jbubble/issues).
 
----
-
-jbubble is a research library for simulating and fitting acoustic microbubble
-dynamics, built on [JAX](https://github.com/jax-ml/jax),
+jbubble simulates and fits the radial dynamics of microbubbles driven by
+ultrasound, such as the coated bubbles in ultrasound contrast agents. It's
+built on [JAX](https://github.com/jax-ml/jax),
 [Equinox](https://github.com/patrick-kidger/equinox), and
-[diffrax](https://github.com/patrick-kidger/diffrax). Models are designed to be composable, extendable, fully differentiable, and jit-compatible.
+[diffrax](https://github.com/patrick-kidger/diffrax), so every model is a
+PyTree that you can compile with `jax.jit`, batch with `jax.vmap`, and
+differentiate with `jax.grad`, through the adaptive ODE solve.
 
-Developed by the [Noninvasive Surgery & Biopsy Laboratory](https://www.nsblab.org/) at Imperial College London.
+jbubble is developed by the
+[Noninvasive Surgery & Biopsy Laboratory](https://www.nsblab.org/) at Imperial
+College London, and was first presented at the 2026 IEEE International
+Ultrasonics Symposium (IUS).
 
-## Why jbubble?
+## Why jbubble
 
-| Feature | jbubble | APECSS / MATLAB |
-|---|---|---|
-| JIT compilation | `jax.jit` | No |
-| Vectorised sweeps | `jax.vmap` | Script loops |
-| Gradient-based fitting | `jax.grad` | Finite differences |
-| Composable physics | Mix any gas + shell + medium | Fixed combinations |
-| Neural components | `NeuralProperty`, `NeuralPulse` | No |
+- **Compiled simulations.** `jax.jit` compiles a model once. Later calls with
+  new parameter values reuse the compiled solver.
+- **Batched sweeps.** `jax.vmap` simulates a row of bubbles in one call, and
+  `GridSweep` maps a whole parameter grid in memory-bounded chunks on every
+  CPU core, or on your GPUs.
+- **Gradients and fitting.** `jax.grad` gives the derivative of any output with
+  respect to any model parameter. `fit_parameters` fits parameters to measured
+  radius curves or emission signals with [optax](https://github.com/google-deepmind/optax),
+  with bounds, scaling, and several recordings at once.
+- **Composable physics.** Combine four equations of motion (Rayleigh-Plesset,
+  modified Rayleigh-Plesset, Keller-Miksis, and Gilmore) with any gas, shell,
+  surface tension law, and Newtonian, viscoelastic, or power-law medium.
+  Presets build a free bubble, a lipid-coated bubble, or a polymer-shelled
+  bubble in one line.
+- **Neural components.** Replace a physical law, such as the shell's surface
+  tension, with a `NeuralProperty`, or the drive with a `NeuralPulse`, and
+  train it from data with the same gradients.
+- **Acoustic emission.** Compute the pressure that the bubble radiates to a
+  field point with an incompressible or a quasi-acoustic monopole model, and
+  turn it into a spectrum.
 
-## Installation
+## Install
+
+Install jbubble from PyPI with pip:
 
 ```bash
 pip install jbubble
 ```
 
-For development:
+Or add it to a [uv](https://docs.astral.sh/uv/) project:
 
 ```bash
-git clone https://github.com/imperial-nsb/jbubble.git
-cd jbubble
-pip install -e ".[dev]"
+uv add jbubble
 ```
 
-Requires Python &ge; 3.11. See the docs for more information.
+jbubble needs Python 3.12 or later, and installs the CPU build of JAX. The
+optional `examples` extra installs Matplotlib, for the example scripts and the
+jbubble figure styles. To install it, run `pip install "jbubble[examples]"`.
+For GPU support, conda, or a development install, see the
+[installation guide](https://imperial-nsb.github.io/jbubble/guide/installation/).
 
 ## Quick start
 
-### Using a preset
+Simulate a lipid-coated bubble 2 µm in radius, driven by a 1 MHz, 100 kPa
+tone burst:
 
 ```python
-import jax
-from jbubble import run_simulation, SaveSpec
+from jbubble import run_simulation
 from jbubble.utils.presets import lipid_bubble
 
 eom, pulse = lipid_bubble(R0=2e-6, freq=1e6, pressure=100e3)
-
-result = jax.jit(run_simulation)(
-    eom, pulse,
-    save_spec=SaveSpec(num_samples=1000),
-    t_max=10e-6,
-)
-print(result.radius.max() / eom.R0)  # peak expansion ratio
+result = run_simulation(eom, pulse)
+print(f"Peak radius: {float(result.radius.max() / eom.R0):.2f} R0")
 ```
 
-Three presets are available: `free_bubble`, `lipid_bubble`, and `thick_shell_bubble`.
+The simulation is a JAX function, so you can batch it and differentiate it:
 
-### Composing models manually
-
-```python
+```{.python continuation}
 import jax
-from jbubble import run_simulation, SaveSpec
-from jbubble.bubble.eom import KellerMiksis
-from jbubble.bubble.gas import PolytropicGas
-from jbubble.bubble.shell import NoShell
-from jbubble.bubble.medium import NewtonianMedium
-from jbubble.pulse import ToneBurst
-from jbubble.pulse.shapes import Sine
+import jax.numpy as jnp
 
-eom = KellerMiksis(
-    gas=PolytropicGas(gamma=1.4),
-    shell=NoShell(sigma=0.072),
-    medium=NewtonianMedium(mu=1e-3),
-    R0=2e-6, P_amb=101325.0, rho_L=998.0, c_L=1500.0,
-)
-pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
 
-result = jax.jit(run_simulation)(
-    eom, pulse,
-    save_spec=SaveSpec(num_samples=1000),
-    t_max=10e-6,
-)
+def peak_expansion(pressure):
+    eom, pulse = lipid_bubble(R0=2e-6, freq=1e6, pressure=pressure)
+    return run_simulation(eom, pulse).radius.max() / eom.R0
+
+
+pressures = jnp.linspace(50e3, 200e3, 4)
+print(jax.vmap(peak_expansion)(pressures))  # four bubbles in one call
+print(jax.grad(peak_expansion)(100e3))  # sensitivity to pressure [1/Pa]
 ```
 
-Any gas model works with any shell model and any medium model—all
-combinations are valid and differentiated through automatically via `jax.grad`.
+To build the same model from a gas, a shell, and a medium, read the
+[quickstart guide](https://imperial-nsb.github.io/jbubble/guide/quickstart/)
+or open the
+[first example in Colab](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/01_first_simulation.ipynb).
 
-## Key capabilities
+## Visual tour
 
-- **Composable physics** — Mix and match 6 equations of motion (Rayleigh-Plesset through Gilmore), 2 gas models, 3 shell models, and 4 medium models. All combinations work automatically.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/readme/gradient-climb-dark.gif">
+  <img src="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/readme/gradient-climb-light.gif" alt="Gradient steps climb a GridSweep map of bubble response against drive frequency and bubble radius, and stop at the resonance peak." width="100%">
+</picture>
 
-- **Batch parameter sweeps** — Run thousands of simulations in parallel with `GridSweep`, which uses `jax.vmap` under the hood:
-  ```python
-  sweep = GridSweep(fn=simulate, search_space={"R0": radii, "freq": freqs})
-  results = sweep.run()  # shape (len(radii), len(freqs))
-  ```
+`jax.grad` and optax climb a `GridSweep` response map to the resonance peak.
+See [example 09: gradients and optimisation](https://imperial-nsb.github.io/jbubble/examples/09_gradients_and_optimisation/).
 
-- **Gradient-based fitting** — Fit model parameters to experimental data via `fit_parameters` and `optax`:
-  ```python
-  fit_result = fit_parameters(
-      make_model=lambda p: (make_eom(p), pulse),
-      params0=initial_guess,
-      loss_fn=my_loss,
-      optimizer=optax.adam(1e-2),
-  )
-  ```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/readme/neural-sigma-dark.gif">
+  <img src="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/readme/neural-sigma-light.gif" alt="Over training, a neural network's surface tension curve converges on the Marmottant law, while the simulated radius curves converge on the data." width="100%">
+</picture>
 
-- **Acoustic emissions** — Compute radiated pressure at arbitrary field points from solved trajectories using `IncompressibleMonopole` or `QuasiAcoustic` emission models.
+A neural network learns a lipid shell's surface tension law from radius
+curves, against the true Marmottant law.
+See [example 11: learn a shell law](https://imperial-nsb.github.io/jbubble/examples/11_learn_shell_law/).
 
-## Examples
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/readme/emission-spectrum-dark.png">
+  <img src="https://raw.githubusercontent.com/imperial-nsb/jbubble/main/docs/assets/readme/emission-spectrum-light.png" alt="A map of the radiated pressure spectrum against drive pressure: harmonics of the drive frequency, then broadband emission above a marked threshold." width="100%">
+</picture>
 
-The [`examples/`](examples/) directory contains 12 self-contained scripts:
-
-| # | Script | Description |
-|---|--------|-------------|
-| 00 | [Presets](examples/00_presets.py) | Quickest start — pick a preset and run |
-| 01 | [Basic simulation](examples/01_basic_simulation.py) | Assemble an EoM from components manually |
-| 02 | [Pulse algebra](examples/02_pulse_algebra.py) | Add, scale, and window pulse waveforms |
-| 03 | [Shell models](examples/03_shell_models.py) | Compare no-shell, lipid, and thick-shell coatings |
-| 04 | [Batch sweeps](examples/04_batch_sweeps.py) | `GridSweep` + `vmap` over parameter grids |
-| 05 | [Parameter fitting](examples/05_fitting.py) | Gradient-based estimation of shell elasticity |
-| 06 | [JIT timing](examples/06_jit_timing.py) | Benchmark JIT compilation vs steady-state throughput |
-| 07 | [Cavitation regimes](examples/07_cavitation_regimes.py) | Stable vs inertial cavitation physics |
-| 08 | [Acoustic emissions](examples/08_acoustic_emissions.py) | Monopole and quasi-acoustic radiated pressure |
-| 09 | [Custom pulse shapes](examples/09_custom_pulse_shapes.py) | Subclass `FourierPulseShape` for custom waveforms |
-| 10 | [Envelopes](examples/10_envelopes.py) | Envelope types and their gradient compatibility |
-| 11 | [Gradient resonance](examples/11_gradient_resonance.py) | 2D sweep + gradient descent to resonance peak |
+The spectrum of the radiated pressure against drive pressure, from harmonics
+to broadband emission.
+See [example 06: acoustic emission](https://imperial-nsb.github.io/jbubble/examples/06_acoustic_emission/).
 
 ## Documentation
 
-Full documentation is available at **[imperial-nsb.github.io/jbubble](https://imperial-nsb.github.io/jbubble/)**, including:
+The documentation lives at
+**[imperial-nsb.github.io/jbubble](https://imperial-nsb.github.io/jbubble/)**:
 
-- [Quickstart guide](https://imperial-nsb.github.io/jbubble/guide/quickstart/)
-- [Bubble models guide](https://imperial-nsb.github.io/jbubble/guide/bubble_models/)
-- [JAX tips (JIT, vmap, grad)](https://imperial-nsb.github.io/jbubble/guide/jax_tips/)
-- [API reference](https://imperial-nsb.github.io/jbubble/api/)
+- The [example gallery](https://imperial-nsb.github.io/jbubble/examples/) has
+  11 runnable examples, from a first simulation to learning a shell law, each
+  with an Open in Colab button.
+- The guide covers
+  [installation](https://imperial-nsb.github.io/jbubble/guide/installation/),
+  a [quickstart](https://imperial-nsb.github.io/jbubble/guide/quickstart/),
+  [bubble models](https://imperial-nsb.github.io/jbubble/guide/bubble_models/),
+  [pulse shapes](https://imperial-nsb.github.io/jbubble/guide/pulse_shapes/),
+  [solvers and stiffness](https://imperial-nsb.github.io/jbubble/guide/solvers/),
+  [parameter sweeps](https://imperial-nsb.github.io/jbubble/guide/sweeps/),
+  [fitting model parameters to data](https://imperial-nsb.github.io/jbubble/guide/fitting/),
+  and [JAX tips](https://imperial-nsb.github.io/jbubble/guide/jax_tips/).
+- The [API reference](https://imperial-nsb.github.io/jbubble/api/) documents
+  every public class and function.
+
+For the changes in each release, see the
+[changelog](https://github.com/imperial-nsb/jbubble/blob/main/CHANGELOG.md).
+For planned features, see the
+[roadmap](https://github.com/imperial-nsb/jbubble/blob/main/ROADMAP.md).
+
+## Citing jbubble
+
+jbubble was first presented at the 2026 IEEE International Ultrasonics
+Symposium (IUS). Until a paper is available, cite the software itself. The
+[`CITATION.cff`](https://github.com/imperial-nsb/jbubble/blob/main/CITATION.cff)
+file holds the citation metadata. On GitHub, select **Cite this repository**
+in the repository sidebar to copy an APA or BibTeX entry.
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome. To set up a development environment, run the
+checks, and open a pull request, see the
+[contributing guide](https://github.com/imperial-nsb/jbubble/blob/main/CONTRIBUTING.md).
+This project follows a
+[code of conduct](https://github.com/imperial-nsb/jbubble/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
-MIT License. Copyright (c) 2026 Noninvasive Surgery & Biopsy Laboratory.
-See [LICENSE](LICENSE) for details.
+jbubble is released under the MIT License. Copyright (c) 2026 Noninvasive
+Surgery & Biopsy Laboratory. For details, see
+[`LICENSE`](https://github.com/imperial-nsb/jbubble/blob/main/LICENSE).

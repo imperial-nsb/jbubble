@@ -1,75 +1,135 @@
 [build-system]
-requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.27", "hatch-vcs>=0.5"]
+build-backend = "hatchling.build"
 
 [project]
 name = "jbubble"
 dynamic = ["version"]
-description = "Differentiable microbubble dynamics primitives"
+description = "Differentiable microbubble dynamics in JAX"
 readme = "README.md"
-requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
 authors = [
-  {name = "Callum Rhys Tilbury"},
+    { name = "Callum Rhys Tilbury" },
+    { name = "Shima Mohammed" },
+    { name = "Anthea MacIntosh-LaRocque" },
+    { name = "Rui Xu" },
+    { name = "Ben Moseley" },
+    { name = "James J. Choi" },
 ]
-license = {text = "MIT"}
+keywords = [
+    "jax",
+    "microbubbles",
+    "ultrasound",
+    "contrast agents",
+    "cavitation",
+    "differentiable simulation",
+]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Physics",
+    "Typing :: Typed",
 ]
+# Lower bounds are the oldest versions CI tests (the `lowest-direct` job).
+# No upper bounds: a weekly CI job tests the newest releases instead.
 dependencies = [
-    "jax==0.8.1",
-    "jaxlib==0.8.1",
-    "diffrax>=0.7.0",
-    "equinox>=0.13.2",
-    "numpy>=2.0.0",
-    "chex>=0.1.91",
+    "jax>=0.8.1",
+    # diffrax 0.7.0 and 0.7.1 paired with optimistix 0.1.0 reject every implicit
+    # (Kvaerno) step; 0.7.2 is the first release that supports optimistix 0.1.
+    "diffrax>=0.7.2",
+    # 0.13.3 crashed on scan-of-vmap of modules with default fields
+    # (equinox#1172); 0.13.4 is also the first release tested with jax>=0.8.2.
+    "equinox>=0.13.4",
+    # Not imported directly. lineax<=0.0.8 raises TracerBoolConversionError in
+    # implicit solvers with jax>=0.8.2 (lineax#187), fixed in 0.1.0.
+    "lineax>=0.1.0",
+    # SolverConfig.stiff builds an optimistix root finder. diffrax 0.7.2
+    # already requires optimistix>=0.1.0.
+    "optimistix>=0.1.0",
     "optax>=0.2.3",
+    "numpy>=2.0",
     "tqdm>=4.65",
-    "h5py>=3.10",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-    "pytest-xdist>=3.5",
-    "ruff>=0.4",
-    "ty>=0.0.20",
-    "pre-commit>=3.7",
-]
-docs = [
-    "mkdocs>=1.6",
-    "mkdocs-material>=9.5",
-    "mkdocstrings[python]>=0.25",
-    "pymdown-extensions>=10.0",
-]
+# Plotting for the example scripts and notebooks.
+examples = ["matplotlib>=3.9"]
 
 [project.urls]
-"Homepage" = "https://github.com/imperial-nsb/jbubble"
-"Bug Tracker" = "https://github.com/imperial-nsb/jbubble/issues"
+Homepage = "https://github.com/imperial-nsb/jbubble"
+Documentation = "https://imperial-nsb.github.io/jbubble/"
+Source = "https://github.com/imperial-nsb/jbubble"
+Issues = "https://github.com/imperial-nsb/jbubble/issues"
+Changelog = "https://github.com/imperial-nsb/jbubble/blob/main/CHANGELOG.md"
 
-[tool.setuptools.packages.find]
-include = ["jbubble*"]
+# PEP 735 groups: local development only, never published.
+# `uv sync` installs the `dev` group by default.
+# With pip >= 25.1, use `pip install -e ".[examples]" --group dev`.
+[dependency-groups]
+test = ["pytest>=8.3", "pytest-xdist>=3.6", "pytest-timeout>=2.3.1", "jbubble[examples]"]
+lint = ["ruff>=0.16.10", "ty==0.0.84"]
+dev = [{ include-group = "test" }, { include-group = "lint" }, "prek>=0.5"]
+# The documentation site (Zensical), the example gallery, and the tests that
+# run the code samples in the docs. Install with `uv sync --group docs`.
+docs = [
+    # The examples run with the same extras that users install.
+    "jbubble[examples]",
+    "zensical>=0.0.67", # raise to >=0.1 after the 0.1.0 release
+    "mkdocstrings[python]>=1.0.6",
+    "mkdocstrings-python>=2.0.9",
+    # Imported by scripts/griffe_extensions.py.
+    "griffelib>=2.0",
+    # mkdocstrings and mkdocs-autorefs import MkDocs 1.x without capping it.
+    # MkDocs 2.0 has no plugin API, so the cap keeps the API pages building.
+    "mkdocs>=1.6,<2",
+    # Formats the signatures that `separate_signature` renders.
+    "ruff>=0.16.10",
+    # scripts/build_examples.py: run the percent-format examples as notebooks.
+    "jupytext>=1.19",
+    "nbclient>=0.11",
+    "nbformat>=5.11",
+    "ipykernel>=7.0",
+    # Run the code blocks in README.md and docs/guide/.
+    "pytest>=8.3",
+    "pytest-markdown-docs>=0.9",
+]
+# scripts/make_readme_assets.py: render the README animations and images.
+# imageio-ffmpeg bundles an ffmpeg binary that encodes the GIFs. Install with
+# `uv sync --group assets`.
+assets = ["matplotlib>=3.9", "imageio-ffmpeg>=0.6"]
 
-[tool.setuptools_scm]
-write_to = "jbubble/_version.py"
-version_scheme = "no-guess-dev"
-local_scheme = "no-local-version"
-fallback_version = "0.1.0"
+[tool.hatch.version]
+source = "vcs"
+# Same scheme as the old setuptools-scm config. The fallback only applies to a
+# source tree with no git metadata and no .git_archival.txt.
+raw-options = { version_scheme = "no-guess-dev", local_scheme = "no-local-version", fallback_version = "0.0.0" }
+
+[tool.hatch.build.targets.sdist]
+include = ["/jbubble", "/tests", "/README.md", "/LICENSE", "/CITATION.cff"]
+
+[tool.hatch.build.targets.wheel]
+# Ships every file under jbubble/ that git doesn't ignore, including non-Python
+# package data such as py.typed.
+packages = ["jbubble"]
 
 # ── Ruff: linting + formatting ────────────────────────────────────────────────
+# Ruff and ty infer the target Python from `requires-python`.
 
 [tool.ruff]
-target-version = "py311"
 line-length = 88
 src = ["jbubble", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM"]
+# D301: docstrings that contain backslashes (for example LaTeX) must be raw.
+select = ["E", "F", "I", "UP", "B", "SIM", "D301"]
 ignore = [
     "E501",  # line too long — handled by formatter
     "B008",  # function call in default argument (common JAX pattern)
@@ -77,7 +137,6 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101"]      # allow assert in tests
 "examples/*" = ["E402", "I001", "B007", "B023", "F841"]  # example scripts are more lenient
 "jbubble/__init__.py" = ["E402"]  # jax.config.update must precede all imports
 
@@ -86,33 +145,17 @@ quote-style = "double"
 indent-style = "space"
 
 # ── ty: type checking ─────────────────────────────────────────────────────────
-
-[tool.ty.environment]
-python-version = "3.11"
-
-[tool.ty.rules]
-# ty does not yet understand equinox's eqx.field(converter=...) pattern: fields
-# declared as `Property` with `converter=as_property` correctly accept plain
-# floats at construction time, but ty treats the constructor as requiring a
-# `Property` instance.  Pyright handles this correctly.  Suppress until ty
-# gains converter-aware constructor inference.
-invalid-argument-type = "ignore"
-
-# ty treats eqx.Module subclass constructors as returning `Module` (the base
-# class) rather than the specific subclass.  This causes spurious
-# invalid-return-type errors wherever a function returns a freshly-constructed
-# Module subclass (e.g. `return BubbleState(...)`), and invalid-assignment
-# errors wherever such a value is stored in a variable declared as the
-# subclass type.  Both are equinox false positives; suppress until ty gains
-# proper equinox-aware constructor inference.
-invalid-return-type = "ignore"
-invalid-assignment = "ignore"
+# ty needs no configuration here. With equinox older than 0.13.7, it reports
+# false positives on eqx.Module constructors, so run it in the locked
+# environment: `uv run ty check jbubble`.
 
 # ── Pytest ────────────────────────────────────────────────────────────────────
 
 [tool.pytest.ini_options]
+minversion = "8.3"
 testpaths = ["tests"]
-addopts = "-v --tb=short"
+addopts = ["-ra", "--tb=short", "--strict-markers", "--strict-config"]
+xfail_strict = false
 filterwarnings = [
     "ignore::DeprecationWarning:jax",
     "ignore::UserWarning:diffrax",

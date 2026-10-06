@@ -1,307 +1,368 @@
 # Bubble models
 
-A complete bubble model is a combination of:
+A bubble model in jbubble has four parts:
 
-1. An **equation of motion** — the ODE governing $R(t)$.
-2. A **gas model** — the pressure law inside the bubble.
-3. A **shell model** — surface tension and shell stresses.
-4. A **medium model** — viscous/elastic stresses in the surrounding liquid.
+1. An **equation of motion** (EoM): the ordinary differential equation for
+   the radius $R(t)$.
+2. A **gas model**: the pressure inside the bubble.
+3. A **shell model**: surface tension and the stresses of a coating.
+4. A **medium model**: the viscous and elastic stresses of the surrounding
+   liquid or tissue.
 
-All components implement a common interface and can be combined freely. The EoM calls the gas, shell, and medium models to compute the liquid-side boundary pressure:
+The equation of motion asks the other three for the liquid pressure at the
+bubble wall,
 
-$$p_L = p_\text{gas} - p_\text{shell} - p_\text{medium}$$
+$$
+p_L = p_\text{gas} - p_\text{shell} - p_\text{medium},
+$$
 
-and uses $p_L$ to form the ODE right-hand side. Derivatives of $p_L$ are computed automatically via `jax.grad` — no hand-coded Jacobians required.
+and relates it to the wall acceleration $\ddot R$. Where an equation needs a
+time derivative, such as $\mathrm{d}p_L/\mathrm{d}t$ in Keller-Miksis, JAX
+computes it by automatic differentiation. That's why any gas works with any
+shell, medium, and equation of motion, including models that you write
+yourself.
 
----
+Every code block on this page runs as written, in order. The first block
+defines the parts that the later ones reuse:
+
+```python
+import jax
+import jax.numpy as jnp
+
+from jbubble import run_simulation
+from jbubble.bubble.eom import Gilmore, KellerMiksis, RayleighPlesset
+from jbubble.bubble.gas import PolytropicGas
+from jbubble.bubble.medium import NewtonianMedium
+from jbubble.bubble.shell import NoShell
+from jbubble.pulse import ToneBurst
+from jbubble.pulse.shapes import Sine
+
+water = {"P_amb": 101325.0, "rho_L": 998.0}  # [Pa], [kg/m³]
+parts = {
+    "gas": PolytropicGas(gamma=1.4),
+    "shell": NoShell(sigma=0.072),  # [N/m]
+    "medium": NewtonianMedium(mu=1e-3),  # [Pa s]
+    "R0": 2e-6,  # [m]
+}
+```
 
 ## Equations of motion
 
-All EoMs share the same constructor signature:
+Every equation of motion takes `gas`, `shell`, `medium`, `R0`, `P_amb`, and
+`rho_L`. Some take more:
 
-```python
-eom = SomeEoM(
-    gas=...,
-    shell=...,
-    medium=...,
-    R0=2e-6,
-    P_amb=101325.0,
-    rho_L=998.0,
-    # EoM-specific fields below
-)
-```
+| Equation of motion | Extra parameters | Use it for |
+|---|---|---|
+| [`RayleighPlesset`][jbubble.bubble.eom.RayleighPlesset] | none | Weak driving in an incompressible liquid |
+| [`ModifiedRayleighPlesset`][jbubble.bubble.eom.ModifiedRayleighPlesset] | `c_L` | Coated bubbles at low Mach number, as in Marmottant et al. (2005) |
+| [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis] | `c_L` | Most work: the default of every preset |
+| [`Gilmore`][jbubble.bubble.eom.Gilmore] | `n_tait`, `B_tait` | Violent, inertial collapse, where the wall Mach number approaches 1 |
 
-### Rayleigh–Plesset
+### Rayleigh-Plesset
 
-The classic model for a spherical bubble in an incompressible fluid. Suitable for low driving pressures where liquid compressibility is negligible.
+The classic equation for a spherical bubble in an incompressible liquid,
+where $p_\text{ac}(t)$ is the driving pressure:
 
-$$R\ddot{R} + \frac{3}{2}\dot{R}^2 = \frac{1}{\rho_L}\left(p_L - P_\infty - p_{ac}(t)\right)$$
+$$
+R\ddot{R} + \frac{3}{2}\dot{R}^2
+    = \frac{1}{\rho_L}\left(p_L - P_\text{amb} - p_\text{ac}\right).
+$$
 
-```python
-from jbubble.bubble.eom import RayleighPlesset
-eom = RayleighPlesset(gas=..., shell=..., medium=..., R0=2e-6, P_amb=101325, rho_L=998)
-```
+### Modified Rayleigh-Plesset
 
-### Modified Rayleigh–Plesset
+Adds the radiation damping of the gas pressure only, a first-order
+compressibility correction:
 
-Adds a first-order compressibility correction to the RP equation via the acoustic radiation damping term $\frac{R}{c_L}\dot{p}_\text{gas}$. It is simply the Keller-Miksis equation without the $$O(\dot R/c)$$ prefactor terms. Suitable for low driving pressures and for instances where $$M = \dot R/ c\ll 1$$. 
+$$
+R\ddot{R} + \frac{3}{2}\dot{R}^2
+    = \frac{1}{\rho_L}\left(p_L + \frac{R}{c_L}\frac{\mathrm{d}p_\text{gas}}{\mathrm{d}t}
+    - P_\text{amb} - p_\text{ac}\right).
+$$
 
+### Keller-Miksis
 
-$$(1 - M)\, R \ddot{R} + \frac{3}{2}\left(1 - \frac{M}{3}\right)\dot{R}^2
-= \frac{1}{\rho}(1 + M)\left(p_L - P_{\text{amb}} - p_{\text{ac}}\right)
-+ \frac{R}{\rho c}\left(\frac{d p_L}{dt} - \frac{d p_{\text{ac}}}{dt}\right)$$
+Accounts for liquid compressibility to first order in the wall Mach number
+$M = \dot R / c_L$:
 
-```python
-from jbubble.bubble.eom import ModifiedRayleighPlesset
-eom = ModifiedRayleighPlesset(..., c_L=1500.0)
-```
-
-### Keller–Miksis
-
-First-order compressible model. The standard choice for moderate-to-high driving pressures. Breaks down when $$M = \dot R/c \approx 1$$.
-
-$$\left(1 - \frac{\dot{R}}{c_L}\right)R\ddot{R} + \frac{3}{2}\left(1 - \frac{\dot{R}}{3c_L}\right)\dot{R}^2 = \left(1 + \frac{\dot{R}}{c_L}\right)\frac{p_L - P_\infty - p_{ac}}{\rho_L} + \frac{R}{\rho_L c_L}\frac{d}{dt}(p_L - p_{ac})$$
-
-The time derivative of $p_L$ is obtained via `jax.grad` applied through the entire gas+shell+medium computation.
-
-```python
-from jbubble.bubble.eom import KellerMiksis
-eom = KellerMiksis(..., c_L=1500.0)
-```
+$$
+(1 - M) R\ddot{R} + \frac{3}{2}\left(1 - \frac{M}{3}\right)\dot{R}^2
+    = \frac{1 + M}{\rho_L}\left(p_L - P_\text{amb} - p_\text{ac}\right)
+    + \frac{R}{\rho_L c_L}\left(\frac{\mathrm{d}p_L}{\mathrm{d}t}
+    - \frac{\mathrm{d}p_\text{ac}}{\mathrm{d}t}\right).
+$$
 
 ### Gilmore
 
-First-order compressible model. Uses enthalpy $H$ rather than pressure and assumes that the speed of sound $C$ varies with $H$. Handles cases where $$M \approx 1$$ well by suppressing the Mach number during violent collapses. Uses the Tait equation of state for the liquid, from which the enthalpy $H$ and local sound speed $C$ are computed; $\dot{H}$ is expanded analytically via the chain rule.
+Treats compressibility through the Tait equation of state, with the wall
+enthalpy $H$ and the local sound speed $C$ in place of pressure and $c_L$:
 
 $$
 \left(1 - \frac{\dot{R}}{C}\right) R \ddot{R}
-+ \frac{3}{2}\left(1 - \frac{\dot{R}}{3C}\right)\dot{R}^2
-= \left(1 + \frac{\dot{R}}{C}\right) H
-+ \frac{R}{C}\left(1 - \frac{\dot{R}}{C}\right)\dot{H}
+    + \frac{3}{2}\left(1 - \frac{\dot{R}}{3C}\right)\dot{R}^2
+    = \left(1 + \frac{\dot{R}}{C}\right) H
+    + \frac{R}{C}\left(1 - \frac{\dot{R}}{C}\right)\dot{H}.
 $$
 
-```python
-from jbubble.bubble.eom import Gilmore
-eom = Gilmore(
-    ...,
-    n_tait=7.0,       # Tait exponent (water default)
-    B_tait=304.9e6,   # Tait constant [Pa] (water default)
-)
+The default Tait parameters for water, $n = 7.15$ and
+$B = 3.046 \times 10^8$ Pa, fix the sound speed of the liquid at rest at
+about 1477 m/s, so `Gilmore` has no `c_L` parameter. To compare it with
+Keller-Miksis, give `KellerMiksis` the same sound speed.
+
+### Compare the equations
+
+The following code drives the same free bubble at 400 kPa, hard enough for
+an inertial collapse, with three equations of motion:
+
+```{.python continuation}
+pulse = ToneBurst(freq=1e6, pressure=400e3, shape=Sine(), cycle_num=3)
+eoms = {
+    "Rayleigh-Plesset": RayleighPlesset(**parts, **water),
+    "Keller-Miksis": KellerMiksis(**parts, **water, c_L=1477.0),
+    "Gilmore": Gilmore(**parts, **water),
+}
+for name, eom in eoms.items():
+    result = run_simulation(eom, pulse)
+    R = result.radius / eom.R0
+    print(f"{name:17s} R_max/R0 = {R.max():.2f}, R_min/R0 = {R.min():.3f}")
 ```
 
-### Leighton tube
-
-!!! warning "Work in progress"
-    The confinement models (`LeightonTube` and `SphericalConfinement`) are
-    not yet validated against reference solutions. Treat their output as
-    indicative only. Known caveats: the Leighton geometry factor `beta` is
-    unverified, and `SphericalConfinement` assumes a Newtonian lumen liquid
-    (elastic / non-Newtonian medium contributions are ignored — see below).
-
-Rayleigh–Plesset modified for a bubble centred in a rigid cylindrical tube. The tube geometry adds an inertia correction and additional added-mass terms.
-
-$$
-R \ddot{R}\left(1 + \frac{R}{\Gamma}\beta\right)
-+ \frac{3}{2}\dot{R}^2\left(1 + \frac{4R}{3\Gamma}\beta\right)
-= \frac{1}{\rho}\left(p_{L,\text{damped}} - P_{\text{amb}} - p_{\text{ac}}\right)
-$$
-
-
-```python
-from jbubble.bubble.eom import LeightonTube
-eom = LeightonTube(
-    ..., c_L=1500.0,
-    tube_radius=1e-3,   # tube inner radius [m]
-    tube_length=5e-2,   # tube length [m]
-)
-```
-
-### Spherical confinement
-
-Coupled two-DOF model: bubble radius $R$ and vessel wall radius $a$. The vessel wall is modelled as a thin elastic shell; surrounding tissue contributes inertia. The $2\times2$ coupled system (liquid continuity + radial momentum) is solved via Cramer's rule. The lumen is assumed Newtonian, so only `medium.mu` is used — elastic / non-Newtonian medium terms are not included.
-
-```python
-from jbubble.bubble.eom import SphericalConfinement
-eom = SphericalConfinement(
-    ..., c_L=1500.0,
-    vessel_radius=50e-6,  # vessel inner radius [m]
-    vessel_rho=1050.0,    # wall material density [kg/m³]
-    vessel_E=1e6,         # Young's modulus [Pa]
-    vessel_nu=0.49,       # Poisson's ratio
-    vessel_d=1e-6,        # wall thickness [m]
-    tissue_rho=1050.0,
-    tissue_d=1e-3,
-)
-```
-
-`SphericalConfinement` integrates a `ConfinedBubbleState`, which carries both $R$ and $a$ as ODE variables.
-
----
+Rayleigh-Plesset has no radiation damping, so it overestimates the growth and
+the collapse. For the full comparison, with plots, see the example
+[Equations of motion](../examples/04_equations_of_motion.md).
 
 ## Gas models
 
-### PolytropicGas
+[`PolytropicGas`][jbubble.bubble.gas.PolytropicGas] is the standard model:
 
-The most common gas model. Assumes a polytropic process:
+$$
+p_\text{gas} = P_{\text{gas},0}\left(\frac{R_0}{R}\right)^{3\gamma}.
+$$
 
-$$p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0}{R}\right)^{3\gamma}$$.
+The polytropic exponent $\gamma$ is 1 for an isothermal process, where heat
+flows faster than the bubble oscillates, and the adiabatic index for an
+adiabatic one: 1.4 for air and about 1.095 for the SF6 of lipid-coated
+contrast agents.
 
-In an isothermal process, heat transfer is fast compared bubble oscillations and $\gamma = 1$ for all gases. 
+[`VanDerWaalsGas`][jbubble.bubble.gas.VanDerWaalsGas] adds a hard core of
+radius $h = h_\text{frac} R_0$, the radius of the gas compressed to its
+excluded volume, which stops a violent collapse from reaching $R = 0$:
 
-In an adiabatic process, heat transfer is slow compared to bubble oscillations. The adiabatic index for SF6, which is commonly used as the gaseous core of lipid-coated microbubbles, is $$approx 1.095$$. 
+$$
+p_\text{gas} = P_{\text{gas},0}
+    \left(\frac{R_0^3 - h^3}{R^3 - h^3}\right)^{\gamma}.
+$$
 
-
-```python
-from jbubble.bubble.gas import PolytropicGas
-gas = PolytropicGas(gamma=1.095)
-```
-
-`gamma` accepts a plain float or any `Property` — useful for learned or state-dependent $\gamma$.
-
-### VanDerWaalsGas
-
-Adds a hard-core repulsion to the polytropic gas model: the bubble cannot be compressed below a fraction $h = h_\text{frac} \cdot R_0$ of its equilibrium radius. Relevant for highly driven bubbles near minimum radius.
-
-$$p_\text{gas} = P_{\text{gas},0} \left(\frac{R_0^3 - h^3}{R^3 - h^3}\right)^\gamma$$
-
-```python
+```{.python continuation}
 from jbubble.bubble.gas import VanDerWaalsGas
-gas = VanDerWaalsGas(gamma=1.4, h_frac=0.2)
+
+air = PolytropicGas(gamma=1.4)
+air_with_core = VanDerWaalsGas(gamma=1.4, h_frac=0.1)  # h = 0.1 R0
 ```
 
----
+The hard-core fraction `h_frac` depends on the gas species and its density
+at equilibrium.
+
+`P_gas0` isn't a parameter: the equation of motion computes it from the
+equilibrium at $R_0$, where the gas pressure balances the ambient pressure
+and the Laplace pressure of the shell.
 
 ## Shell models
 
-### NoShell
+### Uncoated bubbles
 
-No coating — bare bubble in a liquid. The bubble's surface contributes to the interfacial stresses through the Laplace pressure ($2\sigma/R$), whereby $\sigma$ is the constant surface tension of the surrounding liquid. 
+[`NoShell`][jbubble.bubble.shell.NoShell] contributes only the Laplace
+pressure $2\sigma/R$ of the liquid's surface tension, 0.072 N/m for water.
 
-```python
-from jbubble.bubble.shell import NoShell
-shell = NoShell(sigma=0.072)  # water–air surface tension [N/m]
-```
+### Lipid shells
 
-### LipidShell
+[`LipidShell`][jbubble.bubble.shell.LipidShell] models a lipid monolayer
+with a radius-dependent surface tension $\sigma(R)$ and a surface-dilatational
+viscosity $\kappa_s$:
 
-The effects of a thin lipid monolayer is captured by a radius-dependent surface tension law, specifically the piecewise Marmottant model or its differentiable form, the Marmottant-Gompertz law. The lipid coating contributes to the interfacial stresses through 
+$$
+p_\text{shell} = \frac{2\sigma(R)}{R} + \frac{4\kappa_s\dot{R}}{R^2}.
+$$
 
-- the Laplace pressure  ($2\sigma(R)/R$)
-- the lipid's surface dilatational viscosity, which adds the viscous stress term $p_\text{viscous} = \frac{4\kappa_s \dot{R}}{R^2}$
+The surface tension law carries the shell's elasticity. Three laws share
+the parameters `R_buckle_ratio` (the buckling radius as a fraction of
+$R_0$), `chi` (the elasticity $\chi$), and `sigma_rupture`:
 
+| Law | What it is | Use it for |
+|---|---|---|
+| [`MarmottantSurfaceTension`][jbubble.bubble.shell.MarmottantSurfaceTension] | The piecewise law of Marmottant et al. (2005): buckled, elastic, and ruptured regimes | Forward simulations with the exact law |
+| [`SmoothMarmottantSurfaceTension`][jbubble.bubble.shell.SmoothMarmottantSurfaceTension] | The Marmottant law with corners rounded over a width set by `smoothing` | Gradients and fitting; the [`lipid_bubble`][jbubble.utils.presets.lipid_bubble] preset |
+| [`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension] | The Marmottant-Gompertz law of Gümmer et al. (2021) | Reproducing that paper |
 
+In the elastic regime, all three follow
+$\sigma = \chi\left[(R/R_b)^2 - 1\right]$ with $R_b$ the buckling radius.
+The smoothed law stays within `smoothing * ln(2) * sigma_rupture`, about
+0.5 mN/m at the defaults, of the piecewise law, and converges to it as
+`smoothing` goes to zero. The Gompertz law doesn't converge to the
+Marmottant law, so a $\chi$ that you fit with it differs from a Marmottant
+$\chi$; its Notes give the size of the difference.
 
-The effective surface tension is encoded as a `Property` (e.g. `MarmottantSurfaceTension` or `GompertzSurfaceTension`) passed to `sigma`.
+A surface tension law is a [`Property`][jbubble.bubble.property.Property]:
+a function of the bubble state. The following code evaluates the three laws
+below, at, and above the buckling radius:
 
-```python
-from jbubble.bubble.shell import LipidShell
-from jbubble.bubble.shell import GompertzSurfaceTension
-
-sigma = GompertzSurfaceTension(
-    R_buckle_ratio=0.98,  # buckling radius as fraction of R0
-    chi=0.55,             # shell elasticity [N/m]
-    sigma_rupture=0.072,  # post-rupture value [N/m]
+```{.python continuation}
+from jbubble.bubble.shell import (
+    GompertzSurfaceTension,
+    LipidShell,
+    MarmottantSurfaceTension,
+    SmoothMarmottantSurfaceTension,
 )
-shell = LipidShell(sigma=sigma, kappa_s=2.4e-9)  # kappa_s [N·s/m]
+from jbubble.bubble.state import BubbleState
+
+shell_params = {"R_buckle_ratio": 0.98058, "chi": 0.5, "sigma_rupture": 0.072}
+laws = {
+    "Marmottant": MarmottantSurfaceTension(**shell_params),
+    "smoothed": SmoothMarmottantSurfaceTension(**shell_params),
+    "Gompertz": GompertzSurfaceTension(**shell_params),
+}
+for name, law in laws.items():
+    values = [law(BubbleState(R=x * 2e-6, R0=2e-6)) for x in (0.97, 1.0, 1.05)]
+    print(f"{name:10s}", " ".join(f"{1e3 * v:6.2f}" for v in values), "mN/m")
+
+lipid = LipidShell(sigma=laws["smoothed"], kappa_s=7.5e-9)  # kappa_s [N s/m]
 ```
 
-!!! tip "Use GompertzSurfaceTension for fitting"
-    `MarmottantSurfaceTension` is piecewise and has discontinuous derivatives at the phase boundaries. `GompertzSurfaceTension` is a smooth $C^\infty$ approximation that matches the three-regime behaviour and is strongly preferred for gradient-based fitting.
+### Thick shells
 
-### ThickShell
+[`ThickShell`][jbubble.bubble.shell.ThickShell] models a polymer or protein
+shell of thickness $d_s$, shear modulus $G_s$, and shear viscosity $\mu_s$ as
+an incompressible viscoelastic layer (Church 1995):
 
-Church (1995) thick viscoelastic shell. Models polymer-shelled agents (e.g. PLGA). The shell has finite thickness $d_s$ and both elastic ($G_s$) and viscous ($\mu_s$) stiffness:
+$$
+p_\text{elastic} = \frac{4}{3} G_s
+    \left[1 - \left(\frac{R_0}{R}\right)^3\right]\frac{V_s}{R^3 - V_s},
+\qquad
+p_\text{viscous} = 4 \mu_s \frac{V_s}{R^3 - V_s} \frac{\dot{R}}{R},
+$$
 
-$$p_\text{elastic} = \frac{4}{3}G_s \frac{d_s}{R_0}\left(1 - \left(\frac{R_0}{R}\right)^3\right)$$
-$$p_\text{viscous} = \frac{4\mu_s d_s \dot{R}}{R^2}$$
+where $V_s = R_0^3 - (R_0 - d_s)^3$. For a thin shell, these reduce to the
+model of Hoff et al. (2000), which adds a stiffness of $12 G_s d_s / R_0$
+per unit radial strain.
 
-```python
+```{.python continuation}
 from jbubble.bubble.shell import ThickShell
-shell = ThickShell(
-    sigma=0.04,    # surface tension [N/m]
-    d_s=15e-9,     # shell thickness [m]
-    G_s=10e6,      # shear modulus [Pa]
-    mu_s=0.5,      # shell viscosity [Pa·s]
-)
-```
 
----
+polymer = ThickShell(sigma=0.04, d_s=20e-9, G_s=11.7e6, mu_s=0.45)
+```
 
 ## Medium models
 
+| Medium | Stress on the wall | Use it for |
+|---|---|---|
+| [`NewtonianMedium`][jbubble.bubble.medium.NewtonianMedium] | $4\mu\dot R/R$ | Water, saline, blood plasma |
+| [`KelvinVoigtMedium`][jbubble.bubble.medium.KelvinVoigtMedium] | adds $\tfrac{4G}{3}\left[1 - (R_0/R)^3\right]$ | Small oscillations in a soft solid or gel (Yang and Church 2005) |
+| [`NeoHookeanMedium`][jbubble.bubble.medium.NeoHookeanMedium] | adds $G\left[\tfrac{5}{2} - 2\tfrac{R_0}{R} - \tfrac{1}{2}\left(\tfrac{R_0}{R}\right)^4\right]$ | Large oscillations in tissue |
+| [`PowerLawMedium`][jbubble.bubble.medium.PowerLawMedium] | $\tfrac{4K}{n}\dot\gamma_\text{eff}^{\,n-1}\dot R/R$ | Shear-thinning ($n < 1$) or shear-thickening ($n > 1$) liquids |
 
-### NewtonianMedium 
+The two elastic laws agree for small strains, $4G(R - R_0)/R_0$, but only the
+neo-Hookean law holds at finite strain. For a power-law liquid, `mu` is the
+consistency index $K$ in Pa sⁿ, and `eps` regularises the shear rate where
+$\dot R$ changes sign.
 
-Dynamic viscosity $\mu$ is constant and independent of fluid flow. Contributes to the interfacial stresses through 
+```{.python continuation}
+from jbubble.bubble.medium import NeoHookeanMedium, PowerLawMedium
 
-$$p_\text{viscous} = \frac{4\mu \dot{R}}{R}$$
-
-```python
-from jbubble.bubble.medium import NewtonianMedium
-medium = NewtonianMedium(mu=1e-3)  # [Pa·s]
+tissue = NeoHookeanMedium(mu=5e-3, G=10e3)  # [Pa s], [Pa]
+shear_thinning = PowerLawMedium(mu=1.5e-2, n_exp=0.7)  # K [Pa s^n]
 ```
 
-### KelvinVoigtMedium
+## Properties: constant, state-dependent, or learned
 
-Linear viscoelastic medium (solid or gel). Contributes to the interfacial stresses through
+Every physical coefficient of a gas, shell, or medium model, such as `sigma`,
+`kappa_s`, `G`, or `gamma`, is a [`Property`][jbubble.bubble.property.Property]:
+a function from the bubble state to a scalar. A plain number becomes a
+[`ConstantProperty`][jbubble.bubble.property.ConstantProperty]. Pass any
+other `Property` to make the coefficient depend on the state, for example a
+shear modulus that stiffens with strain:
 
-- a viscosity term $$p_\text{viscous} = \frac{4\mu \dot{R}}{R}$$
-- a spring-like elastic restoring term $$p_\text{elastic} = \frac{4G}{3}\left[\left(\frac{R}{R_0}\right)^3 - 1\right]$$
-
-Valid only for small strains ($|R - R_0| \ll R_0$). Prefer `NeoHookeanMedium` for large oscillations.
-
-```python
+```{.python continuation}
 from jbubble.bubble.medium import KelvinVoigtMedium
-medium = KelvinVoigtMedium(mu=1e-3, G=1e3)
+from jbubble.bubble.property import Property
+
+
+class StrainStiffening(Property):
+    """Shear modulus G0 (1 + alpha ε²) at the radial strain ε = R/R0 - 1."""
+
+    G0: float  # [Pa]
+    alpha: float
+
+    def __call__(self, state):
+        strain = state.R / state.R0 - 1.0
+        return self.G0 * (1.0 + self.alpha * strain**2)
+
+
+gel = KelvinVoigtMedium(mu=1e-3, G=StrainStiffening(G0=5e3, alpha=20.0))
 ```
 
-### NeoHookeanMedium
+[`NeuralProperty`][jbubble.bubble.property.NeuralProperty] wraps a neural
+network that maps $R/R_0$ to the value. Bound its output with the network's
+final activation, for example to keep a surface tension between 0 and the
+rupture value:
 
-Finite-strain viscoelastic medium. Derived by integrating the neo-Hookean constitutive law from $R$ to $\infty$ through the incompressible surrounding solid:
+```{.python continuation}
+import equinox as eqx
 
-$$p_\text{elastic} = G\left(\frac{5}{2} - 2\frac{R_0}{R} - \frac{1}{2}\left(\frac{R_0}{R}\right)^4\right)$$
+from jbubble.bubble.property import NeuralProperty
 
-Key properties:
-- Zero at $R = R_0$ (no stress at equilibrium).
-- Reduces to the Kelvin–Voigt result for small strains.
-- Saturates to $5G/2$ as $R \to \infty$ (physical softening as surrounding material spreads thin).
-- Diverges to $-\infty$ as $R \to 0$ (strong compression resistance).
-
-**Recommended** over Kelvin–Voigt whenever large amplitude oscillations are expected.
-
-```python
-from jbubble.bubble.medium import NeoHookeanMedium
-medium = NeoHookeanMedium(mu=1e-3, G=1e3)
+net = eqx.nn.MLP(
+    in_size=1,
+    out_size=1,
+    width_size=16,
+    depth=2,
+    final_activation=lambda x: 0.072 * jax.nn.sigmoid(x),  # [N/m]
+    key=jax.random.key(0),
+)
+learned_shell = LipidShell(sigma=NeuralProperty(net=net), kappa_s=7.5e-9)
 ```
 
-### PowerLawMedium
+To fit such a network to data, see
+[Learn a constitutive law with a neural network](fitting.md#learn-a-constitutive-law-with-a-neural-network).
+To write a new medium or shell model rather than a coefficient, subclass
+[`MediumModel`][jbubble.bubble.medium.MediumModel] or
+[`ShellModel`][jbubble.bubble.shell.ShellModel]; the example
+[Custom physics](../examples/08_custom_physics.md) shows how.
 
-Generalised Newtonian (power-law) fluid. The consistency index $K$ (`mu` field) replaces the dynamic viscosity:
+## Set the initial state
 
-$$p_\text{viscous} = \frac{4K}{n}\left(2\left|\frac{\dot{R}}{R}\right|\right)^{n-1}\frac{\dot{R}}{R}$$
+By default, a simulation starts at rest at the equilibrium radius,
+[`eom.initial_state()`][jbubble.bubble.eom.EquationOfMotion.initial_state].
+To start elsewhere, pass `state0` to `run_simulation`. The following code
+releases a bubble at rest from 1.5 times its equilibrium radius, with no
+drive:
 
-- $n < 1$ — shear-thinning (blood, mucus, some polymer solutions)
-- $n = 1$ — recovers `NewtonianMedium` exactly
-- $n > 1$ — shear-thickening
-
-The $1/n$ prefactor arises from integrating the spatially varying viscosity field $\eta(r)$ over the incompressible flow, not from evaluating at the wall.
-
-```python
-from jbubble.bubble.medium import PowerLawMedium
-medium = PowerLawMedium(mu=1e-3, n_exp=0.6)  # shear-thinning
+```{.python continuation}
+eom = KellerMiksis(**parts, **water, c_L=1500.0)
+silence = ToneBurst(freq=1e6, pressure=0.0, shape=Sine(), cycle_num=5)
+state0 = eom.initial_state(R=1.5 * eom.R0)  # R_dot defaults to 0
+result = run_simulation(eom, silence, state0=state0)
+print(f"R_min/R0 after release: {result.radius.min() / eom.R0:.3f}")
 ```
 
----
+`state0` holds the radius `R`, the wall velocity `R_dot`, and the
+equilibrium values `R0` and `P_gas0`, which stay constant during the solve.
+`BubbleState(R=1.5 * R0)` gives the same start: a zero `R0` or `P_gas0` means
+"unset", and the solver fills it from the equation of motion. For an empty
+cavity, set `P_gas0` to a tiny positive value, such as `1e-12`.
 
-## Choosing models for your application
+## Choose models for your application
 
-| Application | EoM | Gas | Shell | Medium |
+| Application | Equation of motion | Gas | Shell | Medium |
 |---|---|---|---|---|
-| Free bubble, low pressure | `RayleighPlesset` | `PolytropicGas` | `NoShell` | `NewtonianMedium` |
-| Free bubble, high pressure | `KellerMiksis` | `VanDerWaalsGas` | `NoShell` | `NewtonianMedium` |
-| Clinical UCA (SonoVue) | `KellerMiksis` | `PolytropicGas` | `LipidShell` + `Gompertz` | `NewtonianMedium` |
-| Polymer UCA (PLGA/Optison) | `KellerMiksis` | `PolytropicGas` | `ThickShell` | `NewtonianMedium` |
-| Tissue-embedded bubble | `KellerMiksis` | `PolytropicGas` | `NoShell` | `NeoHookeanMedium` |
-| Shear-thinning blood | `KellerMiksis` | `PolytropicGas` | `LipidShell` | `PowerLawMedium` |
-| Confined vessel | `SphericalConfinement` | `PolytropicGas` | `LipidShell` | `NewtonianMedium` |
-| Gradient-based fitting | any | any | `GompertzSurfaceTension` | any |
+| Free bubble, weak driving | `KellerMiksis` or `RayleighPlesset` | `PolytropicGas` | `NoShell` | `NewtonianMedium` |
+| Inertial cavitation | `Gilmore` or `KellerMiksis` | `VanDerWaalsGas` | `NoShell` | `NewtonianMedium` |
+| Lipid-coated contrast agent, such as SonoVue | `KellerMiksis` | `PolytropicGas` | `LipidShell` with `SmoothMarmottantSurfaceTension` | `NewtonianMedium` |
+| Polymer- or protein-shelled agent | `KellerMiksis` | `PolytropicGas` | `ThickShell` | `NewtonianMedium` |
+| Bubble in tissue | `KellerMiksis` | `PolytropicGas` | any | `NeoHookeanMedium` |
+| Non-Newtonian liquid | `KellerMiksis` | `PolytropicGas` | any | `PowerLawMedium` |
+
+The presets [`free_bubble`][jbubble.utils.presets.free_bubble],
+[`lipid_bubble`][jbubble.utils.presets.lipid_bubble], and
+[`thick_shell_bubble`][jbubble.utils.presets.thick_shell_bubble] assemble the
+first, third, and fourth rows with cited parameters. Small or
+viscous bubbles can make the equations stiff; see
+[Solvers and stiffness](solvers.md).

@@ -9,27 +9,62 @@ import jax
 import jax.numpy as jnp
 from jax.typing import ArrayLike
 
+__all__ = [
+    "Envelope",
+    "NoEnvelope",
+    "RectangularEnvelope",
+    "HannEnvelope",
+    "SoftRectangularEnvelope",
+    "TukeyEnvelope",
+]
+
 
 class Envelope(eqx.Module, abc.ABC):
-    """Window function mapping relative time *tau* to a scale in [0, 1].
+    """Window function that maps relative time `tau` to a scale in [0, 1].
 
-    Called as ``envelope(tau, duration)`` where *tau* = t − initial_time.
-    Returns 0 outside [0, duration].
+    A pulse calls it as `envelope(tau, duration)`, where
+    `tau = t - t_start` and `t_start` is the pulse's
+    [`t_start`][jbubble.pulse.base.Pulse.t_start]. It returns 0 outside
+    [0, `duration`], except for two envelopes:
+    [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope],
+    whose sigmoid tails decay smoothly outside the window, and
+    [`NoEnvelope`][jbubble.pulse.envelope.NoEnvelope], which is 1 at all
+    times.
     """
 
     @abc.abstractmethod
     def __call__(self, tau: jax.Array, duration: ArrayLike) -> jax.Array: ...
 
 
+class NoEnvelope(Envelope):
+    """Identity window: 1 at all times, so the signal passes unchanged.
+
+    It is the default envelope of [`Summed`][jbubble.pulse.base.Summed],
+    whose children already apply their own envelopes. To remove the
+    window of a windowed sum, call `pulse.windowed(NoEnvelope())`.
+    """
+
+    def __call__(self, tau: jax.Array, duration: ArrayLike) -> jax.Array:
+        return jnp.ones_like(tau)
+
+
 class RectangularEnvelope(Envelope):
-    """Hard on/off gating — 1 inside [0, duration], 0 outside."""
+    """Hard on/off gating: 1 inside [0, `duration`], 0 outside."""
 
     def __call__(self, tau: jax.Array, duration: ArrayLike) -> jax.Array:
         return jnp.where((tau >= 0) & (tau <= duration), 1.0, 0.0)
 
 
 class HannEnvelope(Envelope):
-    """Hann (raised-cosine) window for smooth on/off transitions."""
+    r"""Hann (raised-cosine) window for smooth on/off transitions.
+
+    $$
+    w(\tau) = \frac{1}{2}\left[1 - \cos\left(\frac{2\pi\tau}{T}\right)\right],
+    \qquad 0 \le \tau \le T,
+    $$
+
+    and 0 outside, where $T$ is the pulse duration.
+    """
 
     def __call__(self, tau: jax.Array, duration: ArrayLike) -> jax.Array:
         in_window = (tau >= 0) & (tau <= duration)
@@ -38,26 +73,32 @@ class HannEnvelope(Envelope):
 
 
 class SoftRectangularEnvelope(Envelope):
-    """Smooth approximation to a rectangular window using sigmoid transitions.
+    r"""Smooth approximation to a rectangular window with sigmoid transitions.
 
-    Replaces the hard on/off step of :class:`RectangularEnvelope` with
-    smooth sigmoid ramps, keeping ``dp_ac/dt`` continuous everywhere.
-    This is the preferred envelope when a near-rectangular window is needed
-    for gradient-based parameter fitting via the adjoint method.
+    Replaces the hard on/off step of
+    [`RectangularEnvelope`][jbubble.pulse.envelope.RectangularEnvelope] with
+    smooth sigmoid ramps, which keeps $\mathrm{d}p_\text{ac}/\mathrm{d}t$
+    continuous everywhere. This is the preferred envelope when you need a
+    near-rectangular window for gradient-based parameter fitting with the
+    adjoint method.
 
-    The window value is::
+    The window value is
 
-        w(τ) = σ(τ / k) · σ((T − τ) / k),   k = T / steepness
+    $$
+    w(\tau) = S\left(\frac{\tau}{k}\right) S\left(\frac{T - \tau}{k}\right),
+    \qquad k = \frac{T}{\text{steepness}},
+    $$
 
-    where ``σ`` is the logistic sigmoid and ``T`` is the pulse duration.
-    The plateau is flat to within ``2·exp(−steepness/2)`` of 1.0.
+    where $S$ is the logistic sigmoid and $T$ is the pulse duration. The
+    plateau is flat to within $2\exp(-\text{steepness}/2)$ of 1.
 
     Parameters
     ----------
     steepness : float
-        Controls transition sharpness.  Transitions span roughly
-        ``4·T / steepness`` in time (±2σ).  Default 100 gives transitions
-        of ≈ 4% of the pulse duration — imperceptible for bursts of 5+ cycles.
+        Controls the transition sharpness. Each transition spans roughly
+        $4T/\text{steepness}$ in time, from $-2k$ to $+2k$. The default,
+        `100.0`, gives transitions of about 4% of the pulse duration, which
+        is imperceptible for bursts of five or more cycles.
     """
 
     steepness: float = 100.0
@@ -68,13 +109,16 @@ class SoftRectangularEnvelope(Envelope):
 
 
 class TukeyEnvelope(Envelope):
-    """Tukey (tapered cosine) window — flat in the middle, cosine tapers.
+    """Tukey (tapered cosine) window: flat in the middle, with cosine tapers.
 
     Parameters
     ----------
     alpha : float
-        Fraction of the window inside the cosine tapers.
-        ``alpha = 0`` → rectangular, ``alpha = 1`` → Hann.
+        Fraction of the window inside the cosine tapers. Must be greater
+        than 0. As `alpha` approaches 0, the window approaches a
+        rectangular window; for a hard gate, use
+        [`RectangularEnvelope`][jbubble.pulse.envelope.RectangularEnvelope].
+        `alpha = 1` gives a Hann window. Default: `0.5`.
     """
 
     alpha: float = 0.5

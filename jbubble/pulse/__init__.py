@@ -1,27 +1,33 @@
 """Acoustic driving pulses for bubble dynamics simulations.
 
-This module provides a flexible, composable system for defining the
-acoustic pressure waveform that drives a bubble.  Every pulse is an
+This package provides a flexible, composable system for defining the
+acoustic pressure waveform that drives a bubble. Every pulse is an
 Equinox module and is fully JAX-differentiable.
 
-Quick start
------------
+Pulse types:
+
+- [`ToneBurst`][jbubble.pulse.tone_burst.ToneBurst]: parametric
+  carrier × envelope (the classic pulse).
+- [`SampledPulse`][jbubble.pulse.sampled.SampledPulse]: interpolated from
+  discrete data.
+- [`ChirpPulse`][jbubble.pulse.chirp.ChirpPulse]: linear or exponential
+  frequency sweep.
+- [`NeuralPulse`][jbubble.pulse.neural.NeuralPulse]: waveform
+  parameterised by a neural network.
+
+Composition:
+
+- [`Scaled`][jbubble.pulse.base.Scaled]: amplitude scaling.
+- [`Summed`][jbubble.pulse.base.Summed]: additive superposition.
+- [`Offset`][jbubble.pulse.base.Offset]: constant offset.
+- [`pulse.windowed(envelope)`][jbubble.pulse.base.Pulse.windowed]: swaps
+  in a new envelope; its docstring explains how sums and wrappers treat it.
+
+Examples
+--------
 >>> from jbubble.pulse import ToneBurst
 >>> from jbubble.pulse.shapes import Sine
 >>> pulse = ToneBurst(freq=1e6, pressure=200e3, shape=Sine())
-
-Pulse types
------------
-- :class:`ToneBurst` — parametric carrier × envelope (the classic pulse)
-- :class:`SampledPulse` — interpolated from discrete data
-- :class:`ChirpPulse` — linear or exponential frequency sweep
-- :class:`NeuralPulse` — neural-network-parameterised waveform
-
-Composition
------------
-- :class:`Scaled` — amplitude scaling
-- :class:`Summed` — additive superposition
-- ``pulse.windowed(envelope)`` — apply an envelope to any pulse
 """
 
 from .base import (
@@ -34,6 +40,7 @@ from .chirp import ChirpPulse
 from .envelope import (
     Envelope,
     HannEnvelope,
+    NoEnvelope,
     RectangularEnvelope,
     SoftRectangularEnvelope,
     TukeyEnvelope,
@@ -47,6 +54,7 @@ __all__ = [
     "Pulse",
     # Envelopes
     "Envelope",
+    "NoEnvelope",
     "RectangularEnvelope",
     "SoftRectangularEnvelope",
     "HannEnvelope",

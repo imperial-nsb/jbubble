@@ -1,4 +1,4 @@
-"""Chirp pulse — frequency sweep over time."""
+"""Chirp pulse: a frequency sweep over time."""
 
 from __future__ import annotations
 
@@ -12,13 +12,17 @@ from jax.typing import ArrayLike
 from .base import Pulse
 from .shapes import PulseShape, Sine
 
+__all__ = ["ChirpSweep", "LinearSweep", "ExponentialSweep", "ChirpPulse"]
+
 
 class ChirpSweep(eqx.Module):
-    """Abstract phase law for a frequency sweep.
+    r"""Abstract phase law for a frequency sweep.
 
-    Subclasses compute the *accumulated phase* Φ(τ) [rad] as a function of
-    elapsed time τ, start/end frequencies, and sweep duration.  The carrier
-    waveform is then evaluated at that phase via the :class:`PulseShape`.
+    Subclasses compute the *accumulated phase* $\Phi(\tau)$ [rad] as a
+    function of the elapsed time $\tau$, the start and end frequencies,
+    and the sweep duration. [`ChirpPulse`][jbubble.pulse.chirp.ChirpPulse]
+    then evaluates the carrier
+    [`PulseShape`][jbubble.pulse.shapes.PulseShape] at that phase.
     """
 
     @abc.abstractmethod
@@ -29,16 +33,19 @@ class ChirpSweep(eqx.Module):
         freq_end: ArrayLike,
         duration: ArrayLike,
     ) -> jax.Array:
-        """Return accumulated phase Φ(τ) [rad]."""
+        r"""Return the accumulated phase $\Phi(\tau)$ [rad]."""
         ...
 
 
 class LinearSweep(ChirpSweep):
-    """Linear (constant rate) frequency sweep.
+    r"""Linear (constant-rate) frequency sweep.
 
-    ::
+    $$
+    \Phi(\tau) = 2\pi\left[f_0 \tau + \frac{(f_1 - f_0)\,\tau^2}{2T}\right]
+    $$
 
-        Φ(τ) = 2π [f₀ τ + (f₁ − f₀) τ² / (2 T)]
+    where $f_0$ is `freq_start`, $f_1$ is `freq_end`, and $T$ is the sweep
+    duration.
     """
 
     def __call__(
@@ -57,11 +64,17 @@ class LinearSweep(ChirpSweep):
 
 
 class ExponentialSweep(ChirpSweep):
-    """Exponential (geometric) frequency sweep.
+    r"""Exponential (geometric) frequency sweep.
 
-    ::
+    $$
+    \Phi(\tau) = \frac{2\pi f_0 T \left(r^{\tau/T} - 1\right)}{\ln r},
+    \qquad r = \frac{f_1}{f_0},
+    $$
 
-        Φ(τ) = 2π f₀ T (r^(τ/T) − 1) / ln(r),   r = f₁/f₀
+    where $f_0$ is `freq_start`, $f_1$ is `freq_end`, and $T$ is the sweep
+    duration. When $f_1 = f_0$, the phase is its limit as $r \to 1$,
+    $\Phi(\tau) = 2\pi f_0 \tau$, a constant tone, and the gradient with
+    respect to either frequency stays finite.
     """
 
     def __call__(
@@ -76,22 +89,39 @@ class ExponentialSweep(ChirpSweep):
             jnp.asarray(freq_end),
             jnp.asarray(duration),
         )
-        ratio = f1 / f0
-        return (
-            2.0 * jnp.pi * f0 * T * (jnp.power(ratio, tau / T) - 1.0) / jnp.log(ratio)
+        x = tau / T
+        log_r = jnp.log(f1 / f0)
+        # (r^x - 1) / ln r = expm1(x ln r) / ln r, which is 0/0 at r = 1. Near
+        # r = 1, its Taylor series in ln r replaces it; the double `where`
+        # keeps the unused branch, and so the gradient, finite.
+        near_one = jnp.abs(log_r) < 1e-4
+        safe = jnp.where(near_one, 1.0, log_r)
+        y = x * log_r
+        growth = jnp.where(
+            near_one,
+            x * (1.0 + y / 2.0 + y**2 / 6.0),
+            jnp.expm1(x * safe) / safe,
         )
+        return 2.0 * jnp.pi * f0 * T * growth
 
 
 class ChirpPulse(Pulse):
-    """Frequency-sweep pulse with a composable carrier shape and sweep law.
+    r"""Frequency-sweep pulse with a composable carrier shape and sweep law.
 
-    The :attr:`shape` determines the carrier waveform (default: sine); the
-    :attr:`sweep` determines how instantaneous frequency varies with time
-    (default: linear).  Both are :class:`~equinox.Module` leaves — swapping
-    either keeps the same computational graph and does not force a re-trace.
+    The `shape` field sets the carrier waveform (default: sine); the
+    `sweep` field sets how the instantaneous frequency varies with time
+    (default: linear). Both are `eqx.Module` fields, so you can swap either
+    without changing `ChirpPulse`. A different shape or sweep class
+    changes the PyTree structure, so `jax.jit` traces the pulse again.
 
-    The shape is evaluated at the instantaneous accumulated phase Φ(τ),
-    so any :class:`~jbubble.pulse.shapes.PulseShape` works as a carrier.
+    The pulse calls the shape as `shape(t, 0.0, -phi, t)`, where `phi` is
+    the accumulated phase $\Phi(\tau)$ and $\tau = t - t_0$, so the phase
+    $x$ that [`PulseShape`][jbubble.pulse.shapes.PulseShape] defines
+    equals $\Phi(\tau)$. Any shape that depends on time only through $x$
+    works as a carrier. [`Triangle`][jbubble.pulse.shapes.Triangle]
+    doesn't, because it divides by `freq`, which is 0 here; use
+    [`TimeDomainTriangle`][jbubble.pulse.shapes.TimeDomainTriangle]
+    instead.
 
     Parameters
     ----------
@@ -104,9 +134,11 @@ class ChirpPulse(Pulse):
     sweep_duration : float
         Duration of the frequency sweep [s].
     shape : PulseShape
-        Carrier waveform shape (default: :class:`~jbubble.pulse.shapes.Sine`).
+        Carrier waveform shape. Default:
+        [`Sine()`][jbubble.pulse.shapes.Sine].
     sweep : ChirpSweep
-        Phase law (default: :class:`LinearSweep`).
+        Phase law. Default:
+        [`LinearSweep()`][jbubble.pulse.chirp.LinearSweep].
 
     Examples
     --------

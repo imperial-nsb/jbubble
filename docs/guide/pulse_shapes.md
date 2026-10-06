@@ -1,193 +1,231 @@
 # Pulse shapes
 
-An acoustic pulse in jbubble is a callable `p_ac(t)` returning the driving pressure in Pascals at time `t`. Every pulse is an Equinox module (a JAX PyTree), so pulses are JIT-compilable and differentiable.
+A pulse is the acoustic pressure $p_\text{ac}(t)$ that drives the bubble.
+Every pulse is a callable [Equinox](https://docs.kidger.site/equinox/)
+module: `pulse(t)` returns the pressure in pascals at time `t` in seconds.
+Because pulses are JAX PyTrees, you can compile, batch, and differentiate
+through their parameters, such as the amplitude, the frequency, or the
+weights of a neural network.
 
----
+Every code block on this page runs as written, in order.
 
-## ToneBurst
+## Tone bursts
 
-The standard ultrasound pulse: a carrier waveform gated by a finite-duration envelope.
+A [`ToneBurst`][jbubble.pulse.tone_burst.ToneBurst] is a periodic carrier
+shape, multiplied by a peak pressure and gated by an envelope:
+
+$$
+p(t) = P\, s(t - t_0; f, \phi)\, w(t - t_0, T), \qquad T = \frac{N}{f},
+$$
+
+where $P$ is `pressure`, $s$ is `shape`, $f$ is `freq`, $\phi$ is `phase`,
+$t_0$ is `initial_time`, $N$ is `cycle_num`, and $w$ is `envelope`.
 
 ```python
-from jbubble.pulse import ToneBurst
+import jax
+import jax.numpy as jnp
+
+from jbubble.pulse import HannEnvelope, ToneBurst
 from jbubble.pulse.shapes import Sine
 
-pulse = ToneBurst(
-    freq=1e6,        # centre frequency [Hz]
-    pressure=100e3,  # peak pressure amplitude [Pa]
-    shape=Sine(),    # carrier waveform
-    cycle_num=5,     # number of complete cycles
-    # Optional:
-    # phase=0.0      # initial carrier phase [rad]
-    # envelope=SoftRectangularEnvelope()
+pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
+hann = ToneBurst(
+    freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5, envelope=HannEnvelope()
+)
+
+ts = jnp.linspace(0.0, 6e-6, 601)  # [s]
+p = jax.vmap(pulse)(ts)  # [Pa]
+print(
+    f"peak {p.max() / 1e3:.1f} kPa, Hann peak {jax.vmap(hann)(ts).max() / 1e3:.1f} kPa"
 )
 ```
 
 ### Carrier shapes
 
-The `shape` argument selects the carrier waveform within each cycle. All shapes are normalised to peak amplitude 1.
+Shapes from `jbubble.pulse.shapes` have a nominal amplitude of 1.
 
-| Shape class | Description |
+| Shape | Waveform |
 |---|---|
-| `Sine` | Standard sine wave (default) |
-| `Square` | Fourier-series square wave (10 terms) |
-| `Sawtooth` | Rising sawtooth |
-| `InvertedSawtooth` | Falling sawtooth |
-| `Triangle` | Triangular wave |
-| `Quadratic` | Parabolic carrier |
-| `NegativeQuadratic` | Inverted parabolic carrier |
-| `Rectangular(duty)` | General duty-cycle rectangular waveform |
-| `TimeDomainSquare(sharpness)` | `tanh`-smoothed square, avoids Gibbs ringing |
-| `TimeDomainSawtooth` | `arctan`-based smooth sawtooth |
-| `TimeDomainTriangle` | `arcsin`-based smooth triangle |
+| [`Sine`][jbubble.pulse.shapes.Sine] | Pure sine |
+| [`Square`][jbubble.pulse.shapes.Square] | Square wave from a 10-term Fourier series, with Gibbs ringing at the edges |
+| [`Sawtooth`][jbubble.pulse.shapes.Sawtooth], [`InvertedSawtooth`][jbubble.pulse.shapes.InvertedSawtooth] | Rising or falling sawtooth from a 10-term Fourier series |
+| [`Triangle`][jbubble.pulse.shapes.Triangle] | Triangle wave from a 10-term Fourier series |
+| [`Quadratic`][jbubble.pulse.shapes.Quadratic], [`NegativeQuadratic`][jbubble.pulse.shapes.NegativeQuadratic] | Piecewise-parabolic wave and its negative |
+| [`Rectangular`][jbubble.pulse.shapes.Rectangular] | Rectangular wave with a duty cycle and two levels, such as a monopolar pulse train |
+| [`TimeDomainSquare`][jbubble.pulse.shapes.TimeDomainSquare], [`TimeDomainSawtooth`][jbubble.pulse.shapes.TimeDomainSawtooth], [`TimeDomainTriangle`][jbubble.pulse.shapes.TimeDomainTriangle] | Smooth shapes built in the time domain, without Fourier ringing |
 
-```python
-from jbubble.pulse.shapes import Square, Rectangular
-import jax.numpy as jnp
+```{.python continuation}
+from jbubble.pulse.shapes import Rectangular, TimeDomainSquare
 
-pulse = ToneBurst(freq=1e6, pressure=200e3, shape=Square())
-
-# Monopolar rectangular pulse (99% duty)
-pulse = ToneBurst(
-    freq=1e6, pressure=200e3,
-    shape=Rectangular(duty=0.01, high_level=0.0, low_level=-1.0,
-                      phase_offset=1.98 * jnp.pi),
+square = ToneBurst(freq=1e6, pressure=100e3, shape=TimeDomainSquare(), cycle_num=5)
+# Negative half-cycle pulses: -1 for 10 % of each period, 0 otherwise.
+monopolar = ToneBurst(
+    freq=1e6,
+    pressure=100e3,
+    shape=Rectangular(duty=0.1, high_level=-1.0, low_level=0.0),
+    cycle_num=5,
 )
 ```
 
 ### Envelopes
 
-The envelope gates the carrier over the active window. The default for `ToneBurst` is `SoftRectangularEnvelope`.
+The envelope gates the carrier to the active window. A single pulse, such as
+a tone burst, defaults to
+[`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope],
+and a sum of pulses to
+[`NoEnvelope`][jbubble.pulse.envelope.NoEnvelope].
 
-| Envelope class | Description |
+| Envelope | Window |
 |---|---|
-| `RectangularEnvelope` | Hard on/off step. **Avoid for fitting** — non-differentiable edges. |
-| `SoftRectangularEnvelope` | Sigmoid on and off transitions. $C^\infty$, near-rectangular. **Preferred.** |
-| `HannEnvelope` | Cosine-squared window. Smooth, tapered edges. |
-| `TukeyEnvelope(alpha)` | Hann-tapered at both ends, flat in the middle. `alpha` controls taper fraction. |
+| [`SoftRectangularEnvelope`][jbubble.pulse.envelope.SoftRectangularEnvelope] | Near-rectangular, with smooth sigmoid edges: the default, and the best choice for gradients |
+| [`RectangularEnvelope`][jbubble.pulse.envelope.RectangularEnvelope] | Hard on and off steps; avoid it when you differentiate, because the drive's slope jumps at the edges |
+| [`HannEnvelope`][jbubble.pulse.envelope.HannEnvelope] | Raised cosine: smooth, with a narrow spectrum |
+| [`TukeyEnvelope`][jbubble.pulse.envelope.TukeyEnvelope] | Flat in the middle with cosine tapers; `alpha` is the fraction of the window in the tapers |
+| [`NoEnvelope`][jbubble.pulse.envelope.NoEnvelope] | 1 at all times: the default of a sum of pulses |
 
-```python
-from jbubble.pulse import ToneBurst, HannEnvelope, TukeyEnvelope
-from jbubble.pulse.shapes import Sine
+To change the envelope of an existing pulse, call
+[`windowed`][jbubble.pulse.base.Pulse.windowed]:
 
-# Hann-windowed tone burst
-pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5,
-                  envelope=HannEnvelope())
+```{.python continuation}
+from jbubble.pulse import TukeyEnvelope
 
-# 10% taper on each side, flat in the middle
-pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=20,
-                  envelope=TukeyEnvelope(alpha=0.1))
+tapered = pulse.windowed(TukeyEnvelope(alpha=0.2))
 ```
 
----
+## Timing: start, stop, and end
 
-## ChirpPulse
+Each pulse has an active window, from
+[`t_start`][jbubble.pulse.base.Pulse.t_start] to
+[`t_stop`][jbubble.pulse.base.Pulse.t_stop]. To delay a pulse, set its
+keyword-only `initial_time`. [`t_end`][jbubble.pulse.base.Pulse.t_end],
+the stop time of a simulation that doesn't set `t_max`, is the start time
+plus twice the duration, so the bubble has time to ring down:
 
-A frequency-swept pulse. Useful for broadband excitation and some therapeutic protocols.
+```{.python continuation}
+delayed = ToneBurst(
+    freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5, initial_time=2e-6
+)
+print(f"start {delayed.t_start * 1e6:.1f} µs, stop {delayed.t_stop * 1e6:.1f} µs, "
+      f"end {delayed.t_end * 1e6:.1f} µs")
+```
 
-```python
+The solver steps to every edge in
+[`window_edges`][jbubble.pulse.base.Pulse.window_edges], so it can't step
+over a pulse that starts late.
+
+## Chirps
+
+A [`ChirpPulse`][jbubble.pulse.chirp.ChirpPulse] sweeps its frequency from
+`freq_start` to `freq_end` over `sweep_duration`. The sweep law is linear by
+default; [`ExponentialSweep`][jbubble.pulse.chirp.ExponentialSweep] sweeps
+geometrically, with equal time per octave:
+
+```{.python continuation}
 from jbubble.pulse import ChirpPulse
+from jbubble.pulse.chirp import ExponentialSweep
 
-pulse = ChirpPulse(
-    freq_start=0.5e6,   # start frequency [Hz]
-    freq_end=2.0e6,     # end frequency [Hz]
-    pressure=100e3,     # peak amplitude [Pa]
-    duration=20e-6,     # pulse duration [s]
-    # mode="linear" or "exponential"
+chirp = ChirpPulse(
+    freq_start=0.5e6,  # [Hz]
+    freq_end=3e6,  # [Hz]
+    pressure=50e3,  # [Pa]
+    sweep_duration=10e-6,  # [s]
+    sweep=ExponentialSweep(),
+    envelope=TukeyEnvelope(alpha=0.2),
 )
 ```
 
----
+## Measured waveforms
 
-## SampledPulse
+A [`SampledPulse`][jbubble.pulse.sampled.SampledPulse] interpolates a
+sampled pressure trace, such as a hydrophone recording, linearly between the
+samples. The sample times are absolute: the active window runs from the
+first sample to the last. The following code builds a stand-in for a
+measured trace, sampled at 100 MHz:
 
-Wraps a discrete pressure waveform, interpolating at query times. Useful when the driving waveform is measured experimentally.
+```{.python continuation}
+from jbubble.pulse import RectangularEnvelope, SampledPulse
 
-```python
-import jax.numpy as jnp
-from jbubble.pulse import SampledPulse
+dt = 10e-9  # 100 MHz sampling [s]
+t_rec = jnp.arange(800) * dt
+measured = 80e3 * jnp.sin(2 * jnp.pi * 1e6 * t_rec) * jnp.exp(
+    -(((t_rec - 4e-6) / 1.5e-6) ** 2)
+)  # stand-in for a hydrophone recording [Pa]
 
-ts = jnp.linspace(0, 10e-6, 1000)   # time axis [s]
-ps = measured_waveform               # pressure values [Pa], shape (1000,)
-
-pulse = SampledPulse(ts=ts, ps=ps)
+recorded = SampledPulse.from_uniform(measured, dt=dt)
+print(f"window: {recorded.t_start * 1e6:.2f} to {recorded.t_stop * 1e6:.2f} µs")
 ```
 
-The interpolation is performed with `jnp.interp` (linear, clamped to boundary values outside the range), so it is differentiable through the sampled pressures.
+The default soft envelope halves the first and last samples. If the trace
+already starts and ends at zero, as here, that changes nothing. Otherwise,
+pass `envelope=RectangularEnvelope()` to keep them, or
+`envelope=HannEnvelope()` to taper a trace that's cut off mid-signal.
 
----
+## Neural pulses
 
-## NeuralPulse
+A [`NeuralPulse`][jbubble.pulse.neural.NeuralPulse] lets a neural network
+define the waveform: the network maps the normalised time
+$(t - t_0)/T$, from 0 to 1 across the window, to the pressure in units of
+`pressure_scale`. Its weights are parameters that you can optimise, for
+example to design a drive that maximises a bubble response:
 
-A pulse parameterised by a small neural network. Useful for learned or optimised driving waveforms.
-
-```python
+```{.python continuation}
 import equinox as eqx
+
 from jbubble.pulse import NeuralPulse
 
-net = eqx.nn.MLP(1, 1, width_size=32, depth=3, key=jax.random.key(0))
-pulse = NeuralPulse(net=net)
+net = eqx.nn.MLP(in_size=1, out_size=1, width_size=32, depth=2, key=jax.random.key(0))
+learned = NeuralPulse(net=net, pulse_duration=5e-6, pressure_scale=100e3)
 ```
 
-The network receives the scalar time `t` and returns the driving pressure. Because it is an Equinox module, the network weights are differentiable and can be optimised via `fit_parameters`.
+`pulse_duration` and `pressure_scale` are fixed configuration, not
+trainable parameters. To scale a neural pulse by a traced value, multiply
+it, as in the next section.
 
----
+## Combine pulses
 
-## Composing pulses
+Pulses support `+` and `*`:
 
-### Superposition
+| Expression | Result | Meaning |
+|---|---|---|
+| `pulse_a + pulse_b` | [`Summed`][jbubble.pulse.base.Summed] | Superposition, such as dual-frequency driving |
+| `k * pulse` | [`Scaled`][jbubble.pulse.base.Scaled] | Amplitude scaling by a number or a JAX scalar |
+| `pulse + c` | [`Offset`][jbubble.pulse.base.Offset] | A constant pressure `c` added at all times, not a time delay |
 
-```python
-from jbubble.pulse import ToneBurst, Summed
-from jbubble.pulse.shapes import Sine
-
-# Dual-frequency driving
-p1 = ToneBurst(freq=1e6, pressure=80e3, shape=Sine(), cycle_num=10)
-p2 = ToneBurst(freq=2e6, pressure=40e3, shape=Sine(), cycle_num=20)
-pulse = Summed(p1, p2)
+```{.python continuation}
+low = ToneBurst(freq=1e6, pressure=80e3, shape=Sine(), cycle_num=10)
+high = ToneBurst(freq=2e6, pressure=40e3, shape=Sine(), cycle_num=20)
+dual = low + high  # Summed((low, high))
+half = 0.5 * dual  # Scaled
+smooth_dual = dual.windowed(HannEnvelope())  # windows the sum
+print(type(dual).__name__, type(half).__name__, f"{float(dual.duration) * 1e6:.0f} µs")
 ```
 
-### Amplitude scaling
+Each part of a sum keeps its own envelope and timing, so a delayed part
+starts on time. A sum has no window of its own until you call `windowed`.
 
-```python
-from jbubble.pulse import Scaled
+## Simulate with a pulse and differentiate it
 
-pulse = Scaled(base=p1, scale=2.0)  # doubles the amplitude
+Any pulse drives any equation of motion. Because the pulse is part of the
+model, `jax.grad` differentiates a simulated quantity with respect to its
+parameters. The following code computes how the peak radius of a 2 µm
+lipid-coated bubble responds to the drive amplitude:
+
+```{.python continuation}
+from jbubble import run_simulation
+from jbubble.utils.presets import lipid_bubble
+
+eom, _ = lipid_bubble()
+
+
+def peak_ratio(k):
+    result = run_simulation(eom, k * pulse)
+    return result.radius.max() / eom.R0
+
+
+value, slope = jax.value_and_grad(peak_ratio)(1.0)
+print(f"peak R/R0 = {value:.3f}, d(peak R/R0)/dk = {slope:.3f}")
 ```
 
-### Time offset
-
-```python
-from jbubble.pulse import Offset
-
-delayed_pulse = Offset(base=p1, offset=5e-6)  # 5 µs delay
-```
-
-### Applying an envelope to any pulse
-
-Every `Pulse` has a `.windowed(envelope)` method:
-
-```python
-from jbubble.pulse import SoftRectangularEnvelope
-
-windowed = sampled_pulse.windowed(SoftRectangularEnvelope())
-```
-
----
-
-## Evaluating a pulse
-
-All pulses share the same interface:
-
-```python
-import jax.numpy as jnp
-
-t = jnp.linspace(0, 10e-6, 1000)
-p = jax.vmap(pulse)(t)  # shape (1000,) [Pa]
-```
-
-Or simply call at a scalar time:
-
-```python
-p_at_3us = pulse(3e-6)
-```
+For the pulse shapes, the algebra, and simulations under each kind of
+pulse, with plots, see the example
+[Driving pulses](../examples/02_driving_pulses.md).

@@ -1,35 +1,121 @@
 name: Release to PyPI
 
+# Keep this filename and the `pypi` environment name: the PyPI trusted
+# publisher for jbubble is registered against both.
 on:
   push:
     tags:
       - "v*.*.*"
 
+permissions:
+  contents: read
+
+# Never cancel a release halfway through publishing.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FORCE_COLOR: "1"
+  MPLBACKEND: Agg
+
 jobs:
-  build-and-publish:
-    name: Build and publish
+  test:
+    name: Test (py${{ matrix.python }}, locked)
     runs-on: ubuntu-latest
-
-    # Requires a PyPI "environment" named "pypi" configured in repository settings.
-    # Uses OIDC trusted publishing — no API token needed.
-    environment: pypi
-    permissions:
-      id-token: write  # required for OIDC trusted publishing
-
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        # Oldest and newest supported Python, with the committed lockfile.
+        python: ["3.12", "3.14"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0  # full history so setuptools-scm reads all tags
-
-      - uses: actions/setup-python@v5
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python }}
+          enable-cache: false # no shared cache in a publishing workflow
+      - run: uv sync --locked
+      - run: uv run --no-sync pytest -n auto
 
-      - name: Install build tools
-        run: pip install build "setuptools-scm>=8.0"
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # full history so hatch-vcs reads the tag
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false # no shared cache in a publishing workflow
+      - run: uv build --no-sources
+      - name: Check the version matches the tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          expected="${TAG#v}"
+          ls dist/
+          test -f "dist/jbubble-${expected}-py3-none-any.whl"
+          test -f "dist/jbubble-${expected}.tar.gz"
+      - run: uvx twine check --strict dist/*
+      - name: Check the wheel ships every tracked package file
+        run: diff <(git ls-files jbubble | sort) <(unzip -Z1 dist/*.whl | grep '^jbubble/' | sort)
+      - name: Smoke-test the wheel in a clean environment
+        # -P keeps the checkout off sys.path, so Python imports the installed
+        # wheel, not ./jbubble. Every module must import with the core
+        # dependencies alone.
+        run: |
+          uv run --isolated --no-project --python 3.12 --with dist/*.whl python -P - <<'EOF'
+          import importlib
+          import pkgutil
 
-      - name: Build source distribution and wheel
-        run: python -m build
+          import jbubble
 
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+          names = [m.name for m in pkgutil.walk_packages(jbubble.__path__, "jbubble.")]
+          for name in names:
+              importlib.import_module(name)
+          print(jbubble.__version__, jbubble.__file__, f"{len(names)} modules")
+          EOF
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PyPI
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    # Protect this environment in the repository settings: require a reviewer
+    # and allow deployments from `v*` tags only. Without those rules, anyone
+    # who can push a `v*.*.*` tag publishes to PyPI.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/jbubble/
+    permissions:
+      id-token: write # OIDC trusted publishing; also signs PEP 740 attestations
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+
+  docs:
+    name: Publish the docs
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write # starts the Docs workflow
+    steps:
+      # The release notebooks on the docs site install this version from PyPI,
+      # so the site goes live only after the upload. Events that GITHUB_TOKEN
+      # triggers start no workflow runs, except workflow_dispatch and
+      # repository_dispatch.
+      - name: Start the Docs workflow on the release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run docs.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"

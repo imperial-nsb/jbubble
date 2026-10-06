@@ -2,75 +2,95 @@
 
 **Differentiable microbubble dynamics in JAX.**
 
-jbubble is a research library for simulating and fitting acoustic microbubble dynamics. It is built on [JAX](https://github.com/google/jax), [Equinox](https://github.com/patrick-kidger/equinox), and [diffrax](https://github.com/patrick-kidger/diffrax), making every simulation fully differentiable and JIT-compilable.
+jbubble simulates the radial oscillations of acoustically driven gas bubbles,
+such as ultrasound contrast agents and cavitation nuclei. You assemble a model
+from interchangeable parts (an equation of motion, a gas, a shell, a
+surrounding medium, and a driving pulse), and jbubble solves it with
+[diffrax](https://docs.kidger.site/diffrax/). Every simulation is a pure
+[JAX](https://docs.jax.dev/) function, so you can compile it with `jax.jit`,
+batch it with `jax.vmap`, and differentiate it with `jax.grad`.
 
-## Why jbubble?
+![A microbubble drawn to scale oscillates beside its radius trace and the driving pressure](assets/readme/hero-bubble-light.gif#only-light)
+![A microbubble drawn to scale oscillates beside its radius trace and the driving pressure](assets/readme/hero-bubble-dark.gif#only-dark)
 
-| Feature | jbubble | APECSS / MATLAB |
-|---|---|---|
-| JIT compilation | Yes (`jax.jit`) | No |
-| Vectorised sweeps | Yes (`jax.vmap`) | Script loops |
-| Gradient-based fitting | Yes (`jax.grad`) | Finite differences |
-| Composable physics | Yes (mix any gas+shell+medium) | Fixed combinations |
-| Neural components | Yes (`NeuralProperty`, `NeuralPulse`) | No |
+## What you can do with jbubble
 
-## Quick example
+- **Simulate** free, lipid-coated, and polymer-shelled bubbles with the
+  Rayleigh-Plesset, Keller-Miksis, and Gilmore equations, in Newtonian
+  liquids or viscoelastic tissue.
+- **Drive** them with tone bursts, chirps, measured waveforms, or
+  learned pulses, and combine pulses with `+` and `*`.
+- **Sweep** thousands of bubbles at once with `jax.vmap` or with
+  [`GridSweep`][jbubble.utils.gridsweep.GridSweep], which uses every CPU core
+  by default.
+- **Differentiate** any output with respect to any input, including shell
+  parameters, the pulse, and the weights of a neural network.
+- **Fit** model parameters to measured radius curves or hydrophone signals
+  with [`fit_parameters`][jbubble.fitting.fit_parameters], or learn a
+  constitutive law, such as the surface tension $\sigma(R)$, with a neural
+  network.
 
-```python
-import jax
-from jbubble import run_simulation, SaveSpec
-from jbubble.bubble.eom import KellerMiksis
-from jbubble.bubble.gas import PolytropicGas
-from jbubble.bubble.shell import NoShell
-from jbubble.bubble.medium import NewtonianMedium
-from jbubble.pulse import ToneBurst
-from jbubble.pulse.shapes import Sine
+jbubble was first presented at the 2026 IEEE International Ultrasonics
+Symposium (IUS). Version 0.2 is beta software: the API can still change
+between minor versions, and the [changelog](changelog.md) lists every change.
 
-eom = KellerMiksis(
-    gas=PolytropicGas(gamma=1.4),
-    shell=NoShell(sigma=0.072),
-    medium=NewtonianMedium(mu=1e-3),
-    R0=2e-6, P_amb=101325.0, rho_L=998.0, c_L=1500.0,
-)
-pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
+## Install
 
-result = jax.jit(run_simulation)(
-    eom, pulse,
-    save_spec=SaveSpec(num_samples=1000),
-    t_max=10e-6,
-)
+jbubble needs Python 3.12 or later.
 
-print(result.radius.max() / eom.R0)   # peak expansion ratio
+```bash
+pip install jbubble                  # or: uv add jbubble
+pip install "jbubble[examples]"      # optional: Matplotlib for the examples
+python -c "import jbubble; print(jbubble.__version__)"
 ```
 
-Or use a preset:
+To run on a GPU, or to install from source, see
+[Installation](guide/installation.md).
+
+## Quick start
+
+The following code simulates a 2 µm lipid-coated microbubble driven by a
+five-cycle, 1 MHz, 100 kPa tone burst:
 
 ```python
+from jbubble import run_simulation
 from jbubble.utils.presets import lipid_bubble
 
-preset = lipid_bubble(R0=2e-6, freq=1e6, pressure=100e3)
-result = jax.jit(run_simulation)(
-    preset.eom, preset.pulse,
-    save_spec=SaveSpec(num_samples=1000),
-    t_max=10e-6,
-)
+eom, pulse = lipid_bubble(R0=2e-6, freq=1e6, pressure=100e3)
+result = run_simulation(eom, pulse)
+print(f"peak R/R0 = {result.radius.max() / eom.R0:.2f}")
 ```
 
-## Architecture at a glance
+`result.radius` holds the radius $R(t)$ in metres at the times in
+`result.ts`. To build the same model from its parts and plot it, see the
+[Quickstart](guide/quickstart.md).
 
-jbubble is structured around a **three-way ontological distinction**:
+## Learn more
 
-- **[Property](api/bubble.md#properties)** — a function `state → scalar`. Any physical parameter that might depend on the bubble state (surface tension, viscosity, …). A plain `float` is automatically promoted.
-- **[BubbleState](api/bubble.md#state)** — the ODE integration variables: radius $R$, wall velocity $\dot{R}$, and frozen equilibrium fields $R_0$, $P_{\text{gas},0}$.
-- **Static params** — quantities fixed for the lifetime of a simulation (ambient pressure, density, …), stored as plain fields on the equation of motion.
+<div class="grid cards" markdown>
 
-This separation keeps the API composable: **any** gas model works with **any** shell model and **any** medium model, and all combinations work with all equations of motion automatically via autodiff.
+- **[Getting started](guide/installation.md)**
 
-## Navigation
+    Install jbubble, then run, plot, and compile your first simulation in
+    the [Quickstart](guide/quickstart.md).
 
-- **[Installation](guide/installation.md)** — environment setup.
-- **[Quickstart](guide/quickstart.md)** — first simulation in five minutes.
-- **[Bubble models](guide/bubble_models.md)** — guide to gas, shell, and medium models.
-- **[Pulse shapes](guide/pulse_shapes.md)** — constructing acoustic driving waveforms.
-- **[JAX tips](guide/jax_tips.md)** — JIT, vmap, grad, fitting workflows.
-- **[API reference](api/index.md)** — full class and function documentation.
+- **[Guide](guide/bubble_models.md)**
+
+    How the physics fits together: [bubble models](guide/bubble_models.md),
+    [pulses](guide/pulse_shapes.md), [solvers](guide/solvers.md),
+    [sweeps](guide/sweeps.md), [fitting](guide/fitting.md), and
+    [JAX tips](guide/jax_tips.md).
+
+- **[Examples](examples/index.md)**
+
+    Eleven runnable examples, from a first simulation to learning a shell
+    law with a neural network. Each one opens in Google Colab.
+
+- **[API reference](api/index.md)**
+
+    Every public class and function, with its governing equations and
+    references.
+
+</div>
+
+To cite jbubble in a publication, see [Citing jbubble](citing.md).

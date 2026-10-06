@@ -1,17 +1,24 @@
 """State-dependent property abstractions for bubble models.
 
-A ``Property`` is any callable ``eqx.Module`` that maps a ``BubbleState``
-to a scalar array.  This abstraction covers:
+A [`Property`][jbubble.bubble.property.Property] is any callable
+`eqx.Module` that maps a [`BubbleState`][jbubble.bubble.state.BubbleState]
+to a scalar array. This abstraction covers:
 
-- ``ConstantProperty`` — a fixed value (the common case)
-- State-dependent laws like ``MarmottantSurfaceTension`` and
-  ``GompertzSurfaceTension`` (defined in ``shell.py``)
-- ``NeuralProperty`` — a neural network that learns an unknown law from data
+- [`ConstantProperty`][jbubble.bubble.property.ConstantProperty]: a fixed
+  value (the common case).
+- State-dependent laws such as
+  [`MarmottantSurfaceTension`][jbubble.bubble.shell.MarmottantSurfaceTension],
+  [`SmoothMarmottantSurfaceTension`][jbubble.bubble.shell.SmoothMarmottantSurfaceTension],
+  and [`GompertzSurfaceTension`][jbubble.bubble.shell.GompertzSurfaceTension],
+  defined in `jbubble.bubble.shell`.
+- [`NeuralProperty`][jbubble.bubble.property.NeuralProperty]: a neural
+  network that learns an unknown law from data.
 
-Because all ``Property`` subclasses are Equinox modules, they are full JAX
-pytrees: ``jit``, ``vmap``, and ``grad`` flow through them without any extra
-bookkeeping.  The ``as_property`` converter lets model constructors accept
-plain floats while still storing a proper ``Property`` internally.
+Because all `Property` subclasses are Equinox modules, they are full JAX
+pytrees: `jit`, `vmap`, and `grad` flow through them without extra
+bookkeeping. The [`as_property`][jbubble.bubble.property.as_property]
+converter lets model constructors accept plain floats while they still
+store a proper `Property` internally.
 """
 
 from __future__ import annotations
@@ -27,20 +34,24 @@ from jax.typing import ArrayLike
 
 from .state import BubbleState
 
+__all__ = ["Property", "ConstantProperty", "NeuralProperty", "as_property"]
+
 
 class Property(eqx.Module, abc.ABC):
     """Abstract base for state-dependent (or constant) bubble properties.
 
-    Any callable ``eqx.Module`` that maps a ``BubbleState`` to a scalar
-    array should inherit from this class.  The concrete subclass
-    ``ConstantProperty`` handles the common case of a fixed value;
-    state-dependent models (e.g. ``MarmottantSurfaceTension``) override
-    ``__call__`` directly.
+    Any callable `eqx.Module` that maps a
+    [`BubbleState`][jbubble.bubble.state.BubbleState] to a scalar array
+    inherits from this class. The concrete subclass
+    [`ConstantProperty`][jbubble.bubble.property.ConstantProperty] handles
+    the common case of a fixed value; state-dependent models, such as
+    [`MarmottantSurfaceTension`][jbubble.bubble.shell.MarmottantSurfaceTension],
+    override `__call__` directly.
     """
 
     @abc.abstractmethod
     def __call__(self, state: BubbleState) -> jax.Array:
-        """Evaluate the property at *state*.
+        """Evaluate the property at `state`.
 
         Parameters
         ----------
@@ -58,11 +69,11 @@ class Property(eqx.Module, abc.ABC):
 class ConstantProperty(Property):
     """A property that returns a constant value regardless of state.
 
-    Fields
-    ------
+    Parameters
+    ----------
     val : float or jax.Array
-        The constant value.  May be a JAX array (including a traced value
-        inside ``jax.grad`` / ``jax.jit``) so that gradients flow through.
+        The constant value. It can be a JAX array, including a traced value
+        inside `jax.grad` or `jax.jit`, so gradients flow through it.
     """
 
     val: ArrayLike
@@ -72,22 +83,22 @@ class ConstantProperty(Property):
 
 
 class NeuralProperty(Property):
-    """A ``Property`` backed by an Equinox neural network.
+    """A [`Property`][jbubble.bubble.property.Property] backed by an Equinox neural network.
 
-    The network receives a normalised 1-D input ``[R / R0]`` and must
-    return a 1-D output of shape ``(1,)``.  The caller is responsible for
-    any output transform needed to satisfy physical constraints — for
-    example, wrapping the final layer output with ``jax.nn.softplus`` or
-    ``jnp.exp`` to enforce positivity for surface tension.
+    The network receives a normalised 1-D input `[R / R0]` and must
+    return a 1-D output of shape `(1,)`. You are responsible for any
+    output transform that the physics needs. For example, wrap the final
+    layer output with `jax.nn.softplus` or `jnp.exp` to keep a surface
+    tension positive.
 
     Parameters
     ----------
     net : eqx.Module
-        Any callable Equinox module with signature ``(x: Array[1]) -> Array[1]``.
-        ``eqx.nn.MLP`` is the natural choice.
+        Any callable Equinox module with signature
+        `(x: Array[1]) -> Array[1]`. `eqx.nn.MLP` is the natural choice.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import equinox as eqx
     >>> import jax
     >>> import jax.numpy as jnp
@@ -106,17 +117,19 @@ class NeuralProperty(Property):
 
 
 def as_property(val: ArrayLike | Property) -> Property:
-    """Coerce a plain scalar or JAX array to a ``ConstantProperty``, or pass through.
+    """Convert a plain scalar or JAX array to a `ConstantProperty`, or pass it through.
 
     Parameters
     ----------
     val : float, jax.Array, or Property
         A plain scalar, a JAX array (possibly a tracer), or an existing
-        ``Property`` instance.
+        [`Property`][jbubble.bubble.property.Property] instance.
 
     Returns
     -------
     Property
+        `val` itself if it's already a `Property`; otherwise
+        `ConstantProperty(val=val)`.
     """
     if isinstance(val, Property):
         return val

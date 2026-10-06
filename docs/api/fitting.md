@@ -1,69 +1,64 @@
 # fitting
 
-Gradient-based parameter optimisation via JAX autodiff and optax.
+Gradient-based parameter estimation through the ODE solve, with any optax
+optimiser. For a task-oriented introduction, see
+[Fit model parameters to data](../guide/fitting.md).
 
 ```python
-from jbubble import fit_parameters, FitResult
+from jbubble import FitResult, fit_parameters
+from jbubble.fitting import Parameter, unwrap
 ```
 
 ---
-
-::: jbubble.fitting.FitResult
 
 ::: jbubble.fitting.fit_parameters
 
+::: jbubble.fitting.FitResult
+
+::: jbubble.fitting.Parameter
+
+::: jbubble.fitting.unwrap
+
 ---
 
-## How it works
+## How a step works
 
-`fit_parameters` traces through the entire pipeline:
+`fit_parameters` evaluates the loss and its gradient in one compiled call,
+with reverse-mode differentiation through the ODE solve. Each step then does
+the following:
 
-```
-params → make_model(params) → (eom, pulse) → run_simulation → SimulationResult → loss_fn → scalar
-```
+1. Computes an update with `optimizer.update(grads, opt_state, params)`.
+2. Tries the candidate `params + update`. If any solve fails to converge, or
+   the loss or gradient isn't finite, it halves the update and tries again,
+   up to `max_backtracks` times.
+3. Accepts the first candidate that succeeds. Its loss goes into
+   `loss_history`, and its gradient drives the next step.
 
-JAX's autodiff (via diffrax's backpropagation-through-time) computes the gradient of the loss with respect to `params`, which is then fed to an optax optimiser.
+If every halved update fails, the fit warns, stops, and returns the last
+accepted parameters. A failed solve during the fit never raises. Only a
+failure at `params0` raises `RuntimeError`, before the first step.
 
-The function automatically partitions `params` into:
-- **Differentiable leaves**: `jax.Array` scalars and arrays — these receive gradients.
-- **Static leaves**: Python scalars, strings, non-array objects — these are held fixed.
+## What gets fitted
 
-This means integer hyperparameters (e.g. number of cycles) can live inside `params` without causing errors.
+| Leaf of `params0` | Fitted | Coordinate that the optimiser updates |
+|---|---|---|
+| `Parameter(x)` | Yes | `x / scale` |
+| `Parameter(x, lower=a)` | Yes | `log((x - a) / scale)` |
+| `Parameter(x, upper=b)` | Yes | `log((b - x) / scale)` |
+| `Parameter(x, lower=a, upper=b)` | Yes | `logit((x - a) / (b - a))` |
+| `Parameter(x, fixed=True)` | No | |
+| Python float or `np.float64` in a dict, list, or tuple, or as `params0` | Yes | as `Parameter(x)` |
+| Floating-point JAX or NumPy array, or another NumPy scalar | Yes | the value itself |
+| Python float inside an Equinox module | No, with a warning if you set it | |
+| Integer, boolean, string, or callable | No | |
 
-## Memory considerations
+`make_model`, `loss_fn`, `step_callback`, and `FitResult.params` all see
+physical values.
 
-For long simulations with many steps, backpropagation through the ODE solve requires storing intermediate solver states. If memory is a concern, use the recursive checkpoint adjoint:
+## Gradients through the ODE solve
 
-```python
-import diffrax
-
-fit_result = fit_parameters(
-    ...,
-    adjoint=diffrax.RecursiveCheckpointAdjoint(checkpoints=100),
-)
-```
-
-This trades computation for memory: it recomputes intermediate states during the backward pass rather than storing all of them.
-
-## Convergence monitoring
-
-The `step_callback` is called **outside JIT** after each gradient step, so it can perform arbitrary Python-side operations (plotting, logging, early stopping):
-
-```python
-import matplotlib.pyplot as plt
-
-losses = []
-params_history = []
-
-def callback(step, params, loss):
-    losses.append(float(loss))
-    params_history.append(params)
-    if step % 50 == 0:
-        plt.clf()
-        plt.plot(losses)
-        plt.xlabel("Step")
-        plt.ylabel("Loss")
-        plt.pause(0.01)
-
-fit_result = fit_parameters(..., step_callback=callback)
-```
+[`solve_eom`][jbubble.solver.solve_eom] evaluates the equation of motion
+through a guard, so a trial step that the adaptive solver rejects, for example
+one that overshoots a strong collapse to `R <= 0`, can't make the gradient
+NaN. With an explicit solver, such as the default `Dopri5`, the guard leaves
+the solution unchanged, bit for bit.

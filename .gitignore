@@ -3,19 +3,25 @@
 *.ipynb_checkpoints
 *.pytest_cache
 *.vscode
-*.egg-info
 *__pycache__
 **/*.pyc
-.venv
-site/*
-build/*
 .ruff_cache
 
-# poetry
-poetry.lock
-
-# setuptools-scm generated version file
+# Python packaging and environments
+.venv/
+dist/
+build/
+*.egg-info/
+# Left over from the setuptools-scm builds in jbubble 0.1.x. jbubble now reads
+# its version from package metadata, so delete this file from old checkouts.
+# Hatchling honours this rule, which keeps the stale file out of local builds.
 jbubble/_version.py
+
+# Docs builds and tool caches. scripts/build_examples.py writes the gallery to
+# docs/examples/ and caches executed notebooks under build/examples-cache/.
+site/
+.cache/
+docs/examples/
 
 # Testing
 .coverage

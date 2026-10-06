@@ -95,3 +95,22 @@ class TestVanDerWaalsGas:
         gas = VanDerWaalsGas(gamma=1.4, h_frac=0.2)
         grad = jax.grad(gas)(eq_state)
         assert float(grad.R) < 0
+
+
+class TestIsAdmissible:
+    @pytest.mark.parametrize(
+        ("R", "expected"), [(R0, True), (0.0, False), (-R0, False)]
+    )
+    def test_polytropic_requires_a_positive_radius(self, R, expected):
+        assert bool(PolytropicGas(gamma=1.4).is_admissible(_make_state(R))) is expected
+
+    @pytest.mark.parametrize(
+        ("ratio", "expected"), [(1.0, True), (0.21, True), (0.2, False), (0.1, False)]
+    )
+    def test_van_der_waals_excludes_the_hard_core(self, ratio, expected):
+        gas = VanDerWaalsGas(gamma=1.4, h_frac=0.2)
+        assert bool(gas.is_admissible(_make_state(ratio * R0))) is expected
+
+    def test_nan_state_is_inadmissible(self):
+        gas = VanDerWaalsGas(gamma=1.4, h_frac=0.2)
+        assert not bool(gas.is_admissible(_make_state(jnp.nan)))

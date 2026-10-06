@@ -10,6 +10,17 @@ from jbubble.bubble.state import BubbleState
 from jbubble.pulse import ToneBurst
 from jbubble.pulse.shapes import Sine
 
+
+def pytest_configure(config):
+    # Without pytest-timeout (for example, in the CI job for the next Python,
+    # which installs only pytest and pytest-xdist), register its marker so
+    # --strict-markers accepts it. The time limit then doesn't apply.
+    if not config.pluginmanager.hasplugin("timeout"):
+        config.addinivalue_line(
+            "markers", "timeout(seconds): time limit, needs pytest-timeout"
+        )
+
+
 # ── Physical constants ──────────────────────────────────────────────────────
 
 R0 = 2e-6

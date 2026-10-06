@@ -47,9 +47,9 @@ an individual is officially representing the community in public spaces.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behaviour may be
-reported to the project maintainers at the contact details available on the
-[repository](https://github.com/imperial-nsb/jbubble). All complaints will be
-reviewed and investigated promptly and fairly.
+reported to the project maintainers at
+[c.tilbury25@imperial.ac.uk](mailto:c.tilbury25@imperial.ac.uk). All complaints
+will be reviewed and investigated promptly and fairly.
 
 ## Attribution
 

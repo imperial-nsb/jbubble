@@ -1,36 +1,68 @@
-# jbubble Examples
+# Examples
 
-This directory contains clean, minimal examples of how to use the `jbubble` library. They are ordered by complexity.
+These 11 scripts take you from a first simulation to learning a shell law
+from data. Each one is self-contained, prints a short summary of its key
+numbers, and draws its figures with jbubble's Matplotlib style.
 
-## Getting Started
+The scripts use the [Jupytext](https://jupytext.readthedocs.io/) percent
+format: a `# %%` line starts a code cell, and a `# %% [markdown]` line starts
+a cell of narrative text. You can run a script with `python`, step through its
+cells in an editor that supports them, such as VS Code or PyCharm, or open it
+as a notebook in Google Colab. The
+[example gallery](https://imperial-nsb.github.io/jbubble/examples/) shows
+every example with its output.
 
-0. **[00_presets.py](00_presets.py)**: The fastest way to start: pick a preset (`free_bubble`, `lipid_bubble`, or `thick_shell_bubble`) and run. Three side-by-side plots showing the effect of shell type on bubble dynamics.
-1. **[01_basic_simulation.py](01_basic_simulation.py)**: The simplest possible microbubble simulation using the high-level `run_simulation` API. Shows how to assemble an EoM from gas, shell, and medium models manually.
-2. **[02_pulse_algebra.py](02_pulse_algebra.py)**: Demonstrates the composable pulse algebra system — adding two tone bursts at different frequencies, scaling amplitude, and applying a windowing envelope.
-3. **[03_shell_models.py](03_shell_models.py)**: Compares different shell models (no shell, lipid Marmottant, thick Church) and surface tension formulations on identical bubble/pulse parameters.
-4. **[04_batch_sweeps.py](04_batch_sweeps.py)**: Uses `GridSweep` + JAX `vmap` to run thousands of simulations across a parameter grid in a single batched call.
-5. **[05_fitting.py](05_fitting.py)**: Fits a shell elasticity parameter (`chi`) to synthetic noisy data via gradient descent (`fit_parameters` + `optax`). Shows convergence plot and radius overlay.
-6. **[06_jit_timing.py](06_jit_timing.py)**: Benchmarks JIT compilation overhead vs steady-state throughput, illustrating how JAX's JIT pays off for repeated simulations.
-7. **[07_cavitation_regimes.py](07_cavitation_regimes.py)**: Physics-focused example contrasting stable cavitation (low-pressure, near-linear) vs inertial cavitation (high-pressure collapse).
-8. **[08_acoustic_emissions.py](08_acoustic_emissions.py)**: Computes radiated acoustic pressure from a solved trajectory using `IncompressibleMonopole` and `QuasiAcoustic` emission models; also shows multi-distance `vmap`.
-9. **[09_custom_pulse_shapes.py](09_custom_pulse_shapes.py)**: Shows how to extend jbubble with custom Fourier pulse shapes by subclassing `FourierPulseShape`, and catalogues the built-in `Rectangular` wave variants.
-10. **[10_envelopes.py](10_envelopes.py)**: Compares all built-in envelope types (`Rectangular`, `Hann`, `Tukey`, `SoftRectangular`) and plots their time derivatives to highlight which are safe for adjoint-based gradient fitting.
-11. **[11_gradient_resonance.py](11_gradient_resonance.py)**: Advanced end-to-end demo: runs a 2-D parameter sweep (frequency × bubble radius) to build an expansion-ratio heatmap, then uses `fit_parameters` to follow the gradient to the resonance peak. Saves the trajectory overlay as a plot.
-12. **[12_3D_batch_sweeps.py](12_3D_batch_sweeps.py)**: Extends `GridSweep` to three parameters (shell elasticity `chi` × bubble radius × frequency), sweeping each `chi` slice and rendering the expansion ratio as a stack of colour-mapped planes in 3-D.
-13. **[13_confinement_visual.py](13_confinement_visual.py)**: Simulates a lipid bubble confined in an elastic spherical vessel (`SphericalConfinement`) and animates the coupled bubble / lumen / vessel-wall / tissue motion over time. **Note:** the confinement models are a work in progress and not yet validated — see the warnings in the docs.
+## Run an example
 
-## Running the Examples
+1. Install jbubble with the `examples` extra, which adds Matplotlib:
 
-Ensure you have installed `jbubble` in your environment:
+   ```bash
+   pip install "jbubble[examples]"
+   ```
+
+   From a clone of the repository, run `uv sync --extra examples` instead.
+
+2. Run a script:
+
+   ```bash
+   python examples/01_first_simulation.py
+   ```
+
+   In a uv project, prefix the command with `uv run`.
+
+Each figure opens in a window, and the script continues when you close it.
+To run an example without windows, for example over SSH or in continuous
+integration (CI), set the environment variable `MPLBACKEND=Agg`.
+
+## Run a quick version
+
+The heavier examples read the environment variable `JBUBBLE_QUICK`. To shrink
+their sweeps and training loops so that they finish sooner, set it
+to `1`:
 
 ```bash
-pip install -e .
+JBUBBLE_QUICK=1 MPLBACKEND=Agg python examples/11_learn_shell_law.py
 ```
 
-Then run any example script:
+The quick results are coarser, so use the default settings to reproduce the
+figures in the gallery.
 
-```bash
-python examples/01_basic_simulation.py
-```
+## All examples
 
-> **Note:** Example 11 (`11_gradient_resonance.py`) runs a 100×100 parameter sweep followed by a 50-step gradient descent and can take several minutes on CPU.
+Runtimes are approximate, measured on a laptop CPU with the default
+settings, and include JAX compilation. The Colab notebooks run on a CPU
+runtime.
+
+| # | Example | What you learn | Runtime | Notebook |
+|---|---------|----------------|---------|----------|
+| 01 | [Your first bubble simulation](01_first_simulation.py) | Run a preset, build the same model from parts, and compile a simulation once with `jax.jit` | 5 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/01_first_simulation.ipynb) |
+| 02 | [Driving pulses](02_driving_pulses.py) | Compare carrier shapes, combine pulses with arithmetic, and drive a bubble with a chirp and a measured trace | 5 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/02_driving_pulses.ipynb) |
+| 03 | [Shells, gases, and media](03_shells_gases_media.py) | Compare free, lipid, and polymer-shelled bubbles, and swap the gas law and the surrounding medium | 10 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/03_shells_gases_media.ipynb) |
+| 04 | [Equations of motion](04_equations_of_motion.py) | Compare Rayleigh-Plesset, modified Rayleigh-Plesset, Keller-Miksis, and Gilmore, and find the onset of inertial cavitation | 5 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/04_equations_of_motion.ipynb) |
+| 05 | [Parameter sweeps](05_parameter_sweeps.py) | Simulate a row of bubbles with `jax.vmap`, map the response with `GridSweep`, and save and load the results with NumPy | 30 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/05_parameter_sweeps.ipynb) |
+| 06 | [Acoustic emission](06_acoustic_emission.py) | Compute the pressure that a bubble radiates, its spectrum, and the drive pressure where broadband emission starts | 20 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/06_acoustic_emission.ipynb) |
+| 07 | [Solvers and stiffness](07_solvers_and_stiffness.py) | Measure when small or viscous bubbles make the problem stiff, check `converged`, and switch to `SolverConfig.stiff()` | 40 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/07_solvers_and_stiffness.ipynb) |
+| 08 | [Custom physics](08_custom_physics.py) | Write your own `Property` and `MediumModel`, and add a neural network with `NeuralProperty` | 5 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/08_custom_physics.ipynb) |
+| 09 | [Gradients and optimisation](09_gradients_and_optimisation.py) | Differentiate a simulation with `jax.grad`, check it against finite differences, and climb to a resonance peak with Optax | 20 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/09_gradients_and_optimisation.ipynb) |
+| 10 | [Fit shell parameters](10_fit_shell_parameters.py) | Recover a lipid shell's elasticity and viscosity from noisy radius curves with `fit_parameters` | 60 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/10_fit_shell_parameters.ipynb) |
+| 11 | [Learn a shell law](11_learn_shell_law.py) | Train a neural network to learn a shell's surface tension law from radius curves at several pressures | 90 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/11_learn_shell_law.ipynb) |

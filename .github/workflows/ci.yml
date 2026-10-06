@@ -4,66 +4,138 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+  schedule:
+    # Mondays 06:00 UTC: re-resolve against the newest upstream releases.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
 
+permissions:
+  contents: read
+
+# A new commit cancels the superseded run of the same pull request. Push,
+# scheduled, and manual runs each get their own group, so a merge to main never
+# cancels or queues behind the weekly run, or another main run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: true
+
+env:
+  FORCE_COLOR: "1"
+  MPLBACKEND: Agg
 
 jobs:
   lint:
-    name: Lint (ruff)
+    name: Lint (prek)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: "3.11"
-
-      - name: Install ruff
-        run: pip install "ruff>=0.4"
-
-      - name: Check linting
-        run: ruff check .
-
-      - name: Check formatting
-        run: ruff format --check .
+          persist-credentials: false
+      - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
 
   typecheck:
     name: Type check (ty)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: "3.11"
-
-      - name: Install package with dev extras
-        run: pip install -e ".[dev]"
-
-      - name: Type check
-        run: ty check jbubble
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.12"
+      # ty resolves imports from the environment, so it needs the runtime
+      # dependencies and extras, not only the lint group.
+      - run: uv sync --locked
+      - run: uv run --no-sync ty check jbubble
 
   test:
-    name: Test (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    name: Test (py${{ matrix.python }}, ${{ matrix.deps }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
-
+        include:
+          # Oldest supported Python with the declared lower bounds. The Python
+          # pin matters: without it, uv picks the newest Python, where the
+          # lower bounds have no wheels.
+          - { os: ubuntu-latest, python: "3.12", deps: lowest-direct }
+          # The committed lockfile, which is what contributors get from `uv sync`.
+          - { os: ubuntu-latest, python: "3.12", deps: locked }
+          # Google Colab's Python, newest releases.
+          - { os: ubuntu-latest, python: "3.13", deps: highest }
+          # Newest supported Python, newest releases.
+          - { os: ubuntu-latest, python: "3.14", deps: highest }
+          - { os: macos-latest, python: "3.14", deps: highest }
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: ${{ matrix.python-version }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: ${{ matrix.python }}
+          cache-suffix: ${{ matrix.deps }}
+      - name: Install
+        env:
+          DEPS: ${{ matrix.deps }}
+        run: |
+          case "$DEPS" in
+            locked)        uv sync --locked ;;
+            lowest-direct) uv sync --resolution lowest-direct ;;
+            highest)       uv sync --upgrade ;;
+          esac
+      - name: Show resolved versions
+        run: uv pip list | grep -iE '^(jax|jaxlib|diffrax|equinox|lineax|optimistix|optax|numpy|scipy) '
+      - name: Test
+        run: uv run --no-sync pytest -n auto
 
-      - name: Install package with dev extras
-        run: pip install -e ".[dev]"
+  python-next:
+    # Early warning for the next Python. Not required: dependencies may lack
+    # wheels until after the final release, so this job installs the core
+    # package and pytest only, and the tests that need Matplotlib skip
+    # themselves.
+    name: Test (py3.15, highest, allowed to fail)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.15"
+          cache-suffix: next
+      - run: uv sync --upgrade --no-default-groups
+      - run: uv pip install pytest pytest-xdist
+      - run: uv run --no-sync pytest -n auto
 
-      - name: Run tests
-        run: pytest tests/ -m "not slow" -v --tb=short
-        timeout-minutes: 20
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # tags are needed for the version
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - run: uv build --no-sources
+      - run: uvx twine check --strict dist/*
+      - name: Check the wheel ships every tracked package file
+        run: diff <(git ls-files jbubble | sort) <(unzip -Z1 dist/*.whl | grep '^jbubble/' | sort)
+      - name: Smoke-test the wheel in a clean environment
+        # -P keeps the checkout off sys.path, so Python imports the installed
+        # wheel, not ./jbubble. Every module must import with the core
+        # dependencies alone.
+        run: |
+          uv run --isolated --no-project --python 3.12 --with dist/*.whl python -P - <<'EOF'
+          import importlib
+          import pkgutil
+
+          import jbubble
+
+          names = [m.name for m in pkgutil.walk_packages(jbubble.__path__, "jbubble.")]
+          for name in names:
+              importlib.import_module(name)
+          print(jbubble.__version__, jbubble.__file__, f"{len(names)} modules")
+          EOF

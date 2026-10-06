@@ -5,7 +5,7 @@ The `jbubble.pulse` module provides composable, differentiable acoustic driving 
 All pulses are Equinox modules and implement the interface:
 
 ```python
-pressure = pulse(t)   # scalar time → scalar pressure [Pa]
+pressure = pulse(t)  # scalar time → scalar pressure [Pa]
 ```
 
 ---
@@ -34,9 +34,23 @@ pressure = pulse(t)   # scalar time → scalar pressure [Pa]
 
 ---
 
+## Chirp sweep laws
+
+A sweep law sets how the instantaneous frequency of a `ChirpPulse` changes over time. Pass one as the `sweep` argument.
+
+::: jbubble.pulse.chirp.ChirpSweep
+
+::: jbubble.pulse.chirp.LinearSweep
+
+::: jbubble.pulse.chirp.ExponentialSweep
+
+---
+
 ## Envelopes
 
 ::: jbubble.pulse.envelope.Envelope
+
+::: jbubble.pulse.envelope.NoEnvelope
 
 ::: jbubble.pulse.envelope.RectangularEnvelope
 

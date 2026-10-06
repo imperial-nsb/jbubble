@@ -1,74 +1,120 @@
 # Installation
 
-## Prerequisites
+jbubble needs Python 3.12 or later. It installs JAX as a dependency, in its
+CPU-only build. A GPU is optional; it speeds up large parameter sweeps (see
+[Run on a GPU](#run-on-a-gpu)).
 
-jbubble requires Python 3.10+ and a working JAX installation. GPU support is optional but recommended for large parameter sweeps.
+## Install from PyPI
 
-## Conda environment (recommended)
-
-The project ships a conda environment spec:
+To install jbubble with pip, run the following command:
 
 ```bash
-conda env create -f environment.yml
-conda activate bubbles
+pip install jbubble
 ```
 
-All development and examples assume the `bubbles` environment is active.
+To add jbubble to a [uv](https://docs.astral.sh/uv/) project, run the
+following command:
 
-## Installing from source
+```bash
+uv add jbubble
+```
+
+## Install the optional extra
+
+The `examples` extra installs `matplotlib`, which the
+[example scripts](../examples/index.md) and the `jbubble.style` figure styles
+need. To install jbubble with it, run one of the following commands:
+
+```bash
+pip install "jbubble[examples]"
+uv add "jbubble[examples]"
+```
+
+## Install in a conda environment
+
+To use jbubble from conda, create an environment with Python and pip, then
+install jbubble with pip:
+
+```bash
+conda create -n jbubble python=3.13 pip
+conda activate jbubble
+pip install "jbubble[examples]"
+```
+
+## Install from source
+
+To work on jbubble itself, clone the repository and let uv create the
+environment:
 
 ```bash
 git clone https://github.com/imperial-nsb/jbubble.git
 cd jbubble
-pip install -e ".[dev]"
+uv sync
 ```
 
-The `[dev]` extra installs testing and documentation dependencies.
+`uv sync` creates a virtual environment in `.venv/` with jbubble, both
+extras, and the development tools. For the full development setup, including
+how to run the tests and build these docs, see the
+[contributing guide](https://github.com/imperial-nsb/jbubble/blob/main/CONTRIBUTING.md).
+
+## Check the installation
+
+The following code runs a short simulation of a free bubble:
+
+```python
+from jbubble import run_simulation
+from jbubble.utils.presets import free_bubble
+
+eom, pulse = free_bubble()  # 2 µm air bubble, 1 MHz, 100 kPa
+result = run_simulation(eom, pulse)
+print("converged:", bool(result.converged))
+print(f"peak R/R0: {result.radius.max() / eom.R0:.2f}")
+```
+
+It prints `converged: True` and `peak R/R0: 1.59`. The first run takes a few seconds, because JAX compiles
+the solver.
 
 ## Dependencies
 
 | Package | Role |
 |---|---|
-| `jax` | Numerical backend, autodiff, JIT, vmap |
-| `equinox` | PyTree-based neural networks and modules |
-| `diffrax` | Adaptive ODE solvers (Kvaerno5) |
-| `optax` | Optimisers for parameter fitting |
-| `h5py` | HDF5 export/import |
+| `jax` | Arrays, compilation, vectorisation, and automatic differentiation |
+| `equinox` | Models as PyTrees: every jbubble model is an `eqx.Module` |
+| `diffrax` | Adaptive ODE solvers (`Dopri5` by default) |
+| `optimistix` | Root finding inside the implicit solver of [`SolverConfig.stiff`][jbubble.solver.SolverConfig.stiff] |
+| `lineax` | Linear solves inside diffrax's implicit solvers |
+| `optax` | Optimisers for [`fit_parameters`][jbubble.fitting.fit_parameters] |
+| `numpy` | Host-side arrays for sweeps |
+| `tqdm` | Progress bars for [`GridSweep`][jbubble.utils.gridsweep.GridSweep] |
+| `matplotlib` | Plotting in the examples (optional, `examples` extra) |
 
-## Verifying the installation
+!!! note "64-bit floats"
+    Importing jbubble turns on JAX's 64-bit mode
+    (`jax.config.update("jax_enable_x64", True)`) for the whole process,
+    because bubble dynamics need double precision. Arrays that you create
+    with `jax.numpy` after the import are 64-bit by default.
 
-```python
-import jbubble
-from jbubble.utils.presets import free_bubble
-import jax
+## Run on a GPU
 
-preset = free_bubble()
-from jbubble import run_simulation, SaveSpec
-result = jax.jit(run_simulation)(
-    preset.eom, preset.pulse,
-    save_spec=SaveSpec(num_samples=500),
-    t_max=10e-6,
-)
-print("converged:", bool(result.converged))
-print("peak R/R0:", float(result.radius.max() / preset.eom.R0))
-```
-
-Expected output (values are approximate):
-
-```
-converged: True
-peak R/R0: 2.3
-```
-
-## GPU / accelerator support
-
-JAX automatically uses a GPU if one is available. No code changes are needed. For multi-GPU setups, use `jax.devices()` to select a device and `jax.device_put` to place arrays explicitly.
-
-## Building the documentation
+`pip install jbubble` installs the CPU-only build of JAX. To use an NVIDIA
+GPU on Linux, install JAX's CUDA build after jbubble:
 
 ```bash
-conda activate bubbles
-pip install mkdocs mkdocs-material mkdocstrings[python]
-mkdocs serve   # live-preview at http://127.0.0.1:8000
-mkdocs build   # static site in site/
+pip install --upgrade "jax[cuda13]"
 ```
+
+For CUDA 12, use `jax[cuda12]`. In a uv project, run
+`uv add "jax[cuda13]"` instead. For TPUs, other GPUs, and other platforms, see
+the [JAX installation guide](https://docs.jax.dev/en/latest/installation.html).
+
+With a GPU build installed, JAX runs on the GPU automatically, and your
+jbubble code doesn't change. To list the devices that JAX found, run the
+following command:
+
+```bash
+python -c "import jax; print(jax.devices())"
+```
+
+A single simulation is a sequential time integration, so it's rarely faster
+on a GPU. Batches of thousands of simulations are where a GPU helps; see
+[Parameter sweeps](sweeps.md#cpu-and-gpu).

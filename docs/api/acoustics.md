@@ -8,7 +8,7 @@ Emission models are **not** `Property` subclasses (they depend on the full traje
 from jbubble.acoustics import IncompressibleMonopole
 
 emission = IncompressibleMonopole(rho_L=998.0)
-p_rad = emission(result, r=1e-2)   # pressure [Pa] at 1 cm, shape (num_samples,)
+p_rad = emission(result, r=1e-2)  # pressure [Pa] at 1 cm, shape (num_samples,)
 ```
 
 For multiple field-point distances, use `jax.vmap`:
@@ -34,9 +34,11 @@ p_all = jax.vmap(lambda r: emission(result, r))(distances)
 
 ## Choosing an emission model
 
-| Model | Accuracy | Validity | Speed |
-|---|---|---|---|
-| `IncompressibleMonopole` | Low | $r \gg R$, $\text{Ma} \ll 1$ | Fastest — instant post-processing |
-| `QuasiAcoustic` | Medium | $r \gg R$, moderate Ma | Fast — uses `jnp.interp` |
+| Model | Arrival times (`observer_time`) | Validity |
+|---|---|---|
+| `IncompressibleMonopole` | `result.ts` | $r \gg R$, $r \ll c_L/f$, $\text{Ma} \ll 1$ |
+| `QuasiAcoustic` | `result.ts + r / c_L` | $r \gg R$, $\text{Ma} \ll 1$ |
+
+Both models return the same pressure values, computed from the saved samples without resampling, so both cost the same. `QuasiAcoustic` adds the propagation delay: plot each model's pressure against its own `observer_time(result, r)`.
 
 The fully compressible acoustic emission model (analogous to APECSS's wave equation integration) is planned but not yet implemented. For most research purposes, `QuasiAcoustic` at a field point distance $r \gg R_0$ is adequate.

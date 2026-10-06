@@ -1,141 +1,173 @@
 # Quickstart
 
-This page walks through a complete simulation from scratch: choosing an equation of motion, constructing a driving pulse, running the solver, and inspecting the output.
+This page takes you from a ready-made bubble to a model that you assemble
+yourself, then shows how to plot the result, compile the simulation once
+for many runs, and compute the sound that the bubble radiates. Every code
+block runs as written, in order.
 
-## 1. Choose an equation of motion
+## Run a preset
 
-An `EquationOfMotion` (EoM) is the ODE right-hand side. It bundles three physics sub-models:
-
-- **Gas model** — pressure inside the bubble.
-- **Shell model** — surface tension and shell stresses.
-- **Medium model** — viscous and elastic stresses from the surrounding liquid.
+A preset returns an equation of motion and a driving pulse with cited,
+physically representative defaults. The following code simulates a 2 µm
+lipid-coated microbubble, such as a SonoVue bubble, driven by a five-cycle,
+1 MHz, 100 kPa tone burst:
 
 ```python
-from jbubble.bubble.eom import KellerMiksis
-from jbubble.bubble.gas import PolytropicGas
-from jbubble.bubble.shell import NoShell
-from jbubble.bubble.medium import NewtonianMedium
+from jbubble import run_simulation
+from jbubble.utils.presets import lipid_bubble
 
-eom = KellerMiksis(
-    gas=PolytropicGas(gamma=1.4),
-    shell=NoShell(sigma=0.072),       # water surface tension [N/m]
-    medium=NewtonianMedium(mu=1e-3),  # water viscosity [Pa·s]
-    R0=2e-6,       # equilibrium radius [m]
-    P_amb=101325,  # ambient pressure [Pa]
-    rho_L=998.0,   # liquid density [kg/m³]
-    c_L=1500.0,    # speed of sound [m/s]
-)
+eom, pulse = lipid_bubble(R0=2e-6, freq=1e6, pressure=100e3)
+result = run_simulation(eom, pulse)
+print(f"peak R/R0 = {result.radius.max() / eom.R0:.3f}")
 ```
 
-`KellerMiksis` is the standard choice: it accounts for first-order liquid compressibility and is well-tested across a wide range of driving pressures.
+[`run_simulation`][jbubble.simulation.run_simulation] integrates from
+$t = 0$ to [`pulse.t_end`][jbubble.pulse.base.Pulse.t_end], twice the pulse
+duration by default, and saves 1024 evenly spaced samples. The three presets
+are [`free_bubble`][jbubble.utils.presets.free_bubble],
+[`lipid_bubble`][jbubble.utils.presets.lipid_bubble], and
+[`thick_shell_bubble`][jbubble.utils.presets.thick_shell_bubble].
 
-## 2. Construct a driving pulse
+## Build the model from parts
 
-```python
+An equation of motion combines three physics models:
+
+- A **gas model**: the pressure inside the bubble.
+- A **shell model**: surface tension and the stresses of a coating.
+- A **medium model**: the viscous and elastic stresses of the surrounding
+  liquid or tissue.
+
+The following code builds the model that `lipid_bubble` returns:
+[`KellerMiksis`][jbubble.bubble.eom.KellerMiksis] with an SF6 core, a lipid
+shell whose surface tension follows the smoothed Marmottant law, and water:
+
+```{.python continuation}
+from jbubble.bubble.eom import KellerMiksis
+from jbubble.bubble.gas import PolytropicGas
+from jbubble.bubble.medium import NewtonianMedium
+from jbubble.bubble.shell import LipidShell, SmoothMarmottantSurfaceTension
 from jbubble.pulse import ToneBurst
 from jbubble.pulse.shapes import Sine
 
-pulse = ToneBurst(
-    freq=1e6,       # centre frequency [Hz]
-    pressure=100e3, # peak pressure [Pa]
-    shape=Sine(),   # sinusoidal carrier
-    cycle_num=5,    # number of cycles
+sigma = SmoothMarmottantSurfaceTension(
+    R_buckle_ratio=0.98058,  # buckling radius / R0
+    chi=0.5,  # shell elasticity [N/m]
+    sigma_rupture=0.072,  # surface tension after rupture [N/m]
 )
+eom = KellerMiksis(
+    gas=PolytropicGas(gamma=1.095),  # SF6
+    shell=LipidShell(sigma=sigma, kappa_s=7.5e-9),  # kappa_s [N s/m]
+    medium=NewtonianMedium(mu=1e-3),  # water viscosity [Pa s]
+    R0=2e-6,  # equilibrium radius [m]
+    P_amb=101325.0,  # ambient pressure [Pa]
+    rho_L=998.0,  # liquid density [kg/m³]
+    c_L=1500.0,  # speed of sound [m/s]
+)
+pulse = ToneBurst(freq=1e6, pressure=100e3, shape=Sine(), cycle_num=5)
+
+result = run_simulation(eom, pulse)
+print(f"peak R/R0 = {result.radius.max() / eom.R0:.3f}")  # same as the preset
 ```
 
-The pulse is a callable `p_ac(t)` returning pressure at time `t`.
+Every part is an [Equinox](https://docs.kidger.site/equinox/) module, and any
+gas works with any shell, medium, and equation of motion. To swap the
+physics, change one argument: for example, `NoShell(sigma=0.072)` gives an
+uncoated bubble. [Bubble models](bubble_models.md) describes every option.
 
-## 3. Run the simulation
+## Plot the result
 
-```python
-import jax
-from jbubble import run_simulation, SaveSpec
+[`SimulationResult`][jbubble.simulation.SimulationResult] holds the time
+points, the full state, its time derivative, the driving pressure, and a
+convergence flag, all in SI units:
 
-result = jax.jit(run_simulation)(
-    eom, pulse,
-    save_spec=SaveSpec(num_samples=1000),
-    t_max=10e-6,  # simulate 10 µs
-)
-```
-
-Wrapping with `jax.jit` compiles the entire solver graph. The first call pays a one-time compilation cost; subsequent calls with the same argument shapes are fast.
-
-## 4. Inspect the result
-
-`SimulationResult` provides convenient properties:
-
-```python
+```{.python continuation}
 import matplotlib.pyplot as plt
 
-# Check the solver converged
-assert result.converged, "ODE did not converge — increase max_steps or loosen tolerances"
+plt.style.use("jbubble.style.light")
 
-# Time axis
-ts = result.ts * 1e6          # convert to µs
-
-# Radius normalised by R0
-R_norm = result.radius / eom.R0
-
-plt.plot(ts, R_norm)
-plt.xlabel("Time [µs]")
-plt.ylabel("R / R₀")
-plt.title("Keller–Miksis: free bubble at 100 kPa, 1 MHz")
+t_us = result.ts * 1e6  # [µs]
+fig, (ax_p, ax_r) = plt.subplots(2, 1, sharex=True, figsize=(7, 4.5))
+ax_p.plot(t_us, result.driving_pressure / 1e3, color="#8c959f")
+ax_p.set_ylabel("Drive [kPa]")
+ax_r.plot(t_us, result.radius / eom.R0, color="C0")
+ax_r.set_xlabel("Time [µs]")
+ax_r.set_ylabel("$R/R_0$")
 plt.show()
 
-print("Peak expansion ratio:", float(R_norm.max()))
-print("Minimum radius ratio:", float(R_norm.min()))
+print("converged:", bool(result.converged))
 ```
 
-The result also carries `state_dot` (time derivatives of all state variables) and `driving_pressure`.
+Besides `result.radius`, the result has `result.radial_velocity`
+($\dot R$), `result.radial_acceleration` ($\ddot R$), and the full state
+trajectory in `result.state`.
 
-## 5. Using presets
+If the solver fails, for example because it reaches its step limit,
+`result.converged` is `False` and the samples after the failure are `inf`.
+Called outside `jax.jit` and `jax.vmap`, `run_simulation` also warns. To
+choose a solver and its settings, see [Solvers and stiffness](solvers.md).
 
-If you just want a physically representative bubble without choosing every parameter, use one of the built-in presets:
+## Compile once, run many times
 
-```python
-from jbubble.utils.presets import free_bubble, lipid_bubble, thick_shell_bubble
+The first simulation takes about a second, because JAX compiles the solver.
+Called directly, `run_simulation` treats the Python floats in a model as
+constants, so a new pressure compiles again. Wrapped in `jax.jit`, every
+number becomes an input of one compiled program: a new value, such as
+another pressure, reuses it and runs in milliseconds. Only a new model
+structure, such as another shell class or another `SaveSpec`, compiles
+again:
 
-# Uncoated bubble in water
-preset = free_bubble(R0=2e-6, freq=1e6, pressure=100e3)
+```{.python continuation}
+import time
 
-# Clinical lipid-shelled UCA (SonoVue-like)
-preset = lipid_bubble(R0=1.5e-6, freq=2.5e6, pressure=50e3)
+import jax
 
-# Polymer thick-shelled UCA (Optison-like)
-preset = thick_shell_bubble(R0=2e-6, freq=1e6, pressure=150e3)
+simulate = jax.jit(run_simulation)
+simulate(eom, pulse).radius.block_until_ready()  # compiles
 
-result = jax.jit(run_simulation)(
-    preset.eom, preset.pulse,
-    save_spec=SaveSpec(num_samples=1000),
-    t_max=10e-6,
-)
+start = time.perf_counter()
+for pressure in [50e3, 100e3, 150e3, 200e3]:
+    _, pulse_p = lipid_bubble(pressure=pressure)
+    peak = simulate(eom, pulse_p).radius.max() / eom.R0
+    print(f"{pressure / 1e3:5.0f} kPa: peak R/R0 = {peak:.3f}")
+print(f"{(time.perf_counter() - start) * 1e3:.0f} ms for four simulations")
 ```
 
-## 6. Acoustic emission
+To run many simulations at once, batch them with `jax.vmap` or
+[`GridSweep`][jbubble.utils.gridsweep.GridSweep]; see
+[Parameter sweeps](sweeps.md).
 
-To compute the radiated pressure at a field point:
+## Compute the radiated pressure
 
-```python
-from jbubble.acoustics import IncompressibleMonopole
+An oscillating bubble radiates sound. The emission models in
+`jbubble.acoustics` turn a result into the pressure at a distance `r` from
+the bubble.
+[`IncompressibleMonopole`][jbubble.acoustics.emission.IncompressibleMonopole]
+gives the pressure without the travel time;
+[`QuasiAcoustic`][jbubble.acoustics.emission.QuasiAcoustic] gives the same
+values on the arrival-time axis `result.ts + r / c_L`:
 
-emission = IncompressibleMonopole(rho_L=998.0)
-r = 1e-2  # 1 cm from the bubble centre
-
-p_rad = emission(result, r)  # shape (num_samples,) [Pa]
-```
-
-For retarded-time corrections:
-
-```python
+```{.python continuation}
 from jbubble.acoustics import QuasiAcoustic
 
 emission = QuasiAcoustic(rho_L=998.0, c_L=1500.0)
-p_rad = emission(result, r)
+r = 10e-3  # 10 mm from the bubble centre [m]
+p_rad = emission(result, r)  # [Pa]
+t_arrival = emission.observer_time(result, r)  # [s]
+print(f"peak radiated pressure at 10 mm: {abs(p_rad).max():.1f} Pa")
+print(f"first sample arrives at {t_arrival[0] * 1e6:.2f} µs")
 ```
+
+Before you compute a spectrum or resolve an inertial collapse, read the
+sampling notes in [`EmissionModel`][jbubble.acoustics.emission.EmissionModel]:
+a collapse peak can be shorter than a nanosecond.
 
 ## Next steps
 
-- [Bubble models](bubble_models.md) — detailed guide to gas, shell, and medium options.
-- [Pulse shapes](pulse_shapes.md) — constructing complex waveforms.
-- [JAX tips](jax_tips.md) — batched sweeps, gradient-based fitting.
-- [API reference](../api/index.md) — complete class documentation.
+- [Bubble models](bubble_models.md): every equation of motion, gas, shell,
+  and medium, and how to add your own.
+- [Pulse shapes](pulse_shapes.md): tone bursts, chirps, measured waveforms,
+  and pulse algebra.
+- [Parameter sweeps](sweeps.md) and [Fit model parameters to data](fitting.md):
+  batches, gradients, and optimisation.
+- [Examples](../examples/index.md): runnable scripts with figures, starting
+  with [Your first simulation](../examples/01_first_simulation.md).
