@@ -21,7 +21,7 @@ jbubble uses [uv](https://docs.astral.sh/uv/) to manage its development environm
    uv sync
    ```
 
-   This command creates `.venv/` with the Python version in `.python-version` (3.13). It installs jbubble in editable mode with the `io` and `examples` extras, plus the `dev` dependency group: pytest, ruff, ty, and prek. All versions come from `uv.lock`.
+   This command creates `.venv/` with the Python version in `.python-version` (3.13). It installs jbubble in editable mode with the `examples` extra, plus the `dev` dependency group: pytest, ruff, ty, and prek. All versions come from `uv.lock`.
 
    To use another supported Python version, set `UV_PYTHON` for your shell session before you run any `uv` command, and then create the environment:
 
