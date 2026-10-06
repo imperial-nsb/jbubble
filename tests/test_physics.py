@@ -26,7 +26,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 from jbubble.bubble.eom import (
-    Gilmore,
     KellerMiksis,
     ModifiedRayleighPlesset,
     RayleighPlesset,
@@ -130,19 +129,6 @@ class TestLinearisedResonanceAndDamping:
         assert omega_sq == pytest.approx(omega_N_sq / stretch, rel=1e-12)
         expected = (4 * mu / (RHO * R0**2) + omega_N_sq * R0 / C) / stretch
         assert two_beta == pytest.approx(expected, rel=1e-12)
-
-    @pytest.mark.parametrize("mu", [0.0, 1e-3])
-    def test_gilmore_linearises_to_keller_miksis(self, mu):
-        r"""At equilibrium $\partial H/\partial p_L = 1/\rho$ and $C = c_\infty$,
-        so the linearised Gilmore equation is Keller-Miksis with
-        $c = c_\infty = \sqrt{n(P_\text{amb} + B)/\rho}$."""
-        gilmore = Gilmore(**_components(mu))
-        c_inf = float(jnp.sqrt(gilmore.n_tait * (P_AMB + gilmore.B_tait) / RHO))
-        km = KellerMiksis(**_components(mu), c_L=c_inf)
-        omega_sq, two_beta = _linearisation(gilmore)
-        km_omega_sq, km_two_beta = _linearisation(km)
-        assert omega_sq == pytest.approx(km_omega_sq, rel=1e-9)
-        assert two_beta == pytest.approx(km_two_beta, rel=1e-9)
 
 
 # ── hand-coded Keller-Miksis trajectory ──────────────────────────────────────

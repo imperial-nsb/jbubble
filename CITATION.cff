@@ -9,7 +9,7 @@ abstract: >-
   jbubble is a JAX library for simulating and fitting the radial dynamics of
   acoustically driven microbubbles, such as ultrasound contrast agents. It
   composes equations of motion (Rayleigh-Plesset, modified Rayleigh-Plesset,
-  Keller-Miksis, and Gilmore) with gas, shell, surface tension, and medium
+  and Keller-Miksis) with gas, shell, surface tension, and medium
   models, and with driving pulses that range from tone bursts to measured or
   neural waveforms. Every model is a PyTree, so simulations compile with
   jax.jit, batch with jax.vmap and a parallel grid sweep, and differentiate

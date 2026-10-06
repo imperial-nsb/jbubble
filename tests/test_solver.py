@@ -9,7 +9,7 @@ import jbubble.solver as solver_module
 import numpy as np
 import optimistix as optx
 import pytest
-from jbubble.bubble.eom import Gilmore, KellerMiksis
+from jbubble.bubble.eom import KellerMiksis
 from jbubble.bubble.gas import PolytropicGas, VanDerWaalsGas
 from jbubble.bubble.medium import KelvinVoigtMedium, NewtonianMedium
 from jbubble.bubble.shell import LipidShell, MarmottantSurfaceTension, NoShell
@@ -84,17 +84,6 @@ def _vdw_bubble(mu):
         P_amb=101325.0,
         rho_L=998.0,
         c_L=1500.0,
-    )
-
-
-def _gilmore_bubble(kappa_s):
-    return Gilmore(
-        gas=PolytropicGas(gamma=1.07),
-        shell=_marmottant(kappa_s),
-        medium=NewtonianMedium(mu=1e-3),
-        R0=2e-6,
-        P_amb=101325.0,
-        rho_L=998.0,
     )
 
 
@@ -579,7 +568,6 @@ class TestGuardedVectorField:
             (_lipid_bubble, 7.2e-9, 400e3, _LOOSE, 10e-6),
             (_free_bubble, 1e-3, 300e3, _FIT01, 10e-6),
             (_vdw_bubble, 1e-3, 500e3, _VERY_LOOSE, 10e-6),
-            (_gilmore_bubble, 5e-9, 300e3, _LOOSE, 10e-6),
             (_tissue_bubble, 1e6, 1e6, _TIGHT, 6e-6),
         ],
         ids=[
@@ -587,7 +575,6 @@ class TestGuardedVectorField:
             "lipid-400k-loose",
             "free-300k-fit01",
             "vdw-500k-rtol1e-3",
-            "gilmore-300k-loose",
             "tissue-1MPa-tight",
         ],
     )

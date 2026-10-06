@@ -30,7 +30,7 @@ import jax
 import jax.numpy as jnp
 
 from jbubble import run_simulation
-from jbubble.bubble.eom import Gilmore, KellerMiksis, RayleighPlesset
+from jbubble.bubble.eom import KellerMiksis, ModifiedRayleighPlesset, RayleighPlesset
 from jbubble.bubble.gas import PolytropicGas
 from jbubble.bubble.medium import NewtonianMedium
 from jbubble.bubble.shell import NoShell
@@ -56,7 +56,6 @@ Every equation of motion takes `gas`, `shell`, `medium`, `R0`, `P_amb`, and
 | [`RayleighPlesset`][jbubble.bubble.eom.RayleighPlesset] | none | Weak driving in an incompressible liquid |
 | [`ModifiedRayleighPlesset`][jbubble.bubble.eom.ModifiedRayleighPlesset] | `c_L` | Coated bubbles at low Mach number, as in Marmottant et al. (2005) |
 | [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis] | `c_L` | Most work: the default of every preset |
-| [`Gilmore`][jbubble.bubble.eom.Gilmore] | `n_tait`, `B_tait` | Violent, inertial collapse, where the wall Mach number approaches 1 |
 
 ### Rayleigh-Plesset
 
@@ -91,23 +90,6 @@ $$
     - \frac{\mathrm{d}p_\text{ac}}{\mathrm{d}t}\right).
 $$
 
-### Gilmore
-
-Treats compressibility through the Tait equation of state, with the wall
-enthalpy $H$ and the local sound speed $C$ in place of pressure and $c_L$:
-
-$$
-\left(1 - \frac{\dot{R}}{C}\right) R \ddot{R}
-    + \frac{3}{2}\left(1 - \frac{\dot{R}}{3C}\right)\dot{R}^2
-    = \left(1 + \frac{\dot{R}}{C}\right) H
-    + \frac{R}{C}\left(1 - \frac{\dot{R}}{C}\right)\dot{H}.
-$$
-
-The default Tait parameters for water, $n = 7.15$ and
-$B = 3.046 \times 10^8$ Pa, fix the sound speed of the liquid at rest at
-about 1477 m/s, so `Gilmore` has no `c_L` parameter. To compare it with
-Keller-Miksis, give `KellerMiksis` the same sound speed.
-
 ### Compare the equations
 
 The following code drives the same free bubble at 400 kPa, hard enough for
@@ -117,13 +99,13 @@ an inertial collapse, with three equations of motion:
 pulse = ToneBurst(freq=1e6, pressure=400e3, shape=Sine(), cycle_num=3)
 eoms = {
     "Rayleigh-Plesset": RayleighPlesset(**parts, **water),
-    "Keller-Miksis": KellerMiksis(**parts, **water, c_L=1477.0),
-    "Gilmore": Gilmore(**parts, **water),
+    "modified Rayleigh-Plesset": ModifiedRayleighPlesset(**parts, **water, c_L=1500.0),
+    "Keller-Miksis": KellerMiksis(**parts, **water, c_L=1500.0),
 }
 for name, eom in eoms.items():
     result = run_simulation(eom, pulse)
     R = result.radius / eom.R0
-    print(f"{name:17s} R_max/R0 = {R.max():.2f}, R_min/R0 = {R.min():.3f}")
+    print(f"{name:25s} R_max/R0 = {R.max():.2f}, R_min/R0 = {R.min():.3f}")
 ```
 
 Rayleigh-Plesset has no radiation damping, so it overestimates the growth and
@@ -354,7 +336,7 @@ cavity, set `P_gas0` to a tiny positive value, such as `1e-12`.
 | Application | Equation of motion | Gas | Shell | Medium |
 |---|---|---|---|---|
 | Free bubble, weak driving | `KellerMiksis` or `RayleighPlesset` | `PolytropicGas` | `NoShell` | `NewtonianMedium` |
-| Inertial cavitation | `Gilmore` or `KellerMiksis` | `VanDerWaalsGas` | `NoShell` | `NewtonianMedium` |
+| Inertial cavitation | `KellerMiksis` | `VanDerWaalsGas` | `NoShell` | `NewtonianMedium` |
 | Lipid-coated contrast agent, such as SonoVue | `KellerMiksis` | `PolytropicGas` | `LipidShell` with `SmoothMarmottantSurfaceTension` | `NewtonianMedium` |
 | Polymer- or protein-shelled agent | `KellerMiksis` | `PolytropicGas` | `ThickShell` | `NewtonianMedium` |
 | Bubble in tissue | `KellerMiksis` | `PolytropicGas` | any | `NeoHookeanMedium` |

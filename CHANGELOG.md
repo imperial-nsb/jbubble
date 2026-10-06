@@ -54,9 +54,7 @@ Models:
   SonoVue parameters from Gümmer et al. (2021). `thick_shell_bubble` uses the
   polymer-shell parameters of Hoff et al. (2000). To keep a specific value,
   pass it as a keyword argument.
-- `Gilmore` defaults to the Tait constants `n_tait=7.15` and
-  `B_tait=3.046e8`. To keep the 0.1 values, pass `n_tait=7.0` and
-  `B_tait=304.9e6`.
+- The `Gilmore` equation of motion, which shipped in 0.1, is removed in 0.2.0 because it isn't yet validated against published trajectories. Use `KellerMiksis` instead. The code is kept on the `feature/gilmore` branch, and `Gilmore` is planned to return once it's validated.
 - `QuasiAcoustic` returns the monopole series at the solver's sample times.
   Plot it against `emission.observer_time(result, r)`, which is
   `result.ts + r / c_L`, instead of against `result.ts`.
@@ -193,8 +191,6 @@ Fitting:
   of R0 by default.
 - Every preset docstring cites the source of each default, and the presets
   share one liquid: water at 20 °C.
-- `Gilmore` defaults to the Tait constants n = 7.15 and B = 3.046e8 Pa
-  (Gümmer et al. 2021), and documents `c_inf`.
 - `PowerLawMedium` uses a smooth shear-rate floor, with a default `eps` of
   1e2 s^-1.
 - `QuasiAcoustic` returns the monopole series unchanged, to plot against the
@@ -251,6 +247,7 @@ Fitting:
   dependency. Saving and loading results is planned to return in a later
   release. Until then, save results with NumPy (`np.savez`) or with h5py
   directly.
+- The `Gilmore` equation of motion, which shipped in 0.1. It's kept on the `feature/gilmore` branch and is planned to return after it's validated against published trajectories.
 - The `chex` dependency.
 - The `dev` and `docs` extras, replaced by dependency groups.
 - The 0.1 example scripts, replaced by the example gallery.

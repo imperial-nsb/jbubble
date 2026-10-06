@@ -79,5 +79,3 @@ These are `Property` subclasses that encode a state-dependent surface tension la
 ::: jbubble.bubble.eom.ModifiedRayleighPlesset
 
 ::: jbubble.bubble.eom.KellerMiksis
-
-::: jbubble.bubble.eom.Gilmore

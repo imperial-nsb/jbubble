@@ -193,8 +193,7 @@ def lipid_bubble(
     The shell and gas defaults are the SonoVue parameters of Gümmer et al.
     (2021), who take them from earlier characterisations of SonoVue. The
     preset solves the Keller-Miksis equation with a polytropic gas, not
-    the Rayleigh-Plesset and Gilmore equations with a hard-core gas that
-    Gümmer et al. use.
+    the equations of motion and the hard-core gas that Gümmer et al. use.
 
     Physics: [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis] +
     [`PolytropicGas`][jbubble.bubble.gas.PolytropicGas] +

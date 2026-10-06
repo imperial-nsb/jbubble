@@ -44,8 +44,8 @@ Ultrasonics Symposium (IUS).
   respect to any model parameter. `fit_parameters` fits parameters to measured
   radius curves or emission signals with [optax](https://github.com/google-deepmind/optax),
   with bounds, scaling, and several recordings at once.
-- **Composable physics.** Combine four equations of motion (Rayleigh-Plesset,
-  modified Rayleigh-Plesset, Keller-Miksis, and Gilmore) with any gas, shell,
+- **Composable physics.** Combine three equations of motion (Rayleigh-Plesset,
+  modified Rayleigh-Plesset, and Keller-Miksis) with any gas, shell,
   surface tension law, and Newtonian, viscoelastic, or power-law medium.
   Presets build a free bubble, a lipid-coated bubble, or a polymer-shelled
   bubble in one line.

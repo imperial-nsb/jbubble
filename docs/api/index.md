@@ -17,7 +17,7 @@ jbubble/
 │   ├── gas.py            # GasModel, PolytropicGas, VanDerWaalsGas
 │   ├── shell.py          # ShellModel, NoShell, LipidShell, ThickShell, surface tension Properties
 │   ├── medium.py         # MediumModel, NewtonianMedium, KelvinVoigtMedium, NeoHookeanMedium, PowerLawMedium
-│   └── eom.py            # EquationOfMotion, RayleighPlesset, KellerMiksis, Gilmore, …
+│   └── eom.py            # EquationOfMotion, RayleighPlesset, ModifiedRayleighPlesset, KellerMiksis
 ├── acoustics/
 │   └── emission.py       # EmissionModel, IncompressibleMonopole, QuasiAcoustic
 ├── pulse/
@@ -45,7 +45,7 @@ from jbubble import (
 )
 
 # Subpackage imports (required for all model classes)
-from jbubble.bubble.eom import KellerMiksis, RayleighPlesset, Gilmore
+from jbubble.bubble.eom import KellerMiksis, RayleighPlesset
 from jbubble.bubble.gas import PolytropicGas, VanDerWaalsGas
 from jbubble.bubble.shell import NoShell, LipidShell, ThickShell
 from jbubble.bubble.shell import (
