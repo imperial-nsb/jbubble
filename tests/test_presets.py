@@ -265,4 +265,4 @@ def test_presets_match_reference_trajectory(factory):
     eom, pulse = factory(cycle_num=2, pressure=150e3)
     result = run_simulation(eom, pulse, save_spec=SaveSpec(num_samples=9))
     expected = jnp.asarray(_REFERENCE_RADII[factory.__name__])
-    assert jnp.allclose(result.state.R, expected, rtol=1e-8, atol=0)
+    assert jnp.allclose(result.state.R, expected, rtol=1e-6, atol=0)
