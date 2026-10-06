@@ -109,9 +109,7 @@ uv run pytest
 
 To run the tests in parallel, add `-n auto`.
 
-CI runs the full suite on Python 3.13 with the oldest versions that
-`pyproject.toml` allows and with `uv.lock`, and on Python 3.14 with the newest
-releases.
+On each pull request, CI runs the fast suite on Python 3.13 with the oldest versions that `pyproject.toml` allows, and on Python 3.14 with the newest releases. Every week, CI runs the full suite on Python 3.13 with the oldest versions and with `uv.lock`, and on Python 3.14 with the newest releases on Linux and macOS. To run the weekly jobs on your branch, start the CI workflow manually from the **Actions** tab.
 
 ### Build the docs
 

@@ -225,11 +225,7 @@ Fitting:
   setuptools-scm, and the repository has a `uv.lock` lockfile. Development
   uses [uv](https://docs.astral.sh/uv/), with Python 3.13 by default.
 - Dependencies: the `jax==0.8.1` and `jaxlib==0.8.1` pins become `jax>=0.8.1`, `diffrax>=0.7.2`, `equinox>=0.13.4`, a `lineax>=0.1.0` floor, and a declared `optimistix>=0.1.0`, and the NumPy floor rises to `numpy>=2.1`. Matplotlib moves to the new `examples` extra, with a `matplotlib>=3.9.2` floor. These are the first releases with Python 3.13 wheels.
-- CI tests Python 3.13 with the oldest supported dependencies and with the
-  lockfile, and Python 3.14 with the newest releases on Linux and
-  macOS, every week as well as on each change. It also smoke-tests the built
-  wheel. The docs workflow executes the examples and runs the code in the
-  README and the guides.
+- CI runs the fast suite on each pull request and push to `main`, on Python 3.13 with the oldest supported dependencies and on Python 3.14 with the newest releases. Every week, CI runs the full suite on Python 3.13 with the oldest supported dependencies and with the lockfile, on Python 3.14 with the newest releases on Linux and macOS, and on the next Python as an early warning. CI also smoke-tests the built wheel. The docs workflow executes the examples and runs the code in the README and the guides.
 - A release publishes its documentation only after PyPI has the release.
 
 ### Deprecated

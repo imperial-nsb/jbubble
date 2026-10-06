@@ -5,7 +5,7 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    # Mondays 06:00 UTC: re-resolve against the newest upstream releases.
+    # Mondays 06:00 UTC: the full matrix against the newest upstream releases.
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
@@ -48,9 +48,12 @@ jobs:
       - run: uv sync --locked
       - run: uv run --no-sync ty check jbubble
 
+  # Pull requests and pushes to main test the floor and the ceiling of the
+  # supported range with the fast suite.
   test:
-    name: Test (py${{ matrix.python }}, ${{ matrix.deps }}, ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    name: Test (py${{ matrix.python }}, ${{ matrix.deps }}, fast)
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -59,10 +62,44 @@ jobs:
           # Oldest supported Python with the declared lower bounds. The Python
           # pin matters: without it, uv picks the newest Python, where the
           # lower bounds have no wheels.
+          - { python: "3.13", deps: lowest-direct }
+          # Newest supported Python, newest releases.
+          - { python: "3.14", deps: highest }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: ${{ matrix.python }}
+          cache-suffix: ${{ matrix.deps }}
+      - name: Install
+        env:
+          DEPS: ${{ matrix.deps }}
+        run: |
+          case "$DEPS" in
+            locked)        uv sync --locked ;;
+            lowest-direct) uv sync --resolution lowest-direct ;;
+            highest)       uv sync --upgrade ;;
+          esac
+      - name: Show resolved versions
+        run: uv pip list | grep -iE '^(jax|jaxlib|diffrax|equinox|lineax|optimistix|optax|numpy|scipy) '
+      - name: Test
+        run: uv run --no-sync pytest -n auto -m "not slow"
+
+  # The weekly and manual runs test the full matrix with the slow tests.
+  test-full:
+    name: Test (py${{ matrix.python }}, ${{ matrix.deps }}, ${{ matrix.os }})
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
           - { os: ubuntu-latest, python: "3.13", deps: lowest-direct }
           # The committed lockfile, which is what contributors get from `uv sync`.
           - { os: ubuntu-latest, python: "3.13", deps: locked }
-          # Newest supported Python, newest releases.
           - { os: ubuntu-latest, python: "3.14", deps: highest }
           - { os: macos-latest, python: "3.14", deps: highest }
     steps:
@@ -93,6 +130,7 @@ jobs:
     # package and pytest only, and the tests that need Matplotlib skip
     # themselves.
     name: Test (py3.15, highest, allowed to fail)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     continue-on-error: true
     timeout-minutes: 30
