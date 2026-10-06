@@ -18,7 +18,7 @@ documentation site with an example gallery. It contains breaking changes:
 
 Installation:
 
-- jbubble needs Python 3.12 or later.
+- jbubble needs Python 3.13 or later. Python 3.12 is no longer supported.
 - `jbubble.utils.io`, with `export_hdf5` and `load_hdf5`, and the h5py
   dependency are removed in 0.2.0. Saving and loading results is planned to
   return in a later release. Until then, save results with NumPy, as in
@@ -224,14 +224,8 @@ Fitting:
 - Packaging uses hatchling and hatch-vcs instead of setuptools and
   setuptools-scm, and the repository has a `uv.lock` lockfile. Development
   uses [uv](https://docs.astral.sh/uv/), with Python 3.13 by default.
-- Dependencies: the `jax==0.8.1` and `jaxlib==0.8.1` pins become `jax>=0.8.1`,
-  `diffrax>=0.7.2`, `equinox>=0.13.4`, a `lineax>=0.1.0` floor, and a
-  declared `optimistix>=0.1.0`. Matplotlib moves to the new `examples` extra.
-- CI tests Python 3.12 with the oldest supported dependencies and with the
-  lockfile, and Python 3.13 and 3.14 with the newest releases on Linux and
-  macOS, every week as well as on each change. It also smoke-tests the built
-  wheel. The docs workflow executes the examples and runs the code in the
-  README and the guides.
+- Dependencies: the `jax==0.8.1` and `jaxlib==0.8.1` pins become `jax>=0.8.1`, `diffrax>=0.7.2`, `equinox>=0.13.4`, a `lineax>=0.1.0` floor, and a declared `optimistix>=0.1.0`, and the NumPy floor rises to `numpy>=2.1`. Matplotlib moves to the new `examples` extra, with a `matplotlib>=3.9.2` floor. These are the first releases with Python 3.13 wheels.
+- CI runs the fast suite on each pull request and push to `main`, on Python 3.13 with the oldest supported dependencies and on Python 3.14 with the newest releases. Every week, CI runs the full suite on Python 3.13 with the oldest supported dependencies and with the lockfile, on Python 3.14 with the newest releases on Linux and macOS, and on the next Python as an early warning. CI also smoke-tests the built wheel. The docs workflow executes the examples and runs the code in the README and the guides.
 - A release publishes its documentation only after PyPI has the release.
 
 ### Deprecated

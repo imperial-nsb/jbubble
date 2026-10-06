@@ -70,7 +70,7 @@ Or add it to a [uv](https://docs.astral.sh/uv/) project:
 uv add jbubble
 ```
 
-jbubble needs Python 3.12 or later, and installs the CPU build of JAX. The
+jbubble needs Python 3.13 or later, and installs the CPU build of JAX. The
 optional `examples` extra installs Matplotlib, for the example scripts and the
 jbubble figure styles. To install it, run `pip install "jbubble[examples]"`.
 For GPU support, conda, or a development install, see the

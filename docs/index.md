@@ -36,7 +36,7 @@ between minor versions, and the [changelog](changelog.md) lists every change.
 
 ## Install
 
-jbubble needs Python 3.12 or later.
+jbubble needs Python 3.13 or later.
 
 ```bash
 pip install jbubble                  # or: uv add jbubble

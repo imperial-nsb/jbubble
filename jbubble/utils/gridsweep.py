@@ -100,22 +100,8 @@ _MAX_CHUNKS_PER_CPU_DEVICE = 31
 
 def _available_cores() -> int:
     """Return the number of CPU cores that this process may run on."""
-    # Python 3.13+: honours the CPU affinity mask and PYTHON_CPU_COUNT.
-    process_cpu_count = getattr(os, "process_cpu_count", None)
-    if process_cpu_count is not None:
-        n = process_cpu_count()
-        if n:
-            return int(n)
-    # Python 3.12 on Linux: the CPU affinity mask.
-    sched_getaffinity = getattr(os, "sched_getaffinity", None)
-    if sched_getaffinity is not None:
-        try:
-            n = len(sched_getaffinity(0))
-        except OSError:
-            n = 0
-        if n:
-            return n
-    return os.cpu_count() or 1
+    # Honours the CPU affinity mask and the PYTHON_CPU_COUNT environment variable.
+    return os.process_cpu_count() or 1
 
 
 def _resolve_devices(devices: int | Sequence[jax.Device] | None) -> list[jax.Device]:
@@ -506,7 +492,7 @@ class GridSweep:
         out = jax.device_get(self._executables[device](args))
         return jax.tree.map(lambda x: x[:n], out)
 
-    def _chunks(self) -> Generator[PyTree, None, None]:
+    def _chunks(self) -> Generator[PyTree]:
         """Yield the chunk outputs in grid order.
 
         With more than one worker, a thread pool keeps up to `2 * workers`
@@ -548,7 +534,7 @@ class GridSweep:
         finally:
             pool.shutdown(wait=True, cancel_futures=True)
 
-    def _progress_chunks(self) -> Generator[PyTree, None, None]:
+    def _progress_chunks(self) -> Generator[PyTree]:
         """Compile, then yield the chunk outputs while updating a progress bar."""
         compiled = all(d in self._executables for d in self.devices)
         desc = "Grid sweep" if compiled else "Grid sweep (compiling)"
@@ -572,7 +558,7 @@ class GridSweep:
 
     def batches(
         self,
-    ) -> Generator[tuple[dict[str, np.ndarray], PyTree], None, None]:
+    ) -> Generator[tuple[dict[str, np.ndarray], PyTree]]:
         """Iterate lazily over the grid, one batch at a time.
 
         The first iteration compiles `fn`. Batches arrive in grid order;

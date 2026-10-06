@@ -501,28 +501,19 @@ def _default_workers() -> int:
 
 @cpu_only
 def test_default_workers_use_process_cpu_count(monkeypatch):
-    monkeypatch.setattr(os, "process_cpu_count", lambda: 3, raising=False)
+    monkeypatch.setattr(os, "process_cpu_count", lambda: 3)
     assert _default_workers() == 3
 
 
 @cpu_only
-def test_default_workers_fall_back_to_cpu_affinity(monkeypatch):
-    monkeypatch.delattr(os, "process_cpu_count", raising=False)
-    monkeypatch.setattr(os, "sched_getaffinity", lambda pid: {0, 5}, raising=False)
-    assert _default_workers() == 2
-
-
-@cpu_only
-def test_default_workers_fall_back_to_cpu_count(monkeypatch):
-    monkeypatch.delattr(os, "process_cpu_count", raising=False)
-    monkeypatch.delattr(os, "sched_getaffinity", raising=False)
-    monkeypatch.setattr(os, "cpu_count", lambda: 5)
-    assert _default_workers() == 5
+def test_default_workers_fall_back_to_one(monkeypatch):
+    monkeypatch.setattr(os, "process_cpu_count", lambda: None)
+    assert _default_workers() == 1
 
 
 @cpu_only
 def test_default_device_on_cpu_is_the_first_local_device(monkeypatch):
-    monkeypatch.setattr(os, "process_cpu_count", lambda: 8, raising=False)
+    monkeypatch.setattr(os, "process_cpu_count", lambda: 8)
     gs = GridSweep(_toy, SS)
     assert gs.devices == jax.local_devices()[:1]
 
@@ -537,7 +528,7 @@ def test_default_device_on_cpu_is_the_first_local_device(monkeypatch):
 
 @cpu_only
 def test_default_workers_stop_at_31_per_cpu_device(monkeypatch):
-    monkeypatch.setattr(os, "process_cpu_count", lambda: 64, raising=False)
+    monkeypatch.setattr(os, "process_cpu_count", lambda: 64)
     ss = {"x": jnp.arange(1000.0), "y": jnp.zeros(1)}
     assert GridSweep(_toy, ss, devices=1).workers == MAX_PER_CPU_DEVICE
     # devices=None uses one CPU device per 31 workers, as far as they go.
@@ -573,7 +564,7 @@ def test_explicit_workers_above_31_per_cpu_device_warn_and_stop_at_31():
 
 @cpu_only
 def test_at_most_31_chunks_run_at_once_on_a_cpu_device(monkeypatch):
-    monkeypatch.setattr(os, "process_cpu_count", lambda: 64, raising=False)
+    monkeypatch.setattr(os, "process_cpu_count", lambda: 64)
     gs = GridSweep(
         _toy,
         {"x": jnp.arange(4.0 * MAX_PER_CPU_DEVICE), "y": jnp.arange(2.0)},

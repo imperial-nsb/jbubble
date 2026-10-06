@@ -33,11 +33,11 @@ environment. To install uv, follow the
    session before you run any `uv` command, and then create the environment:
 
    ```bash
-   export UV_PYTHON=3.12
+   export UV_PYTHON=3.14
    uv sync
    ```
 
-   Don't rely on `uv sync --python 3.12` alone: the next `uv run` reads
+   Don't rely on `uv sync --python 3.14` alone: the next `uv run` reads
    `.python-version` and recreates `.venv/` with Python 3.13.
 
 4. Install the Git hooks, which run ruff and other checks on each commit:
@@ -83,7 +83,7 @@ removes the `jbubble.egg-info/` directory. If you keep that directory,
 `jbubble.__version__` reports the old version when you run Python from the
 repository root.
 
-jbubble now needs Python 3.12 or later. If your environment runs an older
+jbubble now needs Python 3.13 or later. If your environment runs an older
 Python, create a new one with `uv sync` or with the
 [conda steps](#use-conda-instead-of-uv).
 
@@ -109,9 +109,7 @@ uv run pytest
 
 To run the tests in parallel, add `-n auto`.
 
-CI runs the full suite on Python 3.12 with the oldest versions that
-`pyproject.toml` allows and with `uv.lock`, and on Python 3.13 and 3.14 with
-the newest releases.
+On each pull request, CI runs the fast suite on Python 3.13 with the oldest versions that `pyproject.toml` allows, and on Python 3.14 with the newest releases. Every week, CI runs the full suite on Python 3.13 with the oldest versions and with `uv.lock`, and on Python 3.14 with the newest releases on Linux and macOS. To run the weekly jobs on your branch, start the CI workflow manually from the **Actions** tab.
 
 ### Build the docs
 
