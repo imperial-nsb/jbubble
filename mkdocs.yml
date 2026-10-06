@@ -11,9 +11,6 @@ copyright: Copyright &copy; 2026 Noninvasive Surgery &amp; Biopsy Laboratory
 
 theme:
   name: material
-  # overrides/partials/actions.html lets a page's edit_url front matter
-  # replace its edit link, for the generated example pages.
-  custom_dir: overrides
   # The modern variant draws the header on the page background, which the
   # logo colours and docs/stylesheets/extra.css assume.
   variant: modern

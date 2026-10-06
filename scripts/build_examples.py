@@ -11,9 +11,7 @@ For each script, this tool:
 2. Writes a page with the code, the printed output, and the figures to
    `docs/examples/NN_name.md`, plus a gallery of thumbnails to
    `docs/examples/index.md`. Each page ends with links to the previous and
-   the next example and to the gallery. The page's `edit_url` front matter
-   points its edit button at the script, because the generated page isn't in
-   the repository; `overrides/partials/actions.html` reads it.
+   the next example and to the gallery.
 3. Writes the executed notebook, with an install cell before the first code
    cell, to `docs/examples/notebooks/NN_name.ipynb`. The built site serves it
    at `examples/notebooks/NN_name.ipynb`. CI publishes the site to the
@@ -58,9 +56,6 @@ IMAGE_TYPES = {"image/png": "png", "image/gif": "gif", "image/svg+xml": "svg"}
 RELEASE = re.compile(r"\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?")
 ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 COLAB_BADGE = "https://colab.research.google.com/assets/colab-badge.svg"
-# GitHub edits files on a branch, not at a commit, so the edit buttons open the
-# branch that `edit_uri` in mkdocs.yml names, whatever `--source-ref` is.
-EDIT_REF = "main"
 INTRO = """\
 Each example is a Python script in the
 [`examples/`](https://github.com/{repo}/tree/{ref}/examples) directory of the
@@ -334,11 +329,6 @@ def source_path(script: pathlib.Path) -> str:
         return f"examples/{script.name}"
 
 
-def front_matter(repo: str, path: str) -> str:
-    """Point the page's edit button at `path` in the repository."""
-    return f"---\nedit_url: https://github.com/{repo}/edit/{EDIT_REF}/{path}\n---\n\n"
-
-
 def link_bar(name: str, script: pathlib.Path, settings: Settings) -> str:
     colab = (
         f"https://colab.research.google.com/github/{settings.repo}/blob/"
@@ -387,7 +377,6 @@ def build_one(script: pathlib.Path, settings: Settings) -> Entry:
     page, thumb = to_markdown(nb, name, title, links, settings.out / "media")
     if settings.execute and thumb is None:
         raise ExampleError(f"{script}: the example shows no PNG figure.")
-    page = front_matter(settings.repo, source_path(script)) + page
     nbformat.write(
         published_notebook(nb, settings.pip_spec),
         settings.out / "notebooks" / f"{name}.ipynb",
@@ -440,9 +429,7 @@ def write_index(entries: list[Entry], settings: Settings) -> None:
         cards.append(f"-   {image}**[{title}]({e.name}.md)**{summary}\n")
     intro = INTRO.format(repo=settings.repo, ref=settings.source_ref)
     (settings.out / "index.md").write_text(
-        # This script writes the gallery page, so its edit button opens it.
-        front_matter(settings.repo, "scripts/build_examples.py")
-        + "# Examples\n\n"
+        "# Examples\n\n"
         + intro
         + '\n<div class="grid cards" markdown>\n\n'
         + "\n".join(cards)

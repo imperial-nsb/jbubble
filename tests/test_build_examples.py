@@ -256,16 +256,9 @@ def test_build_executes_examples_and_writes_the_gallery(tmp_path, monkeypatch):
     assert nb.cells[1].metadata["tags"] == ["install"]
     index = (out / "index.md").read_text()
     assert "01_small.md" in index
-    assert index.startswith(
-        "---\nedit_url: https://github.com/imperial-nsb/jbubble/edit/main/"
-        "scripts/build_examples.py\n---\n\n# Examples\n"
-    )
+    assert index.startswith("# Examples\n")
     assert page.endswith("[All examples](index.md){ .jb-gallery }\n</nav>\n")
-    # The page isn't in the repository, so its edit button opens the script.
-    assert page.startswith(
-        "---\nedit_url: https://github.com/imperial-nsb/jbubble/edit/main/"
-        "examples/01_small.py\n---\n\n# A small example\n"
-    )
+    assert page.startswith("# A small example\n")
     # A second run reuses the executed notebook from the cache.
     (cached,) = (tmp_path / "cache").glob("01_small-*.ipynb")
     mtime = cached.stat().st_mtime_ns
