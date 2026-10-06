@@ -1,7 +1,7 @@
 # utils
 
-Utility modules: quick-start presets, batched parameter sweeps, HDF5 I/O, and
-Matplotlib styles for figures.
+Utility modules: quick-start presets, batched parameter sweeps, and Matplotlib
+styles for figures.
 
 ---
 
@@ -69,36 +69,6 @@ sweep = GridSweep(
 grid = sweep.run()  # NumPy array of shape (20, 4)
 print(sweep.grid_shape)  # (20, 4)
 print(sweep.total_points)  # 80
-```
-
----
-
-## HDF5 I/O
-
-```python
-from jbubble.utils.io import export_hdf5, load_hdf5
-```
-
-::: jbubble.utils.io.export_hdf5
-
-::: jbubble.utils.io.load_hdf5
-
-### Example
-
-```python
-from jbubble.utils.io import export_hdf5, load_hdf5
-import jax.numpy as jnp
-
-export_hdf5(
-    "results.h5",
-    metadata={"description": "sweep", "freq": 1e6, "n_cycles": 5},
-    R0=jnp.linspace(1e-6, 5e-6, 20),
-    peak_expansion=grid,
-)
-
-arrays, meta = load_hdf5("results.h5")
-print(meta["description"])  # "sweep"
-print(arrays["peak_expansion"].shape)  # (20, 4)
 ```
 
 ---

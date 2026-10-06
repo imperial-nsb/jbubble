@@ -21,9 +21,6 @@ every example with its output.
    ```
 
    From a clone of the repository, run `uv sync --extra examples` instead.
-   Example 05 also saves an HDF5 file, which needs the `io` extra as well:
-   `pip install "jbubble[examples,io]"` or
-   `uv sync --extra examples --extra io`.
 
 2. Run a script:
 
@@ -62,7 +59,7 @@ runtime.
 | 02 | [Driving pulses](02_driving_pulses.py) | Compare carrier shapes, combine pulses with arithmetic, and drive a bubble with a chirp and a measured trace | 5 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/02_driving_pulses.ipynb) |
 | 03 | [Shells, gases, and media](03_shells_gases_media.py) | Compare free, lipid, and polymer-shelled bubbles, and swap the gas law and the surrounding medium | 10 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/03_shells_gases_media.ipynb) |
 | 04 | [Equations of motion](04_equations_of_motion.py) | Compare Rayleigh-Plesset, modified Rayleigh-Plesset, Keller-Miksis, and Gilmore, and find the onset of inertial cavitation | 5 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/04_equations_of_motion.ipynb) |
-| 05 | [Parameter sweeps](05_parameter_sweeps.py) | Simulate a row of bubbles with `jax.vmap`, map the response with `GridSweep`, and save and load the results as HDF5 | 30 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/05_parameter_sweeps.ipynb) |
+| 05 | [Parameter sweeps](05_parameter_sweeps.py) | Simulate a row of bubbles with `jax.vmap`, map the response with `GridSweep`, and save and load the results with NumPy | 30 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/05_parameter_sweeps.ipynb) |
 | 06 | [Acoustic emission](06_acoustic_emission.py) | Compute the pressure that a bubble radiates, its spectrum, and the drive pressure where broadband emission starts | 20 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/06_acoustic_emission.ipynb) |
 | 07 | [Solvers and stiffness](07_solvers_and_stiffness.py) | Measure when small or viscous bubbles make the problem stiff, check `converged`, and switch to `SolverConfig.stiff()` | 40 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/07_solvers_and_stiffness.ipynb) |
 | 08 | [Custom physics](08_custom_physics.py) | Write your own `Property` and `MediumModel`, and add a neural network with `NeuralProperty` | 5 s | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/08_custom_physics.ipynb) |

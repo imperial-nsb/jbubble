@@ -91,9 +91,9 @@ jobs:
 
   python-next:
     # Early warning for the next Python. Not required: dependencies may lack
-    # wheels until after the final release. h5py had no cp315 wheel on
-    # 2026-10-04, so this job installs the core package and pytest only, and
-    # tests/test_io.py skips itself.
+    # wheels until after the final release, so this job installs the core
+    # package and pytest only, and the tests that need Matplotlib skip
+    # themselves.
     name: Test (py3.15, highest, allowed to fail)
     runs-on: ubuntu-latest
     continue-on-error: true
@@ -126,7 +126,7 @@ jobs:
       - name: Smoke-test the wheel in a clean environment
         # -P keeps the checkout off sys.path, so Python imports the installed
         # wheel, not ./jbubble. Every module must import with the core
-        # dependencies alone, except jbubble.utils.io, which needs the io extra.
+        # dependencies alone.
         run: |
           uv run --isolated --no-project --python 3.12 --with dist/*.whl python -P - <<'EOF'
           import importlib
@@ -136,7 +136,6 @@ jobs:
 
           names = [m.name for m in pkgutil.walk_packages(jbubble.__path__, "jbubble.")]
           for name in names:
-              if name != "jbubble.utils.io":
-                  importlib.import_module(name)
+              importlib.import_module(name)
           print(jbubble.__version__, jbubble.__file__, f"{len(names)} modules")
           EOF

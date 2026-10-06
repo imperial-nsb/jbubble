@@ -124,7 +124,7 @@ of an array `Parameter`. `make_model` always receives physical values.
   inside it, is shorthand for `Parameter(value)`.
 - A floating-point array, such as a network weight, is fitted in its own
   units. So is a NumPy scalar of another type, such as `np.float32`, or a 0-d
-  array, for example a value loaded from an HDF5 file.
+  array, for example a value that `np.load` reads from a `.npy` file.
 - Everything else is held fixed: integers, booleans, strings, callables, and
   Python floats inside an Equinox module.
 

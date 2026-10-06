@@ -40,7 +40,7 @@ jbubble needs Python 3.12 or later.
 
 ```bash
 pip install jbubble                  # or: uv add jbubble
-pip install "jbubble[io,examples]"   # optional: HDF5 export and Matplotlib
+pip install "jbubble[examples]"      # optional: Matplotlib for the examples
 python -c "import jbubble; print(jbubble.__version__)"
 ```
 

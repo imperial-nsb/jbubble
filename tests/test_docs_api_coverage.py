@@ -22,16 +22,16 @@ pytestmark = [
         not DOCS_API.is_dir(), reason="needs docs/api/ from a repository checkout"
     ),
 ]
-# The packages that the optional extras install. Both tests skip a module
-# that fails to import because one of them is missing.
-OPTIONAL = {"h5py", "matplotlib"}
+# The package that the optional `examples` extra installs. Both tests skip
+# a module that fails to import because it is missing.
+OPTIONAL = {"matplotlib"}
 
 
 def missing_optional(error: ImportError) -> bool:
     """Return whether an import failed only because an optional package is missing.
 
-    A module such as `jbubble.utils.io` re-raises the `ModuleNotFoundError`
-    for h5py as an `ImportError` with an install hint, so check the cause too.
+    A module can re-raise the `ModuleNotFoundError` for an optional package as
+    an `ImportError` with an install hint, so check the cause too.
     """
     return any(
         isinstance(cause, ModuleNotFoundError)

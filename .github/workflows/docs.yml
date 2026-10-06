@@ -6,7 +6,7 @@ name: Docs
 # executed notebooks, to the gh-pages branch. GitHub Pages serves that branch,
 # and the Colab badges on the example pages open the notebooks from it.
 #
-# A release notebook installs `jbubble[examples,io]==VERSION` from PyPI, so a tag
+# A release notebook installs `jbubble[examples]==VERSION` from PyPI, so a tag
 # push only builds. After release.yml uploads the release to PyPI, it starts a
 # manual run on the tag, which publishes.
 on:
@@ -77,7 +77,7 @@ jobs:
       - name: Install jbubble and the docs tools
         run: uv sync --locked --no-default-groups --group docs
 
-      # For a release, the notebooks pin `jbubble[examples,io]==VERSION`. For
+      # For a release, the notebooks pin `jbubble[examples]==VERSION`. For
       # any other build, they install jbubble from git at this commit.
       - name: Execute the examples and write the gallery
         env:

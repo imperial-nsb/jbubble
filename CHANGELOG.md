@@ -19,11 +19,13 @@ documentation site with an example gallery. It contains breaking changes:
 Installation:
 
 - jbubble needs Python 3.12 or later.
-- h5py is no longer a core dependency. To use `jbubble.utils.io`, install the
-  `io` extra: `pip install "jbubble[io]"`.
+- `jbubble.utils.io`, with `export_hdf5` and `load_hdf5`, and the h5py
+  dependency are removed in 0.2.0. Saving and loading results is planned to
+  return in a later release. Until then, save results with NumPy, as in
+  `np.savez` and `np.load`, or with h5py directly.
 - The `dev` and `docs` extras are gone. In a source checkout, use the
   dependency groups instead: `uv sync` or `uv sync --group docs`, or
-  `pip install -e ".[io,examples]" --group dev` with pip 25.1 or later.
+  `pip install -e ".[examples]" --group dev` with pip 25.1 or later.
 - In a source checkout, delete the `jbubble/_version.py` file and the
   `jbubble.egg-info/` directory that setuptools-scm left behind. Otherwise
   `jbubble.__version__` can report the old version.
@@ -245,7 +247,11 @@ Fitting:
 - `jbubble.bubble.eom.StateType`. `EquationOfMotion` declares its state type
   as a type parameter.
 - Support for Python 3.11.
-- The `chex` dependency, and h5py as a core dependency.
+- `jbubble.utils.io`, with `export_hdf5` and `load_hdf5`, and the h5py
+  dependency. Saving and loading results is planned to return in a later
+  release. Until then, save results with NumPy (`np.savez`) or with h5py
+  directly.
+- The `chex` dependency.
 - The `dev` and `docs` extras, replaced by dependency groups.
 - The 0.1 example scripts, replaced by the example gallery.
 
@@ -285,9 +291,6 @@ Fitting:
   samples that start after 0 are no longer cut off early.
 - `NeuralPulse` normalises time as `(t - initial_time) / pulse_duration`, so
   `initial_time` delays the waveform instead of changing it.
-- `export_hdf5` accepts NumPy and JAX scalar metadata. When it can't save a
-  value, such as metadata that isn't JSON-serialisable or a dict passed as an
-  array, it raises without creating the file or changing an existing one.
 - `ExponentialSweep` gives a constant tone, not NaN, when `freq_end` equals
   `freq_start`, and its gradients there are finite.
 - `fit_parameters` raises `TypeError` for `adjoint=diffrax.ForwardMode()`

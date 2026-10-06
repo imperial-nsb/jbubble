@@ -168,29 +168,26 @@ slightly.
 
 ## Save and load results
 
-[`export_hdf5`][jbubble.utils.io.export_hdf5] writes arrays and a dictionary
-of metadata to an HDF5 file, and [`load_hdf5`][jbubble.utils.io.load_hdf5]
-reads them back. Both need the `io` extra:
+`GridSweep.run` returns NumPy arrays, so NumPy can save them. `np.savez` writes
+named arrays to one `.npz` file, and `np.load` reads them back:
 
 ```{.python continuation}
 import pathlib
 import tempfile
 
-from jbubble.utils.io import export_hdf5, load_hdf5
-
 with tempfile.TemporaryDirectory() as tmp:
-    path = pathlib.Path(tmp) / "sweep.h5"
-    export_hdf5(
+    path = pathlib.Path(tmp) / "sweep.npz"
+    np.savez(
         path,
-        metadata={"preset": "free_bubble", "freq": 1e6},
         R0=np.asarray(search_space["R0"]),
         pressure=np.asarray(search_space["pressure"]),
         **grid,
     )
-    arrays, metadata = load_hdf5(path)
-print(sorted(arrays), arrays["ratio"].shape, metadata["freq"])
+    with np.load(path) as npz:
+        arrays = dict(npz)
+print(sorted(arrays), arrays["ratio"].shape)
 ```
 
-For a full sweep with a response map, a linear-resonance overlay, and HDF5
-export, see the example
+For a full sweep with a response map and a linear-resonance overlay, see the
+example
 [Parameter sweeps](../examples/05_parameter_sweeps.md).

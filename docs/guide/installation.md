@@ -19,18 +19,15 @@ following command:
 uv add jbubble
 ```
 
-## Install the optional extras
+## Install the optional extra
 
-| Extra | Installs | Needed for |
-|---|---|---|
-| `io` | `h5py` | HDF5 export and import with [`export_hdf5`][jbubble.utils.io.export_hdf5] and [`load_hdf5`][jbubble.utils.io.load_hdf5] |
-| `examples` | `matplotlib` | The [example scripts](../examples/index.md) and the `jbubble.style` figure styles |
-
-To install jbubble with both extras, run one of the following commands:
+The `examples` extra installs `matplotlib`, which the
+[example scripts](../examples/index.md) and the `jbubble.style` figure styles
+need. To install jbubble with it, run one of the following commands:
 
 ```bash
-pip install "jbubble[io,examples]"
-uv add "jbubble[io,examples]"
+pip install "jbubble[examples]"
+uv add "jbubble[examples]"
 ```
 
 ## Install in a conda environment
@@ -41,7 +38,7 @@ install jbubble with pip:
 ```bash
 conda create -n jbubble python=3.13 pip
 conda activate jbubble
-pip install "jbubble[io,examples]"
+pip install "jbubble[examples]"
 ```
 
 ## Install from source
@@ -87,9 +84,8 @@ the solver.
 | `optimistix` | Root finding inside the implicit solver of [`SolverConfig.stiff`][jbubble.solver.SolverConfig.stiff] |
 | `lineax` | Linear solves inside diffrax's implicit solvers |
 | `optax` | Optimisers for [`fit_parameters`][jbubble.fitting.fit_parameters] |
-| `numpy` | Host-side arrays for sweeps and HDF5 files |
+| `numpy` | Host-side arrays for sweeps |
 | `tqdm` | Progress bars for [`GridSweep`][jbubble.utils.gridsweep.GridSweep] |
-| `h5py` | HDF5 export and import (optional, `io` extra) |
 | `matplotlib` | Plotting in the examples (optional, `examples` extra) |
 
 !!! note "64-bit floats"

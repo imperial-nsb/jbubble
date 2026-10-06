@@ -60,8 +60,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# HDF5 export (jbubble.utils.io). h5py 3.11 is the first release built for NumPy 2.
-io = ["h5py>=3.11"]
 # Plotting for the example scripts and notebooks.
 examples = ["matplotlib>=3.9"]
 
@@ -74,16 +72,16 @@ Changelog = "https://github.com/imperial-nsb/jbubble/blob/main/CHANGELOG.md"
 
 # PEP 735 groups: local development only, never published.
 # `uv sync` installs the `dev` group by default.
-# With pip >= 25.1, use `pip install -e ".[io,examples]" --group dev`.
+# With pip >= 25.1, use `pip install -e ".[examples]" --group dev`.
 [dependency-groups]
-test = ["pytest>=8.3", "pytest-xdist>=3.6", "pytest-timeout>=2.3.1", "jbubble[io,examples]"]
+test = ["pytest>=8.3", "pytest-xdist>=3.6", "pytest-timeout>=2.3.1", "jbubble[examples]"]
 lint = ["ruff>=0.16.10", "ty==0.0.84"]
 dev = [{ include-group = "test" }, { include-group = "lint" }, "prek>=0.5"]
 # The documentation site (Zensical), the example gallery, and the tests that
 # run the code samples in the docs. Install with `uv sync --group docs`.
 docs = [
     # The examples run with the same extras that users install.
-    "jbubble[io,examples]",
+    "jbubble[examples]",
     "zensical>=0.0.67", # raise to >=0.1 after the 0.1.0 release
     "mkdocstrings[python]>=1.0.6",
     "mkdocstrings-python>=2.0.9",

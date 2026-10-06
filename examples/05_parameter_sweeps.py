@@ -4,10 +4,8 @@
 # Run thousands of bubbles at once. `jax.vmap` simulates a row of bubbles of
 # different sizes in one call, and `GridSweep` maps the response over a grid
 # of radius, frequency, and pressure on every CPU core. The map is checked
-# against linear resonance theory, collected batch by batch, saved to an HDF5
+# against linear resonance theory, collected batch by batch, saved to a NumPy
 # file, and drawn from that file.
-#
-# The HDF5 section needs the `io` extra: `pip install "jbubble[io]"`.
 
 # %%
 import os
@@ -23,7 +21,6 @@ import numpy as np
 
 from jbubble import SaveSpec, run_simulation, solve_eom
 from jbubble.utils import GridSweep
-from jbubble.utils.io import export_hdf5, load_hdf5
 from jbubble.utils.presets import free_bubble
 
 plt.style.use("jbubble.style.light")
@@ -178,14 +175,13 @@ print(
 )
 
 # %% [markdown]
-# ## Collect batches, save to HDF5, then load
+# ## Collect batches, save, then load
 #
 # `GridSweep.run` returns the whole grid at once. For a sweep too large for
 # memory, iterate over `GridSweep.batches` instead: each batch holds the
 # parameter values and outputs of up to `batch_size` grid points, in grid
-# order. Here the batches are collected into flat columns and written to one
-# HDF5 file with `export_hdf5`, which overwrites the file, so call it once.
-# `load_hdf5` reads the arrays and the metadata back.
+# order. Here the batches are collected into flat columns, written to one
+# `.npz` file with `np.savez`, and read back with `np.load`.
 
 # %%
 columns: dict[str, list[np.ndarray]] = {}
@@ -198,23 +194,15 @@ table = {name: np.concatenate(chunks) for name, chunks in columns.items()}
 print(f"Sweep finished in {t_sweep:.1f} s")
 
 with tempfile.TemporaryDirectory() as tmp:
-    path = Path(tmp) / "response_map.h5"
-    export_hdf5(
-        path,
-        **table,
-        metadata={
-            "axes": list(sweep.axes),  # sorted names; the last varies fastest
-            "grid_shape": sweep.grid_shape,
-            "cycle_num": CYCLES,
-            "model": "free_bubble preset (Keller-Miksis)",
-        },
-    )
+    path = Path(tmp) / "response_map.npz"
+    np.savez(path, **table)
     print(f"Wrote {path.name}: {path.stat().st_size / 1e3:.0f} kB")
-    arrays, meta = load_hdf5(path)
+    with np.load(path) as npz:
+        arrays = dict(npz)
 
-shape = tuple(meta["grid_shape"])
-loaded = {name: values.reshape(shape) for name, values in arrays.items()}
-print("Datasets:", ", ".join(sorted(loaded)), "| axes:", meta["axes"])
+# The axes are in sorted order of name, and the last varies fastest.
+loaded = {name: values.reshape(sweep.grid_shape) for name, values in arrays.items()}
+print("Arrays:", ", ".join(sorted(loaded)), "| axes:", list(sweep.axes))
 steps = loaded["num_steps"]
 print(
     f"Converged: {loaded['converged'].sum()} of {loaded['converged'].size}; "

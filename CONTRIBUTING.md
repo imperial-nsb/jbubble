@@ -60,7 +60,7 @@ pip, and install the Git hooks. The `--group` option needs pip 25.1 or later.
 ```bash
 conda create -n jbubble python=3.13 pip
 conda activate jbubble
-pip install -e ".[io,examples]" --group dev
+pip install -e ".[examples]" --group dev
 prek install
 ```
 
