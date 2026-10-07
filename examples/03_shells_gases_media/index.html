@@ -1,0 +1,1599 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Differentiable microbubble dynamics in JAX">
+      
+      
+      
+        <link rel="canonical" href="https://imperial-nsb.github.io/jbubble/examples/03_shells_gases_media/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/logo.svg">
+      <meta name="generator" content="zensical-0.0.67">
+    
+    
+      
+        <title>Shells, gases, and media - jbubble</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.4ae390e2.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.96d1a7e4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Serif+4:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Source Serif 4";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#shells-gases-and-media" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="jbubble" class="md-header__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            jbubble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Shells, gases, and media
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/installation/" class="md-tabs__link">
+          
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/bubble_models/" class="md-tabs__link">
+          
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link">
+        
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../citing/" class="md-tabs__link">
+        
+  
+  Citing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="jbubble" class="md-nav__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    jbubble
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Getting started
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Getting started
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Installation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Quickstart
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Guide
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Guide
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/bubble_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bubble models
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/pulse_shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pulse shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/solvers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Solvers and stiffness
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/sweeps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Parameter sweeps
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/jax_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  JAX tips
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Examples
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  API reference
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/bubble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  bubble
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pulse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  pulse
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  acoustics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/solver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  solver
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  simulation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  metrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  utils
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Citing
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Changelog
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#compare-three-shells" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Compare three shells
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#swap-the-gas-and-the-medium" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Swap the gas and the medium
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/imperial-nsb/jbubble/edit/main/docs/examples/03_shells_gases_media.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="shells-gases-and-media">Shells, gases, and media<a class="headerlink" href="#shells-gases-and-media" title="Permanent link">&para;</a></h1>
+<div class="jb-example-links">
+<a href="https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/03_shells_gases_media.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="md-button" download="03_shells_gases_media.ipynb" href="../notebooks/03_shells_gases_media.ipynb">Download notebook</a>
+<a class="md-button" href="https://github.com/imperial-nsb/jbubble/blob/64d87445dee81504005a77cb453f48399668a2b6/examples/03_shells_gases_media.py">View source</a>
+</div>
+<p>Compare the physical parts of a bubble model. You drive an uncoated bubble, a lipid-coated contrast agent, and a polymer-shelled agent with the same pulse, and you see how the lipid shell's surface tension changes with the radius. Then you swap the gas law and the surrounding medium.</p>
+<p>An equation of motion combines a gas model, a shell model, and a medium model. Each lives in its own module: <code>jbubble.bubble.gas</code>, <code>jbubble.bubble.shell</code>, and <code>jbubble.bubble.medium</code>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+</span><span id="__span-0-2">
+</span><span id="__span-0-3"><span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
+</span><span id="__span-0-4"><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+</span><span id="__span-0-5"><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+</span><span id="__span-0-6"><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+</span><span id="__span-0-7">
+</span><span id="__span-0-8"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">SaveSpec</span><span class="p">,</span> <span class="n">run_simulation</span>
+</span><span id="__span-0-9"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolytropicGas</span><span class="p">,</span> <span class="n">VanDerWaalsGas</span>
+</span><span id="__span-0-10"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="__span-0-11">    <span class="n">KelvinVoigtMedium</span><span class="p">,</span>
+</span><span id="__span-0-12">    <span class="n">NeoHookeanMedium</span><span class="p">,</span>
+</span><span id="__span-0-13">    <span class="n">NewtonianMedium</span><span class="p">,</span>
+</span><span id="__span-0-14">    <span class="n">PowerLawMedium</span><span class="p">,</span>
+</span><span id="__span-0-15"><span class="p">)</span>
+</span><span id="__span-0-16"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarmottantSurfaceTension</span>
+</span><span id="__span-0-17"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">BubbleState</span>
+</span><span id="__span-0-18"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span>
+</span><span id="__span-0-19"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
+</span><span id="__span-0-20"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.presets</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_bubble</span><span class="p">,</span> <span class="n">lipid_bubble</span><span class="p">,</span> <span class="n">thick_shell_bubble</span>
+</span><span id="__span-0-21">
+</span><span id="__span-0-22"><span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">"jbubble.style.light"</span><span class="p">)</span>
+</span><span id="__span-0-23"><span class="n">DRIVE</span> <span class="o">=</span> <span class="s2">"#8c959f"</span>  <span class="c1"># neutral grey for the acoustic drive in the light theme</span>
+</span><span id="__span-0-24"><span class="n">QUICK</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"JBUBBLE_QUICK"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"1"</span>  <span class="c1"># smaller sweeps for CI</span>
+</span></code></pre></div>
+<h2 id="compare-three-shells">Compare three shells<a class="headerlink" href="#compare-three-shells" title="Permanent link">&para;</a></h2>
+<p>The three presets share the liquid (water), the radius (2 µm), and the pulse (five cycles at 1 MHz and 100 kPa). They differ in the coating:</p>
+<ul>
+<li><code>free_bubble</code> has no shell, only the surface tension of water.</li>
+<li><code>lipid_bubble</code> has a lipid monolayer, as in SonoVue. Its surface tension follows the Marmottant law: zero when the shell buckles under compression, elastic over a narrow range of radii, and the surface tension of water once the shell ruptures under expansion.</li>
+<li><code>thick_shell_bubble</code> has a stiff, viscous polymer shell of finite thickness (the Church model), which damps the motion heavily.</li>
+</ul>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><span class="n">presets</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-1-2">    <span class="s2">"free bubble"</span><span class="p">:</span> <span class="n">free_bubble</span><span class="p">(),</span>
+</span><span id="__span-1-3">    <span class="s2">"lipid shell"</span><span class="p">:</span> <span class="n">lipid_bubble</span><span class="p">(),</span>
+</span><span id="__span-1-4">    <span class="s2">"polymer shell"</span><span class="p">:</span> <span class="n">thick_shell_bubble</span><span class="p">(),</span>
+</span><span id="__span-1-5"><span class="p">}</span>
+</span><span id="__span-1-6"><span class="n">runs</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">)</span> <span class="ow">in</span> <span class="n">presets</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+</span><span id="__span-1-7"><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">runs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="__span-1-8">    <span class="n">R0</span> <span class="o">=</span> <span class="n">presets</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">eom</span><span class="o">.</span><span class="n">R0</span>
+</span><span id="__span-1-9">    <span class="nb">print</span><span class="p">(</span>
+</span><span id="__span-1-10">        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">14s</span><span class="si">}</span><span class="s2"> R/R0 from </span><span class="si">{</span><span class="n">run</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">R0</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">run</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">R0</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-1-11">    <span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text jb-output highlight"><pre><span></span><code><span id="__span-2-1">free bubble    R/R0 from 0.500 to 1.593
+</span><span id="__span-2-2">lipid shell    R/R0 from 0.735 to 1.227
+</span><span id="__span-2-3">polymer shell  R/R0 from 0.989 to 1.013
+</span></code></pre></div>
+<p>Evaluate the lipid shell's surface tension law directly. A surface tension law is a <code>Property</code>: a function of the bubble state, which you call with a <code>BubbleState</code>, here one that holds 600 radii at once. The preset uses <code>SmoothMarmottantSurfaceTension</code>, which rounds the corners of the piecewise Marmottant law so that gradients stay smooth. The shaded band marks the radii that the lipid bubble reaches in the simulation. Most of that range lies outside the narrow elastic region between buckling and rupture.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><span class="n">lipid</span> <span class="o">=</span> <span class="n">presets</span><span class="p">[</span><span class="s2">"lipid shell"</span><span class="p">]</span><span class="o">.</span><span class="n">eom</span>
+</span><span id="__span-3-2"><span class="n">R0</span> <span class="o">=</span> <span class="n">lipid</span><span class="o">.</span><span class="n">R0</span>
+</span><span id="__span-3-3"><span class="n">ratio</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.3</span><span class="p">,</span> <span class="mi">600</span><span class="p">)</span>
+</span><span id="__span-3-4"><span class="n">states</span> <span class="o">=</span> <span class="n">BubbleState</span><span class="p">(</span><span class="n">R</span><span class="o">=</span><span class="n">ratio</span> <span class="o">*</span> <span class="n">R0</span><span class="p">,</span> <span class="n">R0</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">ratio</span><span class="p">,</span> <span class="n">R0</span><span class="p">))</span>
+</span><span id="__span-3-5"><span class="n">sigma_smooth</span> <span class="o">=</span> <span class="n">lipid</span><span class="o">.</span><span class="n">shell</span><span class="o">.</span><span class="n">sigma</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+</span><span id="__span-3-6"><span class="n">piecewise</span> <span class="o">=</span> <span class="n">MarmottantSurfaceTension</span><span class="p">(</span>
+</span><span id="__span-3-7">    <span class="n">R_buckle_ratio</span><span class="o">=</span><span class="n">lipid</span><span class="o">.</span><span class="n">shell</span><span class="o">.</span><span class="n">sigma</span><span class="o">.</span><span class="n">R_buckle_ratio</span><span class="p">,</span>
+</span><span id="__span-3-8">    <span class="n">chi</span><span class="o">=</span><span class="n">lipid</span><span class="o">.</span><span class="n">shell</span><span class="o">.</span><span class="n">sigma</span><span class="o">.</span><span class="n">chi</span><span class="p">,</span>
+</span><span id="__span-3-9">    <span class="n">sigma_rupture</span><span class="o">=</span><span class="n">lipid</span><span class="o">.</span><span class="n">shell</span><span class="o">.</span><span class="n">sigma</span><span class="o">.</span><span class="n">sigma_rupture</span><span class="p">,</span>
+</span><span id="__span-3-10"><span class="p">)</span>
+</span><span id="__span-3-11"><span class="n">sigma_piecewise</span> <span class="o">=</span> <span class="n">piecewise</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+</span><span id="__span-3-12">
+</span><span id="__span-3-13"><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">9.0</span><span class="p">,</span> <span class="mf">4.4</span><span class="p">))</span>
+</span><span id="__span-3-14"><span class="n">grid</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_gridspec</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">width_ratios</span><span class="o">=</span><span class="p">[</span><span class="mf">2.2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+</span><span id="__span-3-15"><span class="n">ax_p</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+</span><span id="__span-3-16"><span class="n">ax_r</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">sharex</span><span class="o">=</span><span class="n">ax_p</span><span class="p">)</span>
+</span><span id="__span-3-17"><span class="n">ax_s</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">grid</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="__span-3-18">
+</span><span id="__span-3-19"><span class="n">drive</span> <span class="o">=</span> <span class="n">runs</span><span class="p">[</span><span class="s2">"free bubble"</span><span class="p">]</span>
+</span><span id="__span-3-20"><span class="n">ax_p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">drive</span><span class="o">.</span><span class="n">ts</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">drive</span><span class="o">.</span><span class="n">driving_pressure</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">DRIVE</span><span class="p">)</span>
+</span><span id="__span-3-21"><span class="n">ax_p</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"drive (kPa)"</span><span class="p">)</span>
+</span><span id="__span-3-22"><span class="n">ax_p</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"One pulse, three shells"</span><span class="p">)</span>
+</span><span id="__span-3-23"><span class="n">ax_p</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelbottom</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="__span-3-24"><span class="n">ax_r</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">DRIVE</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
+</span><span id="__span-3-25"><span class="k">for</span> <span class="n">colour</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">run</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s2">"C0"</span><span class="p">,</span> <span class="s2">"C1"</span><span class="p">,</span> <span class="s2">"C2"</span><span class="p">],</span> <span class="n">runs</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+</span><span id="__span-3-26">    <span class="n">ax_r</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">ts</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">run</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">presets</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">eom</span><span class="o">.</span><span class="n">R0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colour</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</span><span id="__span-3-27"><span class="n">ax_r</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"time (µs)"</span><span class="p">)</span>
+</span><span id="__span-3-28"><span class="n">ax_r</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"$R / R_0$"</span><span class="p">)</span>
+</span><span id="__span-3-29"><span class="n">ax_r</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"upper right"</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</span><span id="__span-3-30"><span class="n">ax_r</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">0.45</span><span class="p">,</span> <span class="mf">1.9</span><span class="p">)</span>
+</span><span id="__span-3-31">
+</span><span id="__span-3-32"><span class="n">lipid_run</span> <span class="o">=</span> <span class="n">runs</span><span class="p">[</span><span class="s2">"lipid shell"</span><span class="p">]</span>
+</span><span id="__span-3-33"><span class="n">ax_s</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
+</span><span id="__span-3-34">    <span class="n">lipid_run</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">/</span> <span class="n">R0</span><span class="p">,</span>
+</span><span id="__span-3-35">    <span class="n">lipid_run</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">R0</span><span class="p">,</span>
+</span><span id="__span-3-36">    <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span>
+</span><span id="__span-3-37">    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.12</span><span class="p">,</span>
+</span><span id="__span-3-38">    <span class="n">lw</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-3-39">    <span class="n">label</span><span class="o">=</span><span class="s2">"radii the lipid bubble reaches"</span><span class="p">,</span>
+</span><span id="__span-3-40"><span class="p">)</span>
+</span><span id="__span-3-41"><span class="n">ax_s</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">0.072</span> <span class="o">*</span> <span class="mf">1e3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"free bubble (water)"</span><span class="p">)</span>
+</span><span id="__span-3-42"><span class="n">ax_s</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+</span><span id="__span-3-43">    <span class="n">ratio</span><span class="p">,</span>
+</span><span id="__span-3-44">    <span class="n">sigma_piecewise</span> <span class="o">*</span> <span class="mf">1e3</span><span class="p">,</span>
+</span><span id="__span-3-45">    <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span>
+</span><span id="__span-3-46">    <span class="n">lw</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+</span><span id="__span-3-47">    <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span>
+</span><span id="__span-3-48">    <span class="n">label</span><span class="o">=</span><span class="s2">"Marmottant, piecewise"</span><span class="p">,</span>
+</span><span id="__span-3-49"><span class="p">)</span>
+</span><span id="__span-3-50"><span class="n">ax_s</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ratio</span><span class="p">,</span> <span class="n">sigma_smooth</span> <span class="o">*</span> <span class="mf">1e3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"lipid shell (smoothed)"</span><span class="p">)</span>
+</span><span id="__span-3-51"><span class="n">ax_s</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.72</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">"buckled"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+</span><span id="__span-3-52"><span class="n">ax_s</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">1.07</span><span class="p">,</span> <span class="mi">62</span><span class="p">,</span> <span class="s2">"ruptured"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+</span><span id="__span-3-53"><span class="n">ax_s</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"$R / R_0$"</span><span class="p">)</span>
+</span><span id="__span-3-54"><span class="n">ax_s</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"surface tension (mN/m)"</span><span class="p">)</span>
+</span><span id="__span-3-55"><span class="n">ax_s</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Lipid surface tension law"</span><span class="p">)</span>
+</span><span id="__span-3-56"><span class="n">ax_s</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">95</span><span class="p">)</span>
+</span><span id="__span-3-57"><span class="n">ax_s</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"upper left"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+</span><span id="__span-3-58"><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="Compare three shells" height="492" src="../media/03_shells_gases_media_1.png" width="998" /></p>
+<p>The polymer shell barely moves: its peak expansion is about 1% at this drive. The lipid-coated bubble oscillates less than the free bubble, mostly because the shell's surface viscosity damps it. Its response is also asymmetric: the shell buckles under compression, where its surface tension drops to zero, so the bubble compresses further (to about 0.74 <span class="arithmatex">\(R_0\)</span>) than it expands (to about 1.23 <span class="arithmatex">\(R_0\)</span>).</p>
+<h2 id="swap-the-gas-and-the-medium">Swap the gas and the medium<a class="headerlink" href="#swap-the-gas-and-the-medium" title="Permanent link">&para;</a></h2>
+<p>The shell is one part; the gas and the medium are the other two. Start from the uncoated bubble and replace one part at a time with <code>eqx.tree_at</code>.</p>
+<p>For the gas, compare three laws during a violent collapse at 300 kPa:</p>
+<ul>
+<li>An adiabatic polytropic gas, with exponent 1.4 for air, heats up as it compresses, which cushions the collapse.</li>
+<li>An isothermal gas, with exponent 1.0, doesn't heat up, so the bubble collapses much further.</li>
+<li>A van der Waals gas adds a hard core of radius <span class="arithmatex">\(h\)</span>, because the gas molecules can't be compressed below their own volume. Here <span class="arithmatex">\(h = R_0 / 8.86\)</span>, with the same isothermal exponent, so the core alone stops the collapse.</li>
+</ul>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><span class="n">base</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">free_bubble</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">)</span>
+</span><span id="__span-4-2"><span class="n">collapse_drive</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">300e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="__span-4-3"><span class="n">gases</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-4-4">    <span class="s2">"adiabatic, γ = 1.4"</span><span class="p">:</span> <span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">),</span>
+</span><span id="__span-4-5">    <span class="s2">"isothermal, γ = 1.0"</span><span class="p">:</span> <span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span>
+</span><span id="__span-4-6">    <span class="s2">"van der Waals, γ = 1.0"</span><span class="p">:</span> <span class="n">VanDerWaalsGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">h_frac</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="mf">8.86</span><span class="p">),</span>
+</span><span id="__span-4-7"><span class="p">}</span>
+</span><span id="__span-4-8"><span class="n">gas_runs</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="__span-4-9"><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">gas</span> <span class="ow">in</span> <span class="n">gases</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="__span-4-10">    <span class="n">model</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">gas</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">gas</span><span class="p">)</span>
+</span><span id="__span-4-11">    <span class="c1"># Collapses last nanoseconds, so record many samples.</span>
+</span><span id="__span-4-12">    <span class="n">gas_runs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span>
+</span><span id="__span-4-13">        <span class="n">model</span><span class="p">,</span> <span class="n">collapse_drive</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">20_000</span><span class="p">)</span>
+</span><span id="__span-4-14">    <span class="p">)</span>
+</span><span id="__span-4-15">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">24s</span><span class="si">}</span><span class="s2"> smallest R/R0 = </span><span class="si">{</span><span class="n">gas_runs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">base</span><span class="o">.</span><span class="n">R0</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text jb-output highlight"><pre><span></span><code><span id="__span-5-1">adiabatic, γ = 1.4       smallest R/R0 = 0.137
+</span><span id="__span-5-2">isothermal, γ = 1.0      smallest R/R0 = 0.024
+</span><span id="__span-5-3">van der Waals, γ = 1.0   smallest R/R0 = 0.115
+</span></code></pre></div>
+<p>For the medium, compare the peak radius over a range of drive pressures in four surrounding materials:</p>
+<ul>
+<li>Water, a Newtonian liquid with a viscosity of 1 mPa s.</li>
+<li>A soft viscoelastic solid with a shear modulus of 50 kPa, in two models. The Kelvin-Voigt model is linear in the strain; the neo-Hookean model also holds at large strains.</li>
+<li>A shear-thinning liquid, whose viscosity falls as the shear rate rises: a power law with exponent 0.5.</li>
+</ul>
+<p><code>jax.vmap</code> runs all the pressures for one medium in a single call. Example 05 covers sweeps in depth.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><span class="n">media</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-6-2">    <span class="s2">"water"</span><span class="p">:</span> <span class="n">NewtonianMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">),</span>
+</span><span id="__span-6-3">    <span class="s2">"Kelvin-Voigt, G = 50 kPa"</span><span class="p">:</span> <span class="n">KelvinVoigtMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="mf">50e3</span><span class="p">),</span>
+</span><span id="__span-6-4">    <span class="s2">"neo-Hookean, G = 50 kPa"</span><span class="p">:</span> <span class="n">NeoHookeanMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="mf">50e3</span><span class="p">),</span>
+</span><span id="__span-6-5">    <span class="c1"># For a power law, mu is the consistency index K [Pa s^n].</span>
+</span><span id="__span-6-6">    <span class="s2">"shear-thinning, n = 0.5"</span><span class="p">:</span> <span class="n">PowerLawMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">n_exp</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
+</span><span id="__span-6-7"><span class="p">}</span>
+</span><span id="__span-6-8"><span class="n">pressures</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">10e3</span><span class="p">,</span> <span class="mf">400e3</span><span class="p">,</span> <span class="mi">12</span> <span class="k">if</span> <span class="n">QUICK</span> <span class="k">else</span> <span class="mi">40</span><span class="p">)</span>
+</span><span id="__span-6-9">
+</span><span id="__span-6-10">
+</span><span id="__span-6-11"><span class="k">def</span><span class="w"> </span><span class="nf">peak_radius</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">pressure</span><span class="p">):</span>
+</span><span id="__span-6-12">    <span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="n">pressure</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="__span-6-13">    <span class="n">run</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">2048</span><span class="p">))</span>
+</span><span id="__span-6-14">    <span class="k">return</span> <span class="n">run</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">model</span><span class="o">.</span><span class="n">R0</span><span class="p">,</span> <span class="n">run</span><span class="o">.</span><span class="n">converged</span>
+</span><span id="__span-6-15">
+</span><span id="__span-6-16">
+</span><span id="__span-6-17"><span class="n">peaks</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="__span-6-18"><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">medium</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="__span-6-19">    <span class="n">model</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">medium</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">medium</span><span class="p">)</span>
+</span><span id="__span-6-20">    <span class="n">peak</span><span class="p">,</span> <span class="n">converged</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">peak_radius</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))(</span>
+</span><span id="__span-6-21">        <span class="n">model</span><span class="p">,</span> <span class="n">pressures</span>
+</span><span id="__span-6-22">    <span class="p">)</span>
+</span><span id="__span-6-23">    <span class="n">peaks</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">peak</span>
+</span><span id="__span-6-24">    <span class="nb">print</span><span class="p">(</span>
+</span><span id="__span-6-25">        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">26s</span><span class="si">}</span><span class="s2"> peak R/R0 at 400 kPa = </span><span class="si">{</span><span class="n">peak</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, all converged: </span><span class="si">{</span><span class="nb">bool</span><span class="p">(</span><span class="n">converged</span><span class="o">.</span><span class="n">all</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-6-26">    <span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text jb-output highlight"><pre><span></span><code><span id="__span-7-1">water                      peak R/R0 at 400 kPa = 4.88, all converged: True
+</span><span id="__span-7-2">Kelvin-Voigt, G = 50 kPa   peak R/R0 at 400 kPa = 4.48, all converged: True
+</span><span id="__span-7-3">neo-Hookean, G = 50 kPa    peak R/R0 at 400 kPa = 3.17, all converged: True
+</span><span id="__span-7-4">shear-thinning, n = 0.5    peak R/R0 at 400 kPa = 4.79, all converged: True
+</span></code></pre></div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax_g</span><span class="p">,</span> <span class="n">ax_m</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">9.0</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+</span><span id="__span-8-2"><span class="k">for</span> <span class="n">colour</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">run</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s2">"C0"</span><span class="p">,</span> <span class="s2">"C1"</span><span class="p">,</span> <span class="s2">"C2"</span><span class="p">],</span> <span class="n">gas_runs</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+</span><span id="__span-8-3">    <span class="n">ax_g</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">ts</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">run</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">base</span><span class="o">.</span><span class="n">R0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colour</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</span><span id="__span-8-4"><span class="n">ax_g</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mf">8.86</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C2"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">":"</span><span class="p">)</span>
+</span><span id="__span-8-5"><span class="n">ax_g</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">4.22</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mf">8.86</span> <span class="o">*</span> <span class="mf">1.12</span><span class="p">,</span> <span class="s2">"hard core, $h / R_0$"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C2"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+</span><span id="__span-8-6"><span class="n">ax_g</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mf">4.2</span><span class="p">,</span> <span class="mf">4.9</span><span class="p">)</span>
+</span><span id="__span-8-7"><span class="n">ax_g</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+</span><span id="__span-8-8"><span class="n">ax_g</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">0.015</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</span><span id="__span-8-9"><span class="n">ax_g</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"time (µs)"</span><span class="p">)</span>
+</span><span id="__span-8-10"><span class="n">ax_g</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"$R / R_0$ (log scale)"</span><span class="p">)</span>
+</span><span id="__span-8-11"><span class="n">ax_g</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Gas: one collapse at 300 kPa"</span><span class="p">)</span>
+</span><span id="__span-8-12"><span class="n">ax_g</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"lower right"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+</span><span id="__span-8-13">
+</span><span id="__span-8-14"><span class="k">for</span> <span class="n">colour</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">peak</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s2">"C0"</span><span class="p">,</span> <span class="s2">"C1"</span><span class="p">,</span> <span class="s2">"C2"</span><span class="p">,</span> <span class="s2">"C3"</span><span class="p">],</span> <span class="n">peaks</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+</span><span id="__span-8-15">    <span class="n">ax_m</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pressures</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">,</span> <span class="n">peak</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colour</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</span><span id="__span-8-16"><span class="n">ax_m</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"drive pressure (kPa)"</span><span class="p">)</span>
+</span><span id="__span-8-17"><span class="n">ax_m</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"peak $R / R_0$"</span><span class="p">)</span>
+</span><span id="__span-8-18"><span class="n">ax_m</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Medium: peak radius at 1 MHz"</span><span class="p">)</span>
+</span><span id="__span-8-19"><span class="n">ax_m</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"upper left"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+</span><span id="__span-8-20"><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="Swap the gas and the medium" height="404" src="../media/03_shells_gases_media_2.png" width="998" /></p>
+<p>In water, the peak radius jumps near 200 kPa, where the bubble starts to grow several-fold and collapse violently (example 04). An elastic solid holds the bubble back. Its elastic stress levels off at large expansions, at <span class="arithmatex">\(4G/3\)</span> in the Kelvin-Voigt model and at <span class="arithmatex">\(5G/2\)</span> in the neo-Hookean one, so the strongest drives overcome it, the Kelvin-Voigt solid first. The shear-thinning liquid is viscous only at low shear rates; a microbubble shears it so fast that it behaves almost like water.</p>
+<nav aria-label="Examples" class="jb-example-nav">
+<a class="jb-previous" href="../02_driving_pulses/">Previous: Driving pulses</a>
+<a class="jb-gallery" href="../">All examples</a>
+<a class="jb-next" href="../04_equations_of_motion/">Next: Equations of motion</a>
+</nav>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Noninvasive Surgery &amp; Biopsy Laboratory
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog" role="status" aria-atomic="true">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.progress","navigation.sections","navigation.tabs","navigation.top","search.highlight","toc.follow"],"redirect":null,"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.67a597eb.min.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>

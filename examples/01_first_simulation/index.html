@@ -1,0 +1,1539 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Differentiable microbubble dynamics in JAX">
+      
+      
+      
+        <link rel="canonical" href="https://imperial-nsb.github.io/jbubble/examples/01_first_simulation/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/logo.svg">
+      <meta name="generator" content="zensical-0.0.67">
+    
+    
+      
+        <title>Your first bubble simulation - jbubble</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.4ae390e2.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.96d1a7e4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Serif+4:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Source Serif 4";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#your-first-bubble-simulation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="jbubble" class="md-header__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            jbubble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Your first bubble simulation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/installation/" class="md-tabs__link">
+          
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/bubble_models/" class="md-tabs__link">
+          
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link">
+        
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../citing/" class="md-tabs__link">
+        
+  
+  Citing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="jbubble" class="md-nav__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    jbubble
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Getting started
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Getting started
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Installation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Quickstart
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Guide
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Guide
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/bubble_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bubble models
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/pulse_shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pulse shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/solvers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Solvers and stiffness
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/sweeps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Parameter sweeps
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/jax_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  JAX tips
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Examples
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  API reference
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/bubble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  bubble
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pulse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  pulse
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  acoustics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/solver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  solver
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  simulation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  metrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  utils
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Citing
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Changelog
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#run-a-preset" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Run a preset
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-the-same-model-from-parts" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Build the same model from parts
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compile-once-run-many-times" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Compile once, run many times
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/imperial-nsb/jbubble/edit/main/docs/examples/01_first_simulation.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="your-first-bubble-simulation">Your first bubble simulation<a class="headerlink" href="#your-first-bubble-simulation" title="Permanent link">&para;</a></h1>
+<div class="jb-example-links">
+<a href="https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/01_first_simulation.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="md-button" download="01_first_simulation.ipynb" href="../notebooks/01_first_simulation.ipynb">Download notebook</a>
+<a class="md-button" href="https://github.com/imperial-nsb/jbubble/blob/64d87445dee81504005a77cb453f48399668a2b6/examples/01_first_simulation.py">View source</a>
+</div>
+<p>Simulate a gas microbubble driven by a short ultrasound pulse. You run a preset in five lines, build the same model from its parts, and then compile the simulation once so that every later run takes milliseconds.</p>
+<p>Each example in this series runs as a plain Python script or as a notebook. The figures use jbubble's Matplotlib style: the bubble is blue, comparisons use the next colours in the cycle, and the acoustic drive is grey on its own axes.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+</span><span id="__span-0-2">
+</span><span id="__span-0-3"><span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
+</span><span id="__span-0-4"><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+</span><span id="__span-0-5"><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+</span><span id="__span-0-6"><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+</span><span id="__span-0-7">
+</span><span id="__span-0-8"><span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">"jbubble.style.light"</span><span class="p">)</span>
+</span><span id="__span-0-9"><span class="n">DRIVE</span> <span class="o">=</span> <span class="s2">"#8c959f"</span>  <span class="c1"># neutral grey for the acoustic drive in the light theme</span>
+</span></code></pre></div>
+<h2 id="run-a-preset">Run a preset<a class="headerlink" href="#run-a-preset" title="Permanent link">&para;</a></h2>
+<p>A preset returns an equation of motion, <code>eom</code>, and a driving pulse. <code>free_bubble</code> describes an uncoated 2 µm air bubble in water with the Keller-Miksis equation, driven by a five-cycle, 1 MHz, 100 kPa tone burst. <code>run_simulation</code> integrates the equation of motion and returns the trajectory in SI units.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_simulation</span>
+</span><span id="__span-1-2"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.presets</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_bubble</span>
+</span><span id="__span-1-3">
+</span><span id="__span-1-4"><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span> <span class="o">=</span> <span class="n">free_bubble</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">)</span>
+</span><span id="__span-1-5"><span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">)</span>
+</span><span id="__span-1-6"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Peak radius: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> µm from R0 = 2 µm"</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text jb-output highlight"><pre><span></span><code><span id="__span-2-1">Peak radius: 3.19 µm from R0 = 2 µm
+</span></code></pre></div>
+<p>The result holds the sample times <code>result.ts</code>, the radius <code>result.radius</code>, the wall velocity <code>result.radial_velocity</code>, and the pressure that drives the bubble, <code>result.driving_pressure</code>. By default, <code>run_simulation</code> records 1024 samples from <span class="arithmatex">\(t = 0\)</span> to <code>pulse.t_end</code>, which is twice the pulse duration after the pulse starts, so you also see the bubble ring down after the drive stops.</p>
+<p>Plot the drive above the radius, which you divide by the equilibrium radius <span class="arithmatex">\(R_0\)</span>. The radius doesn't follow the drive like a sine wave. A 2 µm bubble in water resonates near 2 MHz, so the 1 MHz drive also excites its second harmonic, and the bubble keeps ringing at its resonance frequency after the pulse ends.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><span class="n">t_us</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ts</span> <span class="o">*</span> <span class="mf">1e6</span>
+</span><span id="__span-3-2"><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax_p</span><span class="p">,</span> <span class="n">ax_r</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span>
+</span><span id="__span-3-3">    <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.0</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+</span><span id="__span-3-4"><span class="p">)</span>
+</span><span id="__span-3-5"><span class="n">ax_p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t_us</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">driving_pressure</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">DRIVE</span><span class="p">)</span>
+</span><span id="__span-3-6"><span class="n">ax_p</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"drive (kPa)"</span><span class="p">)</span>
+</span><span id="__span-3-7"><span class="n">ax_p</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"A 2 µm air bubble in water, driven at 1 MHz and 100 kPa"</span><span class="p">)</span>
+</span><span id="__span-3-8"><span class="n">ax_r</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">DRIVE</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
+</span><span id="__span-3-9"><span class="n">ax_r</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t_us</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">eom</span><span class="o">.</span><span class="n">R0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">)</span>
+</span><span id="__span-3-10"><span class="n">ax_r</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"time (µs)"</span><span class="p">)</span>
+</span><span id="__span-3-11"><span class="n">ax_r</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"$R / R_0$"</span><span class="p">)</span>
+</span><span id="__span-3-12"><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="Run a preset" height="470" src="../media/01_first_simulation_1.png" width="778" /></p>
+<h2 id="build-the-same-model-from-parts">Build the same model from parts<a class="headerlink" href="#build-the-same-model-from-parts" title="Permanent link">&para;</a></h2>
+<p>An equation of motion combines three physical parts: a gas model for the pressure inside the bubble, a shell model for the coating at its wall, and a medium model for the liquid around it. A pulse combines a carrier shape with a frequency, an amplitude, and a number of cycles. The preset above assembles exactly these parts.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">KellerMiksis</span>
+</span><span id="__span-4-2"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolytropicGas</span>
+</span><span id="__span-4-3"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">NewtonianMedium</span>
+</span><span id="__span-4-4"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoShell</span>
+</span><span id="__span-4-5"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span>
+</span><span id="__span-4-6"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
+</span><span id="__span-4-7">
+</span><span id="__span-4-8"><span class="n">water</span> <span class="o">=</span> <span class="n">KellerMiksis</span><span class="p">(</span>
+</span><span id="__span-4-9">    <span class="n">gas</span><span class="o">=</span><span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">),</span>  <span class="c1"># air, compressed adiabatically</span>
+</span><span id="__span-4-10">    <span class="n">shell</span><span class="o">=</span><span class="n">NoShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">0.072</span><span class="p">),</span>  <span class="c1"># surface tension of water [N/m]</span>
+</span><span id="__span-4-11">    <span class="n">medium</span><span class="o">=</span><span class="n">NewtonianMedium</span><span class="p">(</span>
+</span><span id="__span-4-12">        <span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>  <span class="c1"># viscosity of water [Pa s]</span>
+</span><span id="__span-4-13">        <span class="n">rho_L</span><span class="o">=</span><span class="mf">998.0</span><span class="p">,</span>  <span class="c1"># liquid density [kg/m³]</span>
+</span><span id="__span-4-14">        <span class="n">c_L</span><span class="o">=</span><span class="mf">1500.0</span><span class="p">,</span>  <span class="c1"># speed of sound in the liquid [m/s]</span>
+</span><span id="__span-4-15">    <span class="p">),</span>
+</span><span id="__span-4-16">    <span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">,</span>  <span class="c1"># equilibrium radius [m]</span>
+</span><span id="__span-4-17">    <span class="n">P_amb</span><span class="o">=</span><span class="mf">101325.0</span><span class="p">,</span>  <span class="c1"># ambient pressure [Pa]</span>
+</span><span id="__span-4-18"><span class="p">)</span>
+</span><span id="__span-4-19"><span class="n">burst</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="__span-4-20">
+</span><span id="__span-4-21"><span class="n">by_hand</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">water</span><span class="p">,</span> <span class="n">burst</span><span class="p">)</span>
+</span><span id="__span-4-22"><span class="nb">print</span><span class="p">(</span>
+</span><span id="__span-4-23">    <span class="s2">"Same trajectory as the preset:"</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">by_hand</span><span class="o">.</span><span class="n">radius</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="p">))</span>
+</span><span id="__span-4-24"><span class="p">)</span>
+</span><span id="__span-4-25"><span class="nb">print</span><span class="p">(</span><span class="n">water</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text jb-output highlight"><pre><span></span><code><span id="__span-5-1">Same trajectory as the preset: True
+</span><span id="__span-5-2">KellerMiksis(
+</span><span id="__span-5-3">  gas=PolytropicGas(gamma=ConstantProperty(val=1.4)),
+</span><span id="__span-5-4">  shell=NoShell(sigma=ConstantProperty(val=0.072)),
+</span><span id="__span-5-5">  medium=NewtonianMedium(
+</span><span id="__span-5-6">    mu=ConstantProperty(val=0.001), rho_L=998.0, c_L=1500.0
+</span><span id="__span-5-7">  ),
+</span><span id="__span-5-8">  R0=2e-06,
+</span><span id="__span-5-9">  P_amb=101325.0
+</span><span id="__span-5-10">)
+</span></code></pre></div>
+<p>Models are immutable <a href="https://docs.kidger.site/equinox/">Equinox</a> modules, so you change a part by building a new model. <code>eqx.tree_at</code> copies a model with one part replaced. Here the liquid becomes four times as viscous as water, which damps the oscillation and lowers the peak radius.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><span class="n">viscous</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">medium</span><span class="p">,</span> <span class="n">water</span><span class="p">,</span> <span class="n">NewtonianMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">4e-3</span><span class="p">))</span>
+</span><span id="__span-6-2"><span class="n">damped</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">viscous</span><span class="p">,</span> <span class="n">burst</span><span class="p">)</span>
+</span><span id="__span-6-3">
+</span><span id="__span-6-4"><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span>
+</span><span id="__span-6-5"><span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">DRIVE</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
+</span><span id="__span-6-6"><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">by_hand</span><span class="o">.</span><span class="n">ts</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">by_hand</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">water</span><span class="o">.</span><span class="n">R0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"water, 1 mPa s"</span><span class="p">)</span>
+</span><span id="__span-6-7"><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+</span><span id="__span-6-8">    <span class="n">damped</span><span class="o">.</span><span class="n">ts</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span>
+</span><span id="__span-6-9">    <span class="n">damped</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">water</span><span class="o">.</span><span class="n">R0</span><span class="p">,</span>
+</span><span id="__span-6-10">    <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span>
+</span><span id="__span-6-11">    <span class="n">label</span><span class="o">=</span><span class="s2">"viscous liquid, 4 mPa s"</span><span class="p">,</span>
+</span><span id="__span-6-12"><span class="p">)</span>
+</span><span id="__span-6-13"><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"time (µs)"</span><span class="p">)</span>
+</span><span id="__span-6-14"><span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"$R / R_0$"</span><span class="p">)</span>
+</span><span id="__span-6-15"><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Swap one part: a more viscous liquid damps the bubble"</span><span class="p">)</span>
+</span><span id="__span-6-16"><span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"upper right"</span><span class="p">)</span>
+</span><span id="__span-6-17"><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="Build the same model from parts" height="338" src="../media/01_first_simulation_2.png" width="778" /></p>
+<h2 id="compile-once-run-many-times">Compile once, run many times<a class="headerlink" href="#compile-once-run-many-times" title="Permanent link">&para;</a></h2>
+<p><code>jax.jit</code> compiles a function the first time you call it and reuses the compiled code for every later call whose arguments have the same structure: the same model classes and the same array shapes. Parameter values, such as the pressure, can change freely. A different structure, such as a <code>Square</code> carrier in place of <code>Sine</code>, triggers a new compilation.</p>
+<p>JAX runs asynchronously, so call <code>block_until_ready()</code> before you stop the clock.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><span class="n">sim</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">run_simulation</span><span class="p">)</span>
+</span><span id="__span-7-2">
+</span><span id="__span-7-3"><span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+</span><span id="__span-7-4"><span class="n">sim</span><span class="p">(</span><span class="n">water</span><span class="p">,</span> <span class="n">burst</span><span class="p">)</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
+</span><span id="__span-7-5"><span class="n">first_call</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+</span><span id="__span-7-6">
+</span><span id="__span-7-7"><span class="n">pressures</span> <span class="o">=</span> <span class="p">[</span><span class="mf">50e3</span><span class="p">,</span> <span class="mf">100e3</span><span class="p">,</span> <span class="mf">150e3</span><span class="p">,</span> <span class="mf">200e3</span><span class="p">,</span> <span class="mf">250e3</span><span class="p">]</span>
+</span><span id="__span-7-8"><span class="n">later_calls</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-7-9"><span class="k">for</span> <span class="n">pressure</span> <span class="ow">in</span> <span class="n">pressures</span><span class="p">:</span>
+</span><span id="__span-7-10">    <span class="n">drive</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="n">pressure</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="__span-7-11">    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+</span><span id="__span-7-12">    <span class="n">run</span> <span class="o">=</span> <span class="n">sim</span><span class="p">(</span><span class="n">water</span><span class="p">,</span> <span class="n">drive</span><span class="p">)</span>
+</span><span id="__span-7-13">    <span class="n">run</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
+</span><span id="__span-7-14">    <span class="n">later_calls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+</span><span id="__span-7-15">    <span class="n">peak</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">water</span><span class="o">.</span><span class="n">R0</span><span class="p">)</span>
+</span><span id="__span-7-16">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pressure</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">5.0f</span><span class="si">}</span><span class="s2"> kPa: peak R/R0 = </span><span class="si">{</span><span class="n">peak</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-7-17">
+</span><span id="__span-7-18"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"First call (trace, compile, and run): </span><span class="si">{</span><span class="n">first_call</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> ms"</span><span class="p">)</span>
+</span><span id="__span-7-19"><span class="nb">print</span><span class="p">(</span>
+</span><span id="__span-7-20">    <span class="sa">f</span><span class="s2">"Later calls (run only): </span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">later_calls</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-7-21">    <span class="sa">f</span><span class="s2">" to </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">later_calls</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> ms each"</span>
+</span><span id="__span-7-22"><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text jb-output highlight"><pre><span></span><code><span id="__span-8-1">   50 kPa: peak R/R0 = 1.25
+</span><span id="__span-8-2">  100 kPa: peak R/R0 = 1.59
+</span><span id="__span-8-3">  150 kPa: peak R/R0 = 2.01
+</span><span id="__span-8-4">  200 kPa: peak R/R0 = 3.75
+</span><span id="__span-8-5">  250 kPa: peak R/R0 = 4.07
+</span><span id="__span-8-6">First call (trace, compile, and run): 1646 ms
+</span><span id="__span-8-7">Later calls (run only): 5.6 to 8.2 ms each
+</span></code></pre></div>
+<nav aria-label="Examples" class="jb-example-nav">
+<a class="jb-gallery" href="../">All examples</a>
+<a class="jb-next" href="../02_driving_pulses/">Next: Driving pulses</a>
+</nav>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Noninvasive Surgery &amp; Biopsy Laboratory
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog" role="status" aria-atomic="true">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.progress","navigation.sections","navigation.tabs","navigation.top","search.highlight","toc.follow"],"redirect":null,"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.67a597eb.min.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>

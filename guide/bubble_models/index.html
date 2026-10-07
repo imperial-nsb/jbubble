@@ -1,0 +1,2117 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Differentiable microbubble dynamics in JAX">
+      
+      
+      
+        <link rel="canonical" href="https://imperial-nsb.github.io/jbubble/guide/bubble_models/">
+      
+      
+        <link rel="prev" href="../quickstart/">
+      
+      
+        <link rel="next" href="../pulse_shapes/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/logo.svg">
+      <meta name="generator" content="zensical-0.0.67">
+    
+    
+      
+        <title>Bubble models - jbubble</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.4ae390e2.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.96d1a7e4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Serif+4:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Source Serif 4";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#bubble-models" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="jbubble" class="md-header__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            jbubble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Bubble models
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../installation/" class="md-tabs__link">
+          
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="././" class="md-tabs__link">
+          
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../examples/" class="md-tabs__link">
+        
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../citing/" class="md-tabs__link">
+        
+  
+  Citing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="jbubble" class="md-nav__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    jbubble
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Getting started
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Getting started
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Installation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Quickstart
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Guide
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+            <label class="md-nav__title" for="__nav_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Guide
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bubble models
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bubble models
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#equations-of-motion" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Equations of motion
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Equations of motion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rayleigh-plesset" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Rayleigh-Plesset
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modified-rayleigh-plesset" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Modified Rayleigh-Plesset
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keller-miksis" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Keller-Miksis
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compare-the-equations" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Compare the equations
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gas-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gas models
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shell-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Shell models
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shell models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uncoated-bubbles" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Uncoated bubbles
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lipid-shells" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Lipid shells
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#thick-shells" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Thick shells
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#medium-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Medium models
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties-constant-state-dependent-or-learned" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Properties: constant, state-dependent, or learned
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-the-initial-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Set the initial state
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choose-models-for-your-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Choose models for your application
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pulse_shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pulse shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../solvers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Solvers and stiffness
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sweeps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Parameter sweeps
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jax_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  JAX tips
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Examples
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  API reference
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/bubble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  bubble
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pulse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  pulse
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  acoustics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/solver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  solver
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  simulation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  metrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  utils
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Citing
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Changelog
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#equations-of-motion" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Equations of motion
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Equations of motion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rayleigh-plesset" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Rayleigh-Plesset
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modified-rayleigh-plesset" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Modified Rayleigh-Plesset
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keller-miksis" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Keller-Miksis
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compare-the-equations" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Compare the equations
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gas-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gas models
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shell-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Shell models
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shell models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uncoated-bubbles" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Uncoated bubbles
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lipid-shells" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Lipid shells
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#thick-shells" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Thick shells
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#medium-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Medium models
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties-constant-state-dependent-or-learned" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Properties: constant, state-dependent, or learned
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-the-initial-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Set the initial state
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choose-models-for-your-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Choose models for your application
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/imperial-nsb/jbubble/edit/main/docs/guide/bubble_models.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="bubble-models">Bubble models<a class="headerlink" href="#bubble-models" title="Permanent link">&para;</a></h1>
+<p>A bubble model in jbubble has four parts:</p>
+<ol>
+<li>An <strong>equation of motion</strong> (EoM): the ordinary differential equation for the radius <span class="arithmatex">\(R(t)\)</span>.</li>
+<li>A <strong>gas model</strong>: the pressure inside the bubble.</li>
+<li>A <strong>shell model</strong>: surface tension and the stresses of a coating.</li>
+<li>A <strong>medium model</strong>: the viscous and elastic stresses of the surrounding liquid or tissue.</li>
+</ol>
+<p>The equation of motion asks the other three for the liquid pressure at the bubble wall,</p>
+<div class="arithmatex">\[
+p_L = p_\text{gas} - p_\text{shell} - p_\text{medium},
+\]</div>
+<p>and relates it to the wall acceleration <span class="arithmatex">\(\ddot R\)</span>. Where an equation needs a time derivative, such as <span class="arithmatex">\(\mathrm{d}p_L/\mathrm{d}t\)</span> in Keller-Miksis, JAX computes it by automatic differentiation. That's why any gas works with any shell, medium, and equation of motion, including models that you write yourself.</p>
+<p>Every code block on this page runs as written, in order. The first block defines the parts that the later ones reuse:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+</span><span id="__span-0-2"><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+</span><span id="__span-0-3">
+</span><span id="__span-0-4"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_simulation</span>
+</span><span id="__span-0-5"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="n">KellerMiksis</span><span class="p">,</span> <span class="n">ModifiedRayleighPlesset</span><span class="p">,</span> <span class="n">RayleighPlesset</span>
+</span><span id="__span-0-6"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolytropicGas</span>
+</span><span id="__span-0-7"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">NewtonianMedium</span>
+</span><span id="__span-0-8"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoShell</span>
+</span><span id="__span-0-9"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToneBurst</span>
+</span><span id="__span-0-10"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
+</span><span id="__span-0-11">
+</span><span id="__span-0-12"><span class="n">water</span> <span class="o">=</span> <span class="n">NewtonianMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">rho_L</span><span class="o">=</span><span class="mf">998.0</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mf">1500.0</span><span class="p">)</span>  <span class="c1"># [Pa s], [kg/m³], [m/s]</span>
+</span><span id="__span-0-13"><span class="n">parts</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-0-14">    <span class="s2">"gas"</span><span class="p">:</span> <span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">),</span>
+</span><span id="__span-0-15">    <span class="s2">"shell"</span><span class="p">:</span> <span class="n">NoShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">0.072</span><span class="p">),</span>  <span class="c1"># [N/m]</span>
+</span><span id="__span-0-16">    <span class="s2">"medium"</span><span class="p">:</span> <span class="n">water</span><span class="p">,</span>
+</span><span id="__span-0-17">    <span class="s2">"R0"</span><span class="p">:</span> <span class="mf">2e-6</span><span class="p">,</span>  <span class="c1"># [m]</span>
+</span><span id="__span-0-18">    <span class="s2">"P_amb"</span><span class="p">:</span> <span class="mf">101325.0</span><span class="p">,</span>  <span class="c1"># [Pa]</span>
+</span><span id="__span-0-19"><span class="p">}</span>
+</span></code></pre></div>
+<h2 id="equations-of-motion">Equations of motion<a class="headerlink" href="#equations-of-motion" title="Permanent link">&para;</a></h2>
+<p>Every equation of motion takes the same parameters: <code>gas</code>, <code>shell</code>, <code>medium</code>, <code>R0</code>, and <code>P_amb</code>. The medium holds the liquid's density <code>rho_L</code> and speed of sound <code>c_L</code>, which default to water at 20 °C; see <a href="#medium-models">Medium models</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Equation of motion</th>
+<th>Liquid properties it uses</th>
+<th>Use it for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            RayleighPlesset" href="../../api/bubble/#jbubble.bubble.eom.RayleighPlesset"><code>RayleighPlesset</code></a></td>
+<td><code>medium.rho_L</code></td>
+<td>Weak driving in an incompressible liquid</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            ModifiedRayleighPlesset" href="../../api/bubble/#jbubble.bubble.eom.ModifiedRayleighPlesset"><code>ModifiedRayleighPlesset</code></a></td>
+<td><code>medium.rho_L</code>, <code>medium.c_L</code></td>
+<td>Coated bubbles at low Mach number, as in Marmottant et al. (2005)</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            KellerMiksis" href="../../api/bubble/#jbubble.bubble.eom.KellerMiksis"><code>KellerMiksis</code></a></td>
+<td><code>medium.rho_L</code>, <code>medium.c_L</code></td>
+<td>Most work: the default of every preset</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rayleigh-plesset">Rayleigh-Plesset<a class="headerlink" href="#rayleigh-plesset" title="Permanent link">&para;</a></h3>
+<p>The classic equation for a spherical bubble in an incompressible liquid, where <span class="arithmatex">\(p_\text{ac}(t)\)</span> is the driving pressure:</p>
+<div class="arithmatex">\[
+R\ddot{R} + \frac{3}{2}\dot{R}^2
+    = \frac{1}{\rho_L}\left(p_L - P_\text{amb} - p_\text{ac}\right).
+\]</div>
+<h3 id="modified-rayleigh-plesset">Modified Rayleigh-Plesset<a class="headerlink" href="#modified-rayleigh-plesset" title="Permanent link">&para;</a></h3>
+<p>Adds the radiation damping of the gas pressure only, a first-order compressibility correction:</p>
+<div class="arithmatex">\[
+R\ddot{R} + \frac{3}{2}\dot{R}^2
+    = \frac{1}{\rho_L}\left(p_L + \frac{R}{c_L}\frac{\mathrm{d}p_\text{gas}}{\mathrm{d}t}
+    - P_\text{amb} - p_\text{ac}\right).
+\]</div>
+<h3 id="keller-miksis">Keller-Miksis<a class="headerlink" href="#keller-miksis" title="Permanent link">&para;</a></h3>
+<p>Accounts for liquid compressibility to first order in the wall Mach number <span class="arithmatex">\(M = \dot R / c_L\)</span>:</p>
+<div class="arithmatex">\[
+(1 - M) R\ddot{R} + \frac{3}{2}\left(1 - \frac{M}{3}\right)\dot{R}^2
+    = \frac{1 + M}{\rho_L}\left(p_L - P_\text{amb} - p_\text{ac}\right)
+    + \frac{R}{\rho_L c_L}\left(\frac{\mathrm{d}p_L}{\mathrm{d}t}
+    - \frac{\mathrm{d}p_\text{ac}}{\mathrm{d}t}\right).
+\]</div>
+<h3 id="compare-the-equations">Compare the equations<a class="headerlink" href="#compare-the-equations" title="Permanent link">&para;</a></h3>
+<p>The following code drives the same free bubble at 400 kPa, hard enough for an inertial collapse, with three equations of motion:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">400e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</span><span id="__span-1-2"><span class="n">eoms</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-1-3">    <span class="s2">"Rayleigh-Plesset"</span><span class="p">:</span> <span class="n">RayleighPlesset</span><span class="p">(</span><span class="o">**</span><span class="n">parts</span><span class="p">),</span>
+</span><span id="__span-1-4">    <span class="s2">"modified Rayleigh-Plesset"</span><span class="p">:</span> <span class="n">ModifiedRayleighPlesset</span><span class="p">(</span><span class="o">**</span><span class="n">parts</span><span class="p">),</span>
+</span><span id="__span-1-5">    <span class="s2">"Keller-Miksis"</span><span class="p">:</span> <span class="n">KellerMiksis</span><span class="p">(</span><span class="o">**</span><span class="n">parts</span><span class="p">),</span>
+</span><span id="__span-1-6"><span class="p">}</span>
+</span><span id="__span-1-7"><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">eom</span> <span class="ow">in</span> <span class="n">eoms</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="__span-1-8">    <span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">)</span>
+</span><span id="__span-1-9">    <span class="n">R</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">eom</span><span class="o">.</span><span class="n">R0</span>
+</span><span id="__span-1-10">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">25s</span><span class="si">}</span><span class="s2"> R_max/R0 = </span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, R_min/R0 = </span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Rayleigh-Plesset has no radiation damping, so it overestimates the growth and the collapse. For the full comparison, with plots, see the example <a href="../../examples/04_equations_of_motion/">Equations of motion</a>.</p>
+<h2 id="gas-models">Gas models<a class="headerlink" href="#gas-models" title="Permanent link">&para;</a></h2>
+<p><a class="autorefs autorefs-internal" title="            PolytropicGas" href="../../api/bubble/#jbubble.bubble.gas.PolytropicGas"><code>PolytropicGas</code></a> is the standard model:</p>
+<div class="arithmatex">\[
+p_\text{gas} = P_{\text{gas},0}\left(\frac{R_0}{R}\right)^{3\gamma}.
+\]</div>
+<p>The polytropic exponent <span class="arithmatex">\(\gamma\)</span> is 1 for an isothermal process, where heat flows faster than the bubble oscillates, and the adiabatic index for an adiabatic one: 1.4 for air and about 1.095 for the SF6 of lipid-coated contrast agents.</p>
+<p><a class="autorefs autorefs-internal" title="            VanDerWaalsGas" href="../../api/bubble/#jbubble.bubble.gas.VanDerWaalsGas"><code>VanDerWaalsGas</code></a> adds a hard core of radius <span class="arithmatex">\(h = h_\text{frac} R_0\)</span>, the radius of the gas compressed to its excluded volume, which stops a violent collapse from reaching <span class="arithmatex">\(R = 0\)</span>:</p>
+<div class="arithmatex">\[
+p_\text{gas} = P_{\text{gas},0}
+    \left(\frac{R_0^3 - h^3}{R^3 - h^3}\right)^{\gamma}.
+\]</div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">VanDerWaalsGas</span>
+</span><span id="__span-2-2">
+</span><span id="__span-2-3"><span class="n">air</span> <span class="o">=</span> <span class="n">PolytropicGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">)</span>
+</span><span id="__span-2-4"><span class="n">air_with_core</span> <span class="o">=</span> <span class="n">VanDerWaalsGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">,</span> <span class="n">h_frac</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># h = 0.1 R0</span>
+</span></code></pre></div>
+<p>The hard-core fraction <code>h_frac</code> depends on the gas species and its density at equilibrium.</p>
+<p><code>P_gas0</code> isn't a parameter: the equation of motion computes it from the equilibrium at <span class="arithmatex">\(R_0\)</span>, where the gas pressure balances the ambient pressure and the Laplace pressure of the shell.</p>
+<h2 id="shell-models">Shell models<a class="headerlink" href="#shell-models" title="Permanent link">&para;</a></h2>
+<h3 id="uncoated-bubbles">Uncoated bubbles<a class="headerlink" href="#uncoated-bubbles" title="Permanent link">&para;</a></h3>
+<p><a class="autorefs autorefs-internal" title="            NoShell" href="../../api/bubble/#jbubble.bubble.shell.NoShell"><code>NoShell</code></a> contributes only the Laplace pressure <span class="arithmatex">\(2\sigma/R\)</span> of the liquid's surface tension, 0.072 N/m for water.</p>
+<h3 id="lipid-shells">Lipid shells<a class="headerlink" href="#lipid-shells" title="Permanent link">&para;</a></h3>
+<p><a class="autorefs autorefs-internal" title="            LipidShell" href="../../api/bubble/#jbubble.bubble.shell.LipidShell"><code>LipidShell</code></a> models a lipid monolayer with a radius-dependent surface tension <span class="arithmatex">\(\sigma(R)\)</span> and a surface-dilatational viscosity <span class="arithmatex">\(\kappa_s\)</span>:</p>
+<div class="arithmatex">\[
+p_\text{shell} = \frac{2\sigma(R)}{R} + \frac{4\kappa_s\dot{R}}{R^2}.
+\]</div>
+<p>The surface tension law carries the shell's elasticity. Three laws share the parameters <code>R_buckle_ratio</code> (the buckling radius as a fraction of <span class="arithmatex">\(R_0\)</span>), <code>chi</code> (the elasticity <span class="arithmatex">\(\chi\)</span>), and <code>sigma_rupture</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Law</th>
+<th>What it is</th>
+<th>Use it for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            MarmottantSurfaceTension" href="../../api/bubble/#jbubble.bubble.shell.MarmottantSurfaceTension"><code>MarmottantSurfaceTension</code></a></td>
+<td>The piecewise law of Marmottant et al. (2005): buckled, elastic, and ruptured regimes</td>
+<td>Forward simulations with the exact law</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            SmoothMarmottantSurfaceTension" href="../../api/bubble/#jbubble.bubble.shell.SmoothMarmottantSurfaceTension"><code>SmoothMarmottantSurfaceTension</code></a></td>
+<td>The Marmottant law with corners rounded over a width set by <code>smoothing</code></td>
+<td>Gradients and fitting; the <a class="autorefs autorefs-internal" title="            lipid_bubble" href="../../api/utils/#jbubble.utils.presets.lipid_bubble"><code>lipid_bubble</code></a> preset</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            GompertzSurfaceTension" href="../../api/bubble/#jbubble.bubble.shell.GompertzSurfaceTension"><code>GompertzSurfaceTension</code></a></td>
+<td>The Marmottant-Gompertz law of Gümmer et al. (2021)</td>
+<td>Reproducing that paper</td>
+</tr>
+</tbody>
+</table>
+<p>In the elastic regime, all three follow <span class="arithmatex">\(\sigma = \chi\left[(R/R_b)^2 - 1\right]\)</span> with <span class="arithmatex">\(R_b\)</span> the buckling radius. The smoothed law stays within <code>smoothing * ln(2) * sigma_rupture</code>, about 0.5 mN/m at the defaults, of the piecewise law, and converges to it as <code>smoothing</code> goes to zero. The Gompertz law doesn't converge to the Marmottant law, so a <span class="arithmatex">\(\chi\)</span> that you fit with it differs from a Marmottant <span class="arithmatex">\(\chi\)</span>; its Notes give the size of the difference.</p>
+<p>A surface tension law is a <a class="autorefs autorefs-internal" title="            Property" href="../../api/bubble/#jbubble.bubble.property.Property"><code>Property</code></a>: a function of the bubble state. The following code evaluates the three laws below, at, and above the buckling radius:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="__span-3-2">    <span class="n">GompertzSurfaceTension</span><span class="p">,</span>
+</span><span id="__span-3-3">    <span class="n">LipidShell</span><span class="p">,</span>
+</span><span id="__span-3-4">    <span class="n">MarmottantSurfaceTension</span><span class="p">,</span>
+</span><span id="__span-3-5">    <span class="n">SmoothMarmottantSurfaceTension</span><span class="p">,</span>
+</span><span id="__span-3-6"><span class="p">)</span>
+</span><span id="__span-3-7"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">BubbleState</span>
+</span><span id="__span-3-8">
+</span><span id="__span-3-9"><span class="n">shell_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"R_buckle_ratio"</span><span class="p">:</span> <span class="mf">0.98058</span><span class="p">,</span> <span class="s2">"chi"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">"sigma_rupture"</span><span class="p">:</span> <span class="mf">0.072</span><span class="p">}</span>
+</span><span id="__span-3-10"><span class="n">laws</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-3-11">    <span class="s2">"Marmottant"</span><span class="p">:</span> <span class="n">MarmottantSurfaceTension</span><span class="p">(</span><span class="o">**</span><span class="n">shell_params</span><span class="p">),</span>
+</span><span id="__span-3-12">    <span class="s2">"smoothed"</span><span class="p">:</span> <span class="n">SmoothMarmottantSurfaceTension</span><span class="p">(</span><span class="o">**</span><span class="n">shell_params</span><span class="p">),</span>
+</span><span id="__span-3-13">    <span class="s2">"Gompertz"</span><span class="p">:</span> <span class="n">GompertzSurfaceTension</span><span class="p">(</span><span class="o">**</span><span class="n">shell_params</span><span class="p">),</span>
+</span><span id="__span-3-14"><span class="p">}</span>
+</span><span id="__span-3-15"><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">law</span> <span class="ow">in</span> <span class="n">laws</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="__span-3-16">    <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">law</span><span class="p">(</span><span class="n">BubbleState</span><span class="p">(</span><span class="n">R</span><span class="o">=</span><span class="n">x</span> <span class="o">*</span> <span class="mf">2e-6</span><span class="p">,</span> <span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="mf">0.97</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.05</span><span class="p">)]</span>
+</span><span id="__span-3-17">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="mf">1e3</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">v</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">),</span> <span class="s2">"mN/m"</span><span class="p">)</span>
+</span><span id="__span-3-18">
+</span><span id="__span-3-19"><span class="n">lipid</span> <span class="o">=</span> <span class="n">LipidShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">laws</span><span class="p">[</span><span class="s2">"smoothed"</span><span class="p">],</span> <span class="n">kappa_s</span><span class="o">=</span><span class="mf">7.5e-9</span><span class="p">)</span>  <span class="c1"># kappa_s [N s/m]</span>
+</span></code></pre></div>
+<h3 id="thick-shells">Thick shells<a class="headerlink" href="#thick-shells" title="Permanent link">&para;</a></h3>
+<p><a class="autorefs autorefs-internal" title="            ThickShell" href="../../api/bubble/#jbubble.bubble.shell.ThickShell"><code>ThickShell</code></a> models a polymer or protein shell of thickness <span class="arithmatex">\(d_s\)</span>, shear modulus <span class="arithmatex">\(G_s\)</span>, and shear viscosity <span class="arithmatex">\(\mu_s\)</span> as an incompressible viscoelastic layer (Church 1995):</p>
+<div class="arithmatex">\[
+p_\text{elastic} = \frac{4}{3} G_s
+    \left[1 - \left(\frac{R_0}{R}\right)^3\right]\frac{V_s}{R^3 - V_s},
+\qquad
+p_\text{viscous} = 4 \mu_s \frac{V_s}{R^3 - V_s} \frac{\dot{R}}{R},
+\]</div>
+<p>where <span class="arithmatex">\(V_s = R_0^3 - (R_0 - d_s)^3\)</span>. For a thin shell, these reduce to the model of Hoff et al. (2000), which adds a stiffness of <span class="arithmatex">\(12 G_s d_s / R_0\)</span> per unit radial strain.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThickShell</span>
+</span><span id="__span-4-2">
+</span><span id="__span-4-3"><span class="n">polymer</span> <span class="o">=</span> <span class="n">ThickShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">0.04</span><span class="p">,</span> <span class="n">d_s</span><span class="o">=</span><span class="mf">20e-9</span><span class="p">,</span> <span class="n">G_s</span><span class="o">=</span><span class="mf">11.7e6</span><span class="p">,</span> <span class="n">mu_s</span><span class="o">=</span><span class="mf">0.45</span><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="medium-models">Medium models<a class="headerlink" href="#medium-models" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Medium</th>
+<th>Stress on the wall</th>
+<th>Use it for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            NewtonianMedium" href="../../api/bubble/#jbubble.bubble.medium.NewtonianMedium"><code>NewtonianMedium</code></a></td>
+<td><span class="arithmatex">\(4\mu\dot R/R\)</span></td>
+<td>Water, saline, blood plasma</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            KelvinVoigtMedium" href="../../api/bubble/#jbubble.bubble.medium.KelvinVoigtMedium"><code>KelvinVoigtMedium</code></a></td>
+<td>adds <span class="arithmatex">\(\tfrac{4G}{3}\left[1 - (R_0/R)^3\right]\)</span></td>
+<td>Small oscillations in a soft solid or gel (Yang and Church 2005)</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            NeoHookeanMedium" href="../../api/bubble/#jbubble.bubble.medium.NeoHookeanMedium"><code>NeoHookeanMedium</code></a></td>
+<td>adds <span class="arithmatex">\(G\left[\tfrac{5}{2} - 2\tfrac{R_0}{R} - \tfrac{1}{2}\left(\tfrac{R_0}{R}\right)^4\right]\)</span></td>
+<td>Large oscillations in tissue</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            PowerLawMedium" href="../../api/bubble/#jbubble.bubble.medium.PowerLawMedium"><code>PowerLawMedium</code></a></td>
+<td><span class="arithmatex">\(\tfrac{4K}{n}\dot\gamma_\text{eff}^{\,n-1}\dot R/R\)</span></td>
+<td>Shear-thinning (<span class="arithmatex">\(n &lt; 1\)</span>) or shear-thickening (<span class="arithmatex">\(n &gt; 1\)</span>) liquids</td>
+</tr>
+</tbody>
+</table>
+<p>The two elastic laws agree for small strains, <span class="arithmatex">\(4G(R - R_0)/R_0\)</span>, but only the neo-Hookean law holds at finite strain. For a power-law liquid, <code>mu</code> is the consistency index <span class="arithmatex">\(K\)</span> in Pa sⁿ, and <code>eps</code> regularises the shear rate where <span class="arithmatex">\(\dot R\)</span> changes sign.</p>
+<p>Every medium also holds the liquid's density <code>rho_L</code> [kg/m³] and speed of sound <code>c_L</code> [m/s], which the equations of motion and the <a class="autorefs autorefs-internal" title="            EmissionModel" href="../../api/acoustics/#jbubble.acoustics.emission.EmissionModel">emission models</a> read. They're keyword-only and default to water at 20 °C: <code>rho_L=998.0</code> and <code>c_L=1500.0</code>. They're plain constants, not <code>Property</code> fields, because the equations of motion assume a liquid of constant density and sound speed.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">NeoHookeanMedium</span><span class="p">,</span> <span class="n">PowerLawMedium</span>
+</span><span id="__span-5-2">
+</span><span id="__span-5-3"><span class="n">tissue</span> <span class="o">=</span> <span class="n">NeoHookeanMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">5e-3</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="mf">10e3</span><span class="p">,</span> <span class="n">rho_L</span><span class="o">=</span><span class="mf">1060.0</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mf">1540.0</span><span class="p">)</span>  <span class="c1"># [Pa s], [Pa], [kg/m³], [m/s]</span>
+</span><span id="__span-5-4"><span class="n">shear_thinning</span> <span class="o">=</span> <span class="n">PowerLawMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1.5e-2</span><span class="p">,</span> <span class="n">n_exp</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>  <span class="c1"># K [Pa s^n]</span>
+</span></code></pre></div>
+<h2 id="properties-constant-state-dependent-or-learned">Properties: constant, state-dependent, or learned<a class="headerlink" href="#properties-constant-state-dependent-or-learned" title="Permanent link">&para;</a></h2>
+<p>Every physical coefficient of a gas, shell, or medium model, such as <code>sigma</code>, <code>kappa_s</code>, <code>G</code>, or <code>gamma</code>, except the liquid's <code>rho_L</code> and <code>c_L</code>, is a <a class="autorefs autorefs-internal" title="            Property" href="../../api/bubble/#jbubble.bubble.property.Property"><code>Property</code></a>: a function from the bubble state to a scalar. A plain number becomes a <a class="autorefs autorefs-internal" title="            ConstantProperty" href="../../api/bubble/#jbubble.bubble.property.ConstantProperty"><code>ConstantProperty</code></a>. Pass any other <code>Property</code> to make the coefficient depend on the state, for example a shear modulus that stiffens with strain:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">KelvinVoigtMedium</span>
+</span><span id="__span-6-2"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.property</span><span class="w"> </span><span class="kn">import</span> <span class="n">Property</span>
+</span><span id="__span-6-3">
+</span><span id="__span-6-4">
+</span><span id="__span-6-5"><span class="k">class</span><span class="w"> </span><span class="nc">StrainStiffening</span><span class="p">(</span><span class="n">Property</span><span class="p">):</span>
+</span><span id="__span-6-6"><span class="w">    </span><span class="sd">"""Shear modulus G0 (1 + alpha ε²) at the radial strain ε = R/R0 - 1."""</span>
+</span><span id="__span-6-7">
+</span><span id="__span-6-8">    <span class="n">G0</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># [Pa]</span>
+</span><span id="__span-6-9">    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span>
+</span><span id="__span-6-10">
+</span><span id="__span-6-11">    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+</span><span id="__span-6-12">        <span class="n">strain</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">R</span> <span class="o">/</span> <span class="n">state</span><span class="o">.</span><span class="n">R0</span> <span class="o">-</span> <span class="mf">1.0</span>
+</span><span id="__span-6-13">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">G0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">strain</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="__span-6-14">
+</span><span id="__span-6-15">
+</span><span id="__span-6-16"><span class="n">gel</span> <span class="o">=</span> <span class="n">KelvinVoigtMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="n">StrainStiffening</span><span class="p">(</span><span class="n">G0</span><span class="o">=</span><span class="mf">5e3</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">20.0</span><span class="p">))</span>
+</span></code></pre></div>
+<p><a class="autorefs autorefs-internal" title="            NeuralProperty" href="../../api/bubble/#jbubble.bubble.property.NeuralProperty"><code>NeuralProperty</code></a> wraps a neural network that maps <span class="arithmatex">\(R/R_0\)</span> to the value. Bound its output with the network's final activation, for example to keep a surface tension between 0 and the rupture value:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
+</span><span id="__span-7-2">
+</span><span id="__span-7-3"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.property</span><span class="w"> </span><span class="kn">import</span> <span class="n">NeuralProperty</span>
+</span><span id="__span-7-4">
+</span><span id="__span-7-5"><span class="n">net</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MLP</span><span class="p">(</span>
+</span><span id="__span-7-6">    <span class="n">in_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-7-7">    <span class="n">out_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-7-8">    <span class="n">width_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+</span><span id="__span-7-9">    <span class="n">depth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+</span><span id="__span-7-10">    <span class="n">final_activation</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mf">0.072</span> <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>  <span class="c1"># [N/m]</span>
+</span><span id="__span-7-11">    <span class="n">key</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+</span><span id="__span-7-12"><span class="p">)</span>
+</span><span id="__span-7-13"><span class="n">learned_shell</span> <span class="o">=</span> <span class="n">LipidShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">NeuralProperty</span><span class="p">(</span><span class="n">net</span><span class="o">=</span><span class="n">net</span><span class="p">),</span> <span class="n">kappa_s</span><span class="o">=</span><span class="mf">7.5e-9</span><span class="p">)</span>
+</span></code></pre></div>
+<p>To fit such a network to data, see <a href="../fitting/#learn-a-constitutive-law-with-a-neural-network">Learn a constitutive law with a neural network</a>. To write a new medium or shell model rather than a coefficient, subclass <a class="autorefs autorefs-internal" title="            MediumModel" href="../../api/bubble/#jbubble.bubble.medium.MediumModel"><code>MediumModel</code></a> or <a class="autorefs autorefs-internal" title="            ShellModel" href="../../api/bubble/#jbubble.bubble.shell.ShellModel"><code>ShellModel</code></a>; the example <a href="../../examples/08_custom_physics/">Custom physics</a> shows how.</p>
+<h2 id="set-the-initial-state">Set the initial state<a class="headerlink" href="#set-the-initial-state" title="Permanent link">&para;</a></h2>
+<p>By default, a simulation starts at rest at the equilibrium radius, <a class="autorefs autorefs-internal" title="            initial_state" href="../../api/bubble/#jbubble.bubble.eom.EquationOfMotion.initial_state"><code>eom.initial_state()</code></a>. To start elsewhere, pass <code>state0</code> to <code>run_simulation</code>. The following code releases a bubble at rest from 1.5 times its equilibrium radius, with no drive:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><span class="n">eom</span> <span class="o">=</span> <span class="n">KellerMiksis</span><span class="p">(</span><span class="o">**</span><span class="n">parts</span><span class="p">)</span>
+</span><span id="__span-8-2"><span class="n">silence</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="__span-8-3"><span class="n">state0</span> <span class="o">=</span> <span class="n">eom</span><span class="o">.</span><span class="n">initial_state</span><span class="p">(</span><span class="n">R</span><span class="o">=</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">eom</span><span class="o">.</span><span class="n">R0</span><span class="p">)</span>  <span class="c1"># R_dot defaults to 0</span>
+</span><span id="__span-8-4"><span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">silence</span><span class="p">,</span> <span class="n">state0</span><span class="o">=</span><span class="n">state0</span><span class="p">)</span>
+</span><span id="__span-8-5"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"R_min/R0 after release: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">eom</span><span class="o">.</span><span class="n">R0</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+<p><code>state0</code> holds the radius <code>R</code>, the wall velocity <code>R_dot</code>, and the equilibrium values <code>R0</code> and <code>P_gas0</code>, which stay constant during the solve. <code>BubbleState(R=1.5 * R0)</code> gives the same start: a zero <code>R0</code> or <code>P_gas0</code> means "unset", and the solver fills it from the equation of motion. For an empty cavity, set <code>P_gas0</code> to a tiny positive value, such as <code>1e-12</code>.</p>
+<h2 id="choose-models-for-your-application">Choose models for your application<a class="headerlink" href="#choose-models-for-your-application" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Application</th>
+<th>Equation of motion</th>
+<th>Gas</th>
+<th>Shell</th>
+<th>Medium</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Free bubble, weak driving</td>
+<td><code>KellerMiksis</code> or <code>RayleighPlesset</code></td>
+<td><code>PolytropicGas</code></td>
+<td><code>NoShell</code></td>
+<td><code>NewtonianMedium</code></td>
+</tr>
+<tr>
+<td>Inertial cavitation</td>
+<td><code>KellerMiksis</code></td>
+<td><code>VanDerWaalsGas</code></td>
+<td><code>NoShell</code></td>
+<td><code>NewtonianMedium</code></td>
+</tr>
+<tr>
+<td>Lipid-coated contrast agent, such as SonoVue</td>
+<td><code>KellerMiksis</code></td>
+<td><code>PolytropicGas</code></td>
+<td><code>LipidShell</code> with <code>SmoothMarmottantSurfaceTension</code></td>
+<td><code>NewtonianMedium</code></td>
+</tr>
+<tr>
+<td>Polymer- or protein-shelled agent</td>
+<td><code>KellerMiksis</code></td>
+<td><code>PolytropicGas</code></td>
+<td><code>ThickShell</code></td>
+<td><code>NewtonianMedium</code></td>
+</tr>
+<tr>
+<td>Bubble in tissue</td>
+<td><code>KellerMiksis</code></td>
+<td><code>PolytropicGas</code></td>
+<td>any</td>
+<td><code>NeoHookeanMedium</code></td>
+</tr>
+<tr>
+<td>Non-Newtonian liquid</td>
+<td><code>KellerMiksis</code></td>
+<td><code>PolytropicGas</code></td>
+<td>any</td>
+<td><code>PowerLawMedium</code></td>
+</tr>
+</tbody>
+</table>
+<p>The presets <a class="autorefs autorefs-internal" title="            free_bubble" href="../../api/utils/#jbubble.utils.presets.free_bubble"><code>free_bubble</code></a>, <a class="autorefs autorefs-internal" title="            lipid_bubble" href="../../api/utils/#jbubble.utils.presets.lipid_bubble"><code>lipid_bubble</code></a>, and <a class="autorefs autorefs-internal" title="            thick_shell_bubble" href="../../api/utils/#jbubble.utils.presets.thick_shell_bubble"><code>thick_shell_bubble</code></a> assemble the first, third, and fourth rows with cited parameters. Small or viscous bubbles can make the equations stiff; see <a href="../solvers/">Solvers and stiffness</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../quickstart/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Quickstart">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Quickstart
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../pulse_shapes/" class="md-footer__link md-footer__link--next" aria-label="Next: Pulse shapes">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Pulse shapes
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Noninvasive Surgery &amp; Biopsy Laboratory
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog" role="status" aria-atomic="true">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.progress","navigation.sections","navigation.tabs","navigation.top","search.highlight","toc.follow"],"redirect":null,"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.67a597eb.min.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>

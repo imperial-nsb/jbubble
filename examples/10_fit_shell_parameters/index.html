@@ -1,0 +1,1664 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Differentiable microbubble dynamics in JAX">
+      
+      
+      
+        <link rel="canonical" href="https://imperial-nsb.github.io/jbubble/examples/10_fit_shell_parameters/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/logo.svg">
+      <meta name="generator" content="zensical-0.0.67">
+    
+    
+      
+        <title>Fit shell parameters to radius curves - jbubble</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.4ae390e2.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.96d1a7e4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Serif+4:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Source Serif 4";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#fit-shell-parameters-to-radius-curves" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="jbubble" class="md-header__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            jbubble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Fit shell parameters to radius curves
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/installation/" class="md-tabs__link">
+          
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/bubble_models/" class="md-tabs__link">
+          
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link">
+        
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../citing/" class="md-tabs__link">
+        
+  
+  Citing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="jbubble" class="md-nav__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    jbubble
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Getting started
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Getting started
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Installation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Quickstart
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Guide
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Guide
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/bubble_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bubble models
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/pulse_shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pulse shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/solvers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Solvers and stiffness
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/sweeps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Parameter sweeps
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/jax_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  JAX tips
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Examples
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  API reference
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/bubble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  bubble
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pulse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  pulse
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  acoustics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/solver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  solver
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  simulation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  metrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  utils
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Citing
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Changelog
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#make-stand-in-measurements" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Make stand-in measurements
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#describe-the-model-and-the-loss" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Describe the model and the loss
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#declare-the-parameters-and-fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Declare the parameters and fit
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#look-at-the-loss-landscape" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Look at the loss landscape
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compare-the-fitted-curves-with-the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Compare the fitted curves with the data
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fit-other-kinds-of-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Fit other kinds of data
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/imperial-nsb/jbubble/edit/main/docs/examples/10_fit_shell_parameters.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="fit-shell-parameters-to-radius-curves">Fit shell parameters to radius curves<a class="headerlink" href="#fit-shell-parameters-to-radius-curves" title="Permanent link">&para;</a></h1>
+<div class="jb-example-links">
+<a href="https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/10_fit_shell_parameters.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="md-button" download="10_fit_shell_parameters.ipynb" href="../notebooks/10_fit_shell_parameters.ipynb">Download notebook</a>
+<a class="md-button" href="https://github.com/imperial-nsb/jbubble/blob/64d87445dee81504005a77cb453f48399668a2b6/examples/10_fit_shell_parameters.py">View source</a>
+</div>
+<p>Estimate the elasticity and the dilatational viscosity of a lipid shell from noisy radius-time curves recorded at three driving pressures. In this example, you declare the unknowns with <code>Parameter</code> bounds, fit all three recordings at once with <code>fit_parameters</code>, and look at the loss landscape that the optimiser walks across.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+</span><span id="__span-0-2"><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+</span><span id="__span-0-3">
+</span><span id="__span-0-4"><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+</span><span id="__span-0-5"><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+</span><span id="__span-0-6"><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+</span><span id="__span-0-7"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="__span-0-8"><span class="kn">import</span><span class="w"> </span><span class="nn">optax</span>
+</span><span id="__span-0-9">
+</span><span id="__span-0-10"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">SaveSpec</span><span class="p">,</span> <span class="n">fit_parameters</span><span class="p">,</span> <span class="n">run_simulation</span>
+</span><span id="__span-0-11"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.fitting</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
+</span><span id="__span-0-12"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalised_mse_radius</span>
+</span><span id="__span-0-13"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridSweep</span>
+</span><span id="__span-0-14"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.presets</span><span class="w"> </span><span class="kn">import</span> <span class="n">lipid_bubble</span>
+</span><span id="__span-0-15">
+</span><span id="__span-0-16"><span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">"jbubble.style.light"</span><span class="p">)</span>
+</span><span id="__span-0-17">
+</span><span id="__span-0-18"><span class="c1"># Set JBUBBLE_QUICK=1 for a fast, coarse run (used by CI).</span>
+</span><span id="__span-0-19"><span class="n">QUICK</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"JBUBBLE_QUICK"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"1"</span>
+</span></code></pre></div>
+<h2 id="make-stand-in-measurements">Make stand-in measurements<a class="headerlink" href="#make-stand-in-measurements" title="Permanent link">&para;</a></h2>
+<p>In a real study, an ultra-high-speed camera records the radius of one bubble at several driving pressures. Here, the <a href="https://imperial-nsb.github.io/jbubble/api/utils/#jbubble.utils.presets.lipid_bubble"><code>lipid_bubble</code></a> preset plays the bubble: a 2 µm SF6 bubble with a smoothed Marmottant lipid shell, driven by a five-cycle 1 MHz tone burst. Its shell elasticity <code>chi</code> and dilatational viscosity <code>kappa_s</code> are the values to recover. Gaussian noise of 20 nm, 1 % of the radius, stands in for the camera's measurement error.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><span class="n">R0</span> <span class="o">=</span> <span class="mf">2e-6</span>  <span class="c1"># equilibrium radius, measured optically [m]</span>
+</span><span id="__span-1-2"><span class="n">PRESSURES</span> <span class="o">=</span> <span class="p">[</span><span class="mf">50e3</span><span class="p">,</span> <span class="mf">100e3</span><span class="p">,</span> <span class="mf">150e3</span><span class="p">]</span>  <span class="c1"># peak driving pressures [Pa]</span>
+</span><span id="__span-1-3"><span class="n">NOISE</span> <span class="o">=</span> <span class="mf">20e-9</span>  <span class="c1"># radius measurement noise, one standard deviation [m]</span>
+</span><span id="__span-1-4"><span class="n">TRUE</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"chi"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">"kappa_s"</span><span class="p">:</span> <span class="mf">7.5e-9</span><span class="p">}</span>  <span class="c1"># [N/m], [N s/m]</span>
+</span><span id="__span-1-5"><span class="n">SAVE_SPEC</span> <span class="o">=</span> <span class="n">SaveSpec</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
+</span><span id="__span-1-6"><span class="n">T_MAX</span> <span class="o">=</span> <span class="mf">8e-6</span>  <span class="c1"># [s]</span>
+</span><span id="__span-1-7">
+</span><span id="__span-1-8"><span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="__span-1-9"><span class="n">conditions</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-1-10"><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pressure</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">PRESSURES</span><span class="p">):</span>
+</span><span id="__span-1-11">    <span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span> <span class="o">=</span> <span class="n">lipid_bubble</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="n">pressure</span><span class="p">,</span> <span class="o">**</span><span class="n">TRUE</span><span class="p">)</span>
+</span><span id="__span-1-12">    <span class="n">clean</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SAVE_SPEC</span><span class="p">,</span> <span class="n">t_max</span><span class="o">=</span><span class="n">T_MAX</span><span class="p">)</span><span class="o">.</span><span class="n">radius</span>
+</span><span id="__span-1-13">    <span class="n">noise</span> <span class="o">=</span> <span class="n">NOISE</span> <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">clean</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span><span id="__span-1-14">    <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"pressure"</span><span class="p">:</span> <span class="n">pressure</span><span class="p">,</span> <span class="s2">"radius"</span><span class="p">:</span> <span class="n">clean</span> <span class="o">+</span> <span class="n">noise</span><span class="p">})</span>
+</span><span id="__span-1-15">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pressure</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">5.0f</span><span class="si">}</span><span class="s2"> kPa: R_max/R0 = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">clean</span><span class="o">.</span><span class="n">max</span><span class="p">())</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">R0</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text jb-output highlight"><pre><span></span><code><span id="__span-2-1">   50 kPa: R_max/R0 = 1.05
+</span><span id="__span-2-2">  100 kPa: R_max/R0 = 1.23
+</span><span id="__span-2-3">  150 kPa: R_max/R0 = 1.56
+</span></code></pre></div>
+<h2 id="describe-the-model-and-the-loss">Describe the model and the loss<a class="headerlink" href="#describe-the-model-and-the-loss" title="Permanent link">&para;</a></h2>
+<p><a href="https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.fit_parameters"><code>fit_parameters</code></a> needs two functions. Both receive one entry of <code>conditions</code>, that is, one recording, as their second argument:</p>
+<ul>
+<li><code>make_model(params, condition)</code> returns the <code>(eom, pulse)</code> pair to simulate. <code>lipid_bubble</code> returns exactly such a pair, so the preset is the whole model.</li>
+<li><code>loss_fn(result, condition)</code> compares the simulation with the recording. <a href="https://imperial-nsb.github.io/jbubble/api/metrics/#jbubble.metrics.normalised_mse_radius"><code>normalised_mse_radius</code></a> divides the mean squared error by <span class="arithmatex">\(R_0^2\)</span>, so the loss is dimensionless. With a perfect model, it settles at the noise level, <span class="arithmatex">\((\sigma_\text{noise}/R_0)^2 = 10^{-4}\)</span>.</li>
+</ul>
+<p><code>fit_parameters</code> averages the loss over the recordings. Recordings at several pressures constrain the shared shell parameters far better than one recording does.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><span class="k">def</span><span class="w"> </span><span class="nf">make_model</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">condition</span><span class="p">):</span>
+</span><span id="__span-3-2">    <span class="k">return</span> <span class="n">lipid_bubble</span><span class="p">(</span>
+</span><span id="__span-3-3">        <span class="n">R0</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span>
+</span><span id="__span-3-4">        <span class="n">pressure</span><span class="o">=</span><span class="n">condition</span><span class="p">[</span><span class="s2">"pressure"</span><span class="p">],</span>
+</span><span id="__span-3-5">        <span class="n">chi</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s2">"chi"</span><span class="p">],</span>
+</span><span id="__span-3-6">        <span class="n">kappa_s</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s2">"kappa_s"</span><span class="p">],</span>
+</span><span id="__span-3-7">    <span class="p">)</span>
+</span><span id="__span-3-8">
+</span><span id="__span-3-9">
+</span><span id="__span-3-10"><span class="k">def</span><span class="w"> </span><span class="nf">loss_fn</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">condition</span><span class="p">):</span>
+</span><span id="__span-3-11">    <span class="k">return</span> <span class="n">normalised_mse_radius</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="p">,</span> <span class="n">condition</span><span class="p">[</span><span class="s2">"radius"</span><span class="p">],</span> <span class="n">R0</span><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="declare-the-parameters-and-fit">Declare the parameters and fit<a class="headerlink" href="#declare-the-parameters-and-fit" title="Permanent link">&para;</a></h2>
+<p><code>chi</code> is about 0.5 N/m and <code>kappa_s</code> about <span class="arithmatex">\(10^{-8}\)</span> N s/m, so no single learning rate suits both raw values. Wrap each in a <a href="https://imperial-nsb.github.io/jbubble/api/fitting/#jbubble.fitting.Parameter"><code>Parameter</code></a> instead. The optimiser then updates a coordinate of order one, so a learning rate of 0.1 changes each value by about 10 % per step at first, and a cosine-decay schedule shrinks the steps so that the fit settles. The bounds keep both values physical: <code>kappa_s</code> stays positive, and <code>chi</code> stays between 0 and 2 N/m.</p>
+<p>The fit starts from a poor guess, with <code>chi</code> three times too small and <code>kappa_s</code> almost three times too large. <code>step_callback</code> records the parameters after every step, in physical units.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><span class="n">params0</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-4-2">    <span class="s2">"chi"</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">2.0</span><span class="p">),</span>  <span class="c1"># [N/m]</span>
+</span><span id="__span-4-3">    <span class="s2">"kappa_s"</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">(</span><span class="mf">2e-8</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>  <span class="c1"># [N s/m]</span>
+</span><span id="__span-4-4"><span class="p">}</span>
+</span><span id="__span-4-5"><span class="n">n_steps</span> <span class="o">=</span> <span class="mi">30</span> <span class="k">if</span> <span class="n">QUICK</span> <span class="k">else</span> <span class="mi">150</span>
+</span><span id="__span-4-6"><span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-4-7">
+</span><span id="__span-4-8">
+</span><span id="__span-4-9"><span class="k">def</span><span class="w"> </span><span class="nf">record</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">loss</span><span class="p">):</span>
+</span><span id="__span-4-10">    <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s2">"chi"</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s2">"kappa_s"</span><span class="p">])))</span>
+</span><span id="__span-4-11">
+</span><span id="__span-4-12">
+</span><span id="__span-4-13"><span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+</span><span id="__span-4-14"><span class="n">fit</span> <span class="o">=</span> <span class="n">fit_parameters</span><span class="p">(</span>
+</span><span id="__span-4-15">    <span class="n">make_model</span><span class="p">,</span>
+</span><span id="__span-4-16">    <span class="n">params0</span><span class="p">,</span>
+</span><span id="__span-4-17">    <span class="n">conditions</span><span class="o">=</span><span class="n">conditions</span><span class="p">,</span>
+</span><span id="__span-4-18">    <span class="n">loss_fn</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">,</span>
+</span><span id="__span-4-19">    <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="n">optax</span><span class="o">.</span><span class="n">cosine_decay_schedule</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">)),</span>
+</span><span id="__span-4-20">    <span class="n">n_steps</span><span class="o">=</span><span class="n">n_steps</span><span class="p">,</span>
+</span><span id="__span-4-21">    <span class="n">save_spec</span><span class="o">=</span><span class="n">SAVE_SPEC</span><span class="p">,</span>
+</span><span id="__span-4-22">    <span class="n">t_max</span><span class="o">=</span><span class="n">T_MAX</span><span class="p">,</span>
+</span><span id="__span-4-23">    <span class="n">step_callback</span><span class="o">=</span><span class="n">record</span><span class="p">,</span>
+</span><span id="__span-4-24"><span class="p">)</span>
+</span><span id="__span-4-25"><span class="n">path</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</span><span id="__span-4-26"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fit took </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> s: </span><span class="si">{</span><span class="n">fit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-4-27"><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">unit</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"chi"</span><span class="p">,</span> <span class="s2">"N/m"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"kappa_s"</span><span class="p">,</span> <span class="s2">"N s/m"</span><span class="p">)):</span>
+</span><span id="__span-4-28">    <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+</span><span id="__span-4-29">    <span class="n">error</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">value</span> <span class="o">/</span> <span class="n">TRUE</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-4-30">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">&gt;8</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2"> (true </span><span class="si">{</span><span class="n">TRUE</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">error</span><span class="si">:</span><span class="s2">+.1f</span><span class="si">}</span><span class="s2"> %)"</span><span class="p">)</span>
+</span><span id="__span-4-31"><span class="nb">print</span><span class="p">(</span>
+</span><span id="__span-4-32">    <span class="sa">f</span><span class="s2">"Final loss </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">loss_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">, noise level </span><span class="si">{</span><span class="p">(</span><span class="n">NOISE</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">R0</span><span class="p">)</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">2</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-4-33"><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text jb-output highlight"><pre><span></span><code><span id="__span-5-1">  step    0 / 150  loss = 3.4741e-03  chi=0.15, kappa_s=2e-08
+</span><span id="__span-5-2">  step   25 / 150  loss = 1.2187e-04  chi=0.4635, kappa_s=7.923e-09
+</span><span id="__span-5-3">  step   50 / 150  loss = 1.0689e-04  chi=0.5288, kappa_s=7.417e-09
+</span><span id="__span-5-4">  step   75 / 150  loss = 1.0118e-04  chi=0.5005, kappa_s=7.496e-09
+</span><span id="__span-5-5">  step  100 / 150  loss = 1.0117e-04  chi=0.5033, kappa_s=7.519e-09
+</span><span id="__span-5-6">  step  125 / 150  loss = 1.0115e-04  chi=0.5024, kappa_s=7.504e-09
+</span><span id="__span-5-7">  step  150 / 150  loss = 1.0114e-04  chi=0.5025, kappa_s=7.502e-09
+</span><span id="__span-5-8">Fit took 26.7 s: completed 150 steps
+</span><span id="__span-5-9">     chi = 0.5025 N/m (true 0.5, +0.5 %)
+</span><span id="__span-5-10"> kappa_s = 7.502e-09 N s/m (true 7.5e-09, +0.0 %)
+</span><span id="__span-5-11">Final loss 1.011e-04, noise level 1.0e-04
+</span></code></pre></div>
+<p>Both values come back to within 1 %, and the final loss sits at the noise level: the model explains everything in the data except the noise.</p>
+<h2 id="look-at-the-loss-landscape">Look at the loss landscape<a class="headerlink" href="#look-at-the-loss-landscape" title="Permanent link">&para;</a></h2>
+<p>The following cell evaluates the same loss, averaged over the three recordings, on a grid of <code>chi</code> and <code>kappa_s</code> values with <a href="https://imperial-nsb.github.io/jbubble/api/utils/#jbubble.utils.gridsweep.GridSweep"><code>GridSweep</code></a>, and draws the optimiser's path on it.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><span class="n">radii</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="s2">"radius"</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">conditions</span><span class="p">])</span>
+</span><span id="__span-6-2"><span class="n">pressures</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">PRESSURES</span><span class="p">)</span>
+</span><span id="__span-6-3">
+</span><span id="__span-6-4">
+</span><span id="__span-6-5"><span class="k">def</span><span class="w"> </span><span class="nf">mean_loss</span><span class="p">(</span><span class="n">chi</span><span class="p">,</span> <span class="n">kappa_s</span><span class="p">):</span>
+</span><span id="__span-6-6">    <span class="k">def</span><span class="w"> </span><span class="nf">one</span><span class="p">(</span><span class="n">pressure</span><span class="p">,</span> <span class="n">radius</span><span class="p">):</span>
+</span><span id="__span-6-7">        <span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span> <span class="o">=</span> <span class="n">lipid_bubble</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="n">pressure</span><span class="p">,</span> <span class="n">chi</span><span class="o">=</span><span class="n">chi</span><span class="p">,</span> <span class="n">kappa_s</span><span class="o">=</span><span class="n">kappa_s</span><span class="p">)</span>
+</span><span id="__span-6-8">        <span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SAVE_SPEC</span><span class="p">,</span> <span class="n">t_max</span><span class="o">=</span><span class="n">T_MAX</span><span class="p">)</span>
+</span><span id="__span-6-9">        <span class="k">return</span> <span class="n">normalised_mse_radius</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">R0</span><span class="p">)</span>
+</span><span id="__span-6-10">
+</span><span id="__span-6-11">    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">one</span><span class="p">)(</span><span class="n">pressures</span><span class="p">,</span> <span class="n">radii</span><span class="p">))</span>
+</span><span id="__span-6-12">
+</span><span id="__span-6-13">
+</span><span id="__span-6-14"><span class="n">n_grid</span> <span class="o">=</span> <span class="mi">24</span> <span class="k">if</span> <span class="n">QUICK</span> <span class="k">else</span> <span class="mi">80</span>
+</span><span id="__span-6-15"><span class="n">search_space</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-6-16">    <span class="s2">"chi"</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.6</span><span class="p">,</span> <span class="n">n_grid</span><span class="p">),</span>
+</span><span id="__span-6-17">    <span class="s2">"kappa_s"</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="mf">1e-9</span><span class="p">,</span> <span class="mf">4e-8</span><span class="p">,</span> <span class="n">n_grid</span><span class="p">),</span>
+</span><span id="__span-6-18"><span class="p">}</span>
+</span><span id="__span-6-19"><span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+</span><span id="__span-6-20"><span class="c1"># GridSweep orders the axes by name, so the map has shape (chi, kappa_s).</span>
+</span><span id="__span-6-21"><span class="n">landscape</span> <span class="o">=</span> <span class="n">GridSweep</span><span class="p">(</span><span class="n">mean_loss</span><span class="p">,</span> <span class="n">search_space</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</span><span id="__span-6-22"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_grid</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">n_grid</span><span class="si">}</span><span class="s2"> landscape in </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> s"</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text jb-output highlight"><pre><span></span><code><span id="__span-7-1">80x80 landscape in 13.4 s
+</span></code></pre></div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax_l</span><span class="p">,</span> <span class="n">ax_h</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span>
+</span><span id="__span-8-2">    <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">gridspec_kw</span><span class="o">=</span><span class="p">{</span><span class="s2">"width_ratios"</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.35</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}</span>
+</span><span id="__span-8-3"><span class="p">)</span>
+</span><span id="__span-8-4"><span class="c1"># Plot kappa_s in units of 1e-9 N s/m.</span>
+</span><span id="__span-8-5"><span class="n">contours</span> <span class="o">=</span> <span class="n">ax_l</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span>
+</span><span id="__span-8-6">    <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">search_space</span><span class="p">[</span><span class="s2">"kappa_s"</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1e9</span><span class="p">,</span>
+</span><span id="__span-8-7">    <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">search_space</span><span class="p">[</span><span class="s2">"chi"</span><span class="p">]),</span>
+</span><span id="__span-8-8">    <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">landscape</span><span class="p">),</span>
+</span><span id="__span-8-9">    <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+</span><span id="__span-8-10">    <span class="n">cmap</span><span class="o">=</span><span class="s2">"Blues_r"</span><span class="p">,</span>
+</span><span id="__span-8-11"><span class="p">)</span>
+</span><span id="__span-8-12"><span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">contours</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax_l</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"log$_</span><span class="si">{10}</span><span class="s2">$ loss"</span><span class="p">)</span>
+</span><span id="__span-8-13"><span class="n">ax_l</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+</span><span id="__span-8-14"><span class="n">ax_l</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+</span><span id="__span-8-15"><span class="n">ax_l</span><span class="o">.</span><span class="n">minorticks_off</span><span class="p">()</span>
+</span><span id="__span-8-16"><span class="n">ax_l</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">,</span> <span class="s2">"5"</span><span class="p">,</span> <span class="s2">"10"</span><span class="p">,</span> <span class="s2">"20"</span><span class="p">,</span> <span class="s2">"40"</span><span class="p">])</span>
+</span><span id="__span-8-17"><span class="n">ax_l</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"0.1"</span><span class="p">,</span> <span class="s2">"0.2"</span><span class="p">,</span> <span class="s2">"0.5"</span><span class="p">,</span> <span class="s2">"1"</span><span class="p">,</span> <span class="s2">"1.5"</span><span class="p">])</span>
+</span><span id="__span-8-18"><span class="n">ax_l</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="__span-8-19"><span class="n">ax_l</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e9</span><span class="p">,</span> <span class="n">path</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"optimiser path"</span><span class="p">)</span>
+</span><span id="__span-8-20"><span class="n">ax_l</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+</span><span id="__span-8-21">    <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e9</span><span class="p">,</span>
+</span><span id="__span-8-22">    <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+</span><span id="__span-8-23">    <span class="s2">"o"</span><span class="p">,</span>
+</span><span id="__span-8-24">    <span class="n">ms</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
+</span><span id="__span-8-25">    <span class="n">mfc</span><span class="o">=</span><span class="s2">"none"</span><span class="p">,</span>
+</span><span id="__span-8-26">    <span class="n">mec</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span>
+</span><span id="__span-8-27">    <span class="n">mew</span><span class="o">=</span><span class="mf">1.6</span><span class="p">,</span>
+</span><span id="__span-8-28">    <span class="n">label</span><span class="o">=</span><span class="s2">"start"</span><span class="p">,</span>
+</span><span id="__span-8-29"><span class="p">)</span>
+</span><span id="__span-8-30"><span class="n">ax_l</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e9</span><span class="p">,</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="s2">"o"</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"fitted"</span><span class="p">)</span>
+</span><span id="__span-8-31"><span class="n">ax_l</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+</span><span id="__span-8-32">    <span class="n">TRUE</span><span class="p">[</span><span class="s2">"kappa_s"</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e9</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">[</span><span class="s2">"chi"</span><span class="p">],</span> <span class="s2">"+"</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">mew</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C3"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"true"</span>
+</span><span id="__span-8-33"><span class="p">)</span>
+</span><span id="__span-8-34"><span class="n">ax_l</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">"shell viscosity $\kappa_s$ ($10^{-9}$ N s/m)"</span><span class="p">)</span>
+</span><span id="__span-8-35"><span class="n">ax_l</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">"shell elasticity $\chi$ (N/m)"</span><span class="p">)</span>
+</span><span id="__span-8-36"><span class="n">ax_l</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Loss over three recordings"</span><span class="p">)</span>
+</span><span id="__span-8-37"><span class="n">ax_l</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"lower left"</span><span class="p">)</span>
+</span><span id="__span-8-38">
+</span><span id="__span-8-39"><span class="n">ax_h</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">loss_history</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">)</span>
+</span><span id="__span-8-40"><span class="n">ax_h</span><span class="o">.</span><span class="n">axhline</span><span class="p">((</span><span class="n">NOISE</span> <span class="o">/</span> <span class="n">R0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"0.55"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
+</span><span id="__span-8-41"><span class="n">ax_h</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+</span><span id="__span-8-42">    <span class="s2">"noise level"</span><span class="p">,</span>
+</span><span id="__span-8-43">    <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">loss_history</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">NOISE</span> <span class="o">/</span> <span class="n">R0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span>
+</span><span id="__span-8-44">    <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+</span><span id="__span-8-45">    <span class="n">textcoords</span><span class="o">=</span><span class="s2">"offset points"</span><span class="p">,</span>
+</span><span id="__span-8-46">    <span class="n">ha</span><span class="o">=</span><span class="s2">"right"</span><span class="p">,</span>
+</span><span id="__span-8-47">    <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
+</span><span id="__span-8-48">    <span class="n">color</span><span class="o">=</span><span class="s2">"0.4"</span><span class="p">,</span>
+</span><span id="__span-8-49">    <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+</span><span id="__span-8-50"><span class="p">)</span>
+</span><span id="__span-8-51"><span class="n">ax_h</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"step"</span><span class="p">)</span>
+</span><span id="__span-8-52"><span class="n">ax_h</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"loss (normalised MSE)"</span><span class="p">)</span>
+</span><span id="__span-8-53"><span class="n">ax_h</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Convergence"</span><span class="p">)</span>
+</span><span id="__span-8-54"><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="Look at the loss landscape" height="448" src="../media/10_fit_shell_parameters_1.png" width="1108" /></p>
+<p>The valley is longer along <code>chi</code> than along <code>kappa_s</code>, so these recordings pin down the viscosity more tightly than the elasticity. The path overshoots and circles the minimum before the decaying learning rate lets it settle.</p>
+<h2 id="compare-the-fitted-curves-with-the-data">Compare the fitted curves with the data<a class="headerlink" href="#compare-the-fitted-curves-with-the-data" title="Permanent link">&para;</a></h2>
+<p><code>fit.result</code> holds one <code>SimulationResult</code> per recording, simulated with the fitted parameters.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><span class="n">guess</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params0</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+</span><span id="__span-9-2"><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">PRESSURES</span><span class="p">),</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">3.4</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-9-3"><span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">fit</span><span class="o">.</span><span class="n">result</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+</span><span id="__span-9-4">    <span class="n">t_us</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">ts</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e6</span>
+</span><span id="__span-9-5">    <span class="n">initial</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span>
+</span><span id="__span-9-6">        <span class="o">*</span><span class="n">make_model</span><span class="p">(</span><span class="n">guess</span><span class="p">,</span> <span class="n">condition</span><span class="p">),</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SAVE_SPEC</span><span class="p">,</span> <span class="n">t_max</span><span class="o">=</span><span class="n">T_MAX</span>
+</span><span id="__span-9-7">    <span class="p">)</span><span class="o">.</span><span class="n">radius</span>
+</span><span id="__span-9-8">    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t_us</span><span class="p">,</span> <span class="n">condition</span><span class="p">[</span><span class="s2">"radius"</span><span class="p">]</span> <span class="o">/</span> <span class="n">R0</span><span class="p">,</span> <span class="s2">"."</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"0.55"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"measured"</span><span class="p">)</span>
+</span><span id="__span-9-9">    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t_us</span><span class="p">,</span> <span class="n">initial</span> <span class="o">/</span> <span class="n">R0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"initial guess"</span><span class="p">)</span>
+</span><span id="__span-9-10">    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t_us</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">R0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"fitted"</span><span class="p">)</span>
+</span><span id="__span-9-11">    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">condition</span><span class="p">[</span><span class="s1">'pressure'</span><span class="p">]</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> kPa"</span><span class="p">)</span>
+</span><span id="__span-9-12">    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"time (µs)"</span><span class="p">)</span>
+</span><span id="__span-9-13"><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">"$R/R_0$"</span><span class="p">)</span>
+</span><span id="__span-9-14"><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"upper left"</span><span class="p">)</span>
+</span><span id="__span-9-15"><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="Compare the fitted curves with the data" height="382" src="../media/10_fit_shell_parameters_2.png" width="1218" /></p>
+<h2 id="fit-other-kinds-of-data">Fit other kinds of data<a class="headerlink" href="#fit-other-kinds-of-data" title="Permanent link">&para;</a></h2>
+<p><code>loss_fn</code> receives the full simulation result, so the same recipe fits any differentiable quantity:</p>
+<ul>
+<li><strong>Hydrophone signals.</strong> Compute the radiated pressure inside <code>loss_fn</code> with an emission model such as <a href="https://imperial-nsb.github.io/jbubble/api/acoustics/#jbubble.acoustics.emission.IncompressibleMonopole"><code>IncompressibleMonopole</code></a>, and compare it with the measured signal with <a href="https://imperial-nsb.github.io/jbubble/api/metrics/#jbubble.metrics.normalised_mse_emission"><code>normalised_mse_emission</code></a>.</li>
+<li><strong>Camera frames at their own times.</strong> Interpolate the simulated radius onto the frame times with <code>jnp.interp</code>.</li>
+<li><strong>Per-bubble values.</strong> Fit each bubble's own <code>R0</code> with an array <code>Parameter</code> and an index in each condition.</li>
+</ul>
+<p>The <a href="https://imperial-nsb.github.io/jbubble/guide/fitting/">fitting guide</a> shows each of these, plus Levenberg-Marquardt fits and uncertainty estimates. To learn a whole surface-tension law instead of two numbers, see example 11.</p>
+<nav aria-label="Examples" class="jb-example-nav">
+<a class="jb-previous" href="../09_gradients_and_optimisation/">Previous: Gradients and optimisation</a>
+<a class="jb-gallery" href="../">All examples</a>
+<a class="jb-next" href="../11_learn_shell_law/">Next: Learn a shell law with a neural network</a>
+</nav>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Noninvasive Surgery &amp; Biopsy Laboratory
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog" role="status" aria-atomic="true">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.progress","navigation.sections","navigation.tabs","navigation.top","search.highlight","toc.follow"],"redirect":null,"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.67a597eb.min.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>

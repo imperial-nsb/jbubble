@@ -1,0 +1,2933 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Differentiable microbubble dynamics in JAX">
+      
+      
+      
+        <link rel="canonical" href="https://imperial-nsb.github.io/jbubble/api/solver/">
+      
+      
+        <link rel="prev" href="../acoustics/">
+      
+      
+        <link rel="next" href="../simulation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/logo.svg">
+      <meta name="generator" content="zensical-0.0.67">
+    
+    
+      
+        <title>solver - jbubble</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.4ae390e2.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.96d1a7e4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Serif+4:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Source Serif 4";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#solver" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="jbubble" class="md-header__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            jbubble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              solver
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/installation/" class="md-tabs__link">
+          
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/bubble_models/" class="md-tabs__link">
+          
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../examples/" class="md-tabs__link">
+        
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../citing/" class="md-tabs__link">
+        
+  
+  Citing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="jbubble" class="md-nav__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    jbubble
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Getting started
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Getting started
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Installation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Quickstart
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Guide
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Guide
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/bubble_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bubble models
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/pulse_shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pulse shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/solvers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Solvers and stiffness
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/sweeps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Parameter sweeps
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/jax_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  JAX tips
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Examples
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+            <label class="md-nav__title" for="__nav_5">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  API reference
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bubble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  bubble
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pulse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  pulse
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  acoustics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  solver
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  solver
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.solver.SaveSpec" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;SaveSpec
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SaveSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.solver.SaveSpec.build" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;build
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.solver.SolverConfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;SolverConfig
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SolverConfig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.solver.SolverConfig.stiff" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;stiff
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.solver.solve_eom" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;solve_eom
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solver-choice-and-tolerances" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Solver choice and tolerances
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  simulation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  metrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  utils
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Citing
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Changelog
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.solver.SaveSpec" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;SaveSpec
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SaveSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.solver.SaveSpec.build" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;build
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.solver.SolverConfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;SolverConfig
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SolverConfig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.solver.SolverConfig.stiff" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;stiff
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.solver.solve_eom" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;solve_eom
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solver-choice-and-tolerances" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Solver choice and tolerances
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/imperial-nsb/jbubble/edit/main/docs/api/solver.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="solver">solver<a class="headerlink" href="#solver" title="Permanent link">&para;</a></h1>
+<p>Low-level ODE integration primitives. Most users should prefer <code>run_simulation</code> from <code>jbubble.simulation</code>, which wraps these with post-processing. Use <code>solve_eom</code> directly when you need access to the raw <code>diffrax.Solution</code> object.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_eom</span><span class="p">,</span> <span class="n">SaveSpec</span><span class="p">,</span> <span class="n">SolverConfig</span>
+</span></code></pre></div>
+<hr />
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.solver.SaveSpec" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">SaveSpec</span>
+
+
+<a href="#jbubble.solver.SaveSpec" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><span class="nf">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">1024</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-external" title="equinox.Module" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module">Module</a></code></p>
+
+
+
+        <p>Specification for ODE output sampling.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_samples</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of evenly spaced time points to record. Default: <code>1024</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1024</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.solver.SaveSpec.build" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">build</span>
+
+
+<a href="#jbubble.solver.SaveSpec.build" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><span class="nf">build</span><span class="p">(</span><span class="n">t0</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="jax.Array" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array">Array</a></span><span class="p">,</span> <span class="n">t1</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="jax.Array" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array">Array</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="diffrax.SaveAt" href="https://docs.kidger.site/diffrax/api/saveat/#diffrax.SaveAt">SaveAt</a></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a <code>diffrax.SaveAt</code> with <code>num_samples</code> times from <code>t0</code> to <code>t1</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>t0</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="jax.Array" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array">Array</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>First saved time [s].</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>t1</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="jax.Array" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array">Array</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Last saved time [s].</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" title="diffrax.SaveAt" href="https://docs.kidger.site/diffrax/api/saveat/#diffrax.SaveAt">SaveAt</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Save specification for <code>diffrax.diffeqsolve</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/solver.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-72"><span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t0</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">t1</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">SaveAt</span><span class="p">:</span>
+</span><span id="__span-0-73"><span class="w">    </span><span class="sd">"""Return a `diffrax.SaveAt` with `num_samples` times from `t0` to `t1`.</span>
+</span><span id="__span-0-74">
+</span><span id="__span-0-75"><span class="sd">    Parameters</span>
+</span><span id="__span-0-76"><span class="sd">    ----------</span>
+</span><span id="__span-0-77"><span class="sd">    t0 : jax.Array</span>
+</span><span id="__span-0-78"><span class="sd">        First saved time [s].</span>
+</span><span id="__span-0-79"><span class="sd">    t1 : jax.Array</span>
+</span><span id="__span-0-80"><span class="sd">        Last saved time [s].</span>
+</span><span id="__span-0-81">
+</span><span id="__span-0-82"><span class="sd">    Returns</span>
+</span><span id="__span-0-83"><span class="sd">    -------</span>
+</span><span id="__span-0-84"><span class="sd">    diffrax.SaveAt</span>
+</span><span id="__span-0-85"><span class="sd">        Save specification for `diffrax.diffeqsolve`.</span>
+</span><span id="__span-0-86"><span class="sd">    """</span>
+</span><span id="__span-0-87">    <span class="n">ts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span><span class="p">)</span>
+</span><span id="__span-0-88">    <span class="k">return</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">SaveAt</span><span class="p">(</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+</span></code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.solver.SolverConfig" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">SolverConfig</span>
+
+
+<a href="#jbubble.solver.SolverConfig" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><span class="nf">SolverConfig</span><span class="p">(</span>
+</span><span id="__span-0-2">    <span class="n">solver</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="diffrax.AbstractSolver" href="https://docs.kidger.site/diffrax/api/solvers/abstract_solvers/#diffrax.AbstractSolver">AbstractSolver</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="diffrax.Dopri5" href="https://docs.kidger.site/diffrax/api/solvers/ode_solvers/#diffrax.Dopri5">Dopri5</a></span><span class="p">(),</span>
+</span><span id="__span-0-3">    <span class="n">stepsize_controller</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="diffrax.AbstractStepSizeController" href="https://docs.kidger.site/diffrax/api/stepsize_controller/#diffrax.AbstractStepSizeController">AbstractStepSizeController</a></span> <span class="o">=</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">PIDController</span><span class="p">(</span>
+</span><span id="__span-0-4">        <span class="n">rtol</span><span class="o">=</span><span class="n">_DEFAULT_RTOL</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">_DEFAULT_ATOL</span>
+</span><span id="__span-0-5">    <span class="p">),</span>
+</span><span id="__span-0-6">    <span class="n">dt0</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">1e-09</span><span class="p">,</span>
+</span><span id="__span-0-7">    <span class="n">max_steps</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">100000</span><span class="p">,</span>
+</span><span id="__span-0-8"><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-external" title="equinox.Module" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module">Module</a></code></p>
+
+
+
+        <p>Numerical integration settings for <a class="autorefs autorefs-internal" title="            solve_eom" href="./#jbubble.solver.solve_eom"><code>solve_eom</code></a>.</p>
+<p>The defaults suit microbubbles in water: an explicit fifth-order
+Runge-Kutta method (<code>diffrax.Dopri5</code>) with an adaptive step size. For
+stiff problems, use <a class="autorefs autorefs-internal" title="            stiff
+
+
+  
+      classmethod
+  " href="./#jbubble.solver.SolverConfig.stiff"><code>SolverConfig.stiff</code></a>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>solver</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="diffrax.AbstractSolver" href="https://docs.kidger.site/diffrax/api/solvers/abstract_solvers/#diffrax.AbstractSolver">AbstractSolver</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>ODE solver. Default: <code>diffrax.Dopri5()</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="diffrax.Dopri5" href="https://docs.kidger.site/diffrax/api/solvers/ode_solvers/#diffrax.Dopri5">Dopri5</a>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>stepsize_controller</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="diffrax.AbstractStepSizeController" href="https://docs.kidger.site/diffrax/api/stepsize_controller/#diffrax.AbstractStepSizeController">AbstractStepSizeController</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Step-size controller. Default:
+<code>diffrax.PIDController(rtol=1e-6, atol=1e-10)</code>. The tolerances apply
+to the scaled state of <a class="autorefs autorefs-internal" title="            solve_eom" href="./#jbubble.solver.solve_eom"><code>solve_eom</code></a>, so
+<code>atol=1e-10</code> means <span class="arithmatex">\(10^{-10} R_0\)</span> for the radius and
+<span class="arithmatex">\(10^{-10}\sqrt{P_\text{amb}/\rho_L}\)</span>, about <span class="arithmatex">\(10^{-9}\)</span> m/s in water,
+for the wall velocity.</p>
+              </div>
+            </td>
+            <td>
+                  <code>diffrax.PIDController(rtol=_DEFAULT_RTOL, atol=_DEFAULT_ATOL)</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dt0</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial step size [s]. Default: <code>1e-9</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-09</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_steps</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum number of solver steps per integration. Default: <code>100_000</code>.
+A solve that needs more steps stops early and reports
+<code>converged = False</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>100000</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p><strong>Choosing tolerances.</strong> At the defaults, a microbubble driven at
+100 kPa has radius errors of <span class="arithmatex">\(10^{-6}\)</span> to <span class="arithmatex">\(10^{-5} R_0\)</span> and relative
+gradient errors of <span class="arithmatex">\(10^{-5}\)</span> to <span class="arithmatex">\(10^{-3}\)</span>. The kink in a Marmottant
+surface-tension law is the hardest case, with radius errors up to about
+<span class="arithmatex">\(10^{-3} R_0\)</span> and gradient errors of a few percent, or about 12 % for the
+peak radius of the <code>lipid_bubble</code> preset with respect to <code>kappa_s</code>. Use
+tighter tolerances when you fit a lipid shell. Through an
+inertial collapse (<span class="arithmatex">\(R_\text{max}/R_0 \approx 4\)</span>), both errors are about
+<span class="arithmatex">\(10^{-3}\)</span> to <span class="arithmatex">\(10^{-2}\)</span>. <code>rtol=1e-8, atol=1e-12</code> makes them 100 to 1000
+times smaller for two to three times as many steps. Looser tolerances
+can make gradients through a collapse wrong by more than 100 %.</p>
+<p><code>rtol</code> sets the accuracy of most solves. <code>atol</code> matters where a scaled
+state component is far below 1: the wall velocity of a small or weakly
+driven bubble, which can be millimetres per second. The default
+velocity tolerance, about <span class="arithmatex">\(10^{-9}\)</span> m/s, matches jbubble 0.1. Unlike in
+0.1, where <code>atol=1e-9</code> applied in metres, the radius tolerance is
+relative to <span class="arithmatex">\(R_0\)</span>, so a collapsing microbubble no longer has a loose
+radius tolerance: through an inertial collapse, 0.1's gradients could be
+off by 50 % or more.</p>
+<p><strong>Stiffness.</strong> A bubble is stiff when its fastest relaxation rate is
+much larger than the driving angular frequency <span class="arithmatex">\(\omega\)</span>. For a viscous
+liquid and a lipid shell of dilatational viscosity <span class="arithmatex">\(\kappa_s\)</span>, that rate
+is about</p>
+<div class="arithmatex">\[
+\lambda = \frac{4\mu + 4\kappa_s/R_0}{\rho_L R_0^2},
+\]</div>
+<p>divided by <span class="arithmatex">\(1 + (4\mu + 4\kappa_s/R_0)/(\rho_L c_L R_0)\)</span> for
+Keller-Miksis. The problem is stiff when <span class="arithmatex">\(\lambda/\omega \gtrsim 100\)</span>.
+For example, a lipid shell with <span class="arithmatex">\(\kappa_s = 7.5 \times 10^{-9}\)</span> kg/s
+driven at 5 MHz gives <span class="arithmatex">\(\lambda/\omega \approx 850\)</span> at 50 nm, 320 at
+100 nm, and 150 at 150 nm, and a 300 nm bubble in a 0.05 Pa s liquid at
+2 MHz gives 120. A 2 µm lipid-coated microbubble at 1 MHz gives 0.8.</p>
+<p>On a stiff problem, <code>Dopri5</code> steps at the edge of its stability region:
+it needs hundreds to thousands of steps per driving period, and
+although the radius stays accurate, at the default tolerances the
+gradient through the solve can be wrong by orders of magnitude, or NaN,
+even when the solve reports <code>converged = True</code>: a 20 nm lipid bubble
+driven at 5 MHz gives a NaN gradient. Use
+<a class="autorefs autorefs-internal" title="            stiff
+
+
+  
+      classmethod
+  " href="./#jbubble.solver.SolverConfig.stiff"><code>stiff</code></a> there.</p>
+<p><strong>Long integrations.</strong> <code>Dopri5</code> needs about 60 to 100 steps, accepted
+and rejected, per driving period for a microbubble in water, so
+<code>max_steps=100_000</code> covers about a thousand periods. Raise it for
+longer pulses. A larger <code>max_steps</code> costs neither memory nor compile
+time under <code>jax.grad</code>.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="jbubble.solver.SolverConfig.stiff" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">stiff</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#jbubble.solver.SolverConfig.stiff" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><span class="nf">stiff</span><span class="p">(</span>
+</span><span id="__span-0-2">    <span class="o">*</span><span class="p">,</span>
+</span><span id="__span-0-3">    <span class="n">rtol</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">1e-06</span><span class="p">,</span>
+</span><span id="__span-0-4">    <span class="n">atol</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
+</span><span id="__span-0-5">    <span class="n">dt0</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">1e-09</span><span class="p">,</span>
+</span><span id="__span-0-6">    <span class="n">max_steps</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">100000</span><span class="p">,</span>
+</span><span id="__span-0-7"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            SolverConfig (jbubble.solver.SolverConfig)" href="./#jbubble.solver.SolverConfig">SolverConfig</a></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return settings for stiff problems: an implicit <code>Kvaerno5</code> solver.</p>
+<p>Use this configuration for nanobubbles, sub-micron bubbles in
+viscous liquids, and other stiff problems (see the Notes of
+<a class="autorefs autorefs-internal" title="            SolverConfig" href="./#jbubble.solver.SolverConfig"><code>SolverConfig</code></a>). It returns</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="n">SolverConfig</span><span class="p">(</span>
+</span><span id="__span-0-2">    <span class="n">solver</span><span class="o">=</span><span class="n">diffrax</span><span class="o">.</span><span class="n">Kvaerno5</span><span class="p">(</span>
+</span><span id="__span-0-3">        <span class="n">root_finder</span><span class="o">=</span><span class="n">optimistix</span><span class="o">.</span><span class="n">Chord</span><span class="p">(</span>
+</span><span id="__span-0-4">            <span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">atol</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">),</span> <span class="n">norm</span><span class="o">=</span><span class="n">optimistix</span><span class="o">.</span><span class="n">rms_norm</span>
+</span><span id="__span-0-5">        <span class="p">)</span>
+</span><span id="__span-0-6">    <span class="p">),</span>
+</span><span id="__span-0-7">    <span class="n">stepsize_controller</span><span class="o">=</span><span class="n">diffrax</span><span class="o">.</span><span class="n">PIDController</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">),</span>
+</span><span id="__span-0-8">    <span class="n">dt0</span><span class="o">=</span><span class="n">dt0</span><span class="p">,</span>
+</span><span id="__span-0-9">    <span class="n">max_steps</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
+</span><span id="__span-0-10"><span class="p">)</span>
+</span></code></pre></div>
+<p>Two choices make the implicit solver reliable:</p>
+<ul>
+<li><strong>The <code>Chord</code> root finder.</strong> <code>Kvaerno5</code>'s default root finder,
+  <code>diffrax.VeryChord</code>, reports a Newton iteration that converges
+  slowly as diverged in diffrax 0.7.2 with optimistix 0.1.0, so the
+  solver rejects many steps: on a moderately stiff or a non-stiff
+  problem it takes 6 to 13 times more steps than with <code>Chord</code>.
+  <a href="https://github.com/patrick-kidger/diffrax/pull/754">Diffrax pull request 754</a>
+  fixes this, but no release contains it yet.</li>
+<li><strong>A floor on the Newton tolerance.</strong> <code>Kvaerno5</code> solves for the
+  derivative of the scaled state at each stage, and <code>Chord</code> compares
+  the residual of those equations, in units of the scaled state per
+  second, with its absolute tolerance alone. A nanobubble's
+  right-hand side is a sum of large terms that cancel, so roundoff
+  keeps that residual above about <code>1e-8</code>. With a smaller
+  tolerance, the solver rejects most steps of a 10 to 40 nm bubble
+  and stops at <code>max_steps</code>. The Newton iterations therefore use an
+  absolute tolerance of at least <code>1e-6</code>.</li>
+</ul>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>rtol</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Relative tolerance of the step-size controller and of the Newton
+iterations. Default: <code>1e-6</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-06</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>atol</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Absolute tolerance of the step-size controller, on the scaled
+state (see <a class="autorefs autorefs-internal" title="            SolverConfig" href="./#jbubble.solver.SolverConfig"><code>SolverConfig</code></a>).
+Default: <code>1e-10</code>. The Newton iterations use <code>max(atol, 1e-6)</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-10</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dt0</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial step size [s]. Default: <code>1e-9</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-09</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_steps</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum number of solver steps. Default: <code>100_000</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>100000</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            SolverConfig (jbubble.solver.SolverConfig)" href="./#jbubble.solver.SolverConfig">SolverConfig</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Implicit-solver settings.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>On a stiff problem, <code>Kvaerno5</code> takes 5 to 50 times fewer steps than
+<code>Dopri5</code>, or converges where <code>Dopri5</code> reaches <code>max_steps</code>, and its
+gradients are accurate. For 20 to 150 nm lipid bubbles at the
+default tolerances, the gradient of a loss on the deviation
+<span class="arithmatex">\(R/R_0 - 1\)</span> with respect to the shell viscosity has a relative error
+of about <span class="arithmatex">\(10^{-5}\)</span> to <span class="arithmatex">\(10^{-4}\)</span>. A loss dominated by the mean radius,
+such as one on <span class="arithmatex">\(R/R_0\)</span>, has larger errors: about <span class="arithmatex">\(10^{-3}\)</span> at 20 nm
+and <span class="arithmatex">\(10^{-2}\)</span> at 10 nm. On a problem that isn't stiff, it takes
+about as many steps as <code>Dopri5</code>, with similar errors, but runs 5 to
+10 times longer. It also compiles more slowly: about 2 to 6 s for a
+solve, against about 1 s or less for <code>Dopri5</code>.</p>
+<p>To change the tolerances, call <code>stiff</code> again with new <code>rtol</code> and
+<code>atol</code>, rather than replacing <code>stepsize_controller</code>, so that the
+Newton tolerances follow.</p>
+<p><code>jax.jit</code>, <code>jax.vmap</code>, and <code>jax.grad</code> work with this configuration.
+<code>jax.pmap</code> doesn't: with diffrax 0.7.2, an implicit solve under
+<code>jax.pmap</code> raises <code>ValueError: pytree does not match out_structure</code>.</p>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverConfig</span><span class="p">,</span> <span class="n">run_simulation</span>
+</span><span id="__span-0-2">
+</span><span id="__span-0-3"><span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">SolverConfig</span><span class="o">.</span><span class="n">stiff</span><span class="p">())</span>
+</span></code></pre></div>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/solver.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-191"><span class="nd">@classmethod</span>
+</span><span id="__span-0-192"><span class="k">def</span><span class="w"> </span><span class="nf">stiff</span><span class="p">(</span>
+</span><span id="__span-0-193">    <span class="bp">cls</span><span class="p">,</span>
+</span><span id="__span-0-194">    <span class="o">*</span><span class="p">,</span>
+</span><span id="__span-0-195">    <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_DEFAULT_RTOL</span><span class="p">,</span>
+</span><span id="__span-0-196">    <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_DEFAULT_ATOL</span><span class="p">,</span>
+</span><span id="__span-0-197">    <span class="n">dt0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-9</span><span class="p">,</span>
+</span><span id="__span-0-198">    <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_DEFAULT_MAX_STEPS</span><span class="p">,</span>
+</span><span id="__span-0-199"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverConfig</span><span class="p">:</span>
+</span><span id="__span-0-200"><span class="w">    </span><span class="sa">r</span><span class="sd">"""Return settings for stiff problems: an implicit `Kvaerno5` solver.</span>
+</span><span id="__span-0-201">
+</span><span id="__span-0-202"><span class="sd">    Use this configuration for nanobubbles, sub-micron bubbles in</span>
+</span><span id="__span-0-203"><span class="sd">    viscous liquids, and other stiff problems (see the Notes of</span>
+</span><span id="__span-0-204"><span class="sd">    [`SolverConfig`][jbubble.solver.SolverConfig]). It returns</span>
+</span><span id="__span-0-205">
+</span><span id="__span-0-206"><span class="sd">    ```python</span>
+</span><span id="__span-0-207"><span class="sd">    SolverConfig(</span>
+</span><span id="__span-0-208"><span class="sd">        solver=diffrax.Kvaerno5(</span>
+</span><span id="__span-0-209"><span class="sd">            root_finder=optimistix.Chord(</span>
+</span><span id="__span-0-210"><span class="sd">                rtol=rtol, atol=max(atol, 1e-6), norm=optimistix.rms_norm</span>
+</span><span id="__span-0-211"><span class="sd">            )</span>
+</span><span id="__span-0-212"><span class="sd">        ),</span>
+</span><span id="__span-0-213"><span class="sd">        stepsize_controller=diffrax.PIDController(rtol=rtol, atol=atol),</span>
+</span><span id="__span-0-214"><span class="sd">        dt0=dt0,</span>
+</span><span id="__span-0-215"><span class="sd">        max_steps=max_steps,</span>
+</span><span id="__span-0-216"><span class="sd">    )</span>
+</span><span id="__span-0-217"><span class="sd">    ```</span>
+</span><span id="__span-0-218">
+</span><span id="__span-0-219"><span class="sd">    Two choices make the implicit solver reliable:</span>
+</span><span id="__span-0-220">
+</span><span id="__span-0-221"><span class="sd">    - **The `Chord` root finder.** `Kvaerno5`'s default root finder,</span>
+</span><span id="__span-0-222"><span class="sd">      `diffrax.VeryChord`, reports a Newton iteration that converges</span>
+</span><span id="__span-0-223"><span class="sd">      slowly as diverged in diffrax 0.7.2 with optimistix 0.1.0, so the</span>
+</span><span id="__span-0-224"><span class="sd">      solver rejects many steps: on a moderately stiff or a non-stiff</span>
+</span><span id="__span-0-225"><span class="sd">      problem it takes 6 to 13 times more steps than with `Chord`.</span>
+</span><span id="__span-0-226"><span class="sd">      [Diffrax pull request 754](https://github.com/patrick-kidger/diffrax/pull/754)</span>
+</span><span id="__span-0-227"><span class="sd">      fixes this, but no release contains it yet.</span>
+</span><span id="__span-0-228"><span class="sd">    - **A floor on the Newton tolerance.** `Kvaerno5` solves for the</span>
+</span><span id="__span-0-229"><span class="sd">      derivative of the scaled state at each stage, and `Chord` compares</span>
+</span><span id="__span-0-230"><span class="sd">      the residual of those equations, in units of the scaled state per</span>
+</span><span id="__span-0-231"><span class="sd">      second, with its absolute tolerance alone. A nanobubble's</span>
+</span><span id="__span-0-232"><span class="sd">      right-hand side is a sum of large terms that cancel, so roundoff</span>
+</span><span id="__span-0-233"><span class="sd">      keeps that residual above about `1e-8`. With a smaller</span>
+</span><span id="__span-0-234"><span class="sd">      tolerance, the solver rejects most steps of a 10 to 40 nm bubble</span>
+</span><span id="__span-0-235"><span class="sd">      and stops at `max_steps`. The Newton iterations therefore use an</span>
+</span><span id="__span-0-236"><span class="sd">      absolute tolerance of at least `1e-6`.</span>
+</span><span id="__span-0-237">
+</span><span id="__span-0-238"><span class="sd">    Parameters</span>
+</span><span id="__span-0-239"><span class="sd">    ----------</span>
+</span><span id="__span-0-240"><span class="sd">    rtol : float</span>
+</span><span id="__span-0-241"><span class="sd">        Relative tolerance of the step-size controller and of the Newton</span>
+</span><span id="__span-0-242"><span class="sd">        iterations. Default: `1e-6`.</span>
+</span><span id="__span-0-243"><span class="sd">    atol : float</span>
+</span><span id="__span-0-244"><span class="sd">        Absolute tolerance of the step-size controller, on the scaled</span>
+</span><span id="__span-0-245"><span class="sd">        state (see [`SolverConfig`][jbubble.solver.SolverConfig]).</span>
+</span><span id="__span-0-246"><span class="sd">        Default: `1e-10`. The Newton iterations use `max(atol, 1e-6)`.</span>
+</span><span id="__span-0-247"><span class="sd">    dt0 : float</span>
+</span><span id="__span-0-248"><span class="sd">        Initial step size [s]. Default: `1e-9`.</span>
+</span><span id="__span-0-249"><span class="sd">    max_steps : int</span>
+</span><span id="__span-0-250"><span class="sd">        Maximum number of solver steps. Default: `100_000`.</span>
+</span><span id="__span-0-251">
+</span><span id="__span-0-252"><span class="sd">    Returns</span>
+</span><span id="__span-0-253"><span class="sd">    -------</span>
+</span><span id="__span-0-254"><span class="sd">    SolverConfig</span>
+</span><span id="__span-0-255"><span class="sd">        Implicit-solver settings.</span>
+</span><span id="__span-0-256">
+</span><span id="__span-0-257"><span class="sd">    Notes</span>
+</span><span id="__span-0-258"><span class="sd">    -----</span>
+</span><span id="__span-0-259"><span class="sd">    On a stiff problem, `Kvaerno5` takes 5 to 50 times fewer steps than</span>
+</span><span id="__span-0-260"><span class="sd">    `Dopri5`, or converges where `Dopri5` reaches `max_steps`, and its</span>
+</span><span id="__span-0-261"><span class="sd">    gradients are accurate. For 20 to 150 nm lipid bubbles at the</span>
+</span><span id="__span-0-262"><span class="sd">    default tolerances, the gradient of a loss on the deviation</span>
+</span><span id="__span-0-263"><span class="sd">    $R/R_0 - 1$ with respect to the shell viscosity has a relative error</span>
+</span><span id="__span-0-264"><span class="sd">    of about $10^{-5}$ to $10^{-4}$. A loss dominated by the mean radius,</span>
+</span><span id="__span-0-265"><span class="sd">    such as one on $R/R_0$, has larger errors: about $10^{-3}$ at 20 nm</span>
+</span><span id="__span-0-266"><span class="sd">    and $10^{-2}$ at 10 nm. On a problem that isn't stiff, it takes</span>
+</span><span id="__span-0-267"><span class="sd">    about as many steps as `Dopri5`, with similar errors, but runs 5 to</span>
+</span><span id="__span-0-268"><span class="sd">    10 times longer. It also compiles more slowly: about 2 to 6 s for a</span>
+</span><span id="__span-0-269"><span class="sd">    solve, against about 1 s or less for `Dopri5`.</span>
+</span><span id="__span-0-270">
+</span><span id="__span-0-271"><span class="sd">    To change the tolerances, call `stiff` again with new `rtol` and</span>
+</span><span id="__span-0-272"><span class="sd">    `atol`, rather than replacing `stepsize_controller`, so that the</span>
+</span><span id="__span-0-273"><span class="sd">    Newton tolerances follow.</span>
+</span><span id="__span-0-274">
+</span><span id="__span-0-275"><span class="sd">    `jax.jit`, `jax.vmap`, and `jax.grad` work with this configuration.</span>
+</span><span id="__span-0-276"><span class="sd">    `jax.pmap` doesn't: with diffrax 0.7.2, an implicit solve under</span>
+</span><span id="__span-0-277"><span class="sd">    `jax.pmap` raises `ValueError: pytree does not match out_structure`.</span>
+</span><span id="__span-0-278">
+</span><span id="__span-0-279"><span class="sd">    Examples</span>
+</span><span id="__span-0-280"><span class="sd">    --------</span>
+</span><span id="__span-0-281"><span class="sd">    ```python</span>
+</span><span id="__span-0-282"><span class="sd">    from jbubble import SolverConfig, run_simulation</span>
+</span><span id="__span-0-283">
+</span><span id="__span-0-284"><span class="sd">    result = run_simulation(eom, pulse, config=SolverConfig.stiff())</span>
+</span><span id="__span-0-285"><span class="sd">    ```</span>
+</span><span id="__span-0-286"><span class="sd">    """</span>
+</span><span id="__span-0-287">    <span class="n">root_finder</span> <span class="o">=</span> <span class="n">optx</span><span class="o">.</span><span class="n">Chord</span><span class="p">(</span>
+</span><span id="__span-0-288">        <span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">atol</span><span class="p">,</span> <span class="n">_NEWTON_ATOL_FLOOR</span><span class="p">),</span> <span class="n">norm</span><span class="o">=</span><span class="n">optx</span><span class="o">.</span><span class="n">rms_norm</span>
+</span><span id="__span-0-289">    <span class="p">)</span>
+</span><span id="__span-0-290">    <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+</span><span id="__span-0-291">        <span class="n">solver</span><span class="o">=</span><span class="n">diffrax</span><span class="o">.</span><span class="n">Kvaerno5</span><span class="p">(</span><span class="n">root_finder</span><span class="o">=</span><span class="n">root_finder</span><span class="p">),</span>
+</span><span id="__span-0-292">        <span class="n">stepsize_controller</span><span class="o">=</span><span class="n">diffrax</span><span class="o">.</span><span class="n">PIDController</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">),</span>
+</span><span id="__span-0-293">        <span class="n">dt0</span><span class="o">=</span><span class="n">dt0</span><span class="p">,</span>
+</span><span id="__span-0-294">        <span class="n">max_steps</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
+</span><span id="__span-0-295">    <span class="p">)</span>
+</span></code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="jbubble.solver.solve_eom" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">solve_eom</span>
+
+
+<a href="#jbubble.solver.solve_eom" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><span class="nf">solve_eom</span><span class="p">(</span>
+</span><span id="__span-0-2">    <span class="n">eom</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            EquationOfMotion (jbubble.bubble.eom.EquationOfMotion)" href="../bubble/#jbubble.bubble.eom.EquationOfMotion">EquationOfMotion</a></span><span class="p">,</span>
+</span><span id="__span-0-3">    <span class="n">pulse</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Pulse (jbubble.pulse.base.Pulse)" href="../pulse/#jbubble.pulse.base.Pulse">Pulse</a></span><span class="p">,</span>
+</span><span id="__span-0-4">    <span class="o">*</span><span class="p">,</span>
+</span><span id="__span-0-5">    <span class="n">y0</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-6">    <span class="n">t_max</span><span class="p">:</span> <span class="n"><span title="jbubble.solver.ArrayLike">ArrayLike</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-7">    <span class="n">save_spec</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            SaveSpec (jbubble.solver.SaveSpec)" href="./#jbubble.solver.SaveSpec">SaveSpec</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-8">    <span class="n">config</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            SolverConfig (jbubble.solver.SolverConfig)" href="./#jbubble.solver.SolverConfig">SolverConfig</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-9">    <span class="n">adjoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="diffrax.AbstractAdjoint" href="https://docs.kidger.site/diffrax/api/adjoints/#diffrax.AbstractAdjoint">AbstractAdjoint</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-10">    <span class="n">progress</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-11"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="diffrax.Solution" href="https://docs.kidger.site/diffrax/api/solution/#diffrax.Solution">Solution</a></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Solve the bubble dynamics for an equation of motion.</p>
+<p>Integrates the initial value problem</p>
+<div class="arithmatex">\[
+\frac{\mathrm{d}\,\text{state}}{\mathrm{d}t}
+    = \text{eom}(t, \text{state}, \text{pulse}),
+\qquad \text{state}(0) = y_0,
+\qquad 0 \le t \le t_\text{max}.
+\]</div>
+<p>The solver works on the scaled state <code>state / eom.state_scale(y0)</code>, so
+the tolerances in <code>config</code> are relative to <code>R0</code> for the radius and to
+<span class="arithmatex">\(\sqrt{P_\text{amb}/\rho_L}\)</span> for the wall velocity, and returns the
+solution in SI units. It evaluates the equation of motion only at
+admissible states (see
+<a class="autorefs autorefs-internal" title="            is_admissible" href="../bubble/#jbubble.bubble.eom.EquationOfMotion.is_admissible"><code>EquationOfMotion.is_admissible</code></a>);
+elsewhere the right-hand side is NaN, so the adaptive solver rejects
+the trial step. Rejected steps never enter the solution, so the guard
+keeps gradients finite without changing the forward solve: with an
+explicit solver, such as the default <code>Dopri5</code>, the solution is the same,
+bit for bit, as without the guard. With an implicit solver, XLA can
+round the Newton iterations differently in the last bit, so the
+solution agrees to within the solver tolerance.</p>
+<p>The integration doesn't raise when the solver fails (<code>throw=False</code>);
+check <code>diffrax.is_successful</code> on the solution's <code>result</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>eom</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            EquationOfMotion (jbubble.bubble.eom.EquationOfMotion)" href="../bubble/#jbubble.bubble.eom.EquationOfMotion">EquationOfMotion</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Assembled equation of motion, such as
+<a class="autorefs autorefs-internal" title="            KellerMiksis" href="../bubble/#jbubble.bubble.eom.KellerMiksis"><code>KellerMiksis</code></a>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pulse</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            Pulse (jbubble.pulse.base.Pulse)" href="../pulse/#jbubble.pulse.base.Pulse">Pulse</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Driving acoustic pulse. An adaptive step-size controller steps to
+every time in
+<a class="autorefs autorefs-internal" title="            window_edges
+
+
+  
+      property
+  " href="../pulse/#jbubble.pulse.base.Pulse.window_edges"><code>pulse.window_edges</code></a>, so
+it can't step over a pulse that starts late.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>y0</code>
+            </td>
+            <td>
+                  <code><span title="BubbleState">BubbleState</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial state in SI units. <code>None</code> uses <code>eom.initial_state()</code>. A zero
+<code>R0</code> or <code>P_gas0</code>, the <code>BubbleState</code> defaults, means "unset":
+<code>solve_eom</code> fills it from the equation of motion, so
+<code>BubbleState(R=1.2 * R0)</code> starts at rest at 1.2 times the equilibrium
+radius. <a class="autorefs autorefs-internal" title="            initial_state" href="../bubble/#jbubble.bubble.eom.EquationOfMotion.initial_state"><code>EquationOfMotion.initial_state</code></a>
+with <code>R=</code> and <code>R_dot=</code> builds the same state explicitly. For an
+empty cavity, set <code>P_gas0</code> to a tiny positive value, such as <code>1e-12</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>t_max</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Integration end time [s]. <code>None</code> uses <code>pulse.t_end</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>save_spec</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            SaveSpec (jbubble.solver.SaveSpec)" href="./#jbubble.solver.SaveSpec">SaveSpec</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Output sampling specification. <code>None</code> uses 1024 evenly spaced time
+points.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            SolverConfig (jbubble.solver.SolverConfig)" href="./#jbubble.solver.SolverConfig">SolverConfig</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Numerical integration settings. <code>None</code> uses
+<a class="autorefs autorefs-internal" title="            SolverConfig" href="./#jbubble.solver.SolverConfig"><code>SolverConfig()</code></a>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>adjoint</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="diffrax.AbstractAdjoint" href="https://docs.kidger.site/diffrax/api/adjoints/#diffrax.AbstractAdjoint">AbstractAdjoint</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>How <code>jax.grad</code> differentiates through the solve. <code>None</code> uses
+<code>diffrax.RecursiveCheckpointAdjoint()</code>, which gives the exact
+gradient of the discretised solution. Pass <code>diffrax.ForwardMode()</code>
+to use <code>jax.jacfwd</code>, for example in a Levenberg-Marquardt fit.
+diffrax advises against <code>diffrax.BacksolveAdjoint</code>, whose gradients
+are approximate.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>progress</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to show a text progress meter. Default: <code>False</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" title="diffrax.Solution" href="https://docs.kidger.site/diffrax/api/solution/#diffrax.Solution">Solution</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Solution object with <code>ts</code>, and <code>ys</code> in SI units.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/solver.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-362"><span class="k">def</span><span class="w"> </span><span class="nf">solve_eom</span><span class="p">(</span>
+</span><span id="__span-0-363">    <span class="n">eom</span><span class="p">:</span> <span class="n">EquationOfMotion</span><span class="p">,</span>
+</span><span id="__span-0-364">    <span class="n">pulse</span><span class="p">:</span> <span class="n">Pulse</span><span class="p">,</span>
+</span><span id="__span-0-365">    <span class="o">*</span><span class="p">,</span>
+</span><span id="__span-0-366">    <span class="n">y0</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-367">    <span class="n">t_max</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-368">    <span class="n">save_spec</span><span class="p">:</span> <span class="n">SaveSpec</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-369">    <span class="n">config</span><span class="p">:</span> <span class="n">SolverConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-370">    <span class="n">adjoint</span><span class="p">:</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">AbstractAdjoint</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-371">    <span class="n">progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-372"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">Solution</span><span class="p">:</span>
+</span><span id="__span-0-373"><span class="w">    </span><span class="sa">r</span><span class="sd">"""Solve the bubble dynamics for an equation of motion.</span>
+</span><span id="__span-0-374">
+</span><span id="__span-0-375"><span class="sd">    Integrates the initial value problem</span>
+</span><span id="__span-0-376">
+</span><span id="__span-0-377"><span class="sd">    $$</span>
+</span><span id="__span-0-378"><span class="sd">    \frac{\mathrm{d}\,\text{state}}{\mathrm{d}t}</span>
+</span><span id="__span-0-379"><span class="sd">        = \text{eom}(t, \text{state}, \text{pulse}),</span>
+</span><span id="__span-0-380"><span class="sd">    \qquad \text{state}(0) = y_0,</span>
+</span><span id="__span-0-381"><span class="sd">    \qquad 0 \le t \le t_\text{max}.</span>
+</span><span id="__span-0-382"><span class="sd">    $$</span>
+</span><span id="__span-0-383">
+</span><span id="__span-0-384"><span class="sd">    The solver works on the scaled state `state / eom.state_scale(y0)`, so</span>
+</span><span id="__span-0-385"><span class="sd">    the tolerances in `config` are relative to `R0` for the radius and to</span>
+</span><span id="__span-0-386"><span class="sd">    $\sqrt{P_\text{amb}/\rho_L}$ for the wall velocity, and returns the</span>
+</span><span id="__span-0-387"><span class="sd">    solution in SI units. It evaluates the equation of motion only at</span>
+</span><span id="__span-0-388"><span class="sd">    admissible states (see</span>
+</span><span id="__span-0-389"><span class="sd">    [`EquationOfMotion.is_admissible`][jbubble.bubble.eom.EquationOfMotion.is_admissible]);</span>
+</span><span id="__span-0-390"><span class="sd">    elsewhere the right-hand side is NaN, so the adaptive solver rejects</span>
+</span><span id="__span-0-391"><span class="sd">    the trial step. Rejected steps never enter the solution, so the guard</span>
+</span><span id="__span-0-392"><span class="sd">    keeps gradients finite without changing the forward solve: with an</span>
+</span><span id="__span-0-393"><span class="sd">    explicit solver, such as the default `Dopri5`, the solution is the same,</span>
+</span><span id="__span-0-394"><span class="sd">    bit for bit, as without the guard. With an implicit solver, XLA can</span>
+</span><span id="__span-0-395"><span class="sd">    round the Newton iterations differently in the last bit, so the</span>
+</span><span id="__span-0-396"><span class="sd">    solution agrees to within the solver tolerance.</span>
+</span><span id="__span-0-397">
+</span><span id="__span-0-398"><span class="sd">    The integration doesn't raise when the solver fails (`throw=False`);</span>
+</span><span id="__span-0-399"><span class="sd">    check `diffrax.is_successful` on the solution's `result`.</span>
+</span><span id="__span-0-400">
+</span><span id="__span-0-401"><span class="sd">    Parameters</span>
+</span><span id="__span-0-402"><span class="sd">    ----------</span>
+</span><span id="__span-0-403"><span class="sd">    eom : EquationOfMotion</span>
+</span><span id="__span-0-404"><span class="sd">        Assembled equation of motion, such as</span>
+</span><span id="__span-0-405"><span class="sd">        [`KellerMiksis`][jbubble.bubble.eom.KellerMiksis].</span>
+</span><span id="__span-0-406"><span class="sd">    pulse : Pulse</span>
+</span><span id="__span-0-407"><span class="sd">        Driving acoustic pulse. An adaptive step-size controller steps to</span>
+</span><span id="__span-0-408"><span class="sd">        every time in</span>
+</span><span id="__span-0-409"><span class="sd">        [`pulse.window_edges`][jbubble.pulse.base.Pulse.window_edges], so</span>
+</span><span id="__span-0-410"><span class="sd">        it can't step over a pulse that starts late.</span>
+</span><span id="__span-0-411"><span class="sd">    y0 : BubbleState, optional</span>
+</span><span id="__span-0-412"><span class="sd">        Initial state in SI units. `None` uses `eom.initial_state()`. A zero</span>
+</span><span id="__span-0-413"><span class="sd">        `R0` or `P_gas0`, the `BubbleState` defaults, means "unset":</span>
+</span><span id="__span-0-414"><span class="sd">        `solve_eom` fills it from the equation of motion, so</span>
+</span><span id="__span-0-415"><span class="sd">        `BubbleState(R=1.2 * R0)` starts at rest at 1.2 times the equilibrium</span>
+</span><span id="__span-0-416"><span class="sd">        radius. [`EquationOfMotion.initial_state`][jbubble.bubble.eom.EquationOfMotion.initial_state]</span>
+</span><span id="__span-0-417"><span class="sd">        with `R=` and `R_dot=` builds the same state explicitly. For an</span>
+</span><span id="__span-0-418"><span class="sd">        empty cavity, set `P_gas0` to a tiny positive value, such as `1e-12`.</span>
+</span><span id="__span-0-419"><span class="sd">    t_max : float, optional</span>
+</span><span id="__span-0-420"><span class="sd">        Integration end time [s]. `None` uses `pulse.t_end`.</span>
+</span><span id="__span-0-421"><span class="sd">    save_spec : SaveSpec, optional</span>
+</span><span id="__span-0-422"><span class="sd">        Output sampling specification. `None` uses 1024 evenly spaced time</span>
+</span><span id="__span-0-423"><span class="sd">        points.</span>
+</span><span id="__span-0-424"><span class="sd">    config : SolverConfig, optional</span>
+</span><span id="__span-0-425"><span class="sd">        Numerical integration settings. `None` uses</span>
+</span><span id="__span-0-426"><span class="sd">        [`SolverConfig()`][jbubble.solver.SolverConfig].</span>
+</span><span id="__span-0-427"><span class="sd">    adjoint : diffrax.AbstractAdjoint, optional</span>
+</span><span id="__span-0-428"><span class="sd">        How `jax.grad` differentiates through the solve. `None` uses</span>
+</span><span id="__span-0-429"><span class="sd">        `diffrax.RecursiveCheckpointAdjoint()`, which gives the exact</span>
+</span><span id="__span-0-430"><span class="sd">        gradient of the discretised solution. Pass `diffrax.ForwardMode()`</span>
+</span><span id="__span-0-431"><span class="sd">        to use `jax.jacfwd`, for example in a Levenberg-Marquardt fit.</span>
+</span><span id="__span-0-432"><span class="sd">        diffrax advises against `diffrax.BacksolveAdjoint`, whose gradients</span>
+</span><span id="__span-0-433"><span class="sd">        are approximate.</span>
+</span><span id="__span-0-434"><span class="sd">    progress : bool</span>
+</span><span id="__span-0-435"><span class="sd">        Whether to show a text progress meter. Default: `False`.</span>
+</span><span id="__span-0-436">
+</span><span id="__span-0-437"><span class="sd">    Returns</span>
+</span><span id="__span-0-438"><span class="sd">    -------</span>
+</span><span id="__span-0-439"><span class="sd">    diffrax.Solution</span>
+</span><span id="__span-0-440"><span class="sd">        Solution object with `ts`, and `ys` in SI units.</span>
+</span><span id="__span-0-441"><span class="sd">    """</span>
+</span><span id="__span-0-442">    <span class="k">if</span> <span class="n">save_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-443">        <span class="n">save_spec</span> <span class="o">=</span> <span class="n">SaveSpec</span><span class="p">()</span>
+</span><span id="__span-0-444">    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">save_spec</span><span class="p">,</span> <span class="n">SaveSpec</span><span class="p">)</span>
+</span><span id="__span-0-445">
+</span><span id="__span-0-446">    <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-447">        <span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">()</span>
+</span><span id="__span-0-448">    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">SolverConfig</span><span class="p">)</span>
+</span><span id="__span-0-449">
+</span><span id="__span-0-450">    <span class="n">y0</span> <span class="o">=</span> <span class="n">eom</span><span class="o">.</span><span class="n">initial_state</span><span class="p">()</span> <span class="k">if</span> <span class="n">y0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_with_equilibrium</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">y0</span><span class="p">)</span>
+</span><span id="__span-0-451">    <span class="n">scale</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">eom</span><span class="o">.</span><span class="n">state_scale</span><span class="p">(</span><span class="n">y0</span><span class="p">))</span>
+</span><span id="__span-0-452">    <span class="n">z0</span> <span class="o">=</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">divide</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+</span><span id="__span-0-453">
+</span><span id="__span-0-454">    <span class="n">t0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+</span><span id="__span-0-455">    <span class="n">t1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pulse</span><span class="o">.</span><span class="n">t_end</span> <span class="k">if</span> <span class="n">t_max</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">t_max</span><span class="p">)</span>
+</span><span id="__span-0-456">    <span class="n">saveat</span> <span class="o">=</span> <span class="n">save_spec</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
+</span><span id="__span-0-457">
+</span><span id="__span-0-458">    <span class="n">progress_meter</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-0-459">        <span class="n">diffrax</span><span class="o">.</span><span class="n">TextProgressMeter</span><span class="p">()</span> <span class="k">if</span> <span class="n">progress</span> <span class="k">else</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">NoProgressMeter</span><span class="p">()</span>
+</span><span id="__span-0-460">    <span class="p">)</span>
+</span><span id="__span-0-461">    <span class="n">_adjoint</span> <span class="o">=</span> <span class="n">adjoint</span> <span class="k">if</span> <span class="n">adjoint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">RecursiveCheckpointAdjoint</span><span class="p">()</span>
+</span><span id="__span-0-462">
+</span><span id="__span-0-463">    <span class="n">sol</span> <span class="o">=</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">diffeqsolve</span><span class="p">(</span>
+</span><span id="__span-0-464">        <span class="n">diffrax</span><span class="o">.</span><span class="n">ODETerm</span><span class="p">(</span><span class="n">_guarded_vector_field</span><span class="p">),</span>
+</span><span id="__span-0-465">        <span class="n">config</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span>
+</span><span id="__span-0-466">        <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span>
+</span><span id="__span-0-467">        <span class="n">t1</span><span class="o">=</span><span class="n">t1</span><span class="p">,</span>
+</span><span id="__span-0-468">        <span class="n">dt0</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">dt0</span><span class="p">,</span>
+</span><span id="__span-0-469">        <span class="n">y0</span><span class="o">=</span><span class="n">z0</span><span class="p">,</span>
+</span><span id="__span-0-470">        <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">z0</span><span class="p">),</span> <span class="n">scale</span><span class="p">),</span>
+</span><span id="__span-0-471">        <span class="n">saveat</span><span class="o">=</span><span class="n">saveat</span><span class="p">,</span>
+</span><span id="__span-0-472">        <span class="n">stepsize_controller</span><span class="o">=</span><span class="n">_step_to_window_edges</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">stepsize_controller</span><span class="p">,</span> <span class="n">pulse</span><span class="p">),</span>
+</span><span id="__span-0-473">        <span class="n">max_steps</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">max_steps</span><span class="p">,</span>
+</span><span id="__span-0-474">        <span class="n">progress_meter</span><span class="o">=</span><span class="n">progress_meter</span><span class="p">,</span>
+</span><span id="__span-0-475">        <span class="n">throw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-476">        <span class="n">adjoint</span><span class="o">=</span><span class="n">_adjoint</span><span class="p">,</span>
+</span><span id="__span-0-477">    <span class="p">)</span>
+</span><span id="__span-0-478">    <span class="n">ys</span> <span class="o">=</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">multiply</span><span class="p">,</span> <span class="n">sol</span><span class="o">.</span><span class="n">ys</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+</span><span id="__span-0-479">    <span class="k">return</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">ys</span><span class="p">,</span> <span class="n">sol</span><span class="p">,</span> <span class="n">ys</span><span class="p">)</span>
+</span></code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div><hr />
+<h2 id="solver-choice-and-tolerances">Solver choice and tolerances<a class="headerlink" href="#solver-choice-and-tolerances" title="Permanent link">&para;</a></h2>
+<p>For a longer explanation, with examples, see the guide <a href="../../guide/solvers/">Solvers and stiffness</a>.</p>
+<p>The default, <code>SolverConfig()</code>, is <code>Dopri5</code> (an explicit fifth-order Runge–Kutta method) with a PID step-size controller at <code>rtol=1e-6</code> and <code>atol=1e-10</code>, an initial step of 1 ns, and at most 100,000 steps. It suits microbubbles in water, including inertial collapse.</p>
+<p>The solver integrates a dimensionless state: the radius in units of <span class="arithmatex">\(R_0\)</span> and the wall velocity in units of <span class="arithmatex">\(\sqrt{P_\text{amb}/\rho_L}\)</span>. So <code>atol=1e-10</code> means <span class="arithmatex">\(10^{-10} R_0\)</span> for a bubble of any size. In jbubble 0.1, <code>atol</code> applied in SI units.</p>
+<p>For stiff problems, such as lipid-coated nanobubbles or sub-micron bubbles in viscous liquids, use the implicit configuration:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverConfig</span><span class="p">,</span> <span class="n">run_simulation</span>
+</span><span id="__span-1-2">
+</span><span id="__span-1-3"><span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">SolverConfig</span><span class="o">.</span><span class="n">stiff</span><span class="p">())</span>
+</span></code></pre></div>
+<p>The Notes of <code>SolverConfig</code> explain how to tell whether a problem is stiff.</p>
+<p><code>GridSweep</code> runs implicit solvers such as <code>Kvaerno5</code> on its worker threads, like explicit ones.</p>
+<p>To tighten the tolerances, pass them to the constructor you use, for example <code>SolverConfig.stiff(rtol=1e-8, atol=1e-12)</code>, or <code>SolverConfig(stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-12))</code>. If <code>result.converged</code> is <code>False</code> because the solve reached <code>max_steps</code>, raise <code>max_steps</code>, or switch to <code>SolverConfig.stiff()</code> if <code>Dopri5</code> needs thousands of steps per driving period.</p>
+<p>For gradients, keep the default adjoint, <code>diffrax.RecursiveCheckpointAdjoint()</code>, which differentiates the discretised solve exactly. Pass <code>adjoint=diffrax.ForwardMode()</code> to <code>run_simulation</code> or <code>solve_eom</code> for forward-mode Jacobians, for example in a Levenberg–Marquardt fit.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../acoustics/" class="md-footer__link md-footer__link--prev" aria-label="Previous: acoustics">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                acoustics
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../simulation/" class="md-footer__link md-footer__link--next" aria-label="Next: simulation">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                simulation
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Noninvasive Surgery &amp; Biopsy Laboratory
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog" role="status" aria-atomic="true">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.progress","navigation.sections","navigation.tabs","navigation.top","search.highlight","toc.follow"],"redirect":null,"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.67a597eb.min.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1904 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Differentiable microbubble dynamics in JAX">
+      
+      
+      
+        <link rel="canonical" href="https://imperial-nsb.github.io/jbubble/guide/pulse_shapes/">
+      
+      
+        <link rel="prev" href="../bubble_models/">
+      
+      
+        <link rel="next" href="../solvers/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/logo.svg">
+      <meta name="generator" content="zensical-0.0.67">
+    
+    
+      
+        <title>Pulse shapes - jbubble</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.4ae390e2.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.96d1a7e4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Serif+4:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Source Serif 4";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#pulse-shapes" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="jbubble" class="md-header__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            jbubble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Pulse shapes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../installation/" class="md-tabs__link">
+          
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../bubble_models/" class="md-tabs__link">
+          
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../examples/" class="md-tabs__link">
+        
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../citing/" class="md-tabs__link">
+        
+  
+  Citing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="jbubble" class="md-nav__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    jbubble
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Getting started
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Getting started
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Installation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Quickstart
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Guide
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+            <label class="md-nav__title" for="__nav_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Guide
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bubble_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bubble models
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pulse shapes
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pulse shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tone-bursts" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Tone bursts
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tone bursts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#carrier-shapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Carrier shapes
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#envelopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Envelopes
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timing-start-stop-and-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Timing: start, stop, and end
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chirps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Chirps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#measured-waveforms" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Measured waveforms
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#neural-pulses" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Neural pulses
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#combine-pulses" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Combine pulses
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simulate-with-a-pulse-and-differentiate-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Simulate with a pulse and differentiate it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../solvers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Solvers and stiffness
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sweeps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Parameter sweeps
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jax_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  JAX tips
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Examples
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  API reference
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/bubble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  bubble
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pulse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  pulse
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  acoustics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/solver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  solver
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  simulation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  metrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  utils
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Citing
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Changelog
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tone-bursts" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Tone bursts
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tone bursts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#carrier-shapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Carrier shapes
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#envelopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Envelopes
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timing-start-stop-and-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Timing: start, stop, and end
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chirps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Chirps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#measured-waveforms" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Measured waveforms
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#neural-pulses" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Neural pulses
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#combine-pulses" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Combine pulses
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simulate-with-a-pulse-and-differentiate-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Simulate with a pulse and differentiate it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/imperial-nsb/jbubble/edit/main/docs/guide/pulse_shapes.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="pulse-shapes">Pulse shapes<a class="headerlink" href="#pulse-shapes" title="Permanent link">&para;</a></h1>
+<p>A pulse is the acoustic pressure <span class="arithmatex">\(p_\text{ac}(t)\)</span> that drives the bubble. Every pulse is a callable <a href="https://docs.kidger.site/equinox/">Equinox</a> module: <code>pulse(t)</code> returns the pressure in pascals at time <code>t</code> in seconds. Because pulses are JAX PyTrees, you can compile, batch, and differentiate through their parameters, such as the amplitude, the frequency, or the weights of a neural network.</p>
+<p>Every code block on this page runs as written, in order.</p>
+<h2 id="tone-bursts">Tone bursts<a class="headerlink" href="#tone-bursts" title="Permanent link">&para;</a></h2>
+<p>A <a class="autorefs autorefs-internal" title="            ToneBurst" href="../../api/pulse/#jbubble.pulse.tone_burst.ToneBurst"><code>ToneBurst</code></a> is a periodic carrier shape, multiplied by a peak pressure and gated by an envelope:</p>
+<div class="arithmatex">\[
+p(t) = P\, s(t - t_0; f, \phi)\, w(t - t_0, T), \qquad T = \frac{N}{f},
+\]</div>
+<p>where <span class="arithmatex">\(P\)</span> is <code>pressure</code>, <span class="arithmatex">\(s\)</span> is <code>shape</code>, <span class="arithmatex">\(f\)</span> is <code>freq</code>, <span class="arithmatex">\(\phi\)</span> is <code>phase</code>, <span class="arithmatex">\(t_0\)</span> is <code>initial_time</code>, <span class="arithmatex">\(N\)</span> is <code>cycle_num</code>, and <span class="arithmatex">\(w\)</span> is <code>envelope</code>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+</span><span id="__span-0-2"><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+</span><span id="__span-0-3">
+</span><span id="__span-0-4"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">HannEnvelope</span><span class="p">,</span> <span class="n">ToneBurst</span>
+</span><span id="__span-0-5"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
+</span><span id="__span-0-6">
+</span><span id="__span-0-7"><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="__span-0-8"><span class="n">hann</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span>
+</span><span id="__span-0-9">    <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">envelope</span><span class="o">=</span><span class="n">HannEnvelope</span><span class="p">()</span>
+</span><span id="__span-0-10"><span class="p">)</span>
+</span><span id="__span-0-11">
+</span><span id="__span-0-12"><span class="n">ts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">6e-6</span><span class="p">,</span> <span class="mi">601</span><span class="p">)</span>  <span class="c1"># [s]</span>
+</span><span id="__span-0-13"><span class="n">p</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">pulse</span><span class="p">)(</span><span class="n">ts</span><span class="p">)</span>  <span class="c1"># [Pa]</span>
+</span><span id="__span-0-14"><span class="nb">print</span><span class="p">(</span>
+</span><span id="__span-0-15">    <span class="sa">f</span><span class="s2">"peak </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> kPa, Hann peak </span><span class="si">{</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">hann</span><span class="p">)(</span><span class="n">ts</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> kPa"</span>
+</span><span id="__span-0-16"><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="carrier-shapes">Carrier shapes<a class="headerlink" href="#carrier-shapes" title="Permanent link">&para;</a></h3>
+<p>Shapes from <code>jbubble.pulse.shapes</code> have a nominal amplitude of 1.</p>
+<table>
+<thead>
+<tr>
+<th>Shape</th>
+<th>Waveform</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            Sine" href="../../api/shapes/#jbubble.pulse.shapes.Sine"><code>Sine</code></a></td>
+<td>Pure sine</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            Square" href="../../api/shapes/#jbubble.pulse.shapes.Square"><code>Square</code></a></td>
+<td>Square wave from a 10-term Fourier series, with Gibbs ringing at the edges</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            Sawtooth" href="../../api/shapes/#jbubble.pulse.shapes.Sawtooth"><code>Sawtooth</code></a>, <a class="autorefs autorefs-internal" title="            InvertedSawtooth" href="../../api/shapes/#jbubble.pulse.shapes.InvertedSawtooth"><code>InvertedSawtooth</code></a></td>
+<td>Rising or falling sawtooth from a 10-term Fourier series</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            Triangle" href="../../api/shapes/#jbubble.pulse.shapes.Triangle"><code>Triangle</code></a></td>
+<td>Triangle wave from a 10-term Fourier series</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            Quadratic" href="../../api/shapes/#jbubble.pulse.shapes.Quadratic"><code>Quadratic</code></a>, <a class="autorefs autorefs-internal" title="            NegativeQuadratic" href="../../api/shapes/#jbubble.pulse.shapes.NegativeQuadratic"><code>NegativeQuadratic</code></a></td>
+<td>Piecewise-parabolic wave and its negative</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            Rectangular" href="../../api/shapes/#jbubble.pulse.shapes.Rectangular"><code>Rectangular</code></a></td>
+<td>Rectangular wave with a duty cycle and two levels, such as a monopolar pulse train</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            TimeDomainSquare" href="../../api/shapes/#jbubble.pulse.shapes.TimeDomainSquare"><code>TimeDomainSquare</code></a>, <a class="autorefs autorefs-internal" title="            TimeDomainSawtooth" href="../../api/shapes/#jbubble.pulse.shapes.TimeDomainSawtooth"><code>TimeDomainSawtooth</code></a>, <a class="autorefs autorefs-internal" title="            TimeDomainTriangle" href="../../api/shapes/#jbubble.pulse.shapes.TimeDomainTriangle"><code>TimeDomainTriangle</code></a></td>
+<td>Smooth shapes built in the time domain, without Fourier ringing</td>
+</tr>
+</tbody>
+</table>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rectangular</span><span class="p">,</span> <span class="n">TimeDomainSquare</span>
+</span><span id="__span-1-2">
+</span><span id="__span-1-3"><span class="n">square</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">TimeDomainSquare</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="__span-1-4"><span class="c1"># Negative half-cycle pulses: -1 for 10 % of each period, 0 otherwise.</span>
+</span><span id="__span-1-5"><span class="n">monopolar</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span>
+</span><span id="__span-1-6">    <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span>
+</span><span id="__span-1-7">    <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span>
+</span><span id="__span-1-8">    <span class="n">shape</span><span class="o">=</span><span class="n">Rectangular</span><span class="p">(</span><span class="n">duty</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">high_level</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">low_level</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+</span><span id="__span-1-9">    <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+</span><span id="__span-1-10"><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="envelopes">Envelopes<a class="headerlink" href="#envelopes" title="Permanent link">&para;</a></h3>
+<p>The envelope gates the carrier to the active window. A single pulse, such as a tone burst, defaults to <a class="autorefs autorefs-internal" title="            SoftRectangularEnvelope" href="../../api/pulse/#jbubble.pulse.envelope.SoftRectangularEnvelope"><code>SoftRectangularEnvelope</code></a>, and a sum of pulses to <a class="autorefs autorefs-internal" title="            NoEnvelope" href="../../api/pulse/#jbubble.pulse.envelope.NoEnvelope"><code>NoEnvelope</code></a>.</p>
+<table>
+<thead>
+<tr>
+<th>Envelope</th>
+<th>Window</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            SoftRectangularEnvelope" href="../../api/pulse/#jbubble.pulse.envelope.SoftRectangularEnvelope"><code>SoftRectangularEnvelope</code></a></td>
+<td>Near-rectangular, with smooth sigmoid edges: the default, and the best choice for gradients</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            RectangularEnvelope" href="../../api/pulse/#jbubble.pulse.envelope.RectangularEnvelope"><code>RectangularEnvelope</code></a></td>
+<td>Hard on and off steps; avoid it when you differentiate, because the drive's slope jumps at the edges</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            HannEnvelope" href="../../api/pulse/#jbubble.pulse.envelope.HannEnvelope"><code>HannEnvelope</code></a></td>
+<td>Raised cosine: smooth, with a narrow spectrum</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            TukeyEnvelope" href="../../api/pulse/#jbubble.pulse.envelope.TukeyEnvelope"><code>TukeyEnvelope</code></a></td>
+<td>Flat in the middle with cosine tapers; <code>alpha</code> is the fraction of the window in the tapers</td>
+</tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="            NoEnvelope" href="../../api/pulse/#jbubble.pulse.envelope.NoEnvelope"><code>NoEnvelope</code></a></td>
+<td>1 at all times: the default of a sum of pulses</td>
+</tr>
+</tbody>
+</table>
+<p>To change the envelope of an existing pulse, call <a class="autorefs autorefs-internal" title="            windowed" href="../../api/pulse/#jbubble.pulse.base.Pulse.windowed"><code>windowed</code></a>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">TukeyEnvelope</span>
+</span><span id="__span-2-2">
+</span><span id="__span-2-3"><span class="n">tapered</span> <span class="o">=</span> <span class="n">pulse</span><span class="o">.</span><span class="n">windowed</span><span class="p">(</span><span class="n">TukeyEnvelope</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">))</span>
+</span></code></pre></div>
+<h2 id="timing-start-stop-and-end">Timing: start, stop, and end<a class="headerlink" href="#timing-start-stop-and-end" title="Permanent link">&para;</a></h2>
+<p>Each pulse has an active window, from <a class="autorefs autorefs-internal" title="            t_start
+
+
+  
+      property
+  " href="../../api/pulse/#jbubble.pulse.base.Pulse.t_start"><code>t_start</code></a> to <a class="autorefs autorefs-internal" title="            t_stop
+
+
+  
+      property
+  " href="../../api/pulse/#jbubble.pulse.base.Pulse.t_stop"><code>t_stop</code></a>. To delay a pulse, set its keyword-only <code>initial_time</code>. <a class="autorefs autorefs-internal" title="            t_end
+
+
+  
+      property
+  " href="../../api/pulse/#jbubble.pulse.base.Pulse.t_end"><code>t_end</code></a>, the stop time of a simulation that doesn't set <code>t_max</code>, is the start time plus twice the duration, so the bubble has time to ring down:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><span class="n">delayed</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span>
+</span><span id="__span-3-2">    <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">initial_time</span><span class="o">=</span><span class="mf">2e-6</span>
+</span><span id="__span-3-3"><span class="p">)</span>
+</span><span id="__span-3-4"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"start </span><span class="si">{</span><span class="n">delayed</span><span class="o">.</span><span class="n">t_start</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> µs, stop </span><span class="si">{</span><span class="n">delayed</span><span class="o">.</span><span class="n">t_stop</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> µs, "</span>
+</span><span id="__span-3-5">      <span class="sa">f</span><span class="s2">"end </span><span class="si">{</span><span class="n">delayed</span><span class="o">.</span><span class="n">t_end</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> µs"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>The solver steps to every edge in <a class="autorefs autorefs-internal" title="            window_edges
+
+
+  
+      property
+  " href="../../api/pulse/#jbubble.pulse.base.Pulse.window_edges"><code>window_edges</code></a>, so it can't step over a pulse that starts late.</p>
+<h2 id="chirps">Chirps<a class="headerlink" href="#chirps" title="Permanent link">&para;</a></h2>
+<p>A <a class="autorefs autorefs-internal" title="            ChirpPulse" href="../../api/pulse/#jbubble.pulse.chirp.ChirpPulse"><code>ChirpPulse</code></a> sweeps its frequency from <code>freq_start</code> to <code>freq_end</code> over <code>sweep_duration</code>. The sweep law is linear by default; <a class="autorefs autorefs-internal" title="            ExponentialSweep" href="../../api/pulse/#jbubble.pulse.chirp.ExponentialSweep"><code>ExponentialSweep</code></a> sweeps geometrically, with equal time per octave:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChirpPulse</span>
+</span><span id="__span-4-2"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.chirp</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialSweep</span>
+</span><span id="__span-4-3">
+</span><span id="__span-4-4"><span class="n">chirp</span> <span class="o">=</span> <span class="n">ChirpPulse</span><span class="p">(</span>
+</span><span id="__span-4-5">    <span class="n">freq_start</span><span class="o">=</span><span class="mf">0.5e6</span><span class="p">,</span>  <span class="c1"># [Hz]</span>
+</span><span id="__span-4-6">    <span class="n">freq_end</span><span class="o">=</span><span class="mf">3e6</span><span class="p">,</span>  <span class="c1"># [Hz]</span>
+</span><span id="__span-4-7">    <span class="n">pressure</span><span class="o">=</span><span class="mf">50e3</span><span class="p">,</span>  <span class="c1"># [Pa]</span>
+</span><span id="__span-4-8">    <span class="n">sweep_duration</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">,</span>  <span class="c1"># [s]</span>
+</span><span id="__span-4-9">    <span class="n">sweep</span><span class="o">=</span><span class="n">ExponentialSweep</span><span class="p">(),</span>
+</span><span id="__span-4-10">    <span class="n">envelope</span><span class="o">=</span><span class="n">TukeyEnvelope</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">),</span>
+</span><span id="__span-4-11"><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="measured-waveforms">Measured waveforms<a class="headerlink" href="#measured-waveforms" title="Permanent link">&para;</a></h2>
+<p>A <a class="autorefs autorefs-internal" title="            SampledPulse" href="../../api/pulse/#jbubble.pulse.sampled.SampledPulse"><code>SampledPulse</code></a> interpolates a sampled pressure trace, such as a hydrophone recording, linearly between the samples. The sample times are absolute: the active window runs from the first sample to the last. The following code builds a stand-in for a measured trace, sampled at 100 MHz:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">RectangularEnvelope</span><span class="p">,</span> <span class="n">SampledPulse</span>
+</span><span id="__span-5-2">
+</span><span id="__span-5-3"><span class="n">dt</span> <span class="o">=</span> <span class="mf">10e-9</span>  <span class="c1"># 100 MHz sampling [s]</span>
+</span><span id="__span-5-4"><span class="n">t_rec</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">800</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
+</span><span id="__span-5-5"><span class="n">measured</span> <span class="o">=</span> <span class="mf">80e3</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">1e6</span> <span class="o">*</span> <span class="n">t_rec</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+</span><span id="__span-5-6">    <span class="o">-</span><span class="p">(((</span><span class="n">t_rec</span> <span class="o">-</span> <span class="mf">4e-6</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1.5e-6</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="__span-5-7"><span class="p">)</span>  <span class="c1"># stand-in for a hydrophone recording [Pa]</span>
+</span><span id="__span-5-8">
+</span><span id="__span-5-9"><span class="n">recorded</span> <span class="o">=</span> <span class="n">SampledPulse</span><span class="o">.</span><span class="n">from_uniform</span><span class="p">(</span><span class="n">measured</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+</span><span id="__span-5-10"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"window: </span><span class="si">{</span><span class="n">recorded</span><span class="o">.</span><span class="n">t_start</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">recorded</span><span class="o">.</span><span class="n">t_stop</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> µs"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>The default soft envelope halves the first and last samples. If the trace already starts and ends at zero, as here, that changes nothing. Otherwise, pass <code>envelope=RectangularEnvelope()</code> to keep them, or <code>envelope=HannEnvelope()</code> to taper a trace that's cut off mid-signal.</p>
+<h2 id="neural-pulses">Neural pulses<a class="headerlink" href="#neural-pulses" title="Permanent link">&para;</a></h2>
+<p>A <a class="autorefs autorefs-internal" title="            NeuralPulse" href="../../api/pulse/#jbubble.pulse.neural.NeuralPulse"><code>NeuralPulse</code></a> lets a neural network define the waveform: the network maps the normalised time <span class="arithmatex">\((t - t_0)/T\)</span>, from 0 to 1 across the window, to the pressure in units of <code>pressure_scale</code>. Its weights are parameters that you can optimise, for example to design a drive that maximises a bubble response:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
+</span><span id="__span-6-2">
+</span><span id="__span-6-3"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">NeuralPulse</span>
+</span><span id="__span-6-4">
+</span><span id="__span-6-5"><span class="n">net</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MLP</span><span class="p">(</span><span class="n">in_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">width_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+</span><span id="__span-6-6"><span class="n">learned</span> <span class="o">=</span> <span class="n">NeuralPulse</span><span class="p">(</span><span class="n">net</span><span class="o">=</span><span class="n">net</span><span class="p">,</span> <span class="n">pulse_duration</span><span class="o">=</span><span class="mf">5e-6</span><span class="p">,</span> <span class="n">pressure_scale</span><span class="o">=</span><span class="mf">100e3</span><span class="p">)</span>
+</span></code></pre></div>
+<p><code>pulse_duration</code> and <code>pressure_scale</code> are fixed configuration, not trainable parameters. To scale a neural pulse by a traced value, multiply it, as in the next section.</p>
+<h2 id="combine-pulses">Combine pulses<a class="headerlink" href="#combine-pulses" title="Permanent link">&para;</a></h2>
+<p>Pulses support <code>+</code> and <code>*</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Expression</th>
+<th>Result</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pulse_a + pulse_b</code></td>
+<td><a class="autorefs autorefs-internal" title="            Summed" href="../../api/pulse/#jbubble.pulse.base.Summed"><code>Summed</code></a></td>
+<td>Superposition, such as dual-frequency driving</td>
+</tr>
+<tr>
+<td><code>k * pulse</code></td>
+<td><a class="autorefs autorefs-internal" title="            Scaled" href="../../api/pulse/#jbubble.pulse.base.Scaled"><code>Scaled</code></a></td>
+<td>Amplitude scaling by a number or a JAX scalar</td>
+</tr>
+<tr>
+<td><code>pulse + c</code></td>
+<td><a class="autorefs autorefs-internal" title="            Offset" href="../../api/pulse/#jbubble.pulse.base.Offset"><code>Offset</code></a></td>
+<td>A constant pressure <code>c</code> added at all times, not a time delay</td>
+</tr>
+</tbody>
+</table>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><span class="n">low</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">80e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</span><span id="__span-7-2"><span class="n">high</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">2e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">40e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</span><span id="__span-7-3"><span class="n">dual</span> <span class="o">=</span> <span class="n">low</span> <span class="o">+</span> <span class="n">high</span>  <span class="c1"># Summed((low, high))</span>
+</span><span id="__span-7-4"><span class="n">half</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">dual</span>  <span class="c1"># Scaled</span>
+</span><span id="__span-7-5"><span class="n">smooth_dual</span> <span class="o">=</span> <span class="n">dual</span><span class="o">.</span><span class="n">windowed</span><span class="p">(</span><span class="n">HannEnvelope</span><span class="p">())</span>  <span class="c1"># windows the sum</span>
+</span><span id="__span-7-6"><span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">dual</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">half</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">dual</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> µs"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Each part of a sum keeps its own envelope and timing, so a delayed part starts on time. A sum has no window of its own until you call <code>windowed</code>.</p>
+<h2 id="simulate-with-a-pulse-and-differentiate-it">Simulate with a pulse and differentiate it<a class="headerlink" href="#simulate-with-a-pulse-and-differentiate-it" title="Permanent link">&para;</a></h2>
+<p>Any pulse drives any equation of motion. Because the pulse is part of the model, <code>jax.grad</code> differentiates a simulated quantity with respect to its parameters. The following code computes how the peak radius of a 2 µm lipid-coated bubble responds to the drive amplitude:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_simulation</span>
+</span><span id="__span-8-2"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.presets</span><span class="w"> </span><span class="kn">import</span> <span class="n">lipid_bubble</span>
+</span><span id="__span-8-3">
+</span><span id="__span-8-4"><span class="n">eom</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lipid_bubble</span><span class="p">()</span>
+</span><span id="__span-8-5">
+</span><span id="__span-8-6">
+</span><span id="__span-8-7"><span class="k">def</span><span class="w"> </span><span class="nf">peak_ratio</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+</span><span id="__span-8-8">    <span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">k</span> <span class="o">*</span> <span class="n">pulse</span><span class="p">)</span>
+</span><span id="__span-8-9">    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">eom</span><span class="o">.</span><span class="n">R0</span>
+</span><span id="__span-8-10">
+</span><span id="__span-8-11">
+</span><span id="__span-8-12"><span class="n">value</span><span class="p">,</span> <span class="n">slope</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">peak_ratio</span><span class="p">)(</span><span class="mf">1.0</span><span class="p">)</span>
+</span><span id="__span-8-13"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"peak R/R0 = </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, d(peak R/R0)/dk = </span><span class="si">{</span><span class="n">slope</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>For the pulse shapes, the algebra, and simulations under each kind of pulse, with plots, see the example <a href="../../examples/02_driving_pulses/">Driving pulses</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../bubble_models/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Bubble models">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Bubble models
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../solvers/" class="md-footer__link md-footer__link--next" aria-label="Next: Solvers and stiffness">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Solvers and stiffness
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Noninvasive Surgery &amp; Biopsy Laboratory
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog" role="status" aria-atomic="true">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.progress","navigation.sections","navigation.tabs","navigation.top","search.highlight","toc.follow"],"redirect":null,"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.67a597eb.min.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>

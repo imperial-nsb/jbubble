@@ -1,0 +1,3658 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Differentiable microbubble dynamics in JAX">
+      
+      
+      
+        <link rel="canonical" href="https://imperial-nsb.github.io/jbubble/api/fitting/">
+      
+      
+        <link rel="prev" href="../metrics/">
+      
+      
+        <link rel="next" href="../utils/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/logo.svg">
+      <meta name="generator" content="zensical-0.0.67">
+    
+    
+      
+        <title>fitting - jbubble</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.4ae390e2.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.96d1a7e4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Serif+4:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Source Serif 4";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#fitting" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="jbubble" class="md-header__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            jbubble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              fitting
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/installation/" class="md-tabs__link">
+          
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/bubble_models/" class="md-tabs__link">
+          
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../examples/" class="md-tabs__link">
+        
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../citing/" class="md-tabs__link">
+        
+  
+  Citing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="jbubble" class="md-nav__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    jbubble
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Getting started
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Getting started
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Installation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Quickstart
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Guide
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Guide
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/bubble_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bubble models
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/pulse_shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pulse shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/solvers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Solvers and stiffness
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/sweeps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Parameter sweeps
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/jax_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  JAX tips
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Examples
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+            <label class="md-nav__title" for="__nav_5">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  API reference
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bubble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  bubble
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pulse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  pulse
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  acoustics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../solver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  solver
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  simulation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  metrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  fitting
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.fitting.fit_parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;fit_parameters
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.fitting.FitResult" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FitResult
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.fitting.Parameter" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;Parameter
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameter">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.fitting.Parameter.value" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;value
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.fitting.unwrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;unwrap
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-a-step-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How a step works
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-gets-fitted" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What gets fitted
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gradients-through-the-ode-solve" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gradients through the ODE solve
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  utils
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Citing
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Changelog
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.fitting.fit_parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;fit_parameters
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.fitting.FitResult" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FitResult
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.fitting.Parameter" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;Parameter
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameter">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jbubble.fitting.Parameter.value" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;value
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jbubble.fitting.unwrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;unwrap
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-a-step-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How a step works
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-gets-fitted" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What gets fitted
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gradients-through-the-ode-solve" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gradients through the ODE solve
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/imperial-nsb/jbubble/edit/main/docs/api/fitting.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="fitting">fitting<a class="headerlink" href="#fitting" title="Permanent link">&para;</a></h1>
+<p>Gradient-based parameter estimation through the ODE solve, with any optax optimiser. For a task-oriented introduction, see <a href="../../guide/fitting/">Fit model parameters to data</a>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">FitResult</span><span class="p">,</span> <span class="n">fit_parameters</span>
+</span><span id="__span-0-2"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.fitting</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">unwrap</span>
+</span></code></pre></div>
+<hr />
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="jbubble.fitting.fit_parameters" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">fit_parameters</span>
+
+
+<a href="#jbubble.fitting.fit_parameters" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><span class="nf">fit_parameters</span><span class="p">(</span>
+</span><span id="__span-0-2">    <span class="n">make_model</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="collections.abc.Callable" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable">Callable</a></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple">tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            EquationOfMotion (jbubble.bubble.eom.EquationOfMotion)" href="../bubble/#jbubble.bubble.eom.EquationOfMotion">EquationOfMotion</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Pulse (jbubble.pulse.base.Pulse)" href="../pulse/#jbubble.pulse.base.Pulse">Pulse</a></span><span class="p">]],</span>
+</span><span id="__span-0-3">    <span class="n">params0</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span>
+</span><span id="__span-0-4">    <span class="o">*</span><span class="p">,</span>
+</span><span id="__span-0-5">    <span class="n">loss_fn</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="collections.abc.Callable" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable">Callable</a></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><span title="jbubble.fitting.ArrayLike">ArrayLike</span></span><span class="p">],</span>
+</span><span id="__span-0-6">    <span class="n">optimizer</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="optax.GradientTransformation" href="https://optax.readthedocs.io/en/latest/api/generated/optax.GradientTransformation.html#optax.GradientTransformation">GradientTransformation</a></span><span class="p">,</span>
+</span><span id="__span-0-7">    <span class="n">n_steps</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+</span><span id="__span-0-8">    <span class="n">conditions</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="collections.abc.Sequence" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-9">    <span class="n">save_spec</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            SaveSpec (jbubble.solver.SaveSpec)" href="../solver/#jbubble.solver.SaveSpec">SaveSpec</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-10">    <span class="n">t_max</span><span class="p">:</span> <span class="n"><span title="jbubble.fitting.ArrayLike">ArrayLike</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-11">    <span class="n">config</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            SolverConfig (jbubble.solver.SolverConfig)" href="../solver/#jbubble.solver.SolverConfig">SolverConfig</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-12">    <span class="n">adjoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="diffrax.AbstractAdjoint" href="https://docs.kidger.site/diffrax/api/adjoints/#diffrax.AbstractAdjoint">AbstractAdjoint</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-13">    <span class="n">max_backtracks</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+</span><span id="__span-0-14">    <span class="n">step_callback</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="collections.abc.Callable" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable">Callable</a></span><span class="p">[[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-15">    <span class="n">log_every</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span>
+</span><span id="__span-0-16"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            FitResult (jbubble.fitting.FitResult)" href="./#jbubble.fitting.FitResult">FitResult</a></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Fit model parameters by differentiating through the ODE solve.</p>
+<p><code>fit_parameters</code> minimises the mean loss over the conditions,</p>
+<div class="arithmatex">\[
+L(\theta) = \frac{1}{N} \sum_{c=1}^{N}
+\ell\big(\mathrm{simulate}(\mathrm{make\_model}(p, c)),\, c\big),
+\qquad p = \mathrm{unwrap}(\theta),
+\]</div>
+<p>where <span class="arithmatex">\(\theta\)</span> holds the optimiser's coordinates (see
+<a class="autorefs autorefs-internal" title="            Parameter" href="./#jbubble.fitting.Parameter"><code>Parameter</code></a>), <span class="arithmatex">\(\ell\)</span> is <code>loss_fn</code>, and
+<span class="arithmatex">\(\mathrm{simulate}\)</span> is
+<a class="autorefs autorefs-internal" title="            run_simulation" href="../simulation/#jbubble.simulation.run_simulation"><code>run_simulation</code></a> with <code>save_spec</code>,
+<code>t_max</code>, <code>config</code>, and <code>adjoint</code>. Without <code>conditions</code>, <span class="arithmatex">\(N = 1\)</span> and
+neither <code>make_model</code> nor <code>loss_fn</code> receives a condition. Each step
+computes the update <span class="arithmatex">\(\Delta\theta\)</span> with <code>optimizer</code> and tries</p>
+<div class="arithmatex">\[
+\theta_k = \theta + 2^{-k}\,\Delta\theta, \qquad k = 0, 1, \ldots,
+\texttt{max\_backtracks},
+\]</div>
+<p>accepting the first <span class="arithmatex">\(\theta_k\)</span> at which every solve converges and both
+<span class="arithmatex">\(L\)</span> and its gradient are finite.</p>
+<p><code>fit_parameters</code> runs a Python loop around compiled functions, so you
+can't call it under <code>jax.jit</code> or <code>jax.vmap</code>, and each call compiles
+again. For many fits, such as multi-start fits, write the training loop
+yourself with <a class="autorefs autorefs-internal" title="            unwrap" href="./#jbubble.fitting.unwrap"><code>unwrap</code></a>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>make_model</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#callable">callable</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>make_model(params) -&gt; (eom, pulse)</code>, or
+<code>make_model(params, condition) -&gt; (eom, pulse)</code> when you pass
+<code>conditions</code>. <code>params</code> has the structure of <code>params0</code>, in physical
+units. Must be JAX-traceable.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>params0</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial parameters: a float, a <code>Parameter</code>, a dict, list, or tuple
+of them, or an Equinox module such as a
+<a class="autorefs autorefs-internal" title="            NeuralProperty" href="../bubble/#jbubble.bubble.property.NeuralProperty"><code>NeuralProperty</code></a>. What
+gets fitted:</p>
+<ul>
+<li>A <code>Parameter</code>, on its scaled coordinate, unless it's <code>fixed</code>.</li>
+<li>A Python float (or <code>np.float64</code>) in <code>params0</code> itself or in a dict,
+  list, or tuple: <code>1e-9</code> is shorthand for <code>Parameter(1e-9)</code>.</li>
+<li>A floating-point JAX or NumPy array, including a NumPy scalar
+  other than <code>np.float64</code>, in its own units, for example neural
+  network weights.</li>
+</ul>
+<p>Everything else is held fixed: integers, booleans, strings,
+callables, and Python floats inside an Equinox module. If you set a
+Python float inside a module, <code>fit_parameters</code> warns and names it.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>loss_fn</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#callable">callable</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>loss_fn(result) -&gt; scalar</code>, or <code>loss_fn(result, condition) -&gt;
+scalar</code> when you pass <code>conditions</code>. <code>result</code> is a
+<a class="autorefs autorefs-internal" title="            SimulationResult" href="../simulation/#jbubble.simulation.SimulationResult"><code>SimulationResult</code></a>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>optimizer</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="optax.GradientTransformation" href="https://optax.readthedocs.io/en/latest/api/generated/optax.GradientTransformation.html#optax.GradientTransformation">GradientTransformation</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>For example <code>optax.adam(0.05)</code>. For <code>Parameter</code> and float values,
+the learning rate is a relative step size: 0.05 changes a value by
+about 5 % per step. <code>optimizer.update</code> receives the current
+coordinates as <code>params</code>, so transformations such as <code>optax.adamw</code>
+work, but act on the coordinates: weight decay pulls a lower-bounded
+<code>Parameter</code> toward its initial value, not toward zero.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>n_steps</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of accepted steps. Default: <code>200</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>200</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>conditions</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple">tuple</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>One entry per experimental condition, for example per driving
+pressure or per recording. Each entry can be any pytree, and
+<code>fit_parameters</code> passes it to <code>make_model</code> and <code>loss_fn</code>. All
+conditions share <code>params</code>. Conditions with the same structure and
+leaf shapes run in parallel under <code>jax.vmap</code>; others run one after
+another. In parallel, each number in a condition, including a
+Python int, reaches <code>make_model</code> and <code>loss_fn</code> as a traced array:
+use it in <code>jnp.where</code> or <code>jax.lax.cond</code>, not in an <code>if</code> or as a
+slice bound. A condition that holds a Python bool or a string runs
+one after another, so these stay Python values that you can use as
+flags.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>save_spec</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            SaveSpec (jbubble.solver.SaveSpec)" href="../solver/#jbubble.solver.SaveSpec">SaveSpec</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Output sampling. <code>None</code> uses <a class="autorefs autorefs-internal" title="            SaveSpec" href="../solver/#jbubble.solver.SaveSpec"><code>SaveSpec()</code></a>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>t_max</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Integration end time [s]. <code>None</code> uses each pulse's <code>t_end</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>config</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            SolverConfig (jbubble.solver.SolverConfig)" href="../solver/#jbubble.solver.SolverConfig">SolverConfig</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>ODE solver settings. <code>None</code> uses
+<a class="autorefs autorefs-internal" title="            SolverConfig" href="../solver/#jbubble.solver.SolverConfig"><code>SolverConfig()</code></a>, the same as
+<a class="autorefs autorefs-internal" title="            run_simulation" href="../simulation/#jbubble.simulation.run_simulation"><code>run_simulation</code></a>, so the model
+you fit is the model you simulate.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>adjoint</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="diffrax.AbstractAdjoint" href="https://docs.kidger.site/diffrax/api/adjoints/#diffrax.AbstractAdjoint">AbstractAdjoint</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>How the gradient is computed through the solve. <code>None</code> uses
+<code>diffrax.RecursiveCheckpointAdjoint()</code>. <code>fit_parameters</code>
+differentiates in reverse mode, so it can't use
+<code>diffrax.ForwardMode()</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_backtracks</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>How many times to halve a step that fails before stopping. If every
+halved step fails, the fit warns and returns the last accepted
+parameters. Default: <code>5</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>5</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>step_callback</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#callable">callable</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>step_callback(step, params, loss)</code>, called outside JIT for
+<code>params0</code> (<code>step == 0</code>) and after each accepted step. <code>params</code> is in
+physical units, and <code>loss</code> is the loss at <code>params</code>. Raise
+<code>StopIteration</code> to end the fit. Any other exception propagates and
+discards the fit, so save checkpoints from the callback if you need
+them.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>log_every</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Print progress every <code>log_every</code> steps. <code>0</code> turns off logging.
+Default: <code>25</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>25</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            FitResult (jbubble.fitting.FitResult)" href="./#jbubble.fitting.FitResult">FitResult</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Fitted parameters, loss history, the simulation at the fitted
+parameters, and how the fit ended.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError">ValueError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>params0</code> has nothing to fit, a Python float in <code>params0</code> is zero,
+or <code>conditions</code> is empty.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#TypeError">TypeError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>adjoint</code> is <code>diffrax.ForwardMode()</code>, <code>conditions</code> isn't a list
+or tuple, <code>make_model</code> or <code>loss_fn</code> takes the wrong number of
+arguments, <code>make_model</code> doesn't return an <code>(eom, pulse)</code> tuple, or
+<code>loss_fn</code> doesn't return a scalar.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#RuntimeError">RuntimeError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If a solve fails, or the loss or its gradient isn't finite, at
+<code>params0</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Warns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#UserWarning">UserWarning</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If you set a Python float inside an Equinox module in <code>params0</code>,
+which stays fixed, or if the first step is larger than a
+coordinate's scale or smaller than a millionth of it.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#RuntimeWarning">RuntimeWarning</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If every halved step fails and the fit stops early.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="kn">import</span><span class="w"> </span><span class="nn">optax</span>
+</span><span id="__span-0-2"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_parameters</span>
+</span><span id="__span-0-3"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.fitting</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
+</span><span id="__span-0-4"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalised_mse_radius</span>
+</span><span id="__span-0-5">
+</span><span id="__span-0-6"><span class="n">fit</span> <span class="o">=</span> <span class="n">fit_parameters</span><span class="p">(</span>
+</span><span id="__span-0-7">    <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="p">(</span><span class="n">make_eom</span><span class="p">(</span><span class="n">kappa_s</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"kappa_s"</span><span class="p">],</span> <span class="n">chi</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">"chi"</span><span class="p">]),</span> <span class="n">pulse</span><span class="p">),</span>
+</span><span id="__span-0-8">    <span class="p">{</span>
+</span><span id="__span-0-9">        <span class="s2">"kappa_s"</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">(</span><span class="mf">1e-9</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>  <span class="c1"># [N s/m]</span>
+</span><span id="__span-0-10">        <span class="s2">"chi"</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">1.5</span><span class="p">),</span>  <span class="c1"># [N/m]</span>
+</span><span id="__span-0-11">    <span class="p">},</span>
+</span><span id="__span-0-12">    <span class="n">loss_fn</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">normalised_mse_radius</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">radius</span><span class="p">,</span> <span class="n">measured</span><span class="p">,</span> <span class="n">R0</span><span class="p">),</span>
+</span><span id="__span-0-13">    <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">0.05</span><span class="p">),</span>
+</span><span id="__span-0-14"><span class="p">)</span>
+</span></code></pre></div>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/fitting.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span>
+<span class="normal">522</span>
+<span class="normal">523</span>
+<span class="normal">524</span>
+<span class="normal">525</span>
+<span class="normal">526</span>
+<span class="normal">527</span>
+<span class="normal">528</span>
+<span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
+<span class="normal">535</span>
+<span class="normal">536</span>
+<span class="normal">537</span>
+<span class="normal">538</span>
+<span class="normal">539</span>
+<span class="normal">540</span>
+<span class="normal">541</span>
+<span class="normal">542</span>
+<span class="normal">543</span>
+<span class="normal">544</span>
+<span class="normal">545</span>
+<span class="normal">546</span>
+<span class="normal">547</span>
+<span class="normal">548</span>
+<span class="normal">549</span>
+<span class="normal">550</span>
+<span class="normal">551</span>
+<span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span>
+<span class="normal">557</span>
+<span class="normal">558</span>
+<span class="normal">559</span>
+<span class="normal">560</span>
+<span class="normal">561</span>
+<span class="normal">562</span>
+<span class="normal">563</span>
+<span class="normal">564</span>
+<span class="normal">565</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span>
+<span class="normal">569</span>
+<span class="normal">570</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span>
+<span class="normal">575</span>
+<span class="normal">576</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span>
+<span class="normal">581</span>
+<span class="normal">582</span>
+<span class="normal">583</span>
+<span class="normal">584</span>
+<span class="normal">585</span>
+<span class="normal">586</span>
+<span class="normal">587</span>
+<span class="normal">588</span>
+<span class="normal">589</span>
+<span class="normal">590</span>
+<span class="normal">591</span>
+<span class="normal">592</span>
+<span class="normal">593</span>
+<span class="normal">594</span>
+<span class="normal">595</span>
+<span class="normal">596</span>
+<span class="normal">597</span>
+<span class="normal">598</span>
+<span class="normal">599</span>
+<span class="normal">600</span>
+<span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span>
+<span class="normal">604</span>
+<span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span>
+<span class="normal">608</span>
+<span class="normal">609</span>
+<span class="normal">610</span>
+<span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span>
+<span class="normal">617</span>
+<span class="normal">618</span>
+<span class="normal">619</span>
+<span class="normal">620</span>
+<span class="normal">621</span>
+<span class="normal">622</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span>
+<span class="normal">627</span>
+<span class="normal">628</span>
+<span class="normal">629</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span>
+<span class="normal">633</span>
+<span class="normal">634</span>
+<span class="normal">635</span>
+<span class="normal">636</span>
+<span class="normal">637</span>
+<span class="normal">638</span>
+<span class="normal">639</span>
+<span class="normal">640</span>
+<span class="normal">641</span>
+<span class="normal">642</span>
+<span class="normal">643</span>
+<span class="normal">644</span>
+<span class="normal">645</span>
+<span class="normal">646</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
+<span class="normal">649</span>
+<span class="normal">650</span>
+<span class="normal">651</span>
+<span class="normal">652</span>
+<span class="normal">653</span>
+<span class="normal">654</span>
+<span class="normal">655</span>
+<span class="normal">656</span>
+<span class="normal">657</span>
+<span class="normal">658</span>
+<span class="normal">659</span>
+<span class="normal">660</span>
+<span class="normal">661</span>
+<span class="normal">662</span>
+<span class="normal">663</span>
+<span class="normal">664</span>
+<span class="normal">665</span>
+<span class="normal">666</span>
+<span class="normal">667</span>
+<span class="normal">668</span>
+<span class="normal">669</span>
+<span class="normal">670</span>
+<span class="normal">671</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span>
+<span class="normal">675</span>
+<span class="normal">676</span>
+<span class="normal">677</span>
+<span class="normal">678</span>
+<span class="normal">679</span>
+<span class="normal">680</span>
+<span class="normal">681</span>
+<span class="normal">682</span>
+<span class="normal">683</span>
+<span class="normal">684</span>
+<span class="normal">685</span>
+<span class="normal">686</span>
+<span class="normal">687</span>
+<span class="normal">688</span>
+<span class="normal">689</span>
+<span class="normal">690</span>
+<span class="normal">691</span>
+<span class="normal">692</span>
+<span class="normal">693</span>
+<span class="normal">694</span>
+<span class="normal">695</span>
+<span class="normal">696</span>
+<span class="normal">697</span>
+<span class="normal">698</span>
+<span class="normal">699</span>
+<span class="normal">700</span>
+<span class="normal">701</span>
+<span class="normal">702</span>
+<span class="normal">703</span>
+<span class="normal">704</span>
+<span class="normal">705</span>
+<span class="normal">706</span>
+<span class="normal">707</span>
+<span class="normal">708</span>
+<span class="normal">709</span>
+<span class="normal">710</span>
+<span class="normal">711</span>
+<span class="normal">712</span>
+<span class="normal">713</span>
+<span class="normal">714</span>
+<span class="normal">715</span>
+<span class="normal">716</span>
+<span class="normal">717</span>
+<span class="normal">718</span>
+<span class="normal">719</span>
+<span class="normal">720</span>
+<span class="normal">721</span>
+<span class="normal">722</span>
+<span class="normal">723</span>
+<span class="normal">724</span>
+<span class="normal">725</span>
+<span class="normal">726</span>
+<span class="normal">727</span>
+<span class="normal">728</span>
+<span class="normal">729</span>
+<span class="normal">730</span>
+<span class="normal">731</span>
+<span class="normal">732</span>
+<span class="normal">733</span>
+<span class="normal">734</span>
+<span class="normal">735</span>
+<span class="normal">736</span>
+<span class="normal">737</span>
+<span class="normal">738</span>
+<span class="normal">739</span>
+<span class="normal">740</span>
+<span class="normal">741</span>
+<span class="normal">742</span>
+<span class="normal">743</span>
+<span class="normal">744</span>
+<span class="normal">745</span>
+<span class="normal">746</span>
+<span class="normal">747</span>
+<span class="normal">748</span>
+<span class="normal">749</span>
+<span class="normal">750</span>
+<span class="normal">751</span>
+<span class="normal">752</span>
+<span class="normal">753</span>
+<span class="normal">754</span>
+<span class="normal">755</span>
+<span class="normal">756</span>
+<span class="normal">757</span>
+<span class="normal">758</span>
+<span class="normal">759</span>
+<span class="normal">760</span>
+<span class="normal">761</span>
+<span class="normal">762</span>
+<span class="normal">763</span>
+<span class="normal">764</span>
+<span class="normal">765</span>
+<span class="normal">766</span>
+<span class="normal">767</span>
+<span class="normal">768</span>
+<span class="normal">769</span>
+<span class="normal">770</span>
+<span class="normal">771</span>
+<span class="normal">772</span>
+<span class="normal">773</span>
+<span class="normal">774</span>
+<span class="normal">775</span>
+<span class="normal">776</span>
+<span class="normal">777</span>
+<span class="normal">778</span>
+<span class="normal">779</span>
+<span class="normal">780</span>
+<span class="normal">781</span>
+<span class="normal">782</span>
+<span class="normal">783</span>
+<span class="normal">784</span>
+<span class="normal">785</span>
+<span class="normal">786</span>
+<span class="normal">787</span>
+<span class="normal">788</span>
+<span class="normal">789</span>
+<span class="normal">790</span>
+<span class="normal">791</span>
+<span class="normal">792</span>
+<span class="normal">793</span>
+<span class="normal">794</span>
+<span class="normal">795</span>
+<span class="normal">796</span>
+<span class="normal">797</span>
+<span class="normal">798</span>
+<span class="normal">799</span>
+<span class="normal">800</span>
+<span class="normal">801</span>
+<span class="normal">802</span>
+<span class="normal">803</span>
+<span class="normal">804</span>
+<span class="normal">805</span>
+<span class="normal">806</span>
+<span class="normal">807</span>
+<span class="normal">808</span>
+<span class="normal">809</span>
+<span class="normal">810</span>
+<span class="normal">811</span>
+<span class="normal">812</span>
+<span class="normal">813</span>
+<span class="normal">814</span>
+<span class="normal">815</span>
+<span class="normal">816</span>
+<span class="normal">817</span>
+<span class="normal">818</span>
+<span class="normal">819</span>
+<span class="normal">820</span>
+<span class="normal">821</span>
+<span class="normal">822</span>
+<span class="normal">823</span>
+<span class="normal">824</span>
+<span class="normal">825</span>
+<span class="normal">826</span>
+<span class="normal">827</span>
+<span class="normal">828</span>
+<span class="normal">829</span>
+<span class="normal">830</span>
+<span class="normal">831</span>
+<span class="normal">832</span>
+<span class="normal">833</span>
+<span class="normal">834</span>
+<span class="normal">835</span>
+<span class="normal">836</span>
+<span class="normal">837</span>
+<span class="normal">838</span>
+<span class="normal">839</span>
+<span class="normal">840</span>
+<span class="normal">841</span>
+<span class="normal">842</span>
+<span class="normal">843</span>
+<span class="normal">844</span>
+<span class="normal">845</span>
+<span class="normal">846</span>
+<span class="normal">847</span>
+<span class="normal">848</span>
+<span class="normal">849</span>
+<span class="normal">850</span>
+<span class="normal">851</span>
+<span class="normal">852</span>
+<span class="normal">853</span>
+<span class="normal">854</span>
+<span class="normal">855</span>
+<span class="normal">856</span>
+<span class="normal">857</span>
+<span class="normal">858</span>
+<span class="normal">859</span>
+<span class="normal">860</span>
+<span class="normal">861</span>
+<span class="normal">862</span>
+<span class="normal">863</span>
+<span class="normal">864</span>
+<span class="normal">865</span>
+<span class="normal">866</span>
+<span class="normal">867</span>
+<span class="normal">868</span>
+<span class="normal">869</span>
+<span class="normal">870</span>
+<span class="normal">871</span>
+<span class="normal">872</span>
+<span class="normal">873</span>
+<span class="normal">874</span>
+<span class="normal">875</span>
+<span class="normal">876</span>
+<span class="normal">877</span>
+<span class="normal">878</span>
+<span class="normal">879</span>
+<span class="normal">880</span>
+<span class="normal">881</span>
+<span class="normal">882</span>
+<span class="normal">883</span>
+<span class="normal">884</span>
+<span class="normal">885</span>
+<span class="normal">886</span>
+<span class="normal">887</span>
+<span class="normal">888</span>
+<span class="normal">889</span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-490"><span class="k">def</span><span class="w"> </span><span class="nf">fit_parameters</span><span class="p">(</span>
+</span><span id="__span-0-491">    <span class="n">make_model</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">EquationOfMotion</span><span class="p">,</span> <span class="n">Pulse</span><span class="p">]],</span>
+</span><span id="__span-0-492">    <span class="n">params0</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+</span><span id="__span-0-493">    <span class="o">*</span><span class="p">,</span>
+</span><span id="__span-0-494">    <span class="n">loss_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">],</span>
+</span><span id="__span-0-495">    <span class="n">optimizer</span><span class="p">:</span> <span class="n">optax</span><span class="o">.</span><span class="n">GradientTransformation</span><span class="p">,</span>
+</span><span id="__span-0-496">    <span class="n">n_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+</span><span id="__span-0-497">    <span class="n">conditions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">PyTree</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-498">    <span class="n">save_spec</span><span class="p">:</span> <span class="n">SaveSpec</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-499">    <span class="n">t_max</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-500">    <span class="n">config</span><span class="p">:</span> <span class="n">SolverConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-501">    <span class="n">adjoint</span><span class="p">:</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">AbstractAdjoint</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-502">    <span class="n">max_backtracks</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+</span><span id="__span-0-503">    <span class="n">step_callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="n">PyTree</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-504">    <span class="n">log_every</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span>
+</span><span id="__span-0-505"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitResult</span><span class="p">:</span>
+</span><span id="__span-0-506"><span class="w">    </span><span class="sa">r</span><span class="sd">"""Fit model parameters by differentiating through the ODE solve.</span>
+</span><span id="__span-0-507">
+</span><span id="__span-0-508"><span class="sd">    `fit_parameters` minimises the mean loss over the conditions,</span>
+</span><span id="__span-0-509">
+</span><span id="__span-0-510"><span class="sd">    $$</span>
+</span><span id="__span-0-511"><span class="sd">    L(\theta) = \frac{1}{N} \sum_{c=1}^{N}</span>
+</span><span id="__span-0-512"><span class="sd">    \ell\big(\mathrm{simulate}(\mathrm{make\_model}(p, c)),\, c\big),</span>
+</span><span id="__span-0-513"><span class="sd">    \qquad p = \mathrm{unwrap}(\theta),</span>
+</span><span id="__span-0-514"><span class="sd">    $$</span>
+</span><span id="__span-0-515">
+</span><span id="__span-0-516"><span class="sd">    where $\theta$ holds the optimiser's coordinates (see</span>
+</span><span id="__span-0-517"><span class="sd">    [`Parameter`][jbubble.fitting.Parameter]), $\ell$ is `loss_fn`, and</span>
+</span><span id="__span-0-518"><span class="sd">    $\mathrm{simulate}$ is</span>
+</span><span id="__span-0-519"><span class="sd">    [`run_simulation`][jbubble.simulation.run_simulation] with `save_spec`,</span>
+</span><span id="__span-0-520"><span class="sd">    `t_max`, `config`, and `adjoint`. Without `conditions`, $N = 1$ and</span>
+</span><span id="__span-0-521"><span class="sd">    neither `make_model` nor `loss_fn` receives a condition. Each step</span>
+</span><span id="__span-0-522"><span class="sd">    computes the update $\Delta\theta$ with `optimizer` and tries</span>
+</span><span id="__span-0-523">
+</span><span id="__span-0-524"><span class="sd">    $$</span>
+</span><span id="__span-0-525"><span class="sd">    \theta_k = \theta + 2^{-k}\,\Delta\theta, \qquad k = 0, 1, \ldots,</span>
+</span><span id="__span-0-526"><span class="sd">    \texttt{max\_backtracks},</span>
+</span><span id="__span-0-527"><span class="sd">    $$</span>
+</span><span id="__span-0-528">
+</span><span id="__span-0-529"><span class="sd">    accepting the first $\theta_k$ at which every solve converges and both</span>
+</span><span id="__span-0-530"><span class="sd">    $L$ and its gradient are finite.</span>
+</span><span id="__span-0-531">
+</span><span id="__span-0-532"><span class="sd">    `fit_parameters` runs a Python loop around compiled functions, so you</span>
+</span><span id="__span-0-533"><span class="sd">    can't call it under `jax.jit` or `jax.vmap`, and each call compiles</span>
+</span><span id="__span-0-534"><span class="sd">    again. For many fits, such as multi-start fits, write the training loop</span>
+</span><span id="__span-0-535"><span class="sd">    yourself with [`unwrap`][jbubble.fitting.unwrap].</span>
+</span><span id="__span-0-536">
+</span><span id="__span-0-537"><span class="sd">    Parameters</span>
+</span><span id="__span-0-538"><span class="sd">    ----------</span>
+</span><span id="__span-0-539"><span class="sd">    make_model : callable</span>
+</span><span id="__span-0-540"><span class="sd">        `make_model(params) -&gt; (eom, pulse)`, or</span>
+</span><span id="__span-0-541"><span class="sd">        `make_model(params, condition) -&gt; (eom, pulse)` when you pass</span>
+</span><span id="__span-0-542"><span class="sd">        `conditions`. `params` has the structure of `params0`, in physical</span>
+</span><span id="__span-0-543"><span class="sd">        units. Must be JAX-traceable.</span>
+</span><span id="__span-0-544"><span class="sd">    params0 : PyTree</span>
+</span><span id="__span-0-545"><span class="sd">        Initial parameters: a float, a `Parameter`, a dict, list, or tuple</span>
+</span><span id="__span-0-546"><span class="sd">        of them, or an Equinox module such as a</span>
+</span><span id="__span-0-547"><span class="sd">        [`NeuralProperty`][jbubble.bubble.property.NeuralProperty]. What</span>
+</span><span id="__span-0-548"><span class="sd">        gets fitted:</span>
+</span><span id="__span-0-549">
+</span><span id="__span-0-550"><span class="sd">        - A `Parameter`, on its scaled coordinate, unless it's `fixed`.</span>
+</span><span id="__span-0-551"><span class="sd">        - A Python float (or `np.float64`) in `params0` itself or in a dict,</span>
+</span><span id="__span-0-552"><span class="sd">          list, or tuple: `1e-9` is shorthand for `Parameter(1e-9)`.</span>
+</span><span id="__span-0-553"><span class="sd">        - A floating-point JAX or NumPy array, including a NumPy scalar</span>
+</span><span id="__span-0-554"><span class="sd">          other than `np.float64`, in its own units, for example neural</span>
+</span><span id="__span-0-555"><span class="sd">          network weights.</span>
+</span><span id="__span-0-556">
+</span><span id="__span-0-557"><span class="sd">        Everything else is held fixed: integers, booleans, strings,</span>
+</span><span id="__span-0-558"><span class="sd">        callables, and Python floats inside an Equinox module. If you set a</span>
+</span><span id="__span-0-559"><span class="sd">        Python float inside a module, `fit_parameters` warns and names it.</span>
+</span><span id="__span-0-560"><span class="sd">    loss_fn : callable</span>
+</span><span id="__span-0-561"><span class="sd">        `loss_fn(result) -&gt; scalar`, or `loss_fn(result, condition) -&gt;</span>
+</span><span id="__span-0-562"><span class="sd">        scalar` when you pass `conditions`. `result` is a</span>
+</span><span id="__span-0-563"><span class="sd">        [`SimulationResult`][jbubble.simulation.SimulationResult].</span>
+</span><span id="__span-0-564"><span class="sd">    optimizer : optax.GradientTransformation</span>
+</span><span id="__span-0-565"><span class="sd">        For example `optax.adam(0.05)`. For `Parameter` and float values,</span>
+</span><span id="__span-0-566"><span class="sd">        the learning rate is a relative step size: 0.05 changes a value by</span>
+</span><span id="__span-0-567"><span class="sd">        about 5 % per step. `optimizer.update` receives the current</span>
+</span><span id="__span-0-568"><span class="sd">        coordinates as `params`, so transformations such as `optax.adamw`</span>
+</span><span id="__span-0-569"><span class="sd">        work, but act on the coordinates: weight decay pulls a lower-bounded</span>
+</span><span id="__span-0-570"><span class="sd">        `Parameter` toward its initial value, not toward zero.</span>
+</span><span id="__span-0-571"><span class="sd">    n_steps : int</span>
+</span><span id="__span-0-572"><span class="sd">        Number of accepted steps. Default: `200`.</span>
+</span><span id="__span-0-573"><span class="sd">    conditions : list or tuple, optional</span>
+</span><span id="__span-0-574"><span class="sd">        One entry per experimental condition, for example per driving</span>
+</span><span id="__span-0-575"><span class="sd">        pressure or per recording. Each entry can be any pytree, and</span>
+</span><span id="__span-0-576"><span class="sd">        `fit_parameters` passes it to `make_model` and `loss_fn`. All</span>
+</span><span id="__span-0-577"><span class="sd">        conditions share `params`. Conditions with the same structure and</span>
+</span><span id="__span-0-578"><span class="sd">        leaf shapes run in parallel under `jax.vmap`; others run one after</span>
+</span><span id="__span-0-579"><span class="sd">        another. In parallel, each number in a condition, including a</span>
+</span><span id="__span-0-580"><span class="sd">        Python int, reaches `make_model` and `loss_fn` as a traced array:</span>
+</span><span id="__span-0-581"><span class="sd">        use it in `jnp.where` or `jax.lax.cond`, not in an `if` or as a</span>
+</span><span id="__span-0-582"><span class="sd">        slice bound. A condition that holds a Python bool or a string runs</span>
+</span><span id="__span-0-583"><span class="sd">        one after another, so these stay Python values that you can use as</span>
+</span><span id="__span-0-584"><span class="sd">        flags.</span>
+</span><span id="__span-0-585"><span class="sd">    save_spec : SaveSpec, optional</span>
+</span><span id="__span-0-586"><span class="sd">        Output sampling. `None` uses [`SaveSpec()`][jbubble.solver.SaveSpec].</span>
+</span><span id="__span-0-587"><span class="sd">    t_max : float, optional</span>
+</span><span id="__span-0-588"><span class="sd">        Integration end time [s]. `None` uses each pulse's `t_end`.</span>
+</span><span id="__span-0-589"><span class="sd">    config : SolverConfig, optional</span>
+</span><span id="__span-0-590"><span class="sd">        ODE solver settings. `None` uses</span>
+</span><span id="__span-0-591"><span class="sd">        [`SolverConfig()`][jbubble.solver.SolverConfig], the same as</span>
+</span><span id="__span-0-592"><span class="sd">        [`run_simulation`][jbubble.simulation.run_simulation], so the model</span>
+</span><span id="__span-0-593"><span class="sd">        you fit is the model you simulate.</span>
+</span><span id="__span-0-594"><span class="sd">    adjoint : diffrax.AbstractAdjoint, optional</span>
+</span><span id="__span-0-595"><span class="sd">        How the gradient is computed through the solve. `None` uses</span>
+</span><span id="__span-0-596"><span class="sd">        `diffrax.RecursiveCheckpointAdjoint()`. `fit_parameters`</span>
+</span><span id="__span-0-597"><span class="sd">        differentiates in reverse mode, so it can't use</span>
+</span><span id="__span-0-598"><span class="sd">        `diffrax.ForwardMode()`.</span>
+</span><span id="__span-0-599"><span class="sd">    max_backtracks : int</span>
+</span><span id="__span-0-600"><span class="sd">        How many times to halve a step that fails before stopping. If every</span>
+</span><span id="__span-0-601"><span class="sd">        halved step fails, the fit warns and returns the last accepted</span>
+</span><span id="__span-0-602"><span class="sd">        parameters. Default: `5`.</span>
+</span><span id="__span-0-603"><span class="sd">    step_callback : callable, optional</span>
+</span><span id="__span-0-604"><span class="sd">        `step_callback(step, params, loss)`, called outside JIT for</span>
+</span><span id="__span-0-605"><span class="sd">        `params0` (`step == 0`) and after each accepted step. `params` is in</span>
+</span><span id="__span-0-606"><span class="sd">        physical units, and `loss` is the loss at `params`. Raise</span>
+</span><span id="__span-0-607"><span class="sd">        `StopIteration` to end the fit. Any other exception propagates and</span>
+</span><span id="__span-0-608"><span class="sd">        discards the fit, so save checkpoints from the callback if you need</span>
+</span><span id="__span-0-609"><span class="sd">        them.</span>
+</span><span id="__span-0-610"><span class="sd">    log_every : int</span>
+</span><span id="__span-0-611"><span class="sd">        Print progress every `log_every` steps. `0` turns off logging.</span>
+</span><span id="__span-0-612"><span class="sd">        Default: `25`.</span>
+</span><span id="__span-0-613">
+</span><span id="__span-0-614"><span class="sd">    Returns</span>
+</span><span id="__span-0-615"><span class="sd">    -------</span>
+</span><span id="__span-0-616"><span class="sd">    FitResult</span>
+</span><span id="__span-0-617"><span class="sd">        Fitted parameters, loss history, the simulation at the fitted</span>
+</span><span id="__span-0-618"><span class="sd">        parameters, and how the fit ended.</span>
+</span><span id="__span-0-619">
+</span><span id="__span-0-620"><span class="sd">    Raises</span>
+</span><span id="__span-0-621"><span class="sd">    ------</span>
+</span><span id="__span-0-622"><span class="sd">    ValueError</span>
+</span><span id="__span-0-623"><span class="sd">        If `params0` has nothing to fit, a Python float in `params0` is zero,</span>
+</span><span id="__span-0-624"><span class="sd">        or `conditions` is empty.</span>
+</span><span id="__span-0-625"><span class="sd">    TypeError</span>
+</span><span id="__span-0-626"><span class="sd">        If `adjoint` is `diffrax.ForwardMode()`, `conditions` isn't a list</span>
+</span><span id="__span-0-627"><span class="sd">        or tuple, `make_model` or `loss_fn` takes the wrong number of</span>
+</span><span id="__span-0-628"><span class="sd">        arguments, `make_model` doesn't return an `(eom, pulse)` tuple, or</span>
+</span><span id="__span-0-629"><span class="sd">        `loss_fn` doesn't return a scalar.</span>
+</span><span id="__span-0-630"><span class="sd">    RuntimeError</span>
+</span><span id="__span-0-631"><span class="sd">        If a solve fails, or the loss or its gradient isn't finite, at</span>
+</span><span id="__span-0-632"><span class="sd">        `params0`.</span>
+</span><span id="__span-0-633">
+</span><span id="__span-0-634"><span class="sd">    Warns</span>
+</span><span id="__span-0-635"><span class="sd">    -----</span>
+</span><span id="__span-0-636"><span class="sd">    UserWarning</span>
+</span><span id="__span-0-637"><span class="sd">        If you set a Python float inside an Equinox module in `params0`,</span>
+</span><span id="__span-0-638"><span class="sd">        which stays fixed, or if the first step is larger than a</span>
+</span><span id="__span-0-639"><span class="sd">        coordinate's scale or smaller than a millionth of it.</span>
+</span><span id="__span-0-640"><span class="sd">    RuntimeWarning</span>
+</span><span id="__span-0-641"><span class="sd">        If every halved step fails and the fit stops early.</span>
+</span><span id="__span-0-642">
+</span><span id="__span-0-643"><span class="sd">    Examples</span>
+</span><span id="__span-0-644"><span class="sd">    --------</span>
+</span><span id="__span-0-645"><span class="sd">    ```python</span>
+</span><span id="__span-0-646"><span class="sd">    import optax</span>
+</span><span id="__span-0-647"><span class="sd">    from jbubble import fit_parameters</span>
+</span><span id="__span-0-648"><span class="sd">    from jbubble.fitting import Parameter</span>
+</span><span id="__span-0-649"><span class="sd">    from jbubble.metrics import normalised_mse_radius</span>
+</span><span id="__span-0-650">
+</span><span id="__span-0-651"><span class="sd">    fit = fit_parameters(</span>
+</span><span id="__span-0-652"><span class="sd">        lambda p: (make_eom(kappa_s=p["kappa_s"], chi=p["chi"]), pulse),</span>
+</span><span id="__span-0-653"><span class="sd">        {</span>
+</span><span id="__span-0-654"><span class="sd">            "kappa_s": Parameter(1e-9, lower=0.0),  # [N s/m]</span>
+</span><span id="__span-0-655"><span class="sd">            "chi": Parameter(0.3, lower=0.0, upper=1.5),  # [N/m]</span>
+</span><span id="__span-0-656"><span class="sd">        },</span>
+</span><span id="__span-0-657"><span class="sd">        loss_fn=lambda r: normalised_mse_radius(r.radius, measured, R0),</span>
+</span><span id="__span-0-658"><span class="sd">        optimizer=optax.adam(0.05),</span>
+</span><span id="__span-0-659"><span class="sd">    )</span>
+</span><span id="__span-0-660"><span class="sd">    ```</span>
+</span><span id="__span-0-661"><span class="sd">    """</span>
+</span><span id="__span-0-662">    <span class="n">config</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">()</span> <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">config</span>
+</span><span id="__span-0-663">    <span class="n">adjoint</span> <span class="o">=</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">RecursiveCheckpointAdjoint</span><span class="p">()</span> <span class="k">if</span> <span class="n">adjoint</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">adjoint</span>
+</span><span id="__span-0-664">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">adjoint</span><span class="p">,</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">ForwardMode</span><span class="p">):</span>
+</span><span id="__span-0-665">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="__span-0-666">            <span class="s2">"fit_parameters: diffrax.ForwardMode() gives only forward-mode "</span>
+</span><span id="__span-0-667">            <span class="s2">"derivatives, and fit_parameters differentiates in reverse mode. Keep "</span>
+</span><span id="__span-0-668">            <span class="s2">"the default diffrax.RecursiveCheckpointAdjoint(). For a least-squares "</span>
+</span><span id="__span-0-669">            <span class="s2">"fit with forward-mode Jacobians, pass adjoint=diffrax.ForwardMode() "</span>
+</span><span id="__span-0-670">            <span class="s2">"to run_simulation instead, as the fitting guide shows."</span>
+</span><span id="__span-0-671">        <span class="p">)</span>
+</span><span id="__span-0-672">
+</span><span id="__span-0-673">    <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-674">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+</span><span id="__span-0-675">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="__span-0-676">                <span class="s2">"fit_parameters: conditions must be a list or tuple with one entry "</span>
+</span><span id="__span-0-677">                <span class="s2">"per condition, for example [{'pressure': 50e3, 'radius': r50}, ...]; "</span>
+</span><span id="__span-0-678">                <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span>
+</span><span id="__span-0-679">            <span class="p">)</span>
+</span><span id="__span-0-680">        <span class="k">if</span> <span class="ow">not</span> <span class="n">conditions</span><span class="p">:</span>
+</span><span id="__span-0-681">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"fit_parameters: conditions is empty."</span><span class="p">)</span>
+</span><span id="__span-0-682">        <span class="n">conditions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+</span><span id="__span-0-683">    <span class="k">for</span> <span class="n">fn</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">first</span> <span class="ow">in</span> <span class="p">(</span>
+</span><span id="__span-0-684">        <span class="p">(</span><span class="n">make_model</span><span class="p">,</span> <span class="s2">"make_model"</span><span class="p">,</span> <span class="s2">"params"</span><span class="p">),</span>
+</span><span id="__span-0-685">        <span class="p">(</span><span class="n">loss_fn</span><span class="p">,</span> <span class="s2">"loss_fn"</span><span class="p">,</span> <span class="s2">"result"</span><span class="p">),</span>
+</span><span id="__span-0-686">    <span class="p">):</span>
+</span><span id="__span-0-687">        <span class="n">_check_arity</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">first</span><span class="p">,)</span> <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="s2">"condition"</span><span class="p">))</span>
+</span><span id="__span-0-688">    <span class="n">stacked</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_stack</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+</span><span id="__span-0-689">
+</span><span id="__span-0-690">    <span class="n">spec</span> <span class="o">=</span> <span class="n">_canonicalise</span><span class="p">(</span><span class="n">params0</span><span class="p">)</span>
+</span><span id="__span-0-691">    <span class="n">_warn_held_floats</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+</span><span id="__span-0-692">    <span class="n">trainable</span><span class="p">,</span> <span class="n">static</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">_trainable_filter</span><span class="p">(</span><span class="n">spec</span><span class="p">))</span>
+</span><span id="__span-0-693">    <span class="c1"># Strong dtypes: a weakly typed array, such as jnp.array(1e-9), comes back</span>
+</span><span id="__span-0-694">    <span class="c1"># strongly typed from the first update and would make `evaluate` compile</span>
+</span><span id="__span-0-695">    <span class="c1"># a second time.</span>
+</span><span id="__span-0-696">    <span class="n">trainable</span> <span class="o">=</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+</span><span id="__span-0-697">        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">result_type</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="n">trainable</span>
+</span><span id="__span-0-698">    <span class="p">)</span>
+</span><span id="__span-0-699">    <span class="k">if</span> <span class="ow">not</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_leaves</span><span class="p">(</span><span class="n">trainable</span><span class="p">):</span>
+</span><span id="__span-0-700">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="__span-0-701">            <span class="s2">"fit_parameters: params0 has nothing to fit. Use Parameter or Python "</span>
+</span><span id="__span-0-702">            <span class="s2">"floats for physical values, and floating-point arrays for network "</span>
+</span><span id="__span-0-703">            <span class="s2">"weights. Integers, booleans, fixed Parameters, and Python floats "</span>
+</span><span id="__span-0-704">            <span class="s2">"inside an Equinox module are held fixed."</span>
+</span><span id="__span-0-705">        <span class="p">)</span>
+</span><span id="__span-0-706">
+</span><span id="__span-0-707">    <span class="k">def</span><span class="w"> </span><span class="nf">one</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">SimulationResult</span><span class="p">]:</span>
+</span><span id="__span-0-708">        <span class="n">model</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-0-709">            <span class="n">make_model</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">make_model</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">condition</span><span class="p">)</span>
+</span><span id="__span-0-710">        <span class="p">)</span>
+</span><span id="__span-0-711">        <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_model</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+</span><span id="__span-0-712">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="__span-0-713">                <span class="s2">"fit_parameters: make_model must return an (EquationOfMotion, Pulse) "</span>
+</span><span id="__span-0-714">                <span class="sa">f</span><span class="s2">"tuple; got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span>
+</span><span id="__span-0-715">            <span class="p">)</span>
+</span><span id="__span-0-716">        <span class="n">result</span> <span class="o">=</span> <span class="n">_simulate</span><span class="p">(</span>
+</span><span id="__span-0-717">            <span class="n">model</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+</span><span id="__span-0-718">            <span class="n">model</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+</span><span id="__span-0-719">            <span class="n">save_spec</span><span class="o">=</span><span class="n">save_spec</span><span class="p">,</span>
+</span><span id="__span-0-720">            <span class="n">t_max</span><span class="o">=</span><span class="n">t_max</span><span class="p">,</span>
+</span><span id="__span-0-721">            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+</span><span id="__span-0-722">            <span class="n">adjoint</span><span class="o">=</span><span class="n">adjoint</span><span class="p">,</span>
+</span><span id="__span-0-723">        <span class="p">)</span>
+</span><span id="__span-0-724">        <span class="n">loss</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+</span><span id="__span-0-725">            <span class="n">loss_fn</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">condition</span><span class="p">)</span>
+</span><span id="__span-0-726">        <span class="p">)</span>
+</span><span id="__span-0-727">        <span class="k">if</span> <span class="n">loss</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="__span-0-728">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="__span-0-729">                <span class="sa">f</span><span class="s2">"fit_parameters: loss_fn must return a scalar; got shape </span><span class="si">{</span><span class="n">loss</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">."</span>
+</span><span id="__span-0-730">            <span class="p">)</span>
+</span><span id="__span-0-731">        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">result</span>
+</span><span id="__span-0-732">
+</span><span id="__span-0-733">    <span class="k">def</span><span class="w"> </span><span class="nf">objective</span><span class="p">(</span><span class="n">tr</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">st</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">conds</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+</span><span id="__span-0-734">        <span class="n">params</span> <span class="o">=</span> <span class="n">unwrap</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">st</span><span class="p">))</span>
+</span><span id="__span-0-735">        <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-736">            <span class="n">loss</span><span class="p">,</span> <span class="n">result</span> <span class="o">=</span> <span class="n">one</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+</span><span id="__span-0-737">            <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">loss</span><span class="p">[</span><span class="kc">None</span><span class="p">])</span>
+</span><span id="__span-0-738">        <span class="k">if</span> <span class="n">stacked</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-739">            <span class="n">losses</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">filter_vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">one</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">c</span><span class="p">))(</span><span class="n">conds</span><span class="p">)</span>
+</span><span id="__span-0-740">            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">losses</span><span class="p">),</span> <span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span> <span class="n">losses</span><span class="p">)</span>
+</span><span id="__span-0-741">        <span class="n">outs</span> <span class="o">=</span> <span class="p">[</span><span class="n">one</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">conds</span><span class="p">]</span>
+</span><span id="__span-0-742">        <span class="n">losses</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">loss</span> <span class="k">for</span> <span class="n">loss</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">outs</span><span class="p">])</span>
+</span><span id="__span-0-743">        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">outs</span><span class="p">]</span>
+</span><span id="__span-0-744">        <span class="n">converged</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">r</span><span class="o">.</span><span class="n">converged</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">])</span>
+</span><span id="__span-0-745">        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">losses</span><span class="p">),</span> <span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">losses</span><span class="p">)</span>
+</span><span id="__span-0-746">
+</span><span id="__span-0-747">    <span class="nd">@eqx</span><span class="o">.</span><span class="n">filter_jit</span>
+</span><span id="__span-0-748">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="n">tr</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">st</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">conds</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+</span><span id="__span-0-749">        <span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">losses</span><span class="p">)),</span> <span class="n">grads</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span>
+</span><span id="__span-0-750">            <span class="n">objective</span><span class="p">,</span> <span class="n">has_aux</span><span class="o">=</span><span class="kc">True</span>
+</span><span id="__span-0-751">        <span class="p">)(</span><span class="n">tr</span><span class="p">,</span> <span class="n">st</span><span class="p">,</span> <span class="n">conds</span><span class="p">)</span>
+</span><span id="__span-0-752">        <span class="n">grads_finite</span> <span class="o">=</span> <span class="n">_all_finite</span><span class="p">(</span><span class="n">grads</span><span class="p">)</span>
+</span><span id="__span-0-753">        <span class="n">ok</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">converged</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">grads_finite</span>
+</span><span id="__span-0-754">        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">grads</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="p">(</span><span class="n">converged</span><span class="p">,</span> <span class="n">losses</span><span class="p">,</span> <span class="n">grads_finite</span><span class="p">),</span> <span class="n">results</span>
+</span><span id="__span-0-755">
+</span><span id="__span-0-756">    <span class="nd">@eqx</span><span class="o">.</span><span class="n">filter_jit</span>
+</span><span id="__span-0-757">    <span class="k">def</span><span class="w"> </span><span class="nf">propose</span><span class="p">(</span><span class="n">tr</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">opt_state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">grads</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+</span><span id="__span-0-758">        <span class="k">return</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">grads</span><span class="p">,</span> <span class="n">opt_state</span><span class="p">,</span> <span class="n">tr</span><span class="p">)</span>
+</span><span id="__span-0-759">
+</span><span id="__span-0-760">    <span class="nd">@eqx</span><span class="o">.</span><span class="n">filter_jit</span>
+</span><span id="__span-0-761">    <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="n">tr</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">updates</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+</span><span id="__span-0-762">        <span class="k">return</span> <span class="n">eqx</span><span class="o">.</span><span class="n">apply_updates</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">factor</span> <span class="o">*</span> <span class="n">u</span><span class="p">,</span> <span class="n">updates</span><span class="p">))</span>
+</span><span id="__span-0-763">
+</span><span id="__span-0-764">    <span class="n">conds_arg</span> <span class="o">=</span> <span class="n">stacked</span> <span class="k">if</span> <span class="n">stacked</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">conditions</span>
+</span><span id="__span-0-765">    <span class="n">loss</span><span class="p">,</span> <span class="n">grads</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="n">diagnostics</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">trainable</span><span class="p">,</span> <span class="n">static</span><span class="p">,</span> <span class="n">conds_arg</span><span class="p">)</span>
+</span><span id="__span-0-766">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ok</span><span class="p">):</span>
+</span><span id="__span-0-767">        <span class="n">converged</span><span class="p">,</span> <span class="n">losses</span><span class="p">,</span> <span class="n">grads_finite</span> <span class="o">=</span> <span class="n">diagnostics</span>
+</span><span id="__span-0-768">        <span class="n">problems</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-0-769">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">ok_i</span><span class="p">,</span> <span class="n">loss_i</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+</span><span id="__span-0-770">            <span class="nb">zip</span><span class="p">(</span><span class="n">converged</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">losses</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-0-771">        <span class="p">):</span>
+</span><span id="__span-0-772">            <span class="n">where</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">conditions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"condition </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: "</span>
+</span><span id="__span-0-773">            <span class="k">if</span> <span class="ow">not</span> <span class="n">ok_i</span><span class="p">:</span>
+</span><span id="__span-0-774">                <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">the ODE solve did not converge"</span><span class="p">)</span>
+</span><span id="__span-0-775">            <span class="k">elif</span> <span class="ow">not</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">loss_i</span><span class="p">):</span>
+</span><span id="__span-0-776">                <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">the loss is </span><span class="si">{</span><span class="n">loss_i</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-0-777">        <span class="k">if</span> <span class="ow">not</span> <span class="n">problems</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">grads_finite</span><span class="p">):</span>
+</span><span id="__span-0-778">            <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"the gradient is not finite"</span><span class="p">)</span>
+</span><span id="__span-0-779">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">converged</span><span class="o">.</span><span class="n">tolist</span><span class="p">()):</span>
+</span><span id="__span-0-780">            <span class="n">hint</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-0-781">                <span class="s2">"Check params0 and the driving pressure, raise "</span>
+</span><span id="__span-0-782">                <span class="s2">"SolverConfig.max_steps, or tighten the solver tolerances."</span>
+</span><span id="__span-0-783">            <span class="p">)</span>
+</span><span id="__span-0-784">        <span class="k">else</span><span class="p">:</span>
+</span><span id="__span-0-785">            <span class="n">hint</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-0-786">                <span class="s2">"The solve converged, so check that loss_fn returns a finite "</span>
+</span><span id="__span-0-787">                <span class="s2">"value with a finite gradient at params0."</span>
+</span><span id="__span-0-788">            <span class="p">)</span>
+</span><span id="__span-0-789">        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+</span><span id="__span-0-790">            <span class="s2">"fit_parameters: can't start at params0, because "</span>
+</span><span id="__span-0-791">            <span class="o">+</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">problems</span><span class="p">)</span>
+</span><span id="__span-0-792">            <span class="o">+</span> <span class="s2">". "</span>
+</span><span id="__span-0-793">            <span class="o">+</span> <span class="n">hint</span>
+</span><span id="__span-0-794">        <span class="p">)</span>
+</span><span id="__span-0-795">
+</span><span id="__span-0-796">    <span class="k">def</span><span class="w"> </span><span class="nf">physical</span><span class="p">(</span><span class="n">tr</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+</span><span id="__span-0-797">        <span class="k">return</span> <span class="n">unwrap</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">static</span><span class="p">))</span>
+</span><span id="__span-0-798">
+</span><span id="__span-0-799">    <span class="c1"># Typical magnitude of each coordinate, for the first-step check.</span>
+</span><span id="__span-0-800">    <span class="n">reference</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span>
+</span><span id="__span-0-801">        <span class="n">jtu</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+</span><span id="__span-0-802">            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span>
+</span><span id="__span-0-803">                <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span><span class="k">lambda</span> <span class="n">q</span><span class="p">:</span> <span class="n">q</span><span class="o">.</span><span class="n">raw</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">raw</span><span class="p">))</span>
+</span><span id="__span-0-804">                <span class="k">if</span> <span class="n">_is_parameter</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span id="__span-0-805">                <span class="k">else</span> <span class="n">x</span>
+</span><span id="__span-0-806">            <span class="p">),</span>
+</span><span id="__span-0-807">            <span class="n">spec</span><span class="p">,</span>
+</span><span id="__span-0-808">            <span class="n">is_leaf</span><span class="o">=</span><span class="n">_is_parameter</span><span class="p">,</span>
+</span><span id="__span-0-809">        <span class="p">),</span>
+</span><span id="__span-0-810">        <span class="n">_trainable_filter</span><span class="p">(</span><span class="n">spec</span><span class="p">),</span>
+</span><span id="__span-0-811">    <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-0-812">    <span class="n">opt_state</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">trainable</span><span class="p">)</span>
+</span><span id="__span-0-813">    <span class="n">history</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">loss</span><span class="p">)]</span>
+</span><span id="__span-0-814">    <span class="n">num_rejected</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="__span-0-815">    <span class="n">stopped_early</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="__span-0-816">    <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"completed </span><span class="si">{</span><span class="n">n_steps</span><span class="si">}</span><span class="s2"> steps"</span>
+</span><span id="__span-0-817">
+</span><span id="__span-0-818">    <span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-819">        <span class="k">if</span> <span class="n">log_every</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">step</span> <span class="o">%</span> <span class="n">log_every</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">step</span> <span class="o">==</span> <span class="n">n_steps</span><span class="p">):</span>
+</span><span id="__span-0-820">            <span class="nb">print</span><span class="p">(</span>
+</span><span id="__span-0-821">                <span class="sa">f</span><span class="s2">"  step </span><span class="si">{</span><span class="n">step</span><span class="si">:</span><span class="s2">&gt;4</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">n_steps</span><span class="si">}</span><span class="s2">  loss = </span><span class="si">{</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.4e</span><span class="si">}</span><span class="s2">  "</span>
+</span><span id="__span-0-822">                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_format_params</span><span class="p">(</span><span class="n">physical</span><span class="p">(</span><span class="n">trainable</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-0-823">                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"  (rejected </span><span class="si">{</span><span class="n">num_rejected</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">num_rejected</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+</span><span id="__span-0-824">            <span class="p">)</span>
+</span><span id="__span-0-825">
+</span><span id="__span-0-826">    <span class="k">def</span><span class="w"> </span><span class="nf">callback</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="__span-0-827">        <span class="k">if</span> <span class="n">step_callback</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-828">            <span class="k">return</span> <span class="kc">False</span>
+</span><span id="__span-0-829">        <span class="k">try</span><span class="p">:</span>
+</span><span id="__span-0-830">            <span class="n">step_callback</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">physical</span><span class="p">(</span><span class="n">trainable</span><span class="p">),</span> <span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+</span><span id="__span-0-831">        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+</span><span id="__span-0-832">            <span class="k">return</span> <span class="kc">True</span>
+</span><span id="__span-0-833">        <span class="k">return</span> <span class="kc">False</span>
+</span><span id="__span-0-834">
+</span><span id="__span-0-835">    <span class="n">report</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="__span-0-836">    <span class="n">stop</span> <span class="o">=</span> <span class="n">callback</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="__span-0-837">    <span class="k">if</span> <span class="n">stop</span><span class="p">:</span>
+</span><span id="__span-0-838">        <span class="n">stopped_early</span> <span class="o">=</span> <span class="n">n_steps</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</span><span id="__span-0-839">        <span class="n">message</span> <span class="o">=</span> <span class="s2">"step_callback raised StopIteration at step 0"</span>
+</span><span id="__span-0-840">    <span class="n">step</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="__span-0-841">    <span class="k">while</span> <span class="ow">not</span> <span class="n">stop</span> <span class="ow">and</span> <span class="n">step</span> <span class="o">&lt;</span> <span class="n">n_steps</span><span class="p">:</span>
+</span><span id="__span-0-842">        <span class="n">updates</span><span class="p">,</span> <span class="n">new_opt_state</span> <span class="o">=</span> <span class="n">propose</span><span class="p">(</span><span class="n">trainable</span><span class="p">,</span> <span class="n">opt_state</span><span class="p">,</span> <span class="n">grads</span><span class="p">)</span>
+</span><span id="__span-0-843">        <span class="k">if</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="__span-0-844">            <span class="n">_warn_on_first_step</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">updates</span><span class="p">)</span>
+</span><span id="__span-0-845">        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_backtracks</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+</span><span id="__span-0-846">            <span class="n">candidate</span> <span class="o">=</span> <span class="n">apply</span><span class="p">(</span><span class="n">trainable</span><span class="p">,</span> <span class="n">updates</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mf">0.5</span><span class="o">**</span><span class="n">k</span><span class="p">))</span>
+</span><span id="__span-0-847">            <span class="n">c_loss</span><span class="p">,</span> <span class="n">c_grads</span><span class="p">,</span> <span class="n">c_ok</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">c_results</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">static</span><span class="p">,</span> <span class="n">conds_arg</span><span class="p">)</span>
+</span><span id="__span-0-848">            <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">c_ok</span><span class="p">):</span>
+</span><span id="__span-0-849">                <span class="k">break</span>
+</span><span id="__span-0-850">            <span class="n">num_rejected</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span id="__span-0-851">        <span class="k">else</span><span class="p">:</span>
+</span><span id="__span-0-852">            <span class="n">stopped_early</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="__span-0-853">            <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-0-854">                <span class="sa">f</span><span class="s2">"stopped after </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">n_steps</span><span class="si">}</span><span class="s2"> steps: </span><span class="si">{</span><span class="n">max_backtracks</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> "</span>
+</span><span id="__span-0-855">                <span class="s2">"successively halved steps all made a solve fail or gave a non-finite "</span>
+</span><span id="__span-0-856">                <span class="s2">"loss or gradient"</span>
+</span><span id="__span-0-857">            <span class="p">)</span>
+</span><span id="__span-0-858">            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+</span><span id="__span-0-859">                <span class="sa">f</span><span class="s2">"fit_parameters: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">. Returning the last accepted parameters. "</span>
+</span><span id="__span-0-860">                <span class="s2">"Lower the learning rate, bound the parameters with Parameter, or "</span>
+</span><span id="__span-0-861">                <span class="s2">"raise SolverConfig.max_steps."</span><span class="p">,</span>
+</span><span id="__span-0-862">                <span class="ne">RuntimeWarning</span><span class="p">,</span>
+</span><span id="__span-0-863">                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+</span><span id="__span-0-864">            <span class="p">)</span>
+</span><span id="__span-0-865">            <span class="k">break</span>
+</span><span id="__span-0-866">        <span class="n">trainable</span><span class="p">,</span> <span class="n">opt_state</span> <span class="o">=</span> <span class="n">candidate</span><span class="p">,</span> <span class="n">new_opt_state</span>
+</span><span id="__span-0-867">        <span class="n">loss</span><span class="p">,</span> <span class="n">grads</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">c_loss</span><span class="p">,</span> <span class="n">c_grads</span><span class="p">,</span> <span class="n">c_results</span>
+</span><span id="__span-0-868">        <span class="n">step</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span id="__span-0-869">        <span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">loss</span><span class="p">))</span>
+</span><span id="__span-0-870">        <span class="n">report</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+</span><span id="__span-0-871">        <span class="n">stop</span> <span class="o">=</span> <span class="n">callback</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+</span><span id="__span-0-872">        <span class="k">if</span> <span class="n">stop</span><span class="p">:</span>
+</span><span id="__span-0-873">            <span class="n">stopped_early</span> <span class="o">=</span> <span class="n">step</span> <span class="o">&lt;</span> <span class="n">n_steps</span>
+</span><span id="__span-0-874">            <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"step_callback raised StopIteration after step </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-0-875">
+</span><span id="__span-0-876">    <span class="k">if</span> <span class="n">stacked</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-877">        <span class="n">num_conditions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">jtu</span><span class="o">.</span><span class="n">tree_leaves</span><span class="p">(</span><span class="n">stacked</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+</span><span id="__span-0-878">        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-0-879">            <span class="n">jtu</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">results</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_conditions</span><span class="p">)</span>
+</span><span id="__span-0-880">        <span class="p">]</span>
+</span><span id="__span-0-881">
+</span><span id="__span-0-882">    <span class="k">return</span> <span class="n">FitResult</span><span class="p">(</span>
+</span><span id="__span-0-883">        <span class="n">params</span><span class="o">=</span><span class="n">physical</span><span class="p">(</span><span class="n">trainable</span><span class="p">),</span>
+</span><span id="__span-0-884">        <span class="n">loss_history</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">history</span><span class="p">),</span>
+</span><span id="__span-0-885">        <span class="n">result</span><span class="o">=</span><span class="n">results</span><span class="p">,</span>
+</span><span id="__span-0-886">        <span class="n">num_rejected</span><span class="o">=</span><span class="n">num_rejected</span><span class="p">,</span>
+</span><span id="__span-0-887">        <span class="n">stopped_early</span><span class="o">=</span><span class="n">stopped_early</span><span class="p">,</span>
+</span><span id="__span-0-888">        <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
+</span><span id="__span-0-889">    <span class="p">)</span>
+</span></code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.fitting.FitResult" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">FitResult</span>
+
+
+<a href="#jbubble.fitting.FitResult" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><span class="nf">FitResult</span><span class="p">(</span>
+</span><span id="__span-0-2">    <span class="n">params</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span>
+</span><span id="__span-0-3">    <span class="n">loss_history</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="jax.Array" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array">Array</a></span><span class="p">,</span>
+</span><span id="__span-0-4">    <span class="n">result</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            SimulationResult (jbubble.simulation.SimulationResult)" href="../simulation/#jbubble.simulation.SimulationResult">SimulationResult</a></span> <span class="o">|</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            SimulationResult (jbubble.simulation.SimulationResult)" href="../simulation/#jbubble.simulation.SimulationResult">SimulationResult</a></span><span class="p">],</span>
+</span><span id="__span-0-5">    <span class="n">num_rejected</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-0-6">    <span class="n">stopped_early</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-7">    <span class="n">message</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+</span><span id="__span-0-8"><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Output of <a class="autorefs autorefs-internal" title="            fit_parameters" href="./#jbubble.fitting.fit_parameters"><code>fit_parameters</code></a>.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="jbubble.fitting.FitResult.params">params</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Fitted parameters in physical units, with the structure of
+<code>params0</code>. Each <a class="autorefs autorefs-internal" title="            Parameter" href="./#jbubble.fitting.Parameter"><code>Parameter</code></a> and each
+fitted Python float is replaced by its fitted value, a <code>jax.Array</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="jbubble.fitting.FitResult.loss_history">loss_history</span></code></td>
+            <td>
+                  <code>(<a class="autorefs autorefs-external" title="jax.Array" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array">Array</a>, <span title="shape">shape</span>(<span title="n_accepted">n_accepted</span> + 1))</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>loss_history[0]</code> is the loss at <code>params0</code>, and <code>loss_history[k]</code> the
+loss after <code>k</code> accepted steps. <code>loss_history[-1]</code> is the loss at
+<code>params</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="jbubble.fitting.FitResult.result">result</span></code></td>
+            <td>
+                  <code>SimulationResult or list of SimulationResult</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The simulation at <code>params</code>. With <code>conditions</code>, a list with one
+<a class="autorefs autorefs-internal" title="            SimulationResult" href="../simulation/#jbubble.simulation.SimulationResult"><code>SimulationResult</code></a> per
+condition, in the same order.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="jbubble.fitting.FitResult.num_rejected">num_rejected</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of candidate steps rejected because a solve failed or the
+loss or gradient wasn't finite. Each rejection halves the step.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="jbubble.fitting.FitResult.stopped_early">stopped_early</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> if the fit ended before <code>n_steps</code> accepted steps.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="jbubble.fitting.FitResult.message">message</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Why the fit ended.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="jbubble.fitting.Parameter" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">Parameter</span>
+
+
+<a href="#jbubble.fitting.Parameter" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><span class="nf">Parameter</span><span class="p">(</span>
+</span><span id="__span-0-2">    <span class="n">value</span><span class="p">:</span> <span class="n"><span title="jbubble.fitting.ArrayLike">ArrayLike</span></span><span class="p">,</span>
+</span><span id="__span-0-3">    <span class="n">lower</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-4">    <span class="n">upper</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-5">    <span class="o">*</span><span class="p">,</span>
+</span><span id="__span-0-6">    <span class="n">scale</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-7">    <span class="n">fixed</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-8"><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-external" title="equinox.Module" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module">Module</a></code></p>
+
+
+
+        <p>A fitted quantity, with optional bounds, a scale, or a fixed value.</p>
+<p>The optimiser never updates the physical value <span class="arithmatex">\(x\)</span> directly. It updates
+an unconstrained coordinate <span class="arithmatex">\(u\)</span> of order one, and <span class="arithmatex">\(x\)</span> follows from <span class="arithmatex">\(u\)</span>:</p>
+<div class="arithmatex">\[
+x = \begin{cases}
+s\,u &amp; \text{no bounds} \\
+a + s\,e^{u} &amp; \text{lower bound } a \\
+b - s\,e^{u} &amp; \text{upper bound } b \\
+a + (b - a)\,\operatorname{sigmoid}(u) &amp; \text{both bounds}
+\end{cases}
+\]</div>
+<p>where <span class="arithmatex">\(s\)</span> is <code>scale</code>. The default <code>scale</code> is <span class="arithmatex">\(|x_0|\)</span> without bounds and
+the distance from the initial value <span class="arithmatex">\(x_0\)</span> to the bound with one bound.
+So an optimiser step of 0.05 in <span class="arithmatex">\(u\)</span> changes <span class="arithmatex">\(x\)</span> by about 5 %, whatever
+its units, and one learning rate suits <code>kappa_s</code> near <span class="arithmatex">\(10^{-9}\)</span> N s/m and
+<code>chi</code> near 0.5 N/m alike. With bounds, <span class="arithmatex">\(x\)</span> stays strictly inside them.</p>
+<p>Build a <code>Parameter</code> outside <code>jax.jit</code> and <code>jax.vmap</code>: the constructor
+checks the value and bounds on concrete numbers.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>value</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Initial physical value, in SI units. An array is fitted element by
+element.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>lower</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Lower bound. <code>value</code> must be greater than it. A scalar: one bound
+applies to every element of an array <code>value</code>. <code>-inf</code>, as in SciPy,
+means no lower bound, the same as <code>None</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>upper</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Upper bound. <code>value</code> must be less than it. A scalar, like <code>lower</code>.
+<code>inf</code> means no upper bound, the same as <code>None</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>scale</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#float">float</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Typical magnitude of <span class="arithmatex">\(x\)</span> (no bounds) or of its distance from the
+bound (one bound). Required when <code>value</code> is zero, there are no
+bounds, and the parameter isn't fixed, for example
+<code>Parameter(0.0, scale=1e-7)</code> for a trigger delay [s]. Ignored with
+two bounds. <code>scale</code> is a static field, so <code>Parameter</code>s with
+different scales have different pytree structures, and a compiled
+function compiles again for each one. By default, it comes from
+<code>value</code>: to reuse a compiled function for several initial values,
+pass the same <code>scale</code> to each.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fixed</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to hold <span class="arithmatex">\(x\)</span> at <code>value</code>. Use this to switch a parameter off
+without editing <code>make_model</code>, or to hold a value inside an Equinox
+module fixed without a warning from
+<a class="autorefs autorefs-internal" title="            fit_parameters" href="./#jbubble.fitting.fit_parameters"><code>fit_parameters</code></a>. Default:
+<code>False</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="jbubble.fitting.Parameter.raw">raw</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="jax.Array" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array">Array</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The coordinate <span class="arithmatex">\(u\)</span> that the optimiser updates. For a fixed
+parameter, the value itself.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError">ValueError</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>value</code> isn't finite, lies outside the bounds, or is zero
+without bounds, <code>scale</code>, or <code>fixed</code>, or if a bound is NaN,
+<code>lower &gt;= upper</code>, or <code>scale</code> isn't positive and finite.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="n">kappa_s</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="mf">1e-9</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># positive, log-scaled [N s/m]</span>
+</span><span id="__span-0-2"><span class="n">chi</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>  <span class="c1"># bounded [N/m]</span>
+</span><span id="__span-0-3"><span class="n">R0</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="mf">2e-6</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># held fixed [m]</span>
+</span></code></pre></div>
+
+
+
+
+
+
+
+
+                  <details class="mkdocstrings-source">
+                    <summary>Source code in <code>jbubble/fitting.py</code></summary>
+                    <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-120"><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="__span-0-121">    <span class="bp">self</span><span class="p">,</span>
+</span><span id="__span-0-122">    <span class="n">value</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+</span><span id="__span-0-123">    <span class="n">lower</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-124">    <span class="n">upper</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-125">    <span class="o">*</span><span class="p">,</span>
+</span><span id="__span-0-126">    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-127">    <span class="n">fixed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-128"><span class="p">):</span>
+</span><span id="__span-0-129">    <span class="n">v</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+</span><span id="__span-0-130">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">v</span><span class="p">))):</span>
+</span><span id="__span-0-131">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parameter: value must be finite, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">."</span><span class="p">)</span>
+</span><span id="__span-0-132">    <span class="n">lower</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">lower</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">lower</span><span class="p">)</span>
+</span><span id="__span-0-133">    <span class="n">upper</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">upper</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">upper</span><span class="p">)</span>
+</span><span id="__span-0-134">    <span class="k">if</span> <span class="p">(</span><span class="n">lower</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">lower</span> <span class="o">!=</span> <span class="n">lower</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+</span><span id="__span-0-135">        <span class="n">upper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">upper</span> <span class="o">!=</span> <span class="n">upper</span>
+</span><span id="__span-0-136">    <span class="p">):</span>
+</span><span id="__span-0-137">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="__span-0-138">            <span class="sa">f</span><span class="s2">"Parameter: lower and upper can't be NaN, got lower=</span><span class="si">{</span><span class="n">lower</span><span class="si">}</span><span class="s2">, "</span>
+</span><span id="__span-0-139">            <span class="sa">f</span><span class="s2">"upper=</span><span class="si">{</span><span class="n">upper</span><span class="si">}</span><span class="s2">. Omit a bound, or pass None, for no bound."</span>
+</span><span id="__span-0-140">        <span class="p">)</span>
+</span><span id="__span-0-141">    <span class="c1"># An infinite bound on its own side is no bound, as in SciPy.</span>
+</span><span id="__span-0-142">    <span class="bp">self</span><span class="o">.</span><span class="n">lower</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">lower</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"-inf"</span><span class="p">)</span> <span class="k">else</span> <span class="n">lower</span>
+</span><span id="__span-0-143">    <span class="bp">self</span><span class="o">.</span><span class="n">upper</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">upper</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span> <span class="k">else</span> <span class="n">upper</span>
+</span><span id="__span-0-144">    <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+</span><span id="__span-0-145">    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper</span>
+</span><span id="__span-0-146">    <span class="k">if</span> <span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">lo</span> <span class="o">&lt;</span> <span class="n">hi</span><span class="p">:</span>
+</span><span id="__span-0-147">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parameter: lower=</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2"> must be less than upper=</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+</span><span id="__span-0-148">    <span class="k">if</span> <span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">v</span> <span class="o">&gt;</span> <span class="n">lo</span><span class="p">)):</span>
+</span><span id="__span-0-149">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="__span-0-150">            <span class="sa">f</span><span class="s2">"Parameter: value </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> must be greater than lower=</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">."</span>
+</span><span id="__span-0-151">        <span class="p">)</span>
+</span><span id="__span-0-152">    <span class="k">if</span> <span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">v</span> <span class="o">&lt;</span> <span class="n">hi</span><span class="p">)):</span>
+</span><span id="__span-0-153">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="__span-0-154">            <span class="sa">f</span><span class="s2">"Parameter: value </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> must be less than upper=</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">."</span>
+</span><span id="__span-0-155">        <span class="p">)</span>
+</span><span id="__span-0-156">    <span class="k">if</span> <span class="n">scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="mf">0.0</span> <span class="o">&lt;</span> <span class="nb">float</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)):</span>
+</span><span id="__span-0-157">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="__span-0-158">            <span class="sa">f</span><span class="s2">"Parameter: scale must be positive and finite, got </span><span class="si">{</span><span class="n">scale</span><span class="si">!r}</span><span class="s2">."</span>
+</span><span id="__span-0-159">        <span class="p">)</span>
+</span><span id="__span-0-160">
+</span><span id="__span-0-161">    <span class="k">if</span> <span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-162">        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span>
+</span><span id="__span-0-163">    <span class="k">elif</span> <span class="n">scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-164">        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
+</span><span id="__span-0-165">    <span class="k">elif</span> <span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-166">        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">lo</span><span class="p">))))</span>
+</span><span id="__span-0-167">    <span class="k">elif</span> <span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-168">        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">v</span><span class="p">))))</span>
+</span><span id="__span-0-169">    <span class="k">else</span><span class="p">:</span>
+</span><span id="__span-0-170">        <span class="n">magnitude</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+</span><span id="__span-0-171">        <span class="k">if</span> <span class="n">magnitude</span> <span class="o">==</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">:</span>
+</span><span id="__span-0-172">            <span class="n">magnitude</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># a fixed parameter never uses its scale</span>
+</span><span id="__span-0-173">        <span class="k">elif</span> <span class="n">magnitude</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+</span><span id="__span-0-174">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="__span-0-175">                <span class="s2">"Parameter: can't infer a scale for a value of zero. Pass "</span>
+</span><span id="__span-0-176">                <span class="s2">"scale=&lt;typical magnitude&gt;, for example Parameter(0.0, scale=1e-7)."</span>
+</span><span id="__span-0-177">            <span class="p">)</span>
+</span><span id="__span-0-178">        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">magnitude</span>
+</span><span id="__span-0-179">
+</span><span id="__span-0-180">    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">:</span>
+</span><span id="__span-0-181">        <span class="bp">self</span><span class="o">.</span><span class="n">raw</span> <span class="o">=</span> <span class="n">v</span>
+</span><span id="__span-0-182">    <span class="k">elif</span> <span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-183">        <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span>
+</span><span id="__span-0-184">        <span class="bp">self</span><span class="o">.</span><span class="n">raw</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">z</span><span class="p">)</span>
+</span><span id="__span-0-185">    <span class="k">elif</span> <span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-186">        <span class="bp">self</span><span class="o">.</span><span class="n">raw</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="n">v</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+</span><span id="__span-0-187">    <span class="k">elif</span> <span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-188">        <span class="bp">self</span><span class="o">.</span><span class="n">raw</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="n">hi</span> <span class="o">-</span> <span class="n">v</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+</span><span id="__span-0-189">    <span class="k">else</span><span class="p">:</span>
+</span><span id="__span-0-190">        <span class="bp">self</span><span class="o">.</span><span class="n">raw</span> <span class="o">=</span> <span class="n">v</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span>
+</span></code></pre></div></td></tr></table></div>
+                  </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="jbubble.fitting.Parameter.value" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">value</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#jbubble.fitting.Parameter.value" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><span class="n">value</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Physical value <span class="arithmatex">\(x\)</span> of the parameter, in SI units.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="jbubble.fitting.unwrap" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">unwrap</span>
+
+
+<a href="#jbubble.fitting.unwrap" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><span class="nf">unwrap</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Replace every <a class="autorefs autorefs-internal" title="            Parameter" href="./#jbubble.fitting.Parameter"><code>Parameter</code></a> in <code>tree</code> by its value.</p>
+<p><a class="autorefs autorefs-internal" title="            fit_parameters" href="./#jbubble.fitting.fit_parameters"><code>fit_parameters</code></a> calls this for you
+before it calls <code>make_model</code>. Call it yourself in a hand-written training
+loop.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>tree</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Any pytree, such as a dict of <code>Parameter</code>s or an Equinox module with
+<code>Parameter</code> fields.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>tree</code>, with each <code>Parameter</code> replaced by its physical value, a
+<code>jax.Array</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>jbubble/fitting.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-215"><span class="k">def</span><span class="w"> </span><span class="nf">unwrap</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+</span><span id="__span-0-216"><span class="w">    </span><span class="sd">"""Replace every [`Parameter`][jbubble.fitting.Parameter] in `tree` by its value.</span>
+</span><span id="__span-0-217">
+</span><span id="__span-0-218"><span class="sd">    [`fit_parameters`][jbubble.fitting.fit_parameters] calls this for you</span>
+</span><span id="__span-0-219"><span class="sd">    before it calls `make_model`. Call it yourself in a hand-written training</span>
+</span><span id="__span-0-220"><span class="sd">    loop.</span>
+</span><span id="__span-0-221">
+</span><span id="__span-0-222"><span class="sd">    Parameters</span>
+</span><span id="__span-0-223"><span class="sd">    ----------</span>
+</span><span id="__span-0-224"><span class="sd">    tree : PyTree</span>
+</span><span id="__span-0-225"><span class="sd">        Any pytree, such as a dict of `Parameter`s or an Equinox module with</span>
+</span><span id="__span-0-226"><span class="sd">        `Parameter` fields.</span>
+</span><span id="__span-0-227">
+</span><span id="__span-0-228"><span class="sd">    Returns</span>
+</span><span id="__span-0-229"><span class="sd">    -------</span>
+</span><span id="__span-0-230"><span class="sd">    PyTree</span>
+</span><span id="__span-0-231"><span class="sd">        `tree`, with each `Parameter` replaced by its physical value, a</span>
+</span><span id="__span-0-232"><span class="sd">        `jax.Array`.</span>
+</span><span id="__span-0-233"><span class="sd">    """</span>
+</span><span id="__span-0-234">    <span class="k">return</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+</span><span id="__span-0-235">        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">_is_parameter</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="n">x</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">is_leaf</span><span class="o">=</span><span class="n">_is_parameter</span>
+</span><span id="__span-0-236">    <span class="p">)</span>
+</span></code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div><hr />
+<h2 id="how-a-step-works">How a step works<a class="headerlink" href="#how-a-step-works" title="Permanent link">&para;</a></h2>
+<p><code>fit_parameters</code> evaluates the loss and its gradient in one compiled call, with reverse-mode differentiation through the ODE solve. Each step then does the following:</p>
+<ol>
+<li>Computes an update with <code>optimizer.update(grads, opt_state, params)</code>.</li>
+<li>Tries the candidate <code>params + update</code>. If any solve fails to converge, or the loss or gradient isn't finite, it halves the update and tries again, up to <code>max_backtracks</code> times.</li>
+<li>Accepts the first candidate that succeeds. Its loss goes into <code>loss_history</code>, and its gradient drives the next step.</li>
+</ol>
+<p>If every halved update fails, the fit warns, stops, and returns the last accepted parameters. A failed solve during the fit never raises. Only a failure at <code>params0</code> raises <code>RuntimeError</code>, before the first step.</p>
+<h2 id="what-gets-fitted">What gets fitted<a class="headerlink" href="#what-gets-fitted" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Leaf of <code>params0</code></th>
+<th>Fitted</th>
+<th>Coordinate that the optimiser updates</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Parameter(x)</code></td>
+<td>Yes</td>
+<td><code>x / scale</code></td>
+</tr>
+<tr>
+<td><code>Parameter(x, lower=a)</code></td>
+<td>Yes</td>
+<td><code>log((x - a) / scale)</code></td>
+</tr>
+<tr>
+<td><code>Parameter(x, upper=b)</code></td>
+<td>Yes</td>
+<td><code>log((b - x) / scale)</code></td>
+</tr>
+<tr>
+<td><code>Parameter(x, lower=a, upper=b)</code></td>
+<td>Yes</td>
+<td><code>logit((x - a) / (b - a))</code></td>
+</tr>
+<tr>
+<td><code>Parameter(x, fixed=True)</code></td>
+<td>No</td>
+<td></td>
+</tr>
+<tr>
+<td>Python float or <code>np.float64</code> in a dict, list, or tuple, or as <code>params0</code></td>
+<td>Yes</td>
+<td>as <code>Parameter(x)</code></td>
+</tr>
+<tr>
+<td>Floating-point JAX or NumPy array, or another NumPy scalar</td>
+<td>Yes</td>
+<td>the value itself</td>
+</tr>
+<tr>
+<td>Python float inside an Equinox module</td>
+<td>No, with a warning if you set it</td>
+<td></td>
+</tr>
+<tr>
+<td>Integer, boolean, string, or callable</td>
+<td>No</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><code>make_model</code>, <code>loss_fn</code>, <code>step_callback</code>, and <code>FitResult.params</code> all see physical values.</p>
+<h2 id="gradients-through-the-ode-solve">Gradients through the ODE solve<a class="headerlink" href="#gradients-through-the-ode-solve" title="Permanent link">&para;</a></h2>
+<p><a class="autorefs autorefs-internal" title="            solve_eom" href="../solver/#jbubble.solver.solve_eom"><code>solve_eom</code></a> evaluates the equation of motion through a guard, so a trial step that the adaptive solver rejects, for example one that overshoots a strong collapse to <code>R &lt;= 0</code>, can't make the gradient NaN. With an explicit solver, such as the default <code>Dopri5</code>, the guard leaves the solution unchanged, bit for bit.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../metrics/" class="md-footer__link md-footer__link--prev" aria-label="Previous: metrics">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                metrics
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../utils/" class="md-footer__link md-footer__link--next" aria-label="Next: utils">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                utils
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Noninvasive Surgery &amp; Biopsy Laboratory
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog" role="status" aria-atomic="true">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.progress","navigation.sections","navigation.tabs","navigation.top","search.highlight","toc.follow"],"redirect":null,"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.67a597eb.min.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>

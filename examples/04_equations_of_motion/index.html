@@ -1,0 +1,1568 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Differentiable microbubble dynamics in JAX">
+      
+      
+      
+        <link rel="canonical" href="https://imperial-nsb.github.io/jbubble/examples/04_equations_of_motion/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/logo.svg">
+      <meta name="generator" content="zensical-0.0.67">
+    
+    
+      
+        <title>Equations of motion - jbubble</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.4ae390e2.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.96d1a7e4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Serif+4:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Source Serif 4";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#equations-of-motion" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="jbubble" class="md-header__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            jbubble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Equations of motion
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/installation/" class="md-tabs__link">
+          
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/bubble_models/" class="md-tabs__link">
+          
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link">
+        
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../citing/" class="md-tabs__link">
+        
+  
+  Citing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="jbubble" class="md-nav__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    jbubble
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Getting started
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Getting started
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Installation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Quickstart
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Guide
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Guide
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/bubble_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bubble models
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/pulse_shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pulse shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/solvers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Solvers and stiffness
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/sweeps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Parameter sweeps
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/jax_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  JAX tips
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Examples
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  API reference
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/bubble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  bubble
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pulse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  pulse
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  acoustics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/solver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  solver
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  simulation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  metrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  utils
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Citing
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Changelog
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#build-three-equations-of-motion" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Build three equations of motion
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compare-them-at-400-kpa" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Compare them at 400 kPa
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find-the-onset-of-inertial-cavitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Find the onset of inertial cavitation
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/imperial-nsb/jbubble/edit/main/docs/examples/04_equations_of_motion.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="equations-of-motion">Equations of motion<a class="headerlink" href="#equations-of-motion" title="Permanent link">&para;</a></h1>
+<div class="jb-example-links">
+<a href="https://colab.research.google.com/github/imperial-nsb/jbubble/blob/gh-pages/examples/notebooks/04_equations_of_motion.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="md-button" download="04_equations_of_motion.ipynb" href="../notebooks/04_equations_of_motion.ipynb">Download notebook</a>
+<a class="md-button" href="https://github.com/imperial-nsb/jbubble/blob/64d87445dee81504005a77cb453f48399668a2b6/examples/04_equations_of_motion.py">View source</a>
+</div>
+<p>Solve one bubble with three equations of motion, from the incompressible Rayleigh-Plesset equation to the Keller-Miksis equation, which accounts for the compressibility of the liquid. Then raise the drive pressure to see where stable oscillation gives way to inertial cavitation.</p>
+<p>All three equations share the same gas, shell, and medium models; they differ in how they treat the liquid around the bubble.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+</span><span id="__span-0-2"><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+</span><span id="__span-0-3">
+</span><span id="__span-0-4"><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+</span><span id="__span-0-5"><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+</span><span id="__span-0-6"><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+</span><span id="__span-0-7">
+</span><span id="__span-0-8"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">SaveSpec</span><span class="p">,</span> <span class="n">run_simulation</span>
+</span><span id="__span-0-9"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.eom</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="__span-0-10">    <span class="n">KellerMiksis</span><span class="p">,</span>
+</span><span id="__span-0-11">    <span class="n">ModifiedRayleighPlesset</span><span class="p">,</span>
+</span><span id="__span-0-12">    <span class="n">RayleighPlesset</span><span class="p">,</span>
+</span><span id="__span-0-13"><span class="p">)</span>
+</span><span id="__span-0-14"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.gas</span><span class="w"> </span><span class="kn">import</span> <span class="n">VanDerWaalsGas</span>
+</span><span id="__span-0-15"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.medium</span><span class="w"> </span><span class="kn">import</span> <span class="n">NewtonianMedium</span>
+</span><span id="__span-0-16"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.bubble.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoShell</span>
+</span><span id="__span-0-17"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">HannEnvelope</span><span class="p">,</span> <span class="n">ToneBurst</span>
+</span><span id="__span-0-18"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.pulse.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sine</span>
+</span><span id="__span-0-19">
+</span><span id="__span-0-20"><span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">"jbubble.style.light"</span><span class="p">)</span>
+</span><span id="__span-0-21"><span class="n">DRIVE</span> <span class="o">=</span> <span class="s2">"#8c959f"</span>  <span class="c1"># neutral grey for the acoustic drive in the light theme</span>
+</span><span id="__span-0-22"><span class="n">QUICK</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"JBUBBLE_QUICK"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"1"</span>  <span class="c1"># a smaller sweep for CI</span>
+</span></code></pre></div>
+<h2 id="build-three-equations-of-motion">Build three equations of motion<a class="headerlink" href="#build-three-equations-of-motion" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>RayleighPlesset</code> treats the liquid as incompressible. It has no way to lose energy to sound, so it overestimates violent growth and collapse.</li>
+<li><code>ModifiedRayleighPlesset</code> adds a first-order correction for the sound that the gas pressure radiates, as in Marmottant et al. (2005).</li>
+<li><code>KellerMiksis</code> keeps the liquid's compressibility to first order in the Mach number of the bubble wall. The presets use it.</li>
+</ul>
+<p>The bubble is a 2 µm air bubble in water. A van der Waals gas keeps the collapse physical: the gas can't be compressed below the volume of its molecules, a hard core of radius <span class="arithmatex">\(R_0 / 8.86\)</span>. The liquid is water at 20 °C: <code>NewtonianMedium</code> defaults to a density of 998 kg/m³ and the conventional speed of sound of 1500 m/s.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><span class="n">parts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+</span><span id="__span-1-2">    <span class="n">gas</span><span class="o">=</span><span class="n">VanDerWaalsGas</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="mf">1.4</span><span class="p">,</span> <span class="n">h_frac</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="mf">8.86</span><span class="p">),</span>
+</span><span id="__span-1-3">    <span class="n">shell</span><span class="o">=</span><span class="n">NoShell</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">0.072</span><span class="p">),</span>
+</span><span id="__span-1-4">    <span class="n">medium</span><span class="o">=</span><span class="n">NewtonianMedium</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">),</span>  <span class="c1"># water: rho_L = 998 kg/m³, c_L = 1500 m/s</span>
+</span><span id="__span-1-5">    <span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">,</span>
+</span><span id="__span-1-6">    <span class="n">P_amb</span><span class="o">=</span><span class="mf">101325.0</span><span class="p">,</span>
+</span><span id="__span-1-7"><span class="p">)</span>
+</span><span id="__span-1-8">
+</span><span id="__span-1-9"><span class="n">models</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-1-10">    <span class="s2">"Keller-Miksis"</span><span class="p">:</span> <span class="n">KellerMiksis</span><span class="p">(</span><span class="o">**</span><span class="n">parts</span><span class="p">),</span>
+</span><span id="__span-1-11">    <span class="s2">"Rayleigh-Plesset"</span><span class="p">:</span> <span class="n">RayleighPlesset</span><span class="p">(</span><span class="o">**</span><span class="n">parts</span><span class="p">),</span>
+</span><span id="__span-1-12">    <span class="s2">"modified Rayleigh-Plesset"</span><span class="p">:</span> <span class="n">ModifiedRayleighPlesset</span><span class="p">(</span><span class="o">**</span><span class="n">parts</span><span class="p">),</span>
+</span><span id="__span-1-13"><span class="p">}</span>
+</span></code></pre></div>
+<h2 id="compare-them-at-400-kpa">Compare them at 400 kPa<a class="headerlink" href="#compare-them-at-400-kpa" title="Permanent link">&para;</a></h2>
+<p>Drive the bubble with three cycles at 1 MHz and 400 kPa under a Hann window. At this pressure the bubble grows to several times its size and then collapses, which is where the equations disagree most. Record 4000 samples, because each collapse lasts only a few nanoseconds.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><span class="n">pulse</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span>
+</span><span id="__span-2-2">    <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">400e3</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">envelope</span><span class="o">=</span><span class="n">HannEnvelope</span><span class="p">()</span>
+</span><span id="__span-2-3"><span class="p">)</span>
+</span><span id="__span-2-4"><span class="n">runs</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="__span-2-5"><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="__span-2-6">    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+</span><span id="__span-2-7">    <span class="n">runs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span>
+</span><span id="__span-2-8">        <span class="n">model</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">t_max</span><span class="o">=</span><span class="mf">6e-6</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">4000</span><span class="p">)</span>
+</span><span id="__span-2-9">    <span class="p">)</span>
+</span><span id="__span-2-10">    <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+</span><span id="__span-2-11">    <span class="n">R</span> <span class="o">=</span> <span class="n">runs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">model</span><span class="o">.</span><span class="n">R0</span>
+</span><span id="__span-2-12">    <span class="nb">print</span><span class="p">(</span>
+</span><span id="__span-2-13">        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">26s</span><span class="si">}</span><span class="s2"> R/R0 from </span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, "</span>
+</span><span id="__span-2-14">        <span class="sa">f</span><span class="s2">"converged: </span><span class="si">{</span><span class="nb">bool</span><span class="p">(</span><span class="n">runs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">converged</span><span class="p">)</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> s with compilation"</span>
+</span><span id="__span-2-15">    <span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text jb-output highlight"><pre><span></span><code><span id="__span-3-1">Keller-Miksis              R/R0 from 0.198 to 2.86, converged: True, 3.6 s with compilation
+</span><span id="__span-3-2">Rayleigh-Plesset           R/R0 from 0.151 to 4.00, converged: True, 1.6 s with compilation
+</span><span id="__span-3-3">modified Rayleigh-Plesset  R/R0 from 0.196 to 2.88, converged: True, 1.7 s with compilation
+</span></code></pre></div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax_p</span><span class="p">,</span> <span class="n">ax_r</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span>
+</span><span id="__span-4-2">    <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.5</span><span class="p">,</span> <span class="mf">4.6</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">2.4</span><span class="p">]</span>
+</span><span id="__span-4-3"><span class="p">)</span>
+</span><span id="__span-4-4"><span class="n">first</span> <span class="o">=</span> <span class="n">runs</span><span class="p">[</span><span class="s2">"Keller-Miksis"</span><span class="p">]</span>
+</span><span id="__span-4-5"><span class="n">ax_p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">first</span><span class="o">.</span><span class="n">ts</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">first</span><span class="o">.</span><span class="n">driving_pressure</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">DRIVE</span><span class="p">)</span>
+</span><span id="__span-4-6"><span class="n">ax_p</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"drive (kPa)"</span><span class="p">)</span>
+</span><span id="__span-4-7"><span class="n">ax_p</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"One bubble, three equations of motion: 1 MHz, 400 kPa"</span><span class="p">)</span>
+</span><span id="__span-4-8"><span class="n">ax_r</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">DRIVE</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
+</span><span id="__span-4-9"><span class="c1"># Keller-Miksis is wide and underneath; modified Rayleigh-Plesset is dashed on top.</span>
+</span><span id="__span-4-10"><span class="n">styles</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">lw</span><span class="o">=</span><span class="mf">3.0</span><span class="p">),</span> <span class="nb">dict</span><span class="p">(</span><span class="n">lw</span><span class="o">=</span><span class="mf">1.4</span><span class="p">),</span> <span class="nb">dict</span><span class="p">(</span><span class="n">lw</span><span class="o">=</span><span class="mf">1.4</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)]</span>
+</span><span id="__span-4-11"><span class="k">for</span> <span class="n">colour</span><span class="p">,</span> <span class="n">style</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">run</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+</span><span id="__span-4-12">    <span class="p">[</span><span class="s2">"C0"</span><span class="p">,</span> <span class="s2">"C1"</span><span class="p">,</span> <span class="s2">"C2"</span><span class="p">],</span> <span class="n">styles</span><span class="p">,</span> <span class="n">runs</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span>
+</span><span id="__span-4-13"><span class="p">):</span>
+</span><span id="__span-4-14">    <span class="n">ax_r</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">ts</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">run</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">parts</span><span class="p">[</span><span class="s2">"R0"</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">colour</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">style</span><span class="p">)</span>
+</span><span id="__span-4-15"><span class="n">ax_r</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"time (µs)"</span><span class="p">)</span>
+</span><span id="__span-4-16"><span class="n">ax_r</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"$R / R_0$"</span><span class="p">)</span>
+</span><span id="__span-4-17"><span class="n">ax_r</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"upper left"</span><span class="p">)</span>
+</span><span id="__span-4-18"><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="Compare them at 400 kPa" height="514" src="../media/04_equations_of_motion_1.png" width="833" /></p>
+<p>Rayleigh-Plesset lets the bubble grow furthest, because an incompressible liquid can't carry energy away as sound. The two equations that radiate sound agree closely at this pressure; they differ mainly in how deep each collapse goes. Keller-Miksis keeps compressibility only to first order in the wall Mach number, so treat its results with care when the wall approaches the speed of sound.</p>
+<h2 id="find-the-onset-of-inertial-cavitation">Find the onset of inertial cavitation<a class="headerlink" href="#find-the-onset-of-inertial-cavitation" title="Permanent link">&para;</a></h2>
+<p>At low pressures the bubble oscillates gently around its equilibrium radius for as long as the drive lasts: stable cavitation. Above a threshold it grows to several times its size and collapses violently under the inertia of the liquid that rushes in: inertial cavitation. A common rule of thumb calls a collapse inertial when the bubble first grows to at least twice its equilibrium radius.</p>
+<p><code>jax.vmap</code> runs the Keller-Miksis model at every pressure in one compiled call. A sweep function returns the peak radius together with the solver's <code>converged</code> flag, so you can discard any run that failed.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><span class="n">keller_miksis</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="s2">"Keller-Miksis"</span><span class="p">]</span>
+</span><span id="__span-5-2"><span class="n">pressures</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">10e3</span><span class="p">,</span> <span class="mf">400e3</span><span class="p">,</span> <span class="mi">16</span> <span class="k">if</span> <span class="n">QUICK</span> <span class="k">else</span> <span class="mi">60</span><span class="p">)</span>
+</span><span id="__span-5-3">
+</span><span id="__span-5-4">
+</span><span id="__span-5-5"><span class="k">def</span><span class="w"> </span><span class="nf">peak_radius</span><span class="p">(</span><span class="n">pressure</span><span class="p">):</span>
+</span><span id="__span-5-6">    <span class="n">drive</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span>
+</span><span id="__span-5-7">        <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="n">pressure</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">envelope</span><span class="o">=</span><span class="n">HannEnvelope</span><span class="p">()</span>
+</span><span id="__span-5-8">    <span class="p">)</span>
+</span><span id="__span-5-9">    <span class="n">run</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span>
+</span><span id="__span-5-10">        <span class="n">keller_miksis</span><span class="p">,</span> <span class="n">drive</span><span class="p">,</span> <span class="n">t_max</span><span class="o">=</span><span class="mf">6e-6</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+</span><span id="__span-5-11">    <span class="p">)</span>
+</span><span id="__span-5-12">    <span class="k">return</span> <span class="n">run</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">keller_miksis</span><span class="o">.</span><span class="n">R0</span><span class="p">,</span> <span class="n">run</span><span class="o">.</span><span class="n">converged</span>
+</span><span id="__span-5-13">
+</span><span id="__span-5-14">
+</span><span id="__span-5-15"><span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+</span><span id="__span-5-16"><span class="n">peaks</span><span class="p">,</span> <span class="n">converged</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">peak_radius</span><span class="p">))(</span><span class="n">pressures</span><span class="p">)</span>
+</span><span id="__span-5-17"><span class="n">peaks</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
+</span><span id="__span-5-18"><span class="nb">print</span><span class="p">(</span>
+</span><span id="__span-5-19">    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pressures</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> pressures in </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> s, all converged: </span><span class="si">{</span><span class="nb">bool</span><span class="p">(</span><span class="n">converged</span><span class="o">.</span><span class="n">all</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-5-20"><span class="p">)</span>
+</span><span id="__span-5-21">
+</span><span id="__span-5-22"><span class="n">inertial</span> <span class="o">=</span> <span class="n">peaks</span> <span class="o">&gt;=</span> <span class="mf">2.0</span>
+</span><span id="__span-5-23"><span class="n">threshold</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-5-24">    <span class="nb">float</span><span class="p">(</span><span class="n">pressures</span><span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">inertial</span><span class="p">)])</span> <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">inertial</span><span class="o">.</span><span class="n">any</span><span class="p">())</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
+</span><span id="__span-5-25"><span class="p">)</span>
+</span><span id="__span-5-26"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Peak R/R0 first reaches 2 at about </span><span class="si">{</span><span class="n">threshold</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> kPa"</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text jb-output highlight"><pre><span></span><code><span id="__span-6-1">60 pressures in 2.7 s, all converged: True
+</span><span id="__span-6-2">Peak R/R0 first reaches 2 at about 169 kPa
+</span></code></pre></div>
+<p>Plot two runs on either side of the threshold beside the peak radius at every pressure.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><span class="n">examples</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"stable, 60 kPa"</span><span class="p">:</span> <span class="mf">60e3</span><span class="p">,</span> <span class="s2">"inertial, 300 kPa"</span><span class="p">:</span> <span class="mf">300e3</span><span class="p">}</span>
+</span><span id="__span-7-2"><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">9.0</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
+</span><span id="__span-7-3"><span class="n">grid</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_gridspec</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">width_ratios</span><span class="o">=</span><span class="p">[</span><span class="mf">1.3</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="__span-7-4"><span class="n">ax_peak</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">grid</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="__span-7-5"><span class="k">for</span> <span class="n">row</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">pressure</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+</span><span id="__span-7-6">    <span class="n">drive</span> <span class="o">=</span> <span class="n">ToneBurst</span><span class="p">(</span>
+</span><span id="__span-7-7">        <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="n">pressure</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">Sine</span><span class="p">(),</span> <span class="n">cycle_num</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">envelope</span><span class="o">=</span><span class="n">HannEnvelope</span><span class="p">()</span>
+</span><span id="__span-7-8">    <span class="p">)</span>
+</span><span id="__span-7-9">    <span class="n">run</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span>
+</span><span id="__span-7-10">        <span class="n">keller_miksis</span><span class="p">,</span> <span class="n">drive</span><span class="p">,</span> <span class="n">t_max</span><span class="o">=</span><span class="mf">6e-6</span><span class="p">,</span> <span class="n">save_spec</span><span class="o">=</span><span class="n">SaveSpec</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">4000</span><span class="p">)</span>
+</span><span id="__span-7-11">    <span class="p">)</span>
+</span><span id="__span-7-12">    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+</span><span id="__span-7-13">    <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">DRIVE</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
+</span><span id="__span-7-14">    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">ts</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">run</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">keller_miksis</span><span class="o">.</span><span class="n">R0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">)</span>
+</span><span id="__span-7-15">    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"$R / R_0$"</span><span class="p">)</span>
+</span><span id="__span-7-16">    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">label</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">label</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+</span><span id="__span-7-17">    <span class="n">peak</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">keller_miksis</span><span class="o">.</span><span class="n">R0</span><span class="p">)</span>
+</span><span id="__span-7-18">    <span class="n">ax_peak</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pressure</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">,</span> <span class="n">peak</span><span class="p">,</span> <span class="s2">"o"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">mfc</span><span class="o">=</span><span class="s2">"none"</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+</span><span id="__span-7-19">    <span class="n">offset</span><span class="p">,</span> <span class="n">align</span> <span class="o">=</span> <span class="p">((</span><span class="mi">8</span><span class="p">,</span> <span class="o">-</span><span class="mi">12</span><span class="p">),</span> <span class="s2">"left"</span><span class="p">)</span> <span class="k">if</span> <span class="n">row</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">((</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="s2">"right"</span><span class="p">)</span>
+</span><span id="__span-7-20">    <span class="n">ax_peak</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+</span><span id="__span-7-21">        <span class="n">label</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+</span><span id="__span-7-22">        <span class="p">(</span><span class="n">pressure</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">,</span> <span class="n">peak</span><span class="p">),</span>
+</span><span id="__span-7-23">        <span class="n">textcoords</span><span class="o">=</span><span class="s2">"offset points"</span><span class="p">,</span>
+</span><span id="__span-7-24">        <span class="n">xytext</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+</span><span id="__span-7-25">        <span class="n">ha</span><span class="o">=</span><span class="n">align</span><span class="p">,</span>
+</span><span id="__span-7-26">    <span class="p">)</span>
+</span><span id="__span-7-27"><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"time (µs)"</span><span class="p">)</span>
+</span><span id="__span-7-28">
+</span><span id="__span-7-29"><span class="n">ax_peak</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pressures</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">,</span> <span class="n">peaks</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</span><span id="__span-7-30"><span class="n">ax_peak</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
+</span><span id="__span-7-31"><span class="n">ax_peak</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">2.08</span><span class="p">,</span> <span class="s2">"$R_</span><span class="se">\\</span><span class="s2">mathrm</span><span class="si">{max}</span><span class="s2"> = 2 R_0$"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+</span><span id="__span-7-32"><span class="n">ax_peak</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"drive pressure (kPa)"</span><span class="p">)</span>
+</span><span id="__span-7-33"><span class="n">ax_peak</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"peak $R / R_0$"</span><span class="p">)</span>
+</span><span id="__span-7-34"><span class="n">ax_peak</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Keller-Miksis, 1 MHz, three cycles"</span><span class="p">)</span>
+</span><span id="__span-7-35"><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="Find the onset of inertial cavitation" height="470" src="../media/04_equations_of_motion_2.png" width="998" /></p>
+<nav aria-label="Examples" class="jb-example-nav">
+<a class="jb-previous" href="../03_shells_gases_media/">Previous: Shells, gases, and media</a>
+<a class="jb-gallery" href="../">All examples</a>
+<a class="jb-next" href="../05_parameter_sweeps/">Next: Parameter sweeps</a>
+</nav>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Noninvasive Surgery &amp; Biopsy Laboratory
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog" role="status" aria-atomic="true">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.progress","navigation.sections","navigation.tabs","navigation.top","search.highlight","toc.follow"],"redirect":null,"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.67a597eb.min.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>

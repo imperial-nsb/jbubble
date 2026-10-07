@@ -1,0 +1,1753 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Differentiable microbubble dynamics in JAX">
+      
+      
+      
+        <link rel="canonical" href="https://imperial-nsb.github.io/jbubble/guide/solvers/">
+      
+      
+        <link rel="prev" href="../pulse_shapes/">
+      
+      
+        <link rel="next" href="../sweeps/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/logo.svg">
+      <meta name="generator" content="zensical-0.0.67">
+    
+    
+      
+        <title>Solvers and stiffness - jbubble</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.4ae390e2.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.96d1a7e4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Serif+4:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Source Serif 4";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#solvers-and-stiffness" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="jbubble" class="md-header__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            jbubble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Solvers and stiffness
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../installation/" class="md-tabs__link">
+          
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../bubble_models/" class="md-tabs__link">
+          
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../examples/" class="md-tabs__link">
+        
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../citing/" class="md-tabs__link">
+        
+  
+  Citing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="jbubble" class="md-nav__button md-logo" aria-label="jbubble" data-md-component="logo">
+      
+  <img src="../../assets/images/logo.svg" alt="jbubble">
+
+    </a>
+    jbubble
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/imperial-nsb/jbubble" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    imperial-nsb/jbubble
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Getting started
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Getting started
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Installation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Quickstart
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Guide
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+            <label class="md-nav__title" for="__nav_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Guide
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bubble_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bubble models
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pulse_shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pulse shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Solvers and stiffness
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Solvers and stiffness
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-default-solver" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The default solver
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-tolerances-mean" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What the tolerances mean
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check-that-a-solve-converged" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Check that a solve converged
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-stiffness-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        When stiffness matters
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solve-stiff-problems-with-solverconfigstiff" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Solve stiff problems with <code>SolverConfig.stiff</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gradients-and-adjoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gradients and adjoints
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sweeps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Parameter sweeps
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jax_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  JAX tips
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Examples
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API reference
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  API reference
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/bubble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  bubble
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/pulse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  pulse
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/shapes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  shapes
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/acoustics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  acoustics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/solver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  solver
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  simulation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  metrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  fitting
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  utils
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Citing
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Changelog
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-default-solver" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The default solver
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-tolerances-mean" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What the tolerances mean
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check-that-a-solve-converged" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Check that a solve converged
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-stiffness-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        When stiffness matters
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solve-stiff-problems-with-solverconfigstiff" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Solve stiff problems with <code>SolverConfig.stiff</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gradients-and-adjoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gradients and adjoints
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/imperial-nsb/jbubble/edit/main/docs/guide/solvers.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="solvers-and-stiffness">Solvers and stiffness<a class="headerlink" href="#solvers-and-stiffness" title="Permanent link">&para;</a></h1>
+<p><a class="autorefs autorefs-internal" title="            run_simulation" href="../../api/simulation/#jbubble.simulation.run_simulation"><code>run_simulation</code></a> integrates the equation of motion with <a href="https://docs.kidger.site/diffrax/">diffrax</a>, using the settings in a <a class="autorefs autorefs-internal" title="            SolverConfig" href="../../api/solver/#jbubble.solver.SolverConfig"><code>SolverConfig</code></a>. The defaults suit microbubbles in water, including inertial collapse. This page explains what the settings mean, how to tell when a solve failed, when to switch to an implicit solver, and how gradients flow through a solve.</p>
+<p>Every code block on this page runs as written, in order.</p>
+<h2 id="the-default-solver">The default solver<a class="headerlink" href="#the-default-solver" title="Permanent link">&para;</a></h2>
+<p><code>SolverConfig()</code> uses the following settings:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>solver</code></td>
+<td><code>diffrax.Dopri5()</code></td>
+<td>Explicit fifth-order Runge-Kutta method</td>
+</tr>
+<tr>
+<td><code>stepsize_controller</code></td>
+<td><code>diffrax.PIDController(rtol=1e-6, atol=1e-10)</code></td>
+<td>Adaptive step size with these tolerances</td>
+</tr>
+<tr>
+<td><code>dt0</code></td>
+<td><code>1e-9</code></td>
+<td>First step size [s]</td>
+</tr>
+<tr>
+<td><code>max_steps</code></td>
+<td><code>100_000</code></td>
+<td>Step limit per solve, accepted and rejected steps together</td>
+</tr>
+</tbody>
+</table>
+<p><code>Dopri5</code> needs about 60 to 100 steps per driving period for a microbubble in water, so the step limit covers about a thousand periods. To pass other settings, give <code>run_simulation</code>, <a class="autorefs autorefs-internal" title="            solve_eom" href="../../api/solver/#jbubble.solver.solve_eom"><code>solve_eom</code></a>, or <a class="autorefs autorefs-internal" title="            fit_parameters" href="../../api/fitting/#jbubble.fitting.fit_parameters"><code>fit_parameters</code></a> a <code>config</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><span class="kn">import</span><span class="w"> </span><span class="nn">diffrax</span>
+</span><span id="__span-0-2"><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+</span><span id="__span-0-3">
+</span><span id="__span-0-4"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverConfig</span><span class="p">,</span> <span class="n">run_simulation</span><span class="p">,</span> <span class="n">solve_eom</span>
+</span><span id="__span-0-5"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.presets</span><span class="w"> </span><span class="kn">import</span> <span class="n">lipid_bubble</span>
+</span><span id="__span-0-6">
+</span><span id="__span-0-7"><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span> <span class="o">=</span> <span class="n">lipid_bubble</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="mf">2e-6</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mf">100e3</span><span class="p">)</span>
+</span><span id="__span-0-8"><span class="n">precise</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">(</span><span class="n">stepsize_controller</span><span class="o">=</span><span class="n">diffrax</span><span class="o">.</span><span class="n">PIDController</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">))</span>
+</span><span id="__span-0-9"><span class="n">result</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">precise</span><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="what-the-tolerances-mean">What the tolerances mean<a class="headerlink" href="#what-the-tolerances-mean" title="Permanent link">&para;</a></h2>
+<p>The solver doesn't integrate the state in SI units. It integrates a scaled state: the radius in units of <span class="arithmatex">\(R_0\)</span> and the wall velocity in units of <span class="arithmatex">\(\sqrt{P_\text{amb}/\rho_L}\)</span>, about 10 m/s in water at atmospheric pressure. The tolerances therefore mean the same thing for a 50 nm bubble as for a 50 µm one: <code>atol=1e-10</code> is <span class="arithmatex">\(10^{-10} R_0\)</span> for the radius, and about <span class="arithmatex">\(10^{-9}\)</span> m/s for the wall velocity.</p>
+<p>At the defaults, a microbubble driven at 100 kPa has radius errors of <span class="arithmatex">\(10^{-6}\)</span> to <span class="arithmatex">\(10^{-5} R_0\)</span>, and gradients with relative errors of <span class="arithmatex">\(10^{-5}\)</span> to <span class="arithmatex">\(10^{-3}\)</span>. Two cases are harder:</p>
+<ul>
+<li>The corners of a lipid shell's surface tension law, where the shell buckles and ruptures: radius errors up to about <span class="arithmatex">\(10^{-3} R_0\)</span>, and gradient errors of a few percent, or about 12 % for the peak radius of the <code>lipid_bubble</code> preset (see <a href="#gradients-and-adjoints">Gradients and adjoints</a>).</li>
+<li>An inertial collapse, with <span class="arithmatex">\(R_\text{max}/R_0 \approx 4\)</span>: radius and gradient errors of about <span class="arithmatex">\(10^{-3}\)</span> to <span class="arithmatex">\(10^{-2}\)</span>.</li>
+</ul>
+<p><code>rtol=1e-8, atol=1e-12</code>, as in the <code>precise</code> configuration, makes these errors 100 to 1000 times smaller for two to three times as many steps. Don't loosen the tolerances for gradients through a collapse: they can then be wrong by more than 100 %.</p>
+<p><code>rtol</code> sets the accuracy of most solves. <code>atol</code> matters only where a scaled state component is far below 1, such as the wall velocity of a small or weakly driven bubble.</p>
+<h2 id="check-that-a-solve-converged">Check that a solve converged<a class="headerlink" href="#check-that-a-solve-converged" title="Permanent link">&para;</a></h2>
+<p>When a solve fails, for example because it reaches <code>max_steps</code>, <code>result.converged</code> is <code>False</code>, and the samples after the failure are <code>inf</code>. Called directly, <code>run_simulation</code> also warns. Under <code>jax.jit</code> or <code>jax.vmap</code>, it can't inspect the flag, so it doesn't warn; check <code>result.converged</code> yourself.</p>
+<p>The following code sets a step limit that's too small for a five-cycle pulse:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+</span><span id="__span-1-2">
+</span><span id="__span-1-3"><span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+</span><span id="__span-1-4">    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>  <span class="c1"># run_simulation warns that it failed</span>
+</span><span id="__span-1-5">    <span class="n">short</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">SolverConfig</span><span class="p">(</span><span class="n">max_steps</span><span class="o">=</span><span class="mi">200</span><span class="p">))</span>
+</span><span id="__span-1-6">
+</span><span id="__span-1-7"><span class="nb">print</span><span class="p">(</span><span class="s2">"converged:"</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">short</span><span class="o">.</span><span class="n">converged</span><span class="p">))</span>
+</span><span id="__span-1-8"><span class="nb">print</span><span class="p">(</span><span class="s2">"inf samples:"</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">short</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span> <span class="s2">"of"</span><span class="p">,</span> <span class="n">short</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+</span></code></pre></div>
+<p>To fix a solve that reaches <code>max_steps</code>, raise the limit for a long pulse, or switch to <a class="autorefs autorefs-internal" title="            stiff
+
+
+  
+      classmethod
+  " href="../../api/solver/#jbubble.solver.SolverConfig.stiff"><code>SolverConfig.stiff</code></a> if <code>Dopri5</code> needs thousands of steps per driving period. A larger <code>max_steps</code> costs neither memory nor compile time.</p>
+<h2 id="when-stiffness-matters">When stiffness matters<a class="headerlink" href="#when-stiffness-matters" title="Permanent link">&para;</a></h2>
+<p>A bubble is stiff when its fastest relaxation rate, set by viscous damping, is much larger than the driving angular frequency <span class="arithmatex">\(\omega\)</span>. For a liquid of viscosity <span class="arithmatex">\(\mu\)</span> and a lipid shell of surface viscosity <span class="arithmatex">\(\kappa_s\)</span>, that rate is about</p>
+<div class="arithmatex">\[
+\lambda = \frac{4\mu + 4\kappa_s/R_0}{\rho_L R_0^2},
+\]</div>
+<p>divided by <span class="arithmatex">\(1 + (4\mu + 4\kappa_s/R_0)/(\rho_L c_L R_0)\)</span> for Keller-Miksis. The rate grows as <span class="arithmatex">\(1/R_0^2\)</span> or faster, so small bubbles become stiff first. The problem is stiff when the stiffness ratio <span class="arithmatex">\(\lambda/\omega\)</span> is above about 100:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+</span><span id="__span-2-2">
+</span><span id="__span-2-3">
+</span><span id="__span-2-4"><span class="k">def</span><span class="w"> </span><span class="nf">stiffness_ratio</span><span class="p">(</span><span class="n">R0</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">kappa_s</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rho_L</span><span class="o">=</span><span class="mf">998.0</span><span class="p">,</span> <span class="n">c_L</span><span class="o">=</span><span class="mf">1500.0</span><span class="p">):</span>
+</span><span id="__span-2-5"><span class="w">    </span><span class="sd">"""Ratio of the viscous relaxation rate to the driving angular frequency."""</span>
+</span><span id="__span-2-6">    <span class="n">damping</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">kappa_s</span> <span class="o">/</span> <span class="n">R0</span>
+</span><span id="__span-2-7">    <span class="n">rate</span> <span class="o">=</span> <span class="n">damping</span> <span class="o">/</span> <span class="p">(</span><span class="n">rho_L</span> <span class="o">*</span> <span class="n">R0</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">damping</span> <span class="o">/</span> <span class="p">(</span><span class="n">rho_L</span> <span class="o">*</span> <span class="n">c_L</span> <span class="o">*</span> <span class="n">R0</span><span class="p">))</span>
+</span><span id="__span-2-8">    <span class="k">return</span> <span class="n">rate</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">freq</span><span class="p">)</span>
+</span><span id="__span-2-9">
+</span><span id="__span-2-10">
+</span><span id="__span-2-11"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"2 µm lipid bubble, 1 MHz:   </span><span class="si">{</span><span class="n">stiffness_ratio</span><span class="p">(</span><span class="mf">2e-6</span><span class="p">,</span><span class="w"> </span><span class="mf">1e6</span><span class="p">,</span><span class="w"> </span><span class="n">kappa_s</span><span class="o">=</span><span class="mf">7.5e-9</span><span class="p">)</span><span class="si">:</span><span class="s2">6.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-2-12"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"100 nm lipid bubble, 5 MHz: </span><span class="si">{</span><span class="n">stiffness_ratio</span><span class="p">(</span><span class="mf">100e-9</span><span class="p">,</span><span class="w"> </span><span class="mf">5e6</span><span class="p">,</span><span class="w"> </span><span class="n">kappa_s</span><span class="o">=</span><span class="mf">7.5e-9</span><span class="p">)</span><span class="si">:</span><span class="s2">6.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-2-13"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"300 nm, 0.05 Pa s, 2 MHz:   </span><span class="si">{</span><span class="n">stiffness_ratio</span><span class="p">(</span><span class="mf">300e-9</span><span class="p">,</span><span class="w"> </span><span class="mf">2e6</span><span class="p">,</span><span class="w"> </span><span class="n">mu</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span><span class="si">:</span><span class="s2">6.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>A clinical microbubble is far from stiff, with a ratio below 1. Lipid-coated nanobubbles at a few megahertz, with ratios of 150 at 150 nm, 320 at 100 nm, and 850 at 50 nm, and sub-micron bubbles in viscous liquids are stiff.</p>
+<p>On a stiff problem, <code>Dopri5</code> steps at the edge of its stability region. The radius stays accurate, but the solve takes hundreds to thousands of steps per driving period. Worse, the gradient through the solve can be wrong by orders of magnitude, or NaN, even when the solve reports <code>converged = True</code>.</p>
+<h2 id="solve-stiff-problems-with-solverconfigstiff">Solve stiff problems with <code>SolverConfig.stiff</code><a class="headerlink" href="#solve-stiff-problems-with-solverconfigstiff" title="Permanent link">&para;</a></h2>
+<p><a class="autorefs autorefs-internal" title="            stiff
+
+
+  
+      classmethod
+  " href="../../api/solver/#jbubble.solver.SolverConfig.stiff"><code>SolverConfig.stiff()</code></a> returns settings for the implicit <code>Kvaerno5</code> solver, with a root finder and Newton tolerances that keep it reliable for bubbles down to 10 nm. The following code counts the steps that each solver takes for a microbubble and a nanobubble. <a class="autorefs autorefs-internal" title="            solve_eom" href="../../api/solver/#jbubble.solver.solve_eom"><code>solve_eom</code></a> returns the raw <code>diffrax.Solution</code>, whose <code>stats</code> hold the step counts:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><span class="k">for</span> <span class="n">R0</span><span class="p">,</span> <span class="n">freq</span> <span class="ow">in</span> <span class="p">[(</span><span class="mf">2e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">),</span> <span class="p">(</span><span class="mf">100e-9</span><span class="p">,</span> <span class="mf">5e6</span><span class="p">)]:</span>
+</span><span id="__span-3-2">    <span class="n">eom_r</span><span class="p">,</span> <span class="n">pulse_r</span> <span class="o">=</span> <span class="n">lipid_bubble</span><span class="p">(</span><span class="n">R0</span><span class="o">=</span><span class="n">R0</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="p">)</span>
+</span><span id="__span-3-3">    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"Dopri5"</span><span class="p">,</span> <span class="n">SolverConfig</span><span class="p">()),</span> <span class="p">(</span><span class="s2">"Kvaerno5"</span><span class="p">,</span> <span class="n">SolverConfig</span><span class="o">.</span><span class="n">stiff</span><span class="p">())]:</span>
+</span><span id="__span-3-4">        <span class="n">solution</span> <span class="o">=</span> <span class="n">solve_eom</span><span class="p">(</span><span class="n">eom_r</span><span class="p">,</span> <span class="n">pulse_r</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+</span><span id="__span-3-5">        <span class="n">ok</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">diffrax</span><span class="o">.</span><span class="n">is_successful</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">result</span><span class="p">))</span>
+</span><span id="__span-3-6">        <span class="n">steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s2">"num_steps"</span><span class="p">])</span>
+</span><span id="__span-3-7">        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"R0 = </span><span class="si">{</span><span class="n">R0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">4.0f</span><span class="si">}</span><span class="s2"> nm, </span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">steps</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2"> steps, converged </span><span class="si">{</span><span class="n">ok</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>For the 2 µm bubble, both solvers take a few hundred steps. For the 100 nm bubble, <code>Dopri5</code> takes more than 10 times as many steps as <code>Kvaerno5</code>.</p>
+<p>An implicit step costs more than an explicit one, and <code>Kvaerno5</code> compiles more slowly: about 2 to 6 s, against about 1 s for <code>Dopri5</code>. On a problem that isn't stiff, it takes about as many steps as <code>Dopri5</code> but runs 5 to 10 times longer, so keep <code>Dopri5</code> unless the stiffness ratio or the step count says otherwise.</p>
+<p>To change the tolerances of the stiff configuration, call <code>stiff</code> with new values, such as <code>SolverConfig.stiff(rtol=1e-8, atol=1e-12)</code>, rather than replacing its <code>stepsize_controller</code>, so that the Newton tolerances follow. <code>jax.jit</code>, <code>jax.vmap</code>, <code>jax.grad</code>, and <a class="autorefs autorefs-internal" title="            GridSweep" href="../../api/utils/#jbubble.utils.gridsweep.GridSweep"><code>GridSweep</code></a> all work with it; <code>jax.pmap</code> doesn't.</p>
+<h2 id="gradients-and-adjoints">Gradients and adjoints<a class="headerlink" href="#gradients-and-adjoints" title="Permanent link">&para;</a></h2>
+<p><code>jax.grad</code> differentiates through the solver. The <code>adjoint</code> argument of <code>run_simulation</code>, <code>solve_eom</code>, and <code>fit_parameters</code> sets how:</p>
+<table>
+<thead>
+<tr>
+<th>Adjoint</th>
+<th>Use it for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>diffrax.RecursiveCheckpointAdjoint()</code> (default)</td>
+<td>Reverse-mode gradients, such as <code>jax.grad</code> of a scalar loss. It gives the exact gradient of the discretised solution, and it checkpoints the solve so that memory stays bounded.</td>
+</tr>
+<tr>
+<td><code>diffrax.ForwardMode()</code></td>
+<td>Forward-mode derivatives with <code>jax.jacfwd</code> or <code>jax.jvp</code>, for a few parameters and many outputs, such as the Jacobian of a Levenberg-Marquardt fit.</td>
+</tr>
+</tbody>
+</table>
+<p>diffrax advises against <code>diffrax.BacksolveAdjoint</code>, whose gradients are approximate.</p>
+<p>Rejected trial steps can't poison a gradient. During a violent collapse, an adaptive solver can try a step that reaches <span class="arithmatex">\(R \le 0\)</span>, where the gas law is undefined. jbubble never evaluates the equation of motion there: it reports the step as failed, the solver rejects it, and the gradient stays finite. An equation of motion marks its valid states with <a class="autorefs autorefs-internal" title="            is_admissible" href="../../api/bubble/#jbubble.bubble.eom.EquationOfMotion.is_admissible"><code>is_admissible</code></a>.</p>
+<p>Gradients need tighter tolerances than radius curves where the model has sharp features. The surface tension of a lipid shell has two corners, where the shell buckles and ruptures, and the solver must resolve them for the gradient to be accurate. The following code computes the derivative of the peak radius of the <a class="autorefs autorefs-internal" title="            lipid_bubble" href="../../api/utils/#jbubble.utils.presets.lipid_bubble"><code>lipid_bubble</code></a> preset with respect to the shell viscosity, at the default and at tighter tolerances, and compares each with a central finite difference:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><span class="kn">import</span><span class="w"> </span><span class="nn">diffrax</span>
+</span><span id="__span-4-2"><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+</span><span id="__span-4-3">
+</span><span id="__span-4-4"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverConfig</span><span class="p">,</span> <span class="n">run_simulation</span>
+</span><span id="__span-4-5"><span class="kn">from</span><span class="w"> </span><span class="nn">jbubble.utils.presets</span><span class="w"> </span><span class="kn">import</span> <span class="n">lipid_bubble</span>
+</span><span id="__span-4-6">
+</span><span id="__span-4-7">
+</span><span id="__span-4-8"><span class="k">def</span><span class="w"> </span><span class="nf">peak_ratio</span><span class="p">(</span><span class="n">kappa_s</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="__span-4-9">    <span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span> <span class="o">=</span> <span class="n">lipid_bubble</span><span class="p">(</span><span class="n">kappa_s</span><span class="o">=</span><span class="n">kappa_s</span><span class="p">)</span>
+</span><span id="__span-4-10">    <span class="k">return</span> <span class="n">run_simulation</span><span class="p">(</span><span class="n">eom</span><span class="p">,</span> <span class="n">pulse</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">radius</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">eom</span><span class="o">.</span><span class="n">R0</span>
+</span><span id="__span-4-11">
+</span><span id="__span-4-12">
+</span><span id="__span-4-13"><span class="n">precise</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="p">(</span><span class="n">stepsize_controller</span><span class="o">=</span><span class="n">diffrax</span><span class="o">.</span><span class="n">PIDController</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">))</span>
+</span><span id="__span-4-14"><span class="n">kappa_s</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="mf">7.5e-9</span><span class="p">,</span> <span class="mf">1e-11</span>  <span class="c1"># [N s/m]</span>
+</span><span id="__span-4-15"><span class="n">up</span><span class="p">,</span> <span class="n">down</span> <span class="o">=</span> <span class="n">peak_ratio</span><span class="p">(</span><span class="n">kappa_s</span> <span class="o">+</span> <span class="n">h</span><span class="p">,</span> <span class="n">precise</span><span class="p">),</span> <span class="n">peak_ratio</span><span class="p">(</span><span class="n">kappa_s</span> <span class="o">-</span> <span class="n">h</span><span class="p">,</span> <span class="n">precise</span><span class="p">)</span>
+</span><span id="__span-4-16"><span class="n">reference</span> <span class="o">=</span> <span class="p">(</span><span class="n">up</span> <span class="o">-</span> <span class="n">down</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+</span><span id="__span-4-17"><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"default"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="p">(</span><span class="s2">"precise"</span><span class="p">,</span> <span class="n">precise</span><span class="p">)]:</span>
+</span><span id="__span-4-18">    <span class="n">grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">peak_ratio</span><span class="p">)(</span><span class="n">kappa_s</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+</span><span id="__span-4-19">    <span class="nb">print</span><span class="p">(</span>
+</span><span id="__span-4-20">        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2"> jax.grad = </span><span class="si">{</span><span class="n">grad</span><span class="si">:</span><span class="s2">.4e</span><span class="si">}</span><span class="s2">, relative error </span><span class="si">{</span><span class="n">grad</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">reference</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">:</span><span class="s2">+.1e</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-4-21">    <span class="p">)</span>
+</span></code></pre></div>
+<p>At the default tolerances the gradient is about 12 % off; at <code>rtol=1e-8, atol=1e-12</code> it agrees with the finite difference to about <span class="arithmatex">\(10^{-5}\)</span>. For a free bubble, the default tolerances already give gradients to about <span class="arithmatex">\(10^{-5}\)</span>. Before you trust a gradient, or a fit, check it against a finite difference at your tolerances.</p>
+<p>For gradients on a stiff problem, use <code>SolverConfig.stiff()</code>. For 20 to 150 nm lipid bubbles at the default tolerances, the gradient of a loss on the deviation <span class="arithmatex">\(R/R_0 - 1\)</span> then has a relative error of about <span class="arithmatex">\(10^{-5}\)</span> to <span class="arithmatex">\(10^{-4}\)</span>. For the full comparison of wall time and step counts against the stiffness ratio, see the example <a href="../../examples/07_solvers_and_stiffness/">Solvers and stiffness</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../pulse_shapes/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Pulse shapes">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Pulse shapes
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../sweeps/" class="md-footer__link md-footer__link--next" aria-label="Next: Parameter sweeps">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Parameter sweeps
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Noninvasive Surgery &amp; Biopsy Laboratory
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog" role="status" aria-atomic="true">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.progress","navigation.sections","navigation.tabs","navigation.top","search.highlight","toc.follow"],"redirect":null,"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.67a597eb.min.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.18.11/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>
