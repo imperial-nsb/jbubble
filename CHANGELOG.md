@@ -4,7 +4,7 @@ This file lists the notable changes in each jbubble release.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and jbubble uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html). While the major version is 0, a minor release can contain breaking changes.
 
-## [0.2.0] - Unreleased
+## [0.2.0] - 2026-10-06
 
 jbubble 0.2.0 is a beta release. It corrects several physics models against published references, keeps gradients finite through the adaptive solver, runs parameter sweeps on every CPU core, redesigns parameter fitting, and adds a documentation site with an example gallery. It contains breaking changes: [Upgrading from 0.1](#upgrading-from-01) lists each one and what to change.
 
@@ -155,6 +155,6 @@ Fitting:
 
 First public release.
 
-[0.2.0]: https://github.com/imperial-nsb/jbubble/compare/v0.1.1...HEAD
+[0.2.0]: https://github.com/imperial-nsb/jbubble/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/imperial-nsb/jbubble/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/imperial-nsb/jbubble/releases/tag/v0.1.0

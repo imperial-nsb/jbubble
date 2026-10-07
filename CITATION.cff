@@ -36,6 +36,7 @@ authors:
     family-names: Choi
     affiliation: Imperial College London
 version: 0.2.0
+date-released: 2026-10-06
 license: MIT
 repository-code: "https://github.com/imperial-nsb/jbubble"
 url: "https://imperial-nsb.github.io/jbubble/"
