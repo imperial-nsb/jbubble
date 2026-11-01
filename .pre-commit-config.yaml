@@ -3,7 +3,7 @@
 # the same hooks through j178/prek-action.
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.10 # keep in step with `ruff` in uv.lock
+    rev: v0.17.3 # keep in step with `ruff` in uv.lock
     hooks:
       - id: ruff-check
         args: [--fix]
@@ -23,12 +23,12 @@ repos:
       - id: debug-statements
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.23
+    rev: 0.13.6
     hooks:
       - id: uv-lock # fails if uv.lock is out of date with pyproject.toml
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.38.2
+    rev: 0.39.0
     hooks:
       - id: check-github-workflows
       - id: check-dependabot
